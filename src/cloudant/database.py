@@ -48,6 +48,7 @@ class CloudantDatabase(dict):
         doc = CloudantDocument(self, data.get('_id'))
         doc.update(data)
         doc.create()
+        super(CloudantDatabase, self).__setitem__(doc['_id'], doc)
         return doc
 
     def new_document(self):
@@ -58,6 +59,7 @@ class CloudantDatabase(dict):
         """
         doc = CloudantDocument(self, None)
         doc.create()
+        super(CloudantDatabase, self).__setitem__(doc['_id'], doc)
         return doc
 
     def create(self):
