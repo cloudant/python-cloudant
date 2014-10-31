@@ -1,0 +1,3 @@
+include requirements.txt
+include cirrus.conf
+recursive-include carburetor/templates *
