@@ -18,7 +18,7 @@ def cloudant(user, passwd, **kwargs):
     _cloudant_
 
     Context helper to create a cloudant session and
-    provide access to databases, docs etc
+    provide access to databases, docs etc.
 
     """
     c = Cloudant(user, passwd, **kwargs)
