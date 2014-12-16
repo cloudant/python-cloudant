@@ -142,7 +142,9 @@ class CloudantDatabase(dict):
 
         Otherwise, pass through to built-in __iter__.
 
-        @param remote: fetch docs remotely?
+        @param boolean remote: Governs default behavior of freshly
+            fetching docs from couch (if True), or just digging through
+            locally cached docs (if False)
 
         """
         if not remote:
