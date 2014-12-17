@@ -5,6 +5,7 @@ _database_
 API class representing a cloudant database
 
 """
+import json
 import posixpath
 import urllib
 
@@ -17,12 +18,14 @@ class CloudantDatabase(dict):
     _CloudantDatabase_
 
     """
-    def __init__(self, cloudant, database_name):
+    def __init__(self, cloudant, database_name, fetch_limit=100):
         super(CloudantDatabase, self).__init__()
         self._cloudant_account = cloudant
         self._database_host = cloudant._cloudant_url
         self._database_name = database_name
         self._r_session = cloudant._r_session
+        self._next_startkey = None
+        self._fetch_limit = fetch_limit
 
     _database_url = property(
             lambda x: posixpath.join(
@@ -130,4 +133,46 @@ class CloudantDatabase(dict):
         else:
             raise KeyError(key)
 
+    def __iter__(self, remote=True):
+        """
+        ___iter___ wrapper around dict.__iter__
 
+        By default, fetch docs from couch, in batches equal to
+        self._fetch_limit, yielding results as we get them.
+
+        Otherwise, pass through to built-in __iter__.
+
+        @param boolean remote: Governs default behavior of freshly
+            fetching docs from couch (if True), or just digging through
+            locally cached docs (if False)
+
+        """
+        if not remote:
+            super(CloudantDatabase, self).__iter__()
+        else:
+            next_startkey = 0
+            while next_startkey is not None:
+                docs = self.all_docs(
+                    limit=self._fetch_limit + 1,  # Get one extra doc
+                                                  # to use as
+                                                  # next_startkey
+                    include_docs="true",
+                    startkey=json.dumps(next_startkey)
+                ).get('rows', [])
+
+                if len(docs) > self._fetch_limit:
+                    next_startkey = docs.pop()['id']
+                else:
+                    # This is the last batch of docs, so we set
+                    # ourselves up to break out of the while loop
+                    # after this pass.
+                    next_startkey = None
+
+                for doc in docs:
+                    super(CloudantDatabase, self).__setitem__(
+                        doc['id'],
+                        doc['doc']
+                    )
+                    yield doc
+
+            raise StopIteration
