@@ -5,6 +5,7 @@ _account_
 Top level cloudant API object that maps to a users account.
 
 """
+import base64
 import json
 import posixpath
 import requests
@@ -113,6 +114,22 @@ class Cloudant(dict):
             sess_url
         )
         resp.raise_for_status()
+
+    def basic_auth_str(self):
+        """
+        Compose a basic http auth string, suitable for use with the
+        _replicator database, and other places that need it.
+
+        TODO: I'm not a huge fan of doing basic auth -- need to
+        research and see if there's a better way to do this.
+
+        """
+
+        hash_ = base64.urlsafe_b64encode("{username}:{password}".format(
+            username=self._cloudant_user,
+            password=self._cloudant_token
+        ))
+        return "Basic {0}".format(hash_)
 
     def set_permissions(self):
         #TODO implement this when available in v2

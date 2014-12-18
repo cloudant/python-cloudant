@@ -9,6 +9,7 @@ import json
 import posixpath
 import urllib
 
+from .errors import CloudantException
 
 class CloudantDocument(dict):
     """
@@ -51,7 +52,7 @@ class CloudantDocument(dict):
         headers = {'Content-Type': 'application/json'}
 
         resp = self._r_session.post(
-            self._cloudant_database._database_url,
+            self._cloudant_database.database_url,
             headers=headers,
             data=self.json()
         )
@@ -88,6 +89,29 @@ class CloudantDocument(dict):
             headers=headers
         )
         put_resp.raise_for_status()
+        return
+
+    def delete(self):
+        """
+        _delete_
+
+        Delete the document on the remote db.
+
+        """
+        headers = {}
+        headers.setdefault('Content-Type', 'application/json')
+        if not self.get("_rev"):
+            raise CloudantException(
+                u"Attempting to delete a doc with no _rev. Try running "
+                u".fetch first!"
+            )
+
+        del_resp = self._r_session.delete(
+            self._document_url,
+            params = {"rev": self["_rev"]},
+            headers=headers
+        )
+        del_resp.raise_for_status()
         return
 
     def __enter__(self):

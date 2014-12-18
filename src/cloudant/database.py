@@ -24,23 +24,35 @@ class CloudantDatabase(dict):
         self._database_host = cloudant._cloudant_url
         self._database_name = database_name
         self._r_session = cloudant._r_session
-        self._next_startkey = None
         self._fetch_limit = fetch_limit
 
-    _database_url = property(
-            lambda x: posixpath.join(
-                x._database_host,
-                urllib.quote_plus(x._database_name)
-            )
+    @property
+    def database_url(self):
+        return posixpath.join(
+            self._database_host,
+            urllib.quote_plus(self._database_name)
         )
 
+    @property
+    def creds(self):
+        """
+        _creds_
+
+        Return a dict of useful strings to use to authenicate against
+        this database, using various methods.
+
+        """
+        return {
+            "basic_auth": self._cloudant_account.basic_auth_str(),
+            "user_ctx": self._cloudant_account.session()['userCtx']
+        }
 
     def exists(self):
-        resp = self._r_session.get(self._database_url)
+        resp = self._r_session.get(self.database_url)
         return resp.status_code == 200
 
     def metadata(self):
-        resp = self._r_session.get(self._database_url)
+        resp = self._r_session.get(self.database_url)
         resp.raise_for_status()
         return resp.json()
 
@@ -74,13 +86,13 @@ class CloudantDatabase(dict):
         if self.exists():
             return self
 
-        resp = self._r_session.put(self._database_url)
+        resp = self._r_session.put(self.database_url)
         if resp.status_code == 201:
             return self
 
         raise CloudantException(
             u"Unable to create database {0}: Reason:{1}".format(
-                self._database_url, resp.text
+                self.database_url, resp.text
             ),
             code=resp.status_code
         )
@@ -92,7 +104,7 @@ class CloudantDatabase(dict):
         Delete this database
 
         """
-        resp = self._r_session.delete(self._database_url)
+        resp = self._r_session.delete(self.database_url)
         resp.raise_for_status()
 
     def all_docs(self, **kwargs):
@@ -108,7 +120,7 @@ class CloudantDatabase(dict):
         startkey
 
         """
-        resp = self._r_session.get(posixpath.join(self._database_url, '_all_docs'), params=dict(kwargs))
+        resp = self._r_session.get(posixpath.join(self.database_url, '_all_docs'), params=dict(kwargs))
         data = resp.json()
         return data
 
@@ -138,7 +150,7 @@ class CloudantDatabase(dict):
 
         stream = self._r_session.get(
             posixpath.join(
-                self._database_url,
+                self.database_url,
                 '_changes',),
             params=dict(feed="continuous"),
             stream=True,

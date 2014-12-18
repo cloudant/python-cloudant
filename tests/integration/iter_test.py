@@ -50,7 +50,7 @@ class IterTest(unittest.TestCase):
             for doc in db:
                 docs.append(doc)
 
-            self.assertTrue(len(docs) == 2)
+            self.assertEqual(len(docs), 2)
 
     def test_database_with_many_docs(self):
         """
