@@ -122,6 +122,35 @@ class CloudantDatabase(dict):
         docs = self.all_docs()
         return [ row['id'] for row in docs.get('rows', []) ]
 
+    def changes(self, since=None, continuous=True):
+        """
+        Implement streaming from changes feed. 
+
+        @param str since: Start from this sequence
+        @param boolean continuous: Stream results?
+
+        #TODO: this needs a whole lot of fleshing out. Writing enough
+        to make some tests happy for now.
+
+        """
+        if not continuous:
+            raise Exception(u"Non streaming changes not yet implemented!")
+
+        stream = self._r_session.get(
+            posixpath.join(
+                self._database_url,
+                '_changes',),
+            params=dict(feed="continuous"),
+            stream=True,
+        )
+
+        for chunk in stream.iter_lines(chunk_size=1):
+            # Chunk size one theoretically kicks the last chunk out of
+            # memory.
+            if chunk.strip():
+                yield json.loads(chunk)
+        stream.close()
+
     def __getitem__(self, key):
         if key in self.keys():
             return super(CloudantDatabase, self).__getitem__(key)
