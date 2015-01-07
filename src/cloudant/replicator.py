@@ -37,10 +37,10 @@ class ReplicatorDatabase(CloudantDatabase):
             don't specify.)
 
         Optional overrides (I'll compose these for you, unless you
-            explicitely specify them):
+            explicitly specify them):
         @param str/dict source: string or dict representing the source
-            database, and and any authentication info.
-        @param str/dict target: string or dict represneting the
+            database, along with authentication info, if any.
+        @param str/dict target: string or dict representing the
             target database, possibly including authentication info.
         @param dict user_ctx: User to act as.
 
@@ -98,7 +98,7 @@ class ReplicatorDatabase(CloudantDatabase):
         docs = self.all_docs(include_docs="true")['rows']
         return [doc['doc'] for doc in docs]
 
-    def replication_state(self, replication_id):
+    def replication_state(self, repl_id):
         """
         _replication_state_
 
@@ -108,10 +108,12 @@ class ReplicatorDatabase(CloudantDatabase):
 
         """
         try:
-            repl_doc = self['replication_id']
+            repl_doc = self[repl_id]
         except KeyError:
             raise CloudantException(
                 "Replication {} not found".format(replication_id))
+        repl_doc.fetch()
+        print "repl_doc: {}".format(repl_doc)
         return repl_doc.get('_replication_state')
 
     def follow_replication(self, repl_id):

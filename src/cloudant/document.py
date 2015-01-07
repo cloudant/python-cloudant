@@ -98,8 +98,6 @@ class CloudantDocument(dict):
         Delete the document on the remote db.
 
         """
-        headers = {}
-        headers.setdefault('Content-Type', 'application/json')
         if not self.get("_rev"):
             raise CloudantException(
                 u"Attempting to delete a doc with no _rev. Try running "
@@ -109,7 +107,6 @@ class CloudantDocument(dict):
         del_resp = self._r_session.delete(
             self._document_url,
             params = {"rev": self["_rev"]},
-            headers=headers
         )
         del_resp.raise_for_status()
         return
