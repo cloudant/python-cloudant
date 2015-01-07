@@ -113,7 +113,6 @@ class ReplicatorDatabase(CloudantDatabase):
             raise CloudantException(
                 "Replication {} not found".format(replication_id))
         repl_doc.fetch()
-        print "repl_doc: {}".format(repl_doc)
         return repl_doc.get('_replication_state')
 
     def follow_replication(self, repl_id):
