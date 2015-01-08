@@ -5,7 +5,7 @@ _cloudant_
 Cloudant Python Client API
 
 """
-__version__ = '0.0.0'
+__version__="0.0.1"
 
 import contextlib
 
