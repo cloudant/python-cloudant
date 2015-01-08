@@ -39,7 +39,6 @@ class AccountTests(unittest.TestCase):
     def tearDown(self):
         self.patcher.stop()
 
-
     def test_session_calls(self):
         """test session related methods"""
         c = Cloudant(self.username, self.password)
@@ -130,6 +129,13 @@ class AccountTests(unittest.TestCase):
         mock_get.reset_mocks()
         mock_get.status_code = 404
         self.assertRaises(CloudantException, c.delete_database, "unittest")
+
+    def test_basic_auth_str(self):
+        c = Cloudant(self.username, self.password)
+        auth_str = c.basic_auth_str()
+        self.assertTrue(auth_str.startswith("Basic"))
+        self.assertFalse(auth_str.endswith("Basic "))
+        self.assertFalse(auth_str.endswith("Basic"))
 
 
 if __name__ == '__main__':
