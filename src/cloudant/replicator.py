@@ -102,7 +102,9 @@ class ReplicatorDatabase(CloudantDatabase):
         """
         _replication_state_
 
-        Get the state of the current replication.
+        Get the state of the current replication. Possible values are
+        "triggered", "completed", "error", and None (this last in the
+        case where the replication is not yet triggered in couch).
 
         @param str replication_id: id of the replication to inspect.
 
