@@ -45,4 +45,6 @@ if src_dir:
     setup_args['packages'] = setuptools.find_packages(src_dir, exclude=excl_dirs)
     setup_args['provides'] = setuptools.find_packages(src_dir)
 
+setup_args['package_dir'] = {"": "src"}
+
 setuptools.setup(**setup_args)
