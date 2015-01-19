@@ -83,6 +83,8 @@ class CloudantDatabase(dict):
         """
         _design_documents_
 
+        Return the raw JSON content of the design documents for this database
+
         """
         url = posixpath.join(self.database_url, '_all_docs')
         query = "startkey=\"_design\"&endkey=\"_design0\"&include_docs=true"
@@ -94,13 +96,14 @@ class CloudantDatabase(dict):
         """
         _list_design_documents_
 
+        Return a list of design document names on this database
+
         """
         url = posixpath.join(self.database_url, '_all_docs')
         query = "startkey=\"_design\"&endkey=\"_design0\""
         resp = self._r_session.get(url, params=query)
         data = resp.json()
         return [x.get('key') for x in data.get('rows', [])]
-
 
     def create(self):
         """
