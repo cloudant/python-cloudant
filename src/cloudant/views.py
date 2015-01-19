@@ -102,7 +102,7 @@ class DesignDocument(CloudantDocument):
 
         """
         super(DesignDocument, self).fetch()
-        for view_name, view_def in self['views'].iteritems():
+        for view_name, view_def in self.get('views',{}).iteritems():
             self['views'][view_name] = View(view_name, view_def.get('map'), view_def.get('reduce'))
 
     def iterviews(self):
