@@ -8,8 +8,10 @@ API class representing a cloudant database
 import json
 import posixpath
 import urllib
+import requests
 
 from .document import CloudantDocument
+from .views import DesignDocument
 from .errors import CloudantException
 
 
@@ -77,6 +79,34 @@ class CloudantDatabase(dict):
         super(CloudantDatabase, self).__setitem__(doc['_id'], doc)
         return doc
 
+    def design_documents(self):
+        """
+        _design_documents_
+
+        Return the raw JSON content of the design documents for this database
+
+        """
+        url = posixpath.join(self.database_url, '_all_docs')
+        query = "startkey=\"_design\"&endkey=\"_design0\"&include_docs=true"
+        resp = self._r_session.get(url, params=query)
+        resp.raise_for_status()
+        data = resp.json()
+        return data['rows']
+
+    def list_design_documents(self):
+        """
+        _list_design_documents_
+
+        Return a list of design document names on this database
+
+        """
+        url = posixpath.join(self.database_url, '_all_docs')
+        query = "startkey=\"_design\"&endkey=\"_design0\""
+        resp = self._r_session.get(url, params=query)
+        resp.raise_for_status()
+        data = resp.json()
+        return [x.get('key') for x in data.get('rows', [])]
+
     def create(self):
         """
         _create_
@@ -136,7 +166,7 @@ class CloudantDatabase(dict):
 
     def changes(self, since=None, continuous=True):
         """
-        Implement streaming from changes feed. 
+        Implement streaming from changes feed.
 
         @param str since: Start from this sequence
         @param boolean continuous: Stream results?
@@ -166,7 +196,10 @@ class CloudantDatabase(dict):
     def __getitem__(self, key):
         if key in self.keys():
             return super(CloudantDatabase, self).__getitem__(key)
-        doc = CloudantDocument(self, key)
+        if key.startswith('_design/'):
+            doc = DesignDocument(self, key)
+        else:
+            doc = CloudantDocument(self, key)
         if doc.exists():
             doc.fetch()
             super(CloudantDatabase, self).__setitem__(key, doc)

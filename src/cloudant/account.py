@@ -25,6 +25,17 @@ class Cloudant(dict):
     Maintains a requests.Session for working with the
     account specified in the ctor
 
+    Optional parameters can be passed to control behaviour:
+
+    :param cloudant_url: Fully qualified https:// url for the cloudant service,
+      if not provided defaults to https://<username>.cloudant.com
+
+    :param x_cloudant_user: Override the X-Cloudant-User setting used to auth. This
+      is needed to auth on someones behalf, eg with an admin account
+
+    :param encoder: Optional json Encoder object used to encode documents for storage.
+       defaults to json.JSONEncoder
+
     """
     def __init__(self, cloudant_user, auth_token, **kwargs):
         super(Cloudant, self).__init__()
@@ -32,6 +43,7 @@ class Cloudant(dict):
         self._cloudant_token = auth_token
         self._cloudant_session = None
         self._cloudant_url = kwargs.get("cloudant_url") or "https://{0}.cloudant.com".format(self._cloudant_user)
+        self._cloudant_user_header = kwargs.get("x_cloudant_user") or self._cloudant_user
         self._encoder=kwargs.get('encoder') or json.JSONEncoder
 
     def connect(self):
@@ -43,7 +55,7 @@ class Cloudant(dict):
         """
         self._r_session = requests.Session()
         self._r_session.auth = (self._cloudant_user, self._cloudant_token)
-        self._r_session.headers.update({'X-Cloudant-User': self._cloudant_user})
+        self._r_session.headers.update({'X-Cloudant-User': self._cloudant_user_header})
         self.session_login(self._cloudant_user, self._cloudant_token)
         self._cloudant_session = self.session()
 
