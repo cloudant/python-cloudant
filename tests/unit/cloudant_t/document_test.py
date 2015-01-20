@@ -153,8 +153,6 @@ class CloudantDocumentTest(unittest.TestCase):
         with doc as d:
             d['new_field'] = "NARP"
 
-
-
         self.failUnless(self.mock_session.get.called)
         self.failUnless(self.mock_session.put.called)
         self.failUnless(mock_encode.encode.called)

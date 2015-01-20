@@ -19,6 +19,17 @@ class Code(str):
         super(Code, self).__init__(s)
 
 
+def _codify(code_or_str):
+    """
+    helper to rationalise None, str or Code objects
+    """
+    if code_or_str is None:
+        return None
+    if not isinstance(code_or_str, Code):
+        return Code(code_or_str)
+    return code_or_str
+
+
 class View(dict):
     """
     Dictionary based object representing a view, exposing the map, reduce
@@ -29,20 +40,8 @@ class View(dict):
         super(View, self).__init__()
         self.view_name = view_name
         self[self.view_name] = {}
-        self[self.view_name]['map'] = map_func
-        self[self.view_name]['reduce'] = reduce_func
-        if self[self.view_name]['map'] and not isinstance(
-            self[self.view_name]['map'], Code
-                ):
-            self[self.view_name]['map'] = Code(
-                self[self.view_name]['map']
-            )
-        if self[self.view_name]['reduce'] and not isinstance(
-            self[self.view_name]['reduce'], Code
-                ):
-            self[self.view_name]['reduce'] = Code(
-                self[self.view_name]['reduce']
-            )
+        self[self.view_name]['map'] = _codify(map_func)
+        self[self.view_name]['reduce'] = _codify(reduce_func)
 
     @property
     def map(self):
@@ -52,9 +51,7 @@ class View(dict):
     @map.setter
     def map(self, js_func):
         """map property setter, accepts str or Code obj"""
-        f = js_func
-        if not isinstance(js_func, Code):
-            f = Code(js_func)
+        f = _codify(js_func)
         self[self.view_name]['map'] = f
 
     @property
@@ -65,9 +62,7 @@ class View(dict):
     @reduce.setter
     def reduce(self, js_func):
         """reduce property setter, accepts str or Code obj"""
-        f = js_func
-        if not isinstance(js_func, Code):
-            f = Code(js_func)
+        f = _codify(js_func)
         self[self.view_name]['reduce'] = f
 
 

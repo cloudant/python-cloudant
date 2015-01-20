@@ -89,6 +89,7 @@ class CloudantDatabase(dict):
         url = posixpath.join(self.database_url, '_all_docs')
         query = "startkey=\"_design\"&endkey=\"_design0\"&include_docs=true"
         resp = self._r_session.get(url, params=query)
+        resp.raise_for_status()
         data = resp.json()
         return data['rows']
 
@@ -102,6 +103,7 @@ class CloudantDatabase(dict):
         url = posixpath.join(self.database_url, '_all_docs')
         query = "startkey=\"_design\"&endkey=\"_design0\""
         resp = self._r_session.get(url, params=query)
+        resp.raise_for_status()
         data = resp.json()
         return [x.get('key') for x in data.get('rows', [])]
 
