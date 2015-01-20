@@ -31,10 +31,18 @@ class View(dict):
         self[self.view_name] = {}
         self[self.view_name]['map'] = map_func
         self[self.view_name]['reduce'] = reduce_func
-        if self[self.view_name]['map'] and not isinstance(self[self.view_name]['map'], Code):
-            self[self.view_name]['map'] = Code(self[self.view_name]['map'] )
-        if self[self.view_name]['reduce'] and not isinstance(self[self.view_name]['reduce'], Code):
-            self[self.view_name]['reduce'] = Code(self[self.view_name]['reduce'])
+        if self[self.view_name]['map'] and not isinstance(
+            self[self.view_name]['map'], Code
+                ):
+            self[self.view_name]['map'] = Code(
+                self[self.view_name]['map']
+            )
+        if self[self.view_name]['reduce'] and not isinstance(
+            self[self.view_name]['reduce'], Code
+                ):
+            self[self.view_name]['reduce'] = Code(
+                self[self.view_name]['reduce']
+            )
 
     @property
     def map(self):
@@ -92,7 +100,7 @@ class DesignDocument(CloudantDocument):
         """
         v = View(view_name, map_func, reduce_func)
         self.views[view_name] = v
-        #TODO - save doc to db
+        # TODO - save doc to db
 
     def fetch(self):
         """
@@ -102,8 +110,12 @@ class DesignDocument(CloudantDocument):
 
         """
         super(DesignDocument, self).fetch()
-        for view_name, view_def in self.get('views',{}).iteritems():
-            self['views'][view_name] = View(view_name, view_def.get('map'), view_def.get('reduce'))
+        for view_name, view_def in self.get('views', {}).iteritems():
+            self['views'][view_name] = View(
+                view_name,
+                view_def.get('map'),
+                view_def.get('reduce')
+            )
 
     def iterviews(self):
         """
@@ -114,4 +126,3 @@ class DesignDocument(CloudantDocument):
         """
         for view_name, view in self.views.iteritems():
             yield view_name, view
-
