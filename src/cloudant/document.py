@@ -64,6 +64,12 @@ class CloudantDocument(dict):
         return
 
     def fetch(self):
+        """
+        _fetch_
+
+        Fetch the content of this document from the database and update
+        self with whatever it finds
+        """
         resp = self._r_session.get(self._document_url)
         resp.raise_for_status()
         self.update(resp.json())
@@ -77,7 +83,6 @@ class CloudantDocument(dict):
         dont want to conflict with dict.update
 
         """
-
         headers = {}
         headers.setdefault('Content-Type', 'application/json')
         if not self.exists():
