@@ -36,8 +36,9 @@ class View(dict):
     functions as attributes and supporting query/data access via the view
 
     """
-    def __init__(self, view_name, map_func=None, reduce_func=None):
+    def __init__(self, ddoc, view_name, map_func=None, reduce_func=None):
         super(View, self).__init__()
+        self.design_doc = ddoc
         self.view_name = view_name
         self[self.view_name] = {}
         self[self.view_name]['map'] = _codify(map_func)
@@ -93,7 +94,7 @@ class DesignDocument(CloudantDocument):
         :param map_func: str or Code object containing js map function
         :param reduce_func: str or Code object containing js reduce function
         """
-        v = View(view_name, map_func, reduce_func)
+        v = View(self, view_name, map_func, reduce_func)
         self.views[view_name] = v
         # TODO - save doc to db
 
@@ -107,6 +108,7 @@ class DesignDocument(CloudantDocument):
         super(DesignDocument, self).fetch()
         for view_name, view_def in self.get('views', {}).iteritems():
             self['views'][view_name] = View(
+                self,
                 view_name,
                 view_def.get('map'),
                 view_def.get('reduce')

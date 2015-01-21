@@ -25,10 +25,11 @@ class ViewTests(unittest.TestCase):
 
     def test_view_class(self):
         """test various methods of instantiation and properties"""
-        view1 = View("view1", map_func=self.map_func, reduce_func=self.reduce_func)
-        view2 = View("view2", map_func=self.map_func)
-        view3 = View("view1", map_func=Code(self.map_func), reduce_func=Code(self.reduce_func))
-        view4 = View("view1", map_func=Code(self.map_func))
+        ddoc = DesignDocument(mock.Mock(), "_design/tests")
+        view1 = View(ddoc, "view1", map_func=self.map_func, reduce_func=self.reduce_func)
+        view2 = View(ddoc, "view2", map_func=self.map_func)
+        view3 = View(ddoc, "view1", map_func=Code(self.map_func), reduce_func=Code(self.reduce_func))
+        view4 = View(ddoc, "view1", map_func=Code(self.map_func))
 
         self.assertEqual(view1.map, Code(self.map_func))
         self.assertEqual(view1.reduce, Code(self.reduce_func))
@@ -39,7 +40,7 @@ class ViewTests(unittest.TestCase):
         self.assertEqual(view4.map, Code(self.map_func))
         self.assertEqual(view4.reduce, None)
 
-        view5 = View("view5")
+        view5 = View(ddoc, "view5")
         self.assertEqual(view5.map, None)
         self.assertEqual(view5.reduce, None)
         view5.map = self.map_func
