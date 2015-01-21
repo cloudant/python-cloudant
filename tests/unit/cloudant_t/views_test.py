@@ -48,6 +48,25 @@ class ViewTests(unittest.TestCase):
         view5.reduce = self.reduce_func
         self.assertEqual(view5.reduce, Code(self.reduce_func))
 
+    def test_view_access(self):
+        """
+        _test_view_access_
+
+        Test accessing the data via the view
+
+        """
+        db = mock.Mock()
+        db._database_name = 'unittest'
+        ddoc = DesignDocument(db, "_design/tests")
+        ddoc._database_host = "https://bob.cloudant.com"
+        view1 = View(ddoc, "view1", map_func=self.map_func)
+
+        self.assertEqual(
+            view1.url,
+            "https://bob.cloudant.com/unittest/_design/tests/_view/view1"
+        )
+
+
 class DesignDocTests(unittest.TestCase):
     """
     tests for design doc object
