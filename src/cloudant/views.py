@@ -10,6 +10,7 @@ import json
 import posixpath
 
 from .document import CloudantDocument
+from .utils import python_to_couch, ALL_ARGS
 
 
 class Code(str):
@@ -34,64 +35,6 @@ def _codify(code_or_str):
     return code_or_str
 
 
-ALL_ARGS = [
-    "descending",
-    "endkey",
-    "endkey_docid",
-    "group",
-    "group_level",
-    "include_docs",
-    "inclusive_end",
-    "key",
-    "limit",
-    "reduce",
-    "skip",
-    "stale",
-    "startkey",
-    "startkey_docid"
-]
-
-BOOLEAN_ARGS = [
-    'include_docs',
-    'inclusive_end',
-    'reduce',
-    'group',
-    'descending'
-]
-
-ARRAY_ARGS = [
-    'startkey',
-    'endkey'
-]
-STRING_ARGS = [
-    'key',
-]
-
-
-def python_to_couch(kwargs):
-    """
-    _python_to_couch_
-
-    Translator method to flip python style
-    options into couch query options, eg True => 'true'
-    """
-    for b in BOOLEAN_ARGS:
-        if b in kwargs:
-            if kwargs[b]:
-                kwargs[b] = 'true'
-            else:
-                kwargs[b] = 'false'
-    for a in ARRAY_ARGS:
-        if a in kwargs:
-            value = kwargs[a]
-            if isinstance(value, Sequence):
-                kwargs[a] = json.dumps(list(value))
-            elif isinstance(value, basestring):
-                kwargs[a] = json.dumps(value)
-    for s in STRING_ARGS:
-        if s in kwargs:
-            kwargs[s] = json.dumps(kwargs[s])
-    return kwargs
 
 
 class View(dict):
@@ -154,15 +97,29 @@ class View(dict):
             str_or_none_stop =  isinstance(key.stop, (basestring, list)) or key.stop is None
             if str_or_none_start and str_or_none_stop:
                 # startkey/endkey
-                data = self(startkey=key.start, endkey=key.stop)
+                if key.start is not None and key.stop is not None:
+                    data = self(startkey=key.start, endkey=key.stop)
+                if key.start is not None and key.stop is None:
+                    data = self(startkey=key.start)
+                if key.start is None and key.stop is not None:
+                    data = self(endkey=key.stop)
+                if key.start is None and key.stop is None:
+                    data = self()
                 return data['rows']
-            if isinstance(key.start, (int)) and isinstance(key.stop, (int)):
-                data = self(skip=key.start, limit=key.stop)
+            int_or_none_start = isinstance(key.start, (int)) or key.start is None
+            int_or_none_stop = isinstance(key.stop, (int)) or key.stop is None
+            if int_or_none_start and int_or_none_stop:
+                if key.start is not None and key.stop is not None:
+                    data = self(skip=key.start, limit=key.stop)
+                if key.start is not None and key.stop is None:
+                    data = self(skip=key.start)
+                if key.start is None and key.stop is not None:
+                    data = self(limit=key.stop)
+                if key.start is None and key.stop is None:
+                    data = self()
                 return data['rows']
 
         raise RuntimeError("wtf was {0}??".format(key))
-
-
 
     def __call__(self, **kwargs):
         """

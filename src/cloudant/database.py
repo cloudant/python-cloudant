@@ -9,10 +9,65 @@ import json
 import posixpath
 import urllib
 import requests
+from collections import Sequence
 
 from .document import CloudantDocument
 from .views import DesignDocument
 from .errors import CloudantException
+from .utils import python_to_couch, ALL_ARGS
+
+
+
+class PrimaryIndex(object):
+    """
+    _PrimaryIndex_
+
+    Slice/dict like access helper to the _all_docs endpoint
+    for a given database
+
+    """
+    def __init__(self, database):
+        self._database = database
+        self._r_session = database._r_session
+
+    def __getitem__(self, key):
+        if isinstance(key, basestring):
+            data = self._database.all_docs(key=key)
+            return data['rows']
+
+        if isinstance(key, Sequence):
+            data = self._database.all_docs(key=key)
+            return data['rows']
+
+        if isinstance(key, slice):
+            str_or_none_start = isinstance(key.start, (basestring, list)) or key.start is None
+            str_or_none_stop =  isinstance(key.stop, (basestring, list)) or key.stop is None
+            if str_or_none_start and str_or_none_stop:
+                # startkey/endkey
+                if key.stop is None and key.start is not None:
+                    data = self._database.all_docs(startkey=key.start)
+                if key.start is None and key.stop is not None:
+                    data = self._database.all_docs(endkey=key.stop)
+                if key.start is None and key.stop is None:
+                    data = self._database.all_docs()
+                if key.start is not None and key.stop is not None:
+                    data = self._database.all_docs(startkey=key.start, endkey=key.stop)
+                return data['rows']
+            int_or_none_start = isinstance(key.start, (int)) or key.start is None
+            int_or_none_stop = isinstance(key.stop, (int)) or key.stop is None
+            if int_or_none_start and int_or_none_stop:
+                if key.start is not None and key.stop is not None:
+                    data = self._database.all_docs(skip=key.start, limit=key.stop)
+                if key.start is not None and key.stop is None:
+                    data = self._database.all_docs(skip=key.start)
+                if key.start is None and key.stop is not None:
+                    data = self._database.all_docs(limit=key.stop)
+                if key.start is None and key.stop is None:
+                    data = self._database.all_docs()
+                data = self._database.all_docs(skip=key.start, limit=key.stop)
+                return data['rows']
+
+        raise RuntimeError("wtf is {0}?".format(key))
 
 
 class CloudantDatabase(dict):
@@ -27,6 +82,7 @@ class CloudantDatabase(dict):
         self._database_name = database_name
         self._r_session = cloudant._r_session
         self._fetch_limit = fetch_limit
+        self.index = PrimaryIndex(self)
 
     @property
     def database_url(self):
@@ -150,7 +206,11 @@ class CloudantDatabase(dict):
         startkey
 
         """
-        resp = self._r_session.get(posixpath.join(self.database_url, '_all_docs'), params=dict(kwargs))
+        for k in kwargs:
+            if k not in ALL_ARGS:
+                raise ValueError("Invalid argument: {0}".format(k))
+        params = python_to_couch(kwargs)
+        resp = self._r_session.get(posixpath.join(self.database_url, '_all_docs'), params=params)
         data = resp.json()
         return data
 
