@@ -5,12 +5,11 @@ _views_
 Utilities for handling design docs and the resulting views they create
 
 """
-from collections import Sequence
-import json
+import contextlib
 import posixpath
 
 from .document import CloudantDocument
-from .utils import python_to_couch, ALL_ARGS
+from .index import Index, ALL_ARGS, python_to_couch
 
 
 class Code(str):
@@ -35,8 +34,6 @@ def _codify(code_or_str):
     return code_or_str
 
 
-
-
 class View(dict):
     """
     Dictionary based object representing a view, exposing the map, reduce
@@ -51,6 +48,7 @@ class View(dict):
         self[self.view_name] = {}
         self[self.view_name]['map'] = _codify(map_func)
         self[self.view_name]['reduce'] = _codify(reduce_func)
+        self.index = Index(self)
 
     @property
     def map(self):
@@ -77,49 +75,6 @@ class View(dict):
     @property
     def url(self):
         return posixpath.join(self.design_doc._document_url, '_view', self.view_name)
-
-    def __getitem__(self, key):
-        if key == self.view_name:
-            # behave like a normal dict for only dict like key
-            return super(View, self).__getitem__(self.view_name)
-
-        if isinstance(key, basestring):
-            data = self(key=key)
-            return data['rows']
-
-        if isinstance(key, list):
-            data = self(key=key)
-            return data['rows']
-
-        if isinstance(key, slice):
-            # slice is startkey and endkey if str or array
-            str_or_none_start = isinstance(key.start, (basestring, list)) or key.start is None
-            str_or_none_stop =  isinstance(key.stop, (basestring, list)) or key.stop is None
-            if str_or_none_start and str_or_none_stop:
-                # startkey/endkey
-                if key.start is not None and key.stop is not None:
-                    data = self(startkey=key.start, endkey=key.stop)
-                if key.start is not None and key.stop is None:
-                    data = self(startkey=key.start)
-                if key.start is None and key.stop is not None:
-                    data = self(endkey=key.stop)
-                if key.start is None and key.stop is None:
-                    data = self()
-                return data['rows']
-            int_or_none_start = isinstance(key.start, (int)) or key.start is None
-            int_or_none_stop = isinstance(key.stop, (int)) or key.stop is None
-            if int_or_none_start and int_or_none_stop:
-                if key.start is not None and key.stop is not None:
-                    data = self(skip=key.start, limit=key.stop)
-                if key.start is not None and key.stop is None:
-                    data = self(skip=key.start)
-                if key.start is None and key.stop is not None:
-                    data = self(limit=key.stop)
-                if key.start is None and key.stop is None:
-                    data = self()
-                return data['rows']
-
-        raise RuntimeError("wtf was {0}??".format(key))
 
     def __call__(self, **kwargs):
         """
@@ -149,6 +104,12 @@ class View(dict):
         resp = self._r_session.get(self.url, params=params)
         resp.raise_for_status()
         return resp.json()
+
+    @contextlib.contextmanager
+    def custom_index(self, **options):
+        indx = Index(self, **options)
+        yield indx
+        del indx
 
 
 class DesignDocument(CloudantDocument):
