@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """
-_utils_
+_index_
 
-General utilities
-
+Support for accessing couchdb indexes such as _all_docs
+and views
 
 """
 import json
@@ -44,7 +44,7 @@ STRING_ARGS = [
 ]
 
 
-def python_to_couch(kwargs):
+def python_to_couch(options):
     """
     _python_to_couch_
 
@@ -52,22 +52,26 @@ def python_to_couch(kwargs):
     options into couch query options, eg True => 'true'
     """
     for b in BOOLEAN_ARGS:
-        if b in kwargs:
-            if kwargs[b]:
-                kwargs[b] = 'true'
+        if b in options:
+            value = options[b]
+            if not isinstance(value, bool):
+                continue
+            if value:
+                options[b] = 'true'
             else:
-                kwargs[b] = 'false'
+                options[b] = 'false'
     for a in ARRAY_ARGS:
-        if a in kwargs:
-            value = kwargs[a]
+        if a in options:
+            value = options[a]
             if isinstance(value, Sequence):
-                kwargs[a] = json.dumps(list(value))
+                options[a] = json.dumps(list(value))
             elif isinstance(value, basestring):
-                kwargs[a] = json.dumps(value)
+                options[a] = json.dumps(value)
     for s in STRING_ARGS:
-        if s in kwargs:
-            kwargs[s] = json.dumps(kwargs[s])
-    return kwargs
+        if s in options:
+            if isinstance(options[s], basestring):
+                options[s] = json.dumps(options[s])
+    return options
 
 
 class Index(object):
@@ -78,7 +82,7 @@ class Index(object):
 
     Instantiated with the raw data callable such as the
     CloudantDatabase.all_docs or View.__call__ reference used to
-    retrieve data, the index can also store optional extra agrs for
+    retrieve data, the index can also store optional extra args for
     customisation and supports efficient, paged iteration over the
     results to avoid large views blowing up memory
 
@@ -101,7 +105,17 @@ class Index(object):
 
     def __getitem__(self, key):
         """
-        implement key access and slicing
+        implement key access and slicing.
+
+        key can be either a single value as a string or list which will be
+        passed as the key to the query for entries matching that key or
+        a slice object.
+
+        Slices with integers will be interpreted as skip:limit style pairs,
+        eg with [100:200] meaning skip 100, get 200 records.
+
+        Slices with strings/lists will be interpreted as startkey/endkey
+        style keys.
 
         """
         extras = self._prepare_extras()

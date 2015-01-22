@@ -124,7 +124,6 @@ class View(dict):
                 raise ValueError("Invalid argument: {0}".format(k))
         params = python_to_couch(kwargs)
         resp = self._r_session.get(self.url, params=params)
-        print ">>>>>",resp.status_code, resp.text
         resp.raise_for_status()
         return resp.json()
 
@@ -228,7 +227,7 @@ class DesignDocument(CloudantDocument):
 
         GET databasename/_design/test/_info
         """
-        pass
+        raise NotImplemented("info not yet implemented")
 
     def cleanup(self):
         """
@@ -236,10 +235,10 @@ class DesignDocument(CloudantDocument):
         POST /some_database/_view_cleanup
 
         """
-        pass
+        raise NotImplemented("cleanup not yet implemented")
 
     def compact(self):
         """
         POST /some_database/_compact/designname
         """
-        pass
+        raise NotImplemented("compact not yet implemented")
