@@ -140,14 +140,22 @@ class CloudantDatabase(dict):
 
     def all_docs(self, **kwargs):
         """
+        TODO: docstring worth a damn
 
-        descending  Return the documents in descending by key order boolean false
-        endkey  Stop returning records when the specified key is reached string
-        include_docs    Include the full content of the documents in the return boolean false
-        inclusive_end   Include rows whose key equals the endkey  boolean true
-        key Return only documents that match the specified key  string
-        limit   Limit the number of the returned documents to the specified number  numeric
-        skip    Skip this number of records before starting to return the results  numeric 0
+        descending  Return the documents in descending by key
+            order boolean false
+        endkey  Stop returning records when the specified key is
+            reached string
+        include_docs    Include the full content of the documents
+            in the return boolean false
+        inclusive_end   Include rows whose key equals the endkey
+            boolean true
+        key Return only documents that match the
+            specified key  string
+        limit   Limit the number of the returned documents
+            to the specified number  numeric
+        skip    Skip this number of records before starting to
+           return the results  numeric 0
         startkey
 
         """
@@ -155,7 +163,13 @@ class CloudantDatabase(dict):
             if k not in ALL_ARGS:
                 raise ValueError("Invalid argument: {0}".format(k))
         params = python_to_couch(kwargs)
-        resp = self._r_session.get(posixpath.join(self.database_url, '_all_docs'), params=params)
+        resp = self._r_session.get(
+            posixpath.join(
+                self.database_url,
+                '_all_docs'
+            ),
+            params=params
+        )
         data = resp.json()
         return data
 
@@ -167,7 +181,7 @@ class CloudantDatabase(dict):
         if not remote:
             return super(CloudantDatabase, self).keys()
         docs = self.all_docs()
-        return [ row['id'] for row in docs.get('rows', []) ]
+        return [row['id'] for row in docs.get('rows', [])]
 
     def changes(self, since=None, continuous=True):
         """

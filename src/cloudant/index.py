@@ -74,7 +74,13 @@ class Index(object):
     """
     _Index_
 
-    Sliceable and iterable interface to CouchDB View like things
+    Sliceable and iterable interface to CouchDB View like things.
+
+    Instantiated with the raw data callable such as the
+    CloudantDatabase.all_docs or View.__call__ reference used to
+    retrieve data, the index can also store optional extra agrs for
+    customisation and supports efficient, paged iteration over the
+    results to avoid large views blowing up memory
 
     """
     def __init__(self, method_ref, **options):
@@ -93,11 +99,9 @@ class Index(object):
         extras = python_to_couch(self.options)
         return extras
 
-
     def __getitem__(self, key):
         """
         implement key access and slicing
-
 
         """
         extras = self._prepare_extras()
@@ -111,34 +115,48 @@ class Index(object):
 
         if isinstance(key, slice):
             # slice is startkey and endkey if str or array
-            str_or_none_start = isinstance(key.start, (basestring, list)) or key.start is None
-            str_or_none_stop =  isinstance(key.stop, (basestring, list)) or key.stop is None
+            str_or_none_start = isinstance(
+                key.start, (basestring, list)
+                ) or key.start is None
+            str_or_none_stop = isinstance(
+                key.stop, (basestring, list)
+                ) or key.stop is None
             if str_or_none_start and str_or_none_stop:
                 # startkey/endkey
                 if key.start is not None and key.stop is not None:
-                    data = self._ref(startkey=key.start, endkey=key.stop)
+                    data = self._ref(
+                        startkey=key.start,
+                        endkey=key.stop,
+                        **extras
+                    )
                 if key.start is not None and key.stop is None:
-                    data = self._ref(startkey=key.start)
+                    data = self._ref(startkey=key.start, **extras)
                 if key.start is None and key.stop is not None:
-                    data = self._ref(endkey=key.stop)
+                    data = self._ref(endkey=key.stop, **extras)
                 if key.start is None and key.stop is None:
-                    data = self._ref()
+                    data = self._ref(**extras)
                 return data['rows']
             # slice is skip:limit if ints
-            int_or_none_start = isinstance(key.start, (int)) or key.start is None
-            int_or_none_stop = isinstance(key.stop, (int)) or key.stop is None
+            int_or_none_start = isinstance(
+                key.start, (int)
+                ) or key.start is None
+            int_or_none_stop = isinstance(
+                key.stop, (int)
+                ) or key.stop is None
             if int_or_none_start and int_or_none_stop:
                 if key.start is not None and key.stop is not None:
-                    data = self._ref(skip=key.start, limit=key.stop)
+                    data = self._ref(
+                        skip=key.start,
+                        limit=key.stop,
+                        **extras
+                    )
                 if key.start is not None and key.stop is None:
-                    data = self._ref(skip=key.start)
+                    data = self._ref(skip=key.start, **extras)
                 if key.start is None and key.stop is not None:
-                    data = self._ref(limit=key.stop)
+                    data = self._ref(limit=key.stop, **extras)
                 # both None case handled above
                 return data['rows']
-
         raise RuntimeError("wtf was {0}??".format(key))
-
 
     def __iter__(self):
         """
@@ -148,9 +166,8 @@ class Index(object):
         Custom iteration ranges can be controlled via the ctor options
 
         """
-        #TODO custom options need to be converted to couch friendly things
+        # TODO custom options need to be converted to couch friendly things
         #     eg if iteration by page is between a start key and end key
-        #     verify that paging between startkey/endkey and integer indexes works
-
-
-
+        #     verify that paging between startkey/endkey and integer
+        #     indexes works
+        # ALSO: Implement this

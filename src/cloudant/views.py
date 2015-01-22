@@ -39,6 +39,23 @@ class View(dict):
     Dictionary based object representing a view, exposing the map, reduce
     functions as attributes and supporting query/data access via the view
 
+    Provides a sliceable and iterable default index that can be used to
+    query the view data via the index attribute.
+
+    Eg:
+
+    Using integers to skip/limit:
+    view.index[100:200]
+    view.index[:200]
+    view.index[100:]
+
+    Using strings or lists as startkey/endkey:
+
+    view.index[ ["2013","10"]:["2013","11"] ]
+    view.index[["2013","10"]]
+    view.index[["2013","10"]:]
+
+
     """
     def __init__(self, ddoc, view_name, map_func=None, reduce_func=None):
         super(View, self).__init__()
@@ -74,7 +91,12 @@ class View(dict):
 
     @property
     def url(self):
-        return posixpath.join(self.design_doc._document_url, '_view', self.view_name)
+        """property that builds the view URL"""
+        return posixpath.join(
+            self.design_doc._document_url,
+            '_view',
+            self.view_name
+        )
 
     def __call__(self, **kwargs):
         """
@@ -102,11 +124,25 @@ class View(dict):
                 raise ValueError("Invalid argument: {0}".format(k))
         params = python_to_couch(kwargs)
         resp = self._r_session.get(self.url, params=params)
+        print ">>>>>",resp.status_code, resp.text
         resp.raise_for_status()
         return resp.json()
 
     @contextlib.contextmanager
     def custom_index(self, **options):
+        """
+        _custom_index_
+
+        If you want to customise the index behaviour,
+        you can build your own with extra options to the index
+        call using this context manager.
+
+        Example:
+
+        with view.custom_index(include_docs=True, reduce=False) as indx:
+            data = indx[100:200]
+
+        """
         indx = Index(self, **options)
         yield indx
         del indx
