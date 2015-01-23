@@ -9,7 +9,7 @@ import contextlib
 import posixpath
 
 from .document import CloudantDocument
-from .index import Index, ALL_ARGS, python_to_couch
+from .index import Index, python_to_couch
 
 
 class Code(str):
@@ -119,9 +119,6 @@ class View(dict):
         startkey_docid  string
 
         """
-        for k in kwargs:
-            if k not in ALL_ARGS:
-                raise ValueError("Invalid argument: {0}".format(k))
         params = python_to_couch(kwargs)
         resp = self._r_session.get(self.url, params=params)
         resp.raise_for_status()

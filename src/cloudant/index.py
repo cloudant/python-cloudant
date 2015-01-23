@@ -7,41 +7,39 @@ and views
 
 """
 import json
+import types
 
 from collections import Sequence
 
-ALL_ARGS = [
-    "descending",
-    "endkey",
-    "endkey_docid",
-    "group",
-    "group_level",
-    "include_docs",
-    "inclusive_end",
-    "key",
-    "limit",
-    "reduce",
-    "skip",
-    "stale",
-    "startkey",
-    "startkey_docid"
-]
 
-BOOLEAN_ARGS = [
-    'include_docs',
-    'inclusive_end',
-    'reduce',
-    'group',
-    'descending'
-]
+ARG_TYPES = {
+    "descending": bool,
+    "endkey": (basestring, Sequence),
+    "endkey_docid": basestring,
+    "group": bool,
+    "group_level": basestring,
+    "include_docs": bool,
+    "inclusive_end": bool,
+    "key": (int, basestring, Sequence),
+    "limit": (int, types.NoneType),
+    "reduce": bool,
+    "skip": (int, types.NoneType),
+    "stale": basestring,
+    "startkey": (basestring, Sequence),
+    "startkey_docid": basestring,
+}
 
-ARRAY_ARGS = [
-    'startkey',
-    'endkey'
-]
-STRING_ARGS = [
-    'key',
-]
+TYPE_CONVERTERS = {
+    basestring: lambda x: json.dumps(x),
+    str: lambda x: json.dumps(x),
+    unicode: lambda x: json.dumps(x),
+    Sequence: lambda x: json.dumps(list(x)),
+    list:  lambda x: json.dumps(x),
+    tuple: lambda x: json.dumps(list(x)),
+    int: lambda x:x,
+    bool: lambda x: 'true' if x else 'false',
+    types.NoneType: lambda x:x
+}
 
 
 def python_to_couch(options):
@@ -51,29 +49,35 @@ def python_to_couch(options):
     Translator method to flip python style
     options into couch query options, eg True => 'true'
     """
-    for b in BOOLEAN_ARGS:
-        if b in options:
-            value = options[b]
-            if not isinstance(value, bool):
-                continue
-            if value:
-                options[b] = 'true'
+    result = {}
+    for k, v in options.iteritems():
+        if k not in ARG_TYPES:
+            raise RuntimeError("Invalid Argument {0}".format(k))
+        if not isinstance(v, ARG_TYPES[k]):
+            print ">>>>", k, v
+            msg = "Argument {0} not instance of expected type: {1}".format(k, ARG_TYPES[k])
+            raise RuntimeError(msg)
+        arg_converter = TYPE_CONVERTERS.get(type(v))
+        if k == 'stale':
+            if v not in ('ok', 'update_after'):
+                msg = "Invalid value for stale option {0} must be ok or update_after".format(v)
+                raise RuntimeError(msg)
+
+        try:
+            if v is None:
+                result[k] = None
             else:
-                options[b] = 'false'
-    for a in ARRAY_ARGS:
-        if a in options:
-            value = options[a]
-            if isinstance(value, Sequence):
-                options[a] = json.dumps(list(value))
-            elif isinstance(value, basestring):
-                options[a] = json.dumps(value)
-    for s in STRING_ARGS:
-        if s in options:
-            if isinstance(options[s], basestring):
-                options[s] = json.dumps(options[s])
-    return options
+                result[k] = arg_converter(v)
+        except Exception as ex:
+            print ">>>", arg_converter
+            msg = "Error converting arg {0}: {1}".format(k, ex)
+            raise
+            #raise RuntimeError(msg)
+
+    return result
 
 def type_or_none(typerefs, value):
+    """helper to check that value is of the types passed or None"""
     return isinstance(value, typerefs) or value is None
 
 
@@ -94,17 +98,7 @@ class Index(object):
         self.options = options
         self._ref = method_ref
         self._page_size = options.pop("page_size", 100)
-        self._valid_args = ALL_ARGS
-
-    def _prepare_extras(self):
-        """
-        check that extra params are expected/valid
-        """
-        for k in self.options:
-            if k not in self._valid_args:
-                raise ValueError("Invalid argument: {0}".format(k))
-        extras = python_to_couch(self.options)
-        return extras
+        self._valid_args = ARG_TYPES.keys()
 
     def __getitem__(self, key):
         """
@@ -122,13 +116,12 @@ class Index(object):
         style keys.
 
         """
-        extras = self._prepare_extras()
         if isinstance(key, basestring):
-            data = self._ref(key=key, **extras)
+            data = self._ref(key=key, **self.options)
             return data['rows']
 
         if isinstance(key, list):
-            data = self._ref(key=key, **extras)
+            data = self._ref(key=key, **self.options)
             return data['rows']
 
         if isinstance(key, slice):
@@ -141,14 +134,14 @@ class Index(object):
                     data = self._ref(
                         startkey=key.start,
                         endkey=key.stop,
-                        **extras
+                        **self.options
                     )
                 if key.start is not None and key.stop is None:
-                    data = self._ref(startkey=key.start, **extras)
+                    data = self._ref(startkey=key.start, **self.options)
                 if key.start is None and key.stop is not None:
-                    data = self._ref(endkey=key.stop, **extras)
+                    data = self._ref(endkey=key.stop, **self.options)
                 if key.start is None and key.stop is None:
-                    data = self._ref(**extras)
+                    data = self._ref(**self.options)
                 return data['rows']
             # slice is skip:skip+limit if ints
             int_or_none_start = type_or_none(int, key.start)
@@ -159,12 +152,12 @@ class Index(object):
                     data = self._ref(
                         skip=key.start,
                         limit=limit,
-                        **extras
+                        **self.options
                     )
                 if key.start is not None and key.stop is None:
-                    data = self._ref(skip=key.start, **extras)
+                    data = self._ref(skip=key.start, **self.options)
                 if key.start is None and key.stop is not None:
-                    data = self._ref(limit=key.stop, **extras)
+                    data = self._ref(limit=key.stop, **self.options)
                 # both None case handled above
                 return data['rows']
         raise RuntimeError("wtf was {0}??".format(key))

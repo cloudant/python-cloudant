@@ -12,7 +12,7 @@ import urllib
 from .document import CloudantDocument
 from .views import DesignDocument
 from .errors import CloudantException
-from .index import python_to_couch, ALL_ARGS, Index
+from .index import python_to_couch, Index
 
 
 class CloudantDatabase(dict):
@@ -159,9 +159,6 @@ class CloudantDatabase(dict):
         startkey
 
         """
-        for k in kwargs:
-            if k not in ALL_ARGS:
-                raise ValueError("Invalid argument: {0}".format(k))
         params = python_to_couch(kwargs)
         resp = self._r_session.get(
             posixpath.join(
