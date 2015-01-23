@@ -5,7 +5,11 @@ _views_
 Utilities for handling design docs and the resulting views they create
 
 """
+import contextlib
+import posixpath
+
 from .document import CloudantDocument
+from .index import Index, python_to_couch
 
 
 class Code(str):
@@ -35,13 +39,33 @@ class View(dict):
     Dictionary based object representing a view, exposing the map, reduce
     functions as attributes and supporting query/data access via the view
 
+    Provides a sliceable and iterable default index that can be used to
+    query the view data via the index attribute.
+
+    Eg:
+
+    Using integers to skip/limit:
+    view.index[100:200]
+    view.index[:200]
+    view.index[100:]
+
+    Using strings or lists as startkey/endkey:
+
+    view.index[ ["2013","10"]:["2013","11"] ]
+    view.index[["2013","10"]]
+    view.index[["2013","10"]:]
+
+
     """
-    def __init__(self, view_name, map_func=None, reduce_func=None):
+    def __init__(self, ddoc, view_name, map_func=None, reduce_func=None):
         super(View, self).__init__()
+        self.design_doc = ddoc
+        self._r_session = self.design_doc._r_session
         self.view_name = view_name
         self[self.view_name] = {}
         self[self.view_name]['map'] = _codify(map_func)
         self[self.view_name]['reduce'] = _codify(reduce_func)
+        self.index = Index(self)
 
     @property
     def map(self):
@@ -64,6 +88,60 @@ class View(dict):
         """reduce property setter, accepts str or Code obj"""
         f = _codify(js_func)
         self[self.view_name]['reduce'] = f
+
+    @property
+    def url(self):
+        """property that builds the view URL"""
+        return posixpath.join(
+            self.design_doc._document_url,
+            '_view',
+            self.view_name
+        )
+
+    def __call__(self, **kwargs):
+        """
+        retrieve data from the view, using the kwargs provided
+        as query parameters
+
+        descending bool
+        endkey string or array
+        endkey_docid  string
+        group bool
+        group_level ??
+        include_docs bool
+        inclusive_end  bool
+        key string
+        limit   int
+        reduce  boolean
+        skip    int
+        stale   enum(ok, update_after)
+        startkey  string or array
+        startkey_docid  string
+
+        """
+        params = python_to_couch(kwargs)
+        resp = self._r_session.get(self.url, params=params)
+        resp.raise_for_status()
+        return resp.json()
+
+    @contextlib.contextmanager
+    def custom_index(self, **options):
+        """
+        _custom_index_
+
+        If you want to customise the index behaviour,
+        you can build your own with extra options to the index
+        call using this context manager.
+
+        Example:
+
+        with view.custom_index(include_docs=True, reduce=False) as indx:
+            data = indx[100:200]
+
+        """
+        indx = Index(self, **options)
+        yield indx
+        del indx
 
 
 class DesignDocument(CloudantDocument):
@@ -93,9 +171,9 @@ class DesignDocument(CloudantDocument):
         :param map_func: str or Code object containing js map function
         :param reduce_func: str or Code object containing js reduce function
         """
-        v = View(view_name, map_func, reduce_func)
+        v = View(self, view_name, map_func, reduce_func)
         self.views[view_name] = v
-        # TODO - save doc to db
+        self.save()
 
     def fetch(self):
         """
@@ -107,6 +185,7 @@ class DesignDocument(CloudantDocument):
         super(DesignDocument, self).fetch()
         for view_name, view_def in self.get('views', {}).iteritems():
             self['views'][view_name] = View(
+                self,
                 view_name,
                 view_def.get('map'),
                 view_def.get('reduce')
@@ -121,3 +200,42 @@ class DesignDocument(CloudantDocument):
         """
         for view_name, view in self.views.iteritems():
             yield view_name, view
+
+    def list_views(self):
+        """
+        _views_
+
+        return a list of available views on this design doc
+        """
+        return self.views.keys()
+
+    def get_view(self, view_name):
+        """
+        _get_view_
+
+        Get a specific view by name.
+
+        """
+        return self.views.get(view_name)
+
+    def info(self):
+        """
+        retrieve the view info data, returns dictionary
+
+        GET databasename/_design/test/_info
+        """
+        raise NotImplemented("info not yet implemented")
+
+    def cleanup(self):
+        """
+
+        POST /some_database/_view_cleanup
+
+        """
+        raise NotImplemented("cleanup not yet implemented")
+
+    def compact(self):
+        """
+        POST /some_database/_compact/designname
+        """
+        raise NotImplemented("compact not yet implemented")

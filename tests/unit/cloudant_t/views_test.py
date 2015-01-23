@@ -25,10 +25,11 @@ class ViewTests(unittest.TestCase):
 
     def test_view_class(self):
         """test various methods of instantiation and properties"""
-        view1 = View("view1", map_func=self.map_func, reduce_func=self.reduce_func)
-        view2 = View("view2", map_func=self.map_func)
-        view3 = View("view1", map_func=Code(self.map_func), reduce_func=Code(self.reduce_func))
-        view4 = View("view1", map_func=Code(self.map_func))
+        ddoc = DesignDocument(mock.Mock(), "_design/tests")
+        view1 = View(ddoc, "view1", map_func=self.map_func, reduce_func=self.reduce_func)
+        view2 = View(ddoc, "view2", map_func=self.map_func)
+        view3 = View(ddoc, "view1", map_func=Code(self.map_func), reduce_func=Code(self.reduce_func))
+        view4 = View(ddoc, "view1", map_func=Code(self.map_func))
 
         self.assertEqual(view1.map, Code(self.map_func))
         self.assertEqual(view1.reduce, Code(self.reduce_func))
@@ -39,13 +40,32 @@ class ViewTests(unittest.TestCase):
         self.assertEqual(view4.map, Code(self.map_func))
         self.assertEqual(view4.reduce, None)
 
-        view5 = View("view5")
+        view5 = View(ddoc, "view5")
         self.assertEqual(view5.map, None)
         self.assertEqual(view5.reduce, None)
         view5.map = self.map_func
         self.assertEqual(view5.map, Code(self.map_func))
         view5.reduce = self.reduce_func
         self.assertEqual(view5.reduce, Code(self.reduce_func))
+
+    def test_view_access(self):
+        """
+        _test_view_access_
+
+        Test accessing the data via the view
+
+        """
+        db = mock.Mock()
+        db._database_name = 'unittest'
+        ddoc = DesignDocument(db, "_design/tests")
+        ddoc._database_host = "https://bob.cloudant.com"
+        view1 = View(ddoc, "view1", map_func=self.map_func)
+
+        self.assertEqual(
+            view1.url,
+            "https://bob.cloudant.com/unittest/_design/tests/_view/view1"
+        )
+
 
 class DesignDocTests(unittest.TestCase):
     """

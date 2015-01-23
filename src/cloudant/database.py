@@ -8,11 +8,11 @@ API class representing a cloudant database
 import json
 import posixpath
 import urllib
-import requests
 
 from .document import CloudantDocument
 from .views import DesignDocument
 from .errors import CloudantException
+from .index import python_to_couch, Index
 
 
 class CloudantDatabase(dict):
@@ -27,6 +27,7 @@ class CloudantDatabase(dict):
         self._database_name = database_name
         self._r_session = cloudant._r_session
         self._fetch_limit = fetch_limit
+        self.index = Index(self.all_docs)
 
     @property
     def database_url(self):
@@ -139,18 +140,33 @@ class CloudantDatabase(dict):
 
     def all_docs(self, **kwargs):
         """
+        TODO: docstring worth a damn
 
-        descending  Return the documents in descending by key order boolean false
-        endkey  Stop returning records when the specified key is reached string
-        include_docs    Include the full content of the documents in the return boolean false
-        inclusive_end   Include rows whose key equals the endkey  boolean true
-        key Return only documents that match the specified key  string
-        limit   Limit the number of the returned documents to the specified number  numeric
-        skip    Skip this number of records before starting to return the results  numeric 0
+        descending  Return the documents in descending by key
+            order boolean false
+        endkey  Stop returning records when the specified key is
+            reached string
+        include_docs    Include the full content of the documents
+            in the return boolean false
+        inclusive_end   Include rows whose key equals the endkey
+            boolean true
+        key Return only documents that match the
+            specified key  string
+        limit   Limit the number of the returned documents
+            to the specified number  numeric
+        skip    Skip this number of records before starting to
+           return the results  numeric 0
         startkey
 
         """
-        resp = self._r_session.get(posixpath.join(self.database_url, '_all_docs'), params=dict(kwargs))
+        params = python_to_couch(kwargs)
+        resp = self._r_session.get(
+            posixpath.join(
+                self.database_url,
+                '_all_docs'
+            ),
+            params=params
+        )
         data = resp.json()
         return data
 
@@ -162,7 +178,7 @@ class CloudantDatabase(dict):
         if not remote:
             return super(CloudantDatabase, self).keys()
         docs = self.all_docs()
-        return [ row['id'] for row in docs.get('rows', []) ]
+        return [row['id'] for row in docs.get('rows', [])]
 
     def changes(self, since=None, continuous=True):
         """
