@@ -10,6 +10,7 @@ import json
 import types
 
 from collections import Sequence
+from .errors import CloudantArgumentError
 
 
 ARG_TYPES = {
@@ -52,29 +53,33 @@ def python_to_couch(options):
     result = {}
     for k, v in options.iteritems():
         if k not in ARG_TYPES:
-            raise RuntimeError("Invalid Argument {0}".format(k))
+            msg = "Invalid Argument {0}".format(k)
+            raise CloudantArgumentError(msg)
         if not isinstance(v, ARG_TYPES[k]):
-            print ">>>>", k, v
-            msg = "Argument {0} not instance of expected type: {1}".format(k, ARG_TYPES[k])
-            raise RuntimeError(msg)
+            msg = "Argument {0} not instance of expected type: {1}".format(
+                k,
+                ARG_TYPES[k]
+            )
+            raise CloudantArgumentError(msg)
         arg_converter = TYPE_CONVERTERS.get(type(v))
         if k == 'stale':
             if v not in ('ok', 'update_after'):
-                msg = "Invalid value for stale option {0} must be ok or update_after".format(v)
-                raise RuntimeError(msg)
-
+                msg = (
+                    "Invalid value for stale option {0} "
+                    "must be ok or update_after"
+                ).format(v)
+                raise CloudantArgumentError(msg)
         try:
             if v is None:
                 result[k] = None
             else:
                 result[k] = arg_converter(v)
         except Exception as ex:
-            print ">>>", arg_converter
             msg = "Error converting arg {0}: {1}".format(k, ex)
-            raise
-            #raise RuntimeError(msg)
+            raise CloudantArgumentError(msg)
 
     return result
+
 
 def type_or_none(typerefs, value):
     """helper to check that value is of the types passed or None"""
@@ -160,7 +165,11 @@ class Index(object):
                     data = self._ref(limit=key.stop, **self.options)
                 # both None case handled above
                 return data['rows']
-        raise RuntimeError("wtf was {0}??".format(key))
+        msg = (
+            "Failed to interpret the argument {0} passed to "
+            "Index.__getitem__ as a key value or as a slice"
+        ).format(key)
+        raise CloudantArgumentError(msg)
 
     def __iter__(self):
         """
