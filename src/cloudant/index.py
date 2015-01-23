@@ -73,6 +73,9 @@ def python_to_couch(options):
                 options[s] = json.dumps(options[s])
     return options
 
+def type_or_none(typerefs, value):
+    return isinstance(value, typerefs) or value is None
+
 
 class Index(object):
     """
@@ -111,8 +114,9 @@ class Index(object):
         passed as the key to the query for entries matching that key or
         a slice object.
 
-        Slices with integers will be interpreted as skip:limit style pairs,
-        eg with [100:200] meaning skip 100, get 200 records.
+        Slices with integers will be interpreted as skip:limit-skip style pairs,
+        eg with [100:200] meaning skip 100, get next 100 records so that you get
+        the range between the supplied slice values
 
         Slices with strings/lists will be interpreted as startkey/endkey
         style keys.
@@ -129,12 +133,8 @@ class Index(object):
 
         if isinstance(key, slice):
             # slice is startkey and endkey if str or array
-            str_or_none_start = isinstance(
-                key.start, (basestring, list)
-                ) or key.start is None
-            str_or_none_stop = isinstance(
-                key.stop, (basestring, list)
-                ) or key.stop is None
+            str_or_none_start = type_or_none((basestring, list), key.start)
+            str_or_none_stop = type_or_none((basestring, list), key.stop)
             if str_or_none_start and str_or_none_stop:
                 # startkey/endkey
                 if key.start is not None and key.stop is not None:
@@ -150,18 +150,15 @@ class Index(object):
                 if key.start is None and key.stop is None:
                     data = self._ref(**extras)
                 return data['rows']
-            # slice is skip:limit if ints
-            int_or_none_start = isinstance(
-                key.start, (int)
-                ) or key.start is None
-            int_or_none_stop = isinstance(
-                key.stop, (int)
-                ) or key.stop is None
+            # slice is skip:skip+limit if ints
+            int_or_none_start = type_or_none(int, key.start)
+            int_or_none_stop = type_or_none(int, key.stop)
             if int_or_none_start and int_or_none_stop:
                 if key.start is not None and key.stop is not None:
+                    limit = key.stop - key.start
                     data = self._ref(
                         skip=key.start,
-                        limit=key.stop,
+                        limit=limit,
                         **extras
                     )
                 if key.start is not None and key.stop is None:
