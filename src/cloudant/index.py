@@ -90,7 +90,8 @@ class Index(object):
     """
     _Index_
 
-    Sliceable and iterable interface to CouchDB View like things.
+    Sliceable and iterable interface to CouchDB View like things, such
+    as the CloudantDatabase and View objects in this package.
 
     Instantiated with the raw data callable such as the
     CloudantDatabase.all_docs or View.__call__ reference used to
@@ -124,17 +125,17 @@ class Index(object):
     Iteration:
 
     # iterate over all records
-    index = Index()
+    index = Index(callable)
     for i in index:
         print i
 
     # iterate over records between startkey/endkey
-    index = Index(startkey="2013", endkey="2014")
+    index = Index(callable, startkey="2013", endkey="2014")
     for i in index:
         print i
 
     # iterate over records including docs and in 1000 record batches
-    index = Index(include_docs=True, page_size=1000)
+    index = Index(callable, include_docs=True, page_size=1000)
     for i in index:
         print i
 
