@@ -144,7 +144,6 @@ class View(dict):
         del indx
 
 
-
 class DesignDocument(CloudantDocument):
     """
     _DesignDocument_

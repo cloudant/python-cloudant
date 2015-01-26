@@ -154,8 +154,8 @@ class CloudantDatabase(dict):
 
         :param descending: Boolean. Return the documents in descending by key
             order
-        :param endkey: string/list Stop returning records when the specified key is
-            reached
+        :param endkey: string/list Stop returning records when the specified
+            key is reached
         :param include_docs: Boolean. Include the full content of the documents
             in the return
         :param inclusive_end: Boolean. Include rows whose key equals the endkey
