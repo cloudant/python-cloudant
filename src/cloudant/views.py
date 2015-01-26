@@ -55,6 +55,31 @@ class View(dict):
     view.index[["2013","10"]]
     view.index[["2013","10"]:]
 
+    For large views, iteration is supported via index:
+
+    for doc in view.index:
+        print doc
+
+    The default index provides basic functionality, which can
+    be customised with other arguments to the view URL using
+    the custom_index context.
+
+    For example:
+
+    #including documents
+    with view.custom_index(include_docs=True) as idx:
+        idx[100:200] # slice by index
+        idx[["2013","10"]:["2013","11"]] # slice by startkey/endkey
+
+        #iteration
+        for doc in idx:
+            print doc
+
+    Iteration over a view within startkey/endkey range:
+
+    with view.custom_index(startkey="2013", endkey="2014") as idx:
+        for doc in idx:
+            print doc
 
     """
     def __init__(self, ddoc, view_name, map_func=None, reduce_func=None):

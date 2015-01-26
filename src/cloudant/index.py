@@ -10,6 +10,7 @@ import json
 import types
 
 from collections import Sequence
+from .errors import CloudantArgumentError
 
 
 ARG_TYPES = {
@@ -34,11 +35,11 @@ TYPE_CONVERTERS = {
     str: lambda x: json.dumps(x),
     unicode: lambda x: json.dumps(x),
     Sequence: lambda x: json.dumps(list(x)),
-    list:  lambda x: json.dumps(x),
+    list: lambda x: json.dumps(x),
     tuple: lambda x: json.dumps(list(x)),
-    int: lambda x:x,
+    int: lambda x: x,
     bool: lambda x: 'true' if x else 'false',
-    types.NoneType: lambda x:x
+    types.NoneType: lambda x: x
 }
 
 
@@ -52,29 +53,33 @@ def python_to_couch(options):
     result = {}
     for k, v in options.iteritems():
         if k not in ARG_TYPES:
-            raise RuntimeError("Invalid Argument {0}".format(k))
+            msg = "Invalid Argument {0}".format(k)
+            raise CloudantArgumentError(msg)
         if not isinstance(v, ARG_TYPES[k]):
-            print ">>>>", k, v
-            msg = "Argument {0} not instance of expected type: {1}".format(k, ARG_TYPES[k])
-            raise RuntimeError(msg)
+            msg = "Argument {0} not instance of expected type: {1}".format(
+                k,
+                ARG_TYPES[k]
+            )
+            raise CloudantArgumentError(msg)
         arg_converter = TYPE_CONVERTERS.get(type(v))
         if k == 'stale':
             if v not in ('ok', 'update_after'):
-                msg = "Invalid value for stale option {0} must be ok or update_after".format(v)
-                raise RuntimeError(msg)
-
+                msg = (
+                    "Invalid value for stale option {0} "
+                    "must be ok or update_after"
+                ).format(v)
+                raise CloudantArgumentError(msg)
         try:
             if v is None:
                 result[k] = None
             else:
                 result[k] = arg_converter(v)
         except Exception as ex:
-            print ">>>", arg_converter
             msg = "Error converting arg {0}: {1}".format(k, ex)
-            raise
-            #raise RuntimeError(msg)
+            raise CloudantArgumentError(msg)
 
     return result
+
 
 def type_or_none(typerefs, value):
     """helper to check that value is of the types passed or None"""
@@ -85,13 +90,54 @@ class Index(object):
     """
     _Index_
 
-    Sliceable and iterable interface to CouchDB View like things.
+    Sliceable and iterable interface to CouchDB View like things, such
+    as the CloudantDatabase and View objects in this package.
 
     Instantiated with the raw data callable such as the
     CloudantDatabase.all_docs or View.__call__ reference used to
     retrieve data, the index can also store optional extra args for
-    customisation and supports efficient, paged iteration over the
-    results to avoid large views blowing up memory
+    customisation and supports efficient, paged iteration over
+    the view to avoid large views blowing up memory
+
+    In python, slicing returns by value, wheras iteration will yield
+    elements of the sequence, which means that using slices is better
+    for smaller slices of data, wheras if you have large views
+    its better to iterate over them as it should be more efficient.
+
+    Examples:
+
+    Access by key:
+    index['key'] # get all records matching key
+
+    Slicing by startkey/endkey
+
+    index[["2013","10"]:["2013","11"]] # results between compound keys
+    index["2013":"2014"] # results between string keys
+    index["2013":] # all results after key
+    index[:"2014"] # all results up to key
+
+    Slicing by value:
+
+    index[100:200] # get records 100-200
+    index[:200]  # get records up to 200th
+    index[100:]  # get all records after 100th
+
+    Iteration:
+
+    # iterate over all records
+    index = Index(callable)
+    for i in index:
+        print i
+
+    # iterate over records between startkey/endkey
+    index = Index(callable, startkey="2013", endkey="2014")
+    for i in index:
+        print i
+
+    # iterate over records including docs and in 1000 record batches
+    index = Index(callable, include_docs=True, page_size=1000)
+    for i in index:
+        print i
 
     """
     def __init__(self, method_ref, **options):
@@ -108,9 +154,9 @@ class Index(object):
         passed as the key to the query for entries matching that key or
         a slice object.
 
-        Slices with integers will be interpreted as skip:limit-skip style pairs,
-        eg with [100:200] meaning skip 100, get next 100 records so that you get
-        the range between the supplied slice values
+        Slices with integers will be interpreted as skip:limit-skip
+        style pairs, eg with [100:200] meaning skip 100, get next 100
+        records so that you get the range between the supplied slice values
 
         Slices with strings/lists will be interpreted as startkey/endkey
         style keys.
@@ -160,18 +206,44 @@ class Index(object):
                     data = self._ref(limit=key.stop, **self.options)
                 # both None case handled above
                 return data['rows']
-        raise RuntimeError("wtf was {0}??".format(key))
+        msg = (
+            "Failed to interpret the argument {0} passed to "
+            "Index.__getitem__ as a key value or as a slice"
+        ).format(key)
+        raise CloudantArgumentError(msg)
 
     def __iter__(self):
         """
-        Implement iteration protocol by calling the
-        data method accessor and paging through the responses
+        Iteration Support for large views
 
-        Custom iteration ranges can be controlled via the ctor options
+        Uses skip/limit to consume a view in chunks controlled
+        by the page_size setting and retrieves a batch of records
+        from the view or index and then yields each element.
+
+        Since this uses skip/limit to perform the iteration, they
+        cannot be used as optional arguments to the index, but startkey
+        and endkey etc can be used to constrain the result of the iterator
 
         """
-        # TODO custom options need to be converted to couch friendly things
-        #     eg if iteration by page is between a start key and end key
-        #     verify that paging between startkey/endkey and integer
-        #     indexes works
-        # ALSO: Implement this
+        if 'skip' in self.options:
+            msg = "Cannot use skip for iteration"
+            raise CloudantArgumentError(msg)
+        if 'limit' in self.options:
+            msg = "Cannot use limit for iteration"
+            raise CloudantArgumentError(msg)
+
+        skip = 0
+        while True:
+            response = self._ref(
+                limit=self._page_size,
+                skip=skip,
+                **self.options
+            )
+            result = response.get('rows', [])
+            skip = skip + self._page_size
+            if len(result) > 0:
+                for x in result:
+                    yield x
+                del result
+            else:
+                break
