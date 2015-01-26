@@ -199,7 +199,7 @@ class CloudantDatabase(dict):
             data = indx[100:200]
 
         """
-        indx = Index(self, **options)
+        indx = Index(self.all_docs, **options)
         yield indx
         del indx
 
