@@ -6,6 +6,7 @@ API class representing a cloudant database
 
 """
 import json
+import contextlib
 import posixpath
 import urllib
 
@@ -140,23 +141,36 @@ class CloudantDatabase(dict):
 
     def all_docs(self, **kwargs):
         """
-        TODO: docstring worth a damn
+        _all_docs_
 
-        descending  Return the documents in descending by key
-            order boolean false
-        endkey  Stop returning records when the specified key is
-            reached string
-        include_docs    Include the full content of the documents
-            in the return boolean false
-        inclusive_end   Include rows whose key equals the endkey
-            boolean true
-        key Return only documents that match the
-            specified key  string
-        limit   Limit the number of the returned documents
-            to the specified number  numeric
-        skip    Skip this number of records before starting to
-           return the results  numeric 0
-        startkey
+        Wraps the _all_docs primary index on the database,
+        and returns the results by value. This can be used
+        as a direct query to the couch db all_docs endpoint.
+        More convienient/efficient access using slices
+        and iterators can be accessed via the index attribute
+
+        Keyword arguments supported are those of the couch
+        view/index access API.
+
+        :param descending: Boolean. Return the documents in descending by key
+            order
+        :param endkey: string/list Stop returning records when the specified key is
+            reached
+        :param include_docs: Boolean. Include the full content of the documents
+            in the return
+        :param inclusive_end: Boolean. Include rows whose key equals the endkey
+            boolean
+        :param key: string. Return only documents that match the
+            specified key
+        :param limit: int. Limit the number of the returned documents
+            to the specified number
+        :param skip: int. Skip this number of records before starting to
+           return the results
+        :param startkey: str/list. Start returning records when the specified
+          key matches this value
+
+        :returns: Raw data JSON response from the all_docs endpoint containing
+          rows, counts etc.
 
         """
         params = python_to_couch(kwargs)
@@ -169,6 +183,25 @@ class CloudantDatabase(dict):
         )
         data = resp.json()
         return data
+
+    @contextlib.contextmanager
+    def custom_index(self, **options):
+        """
+        _custom_index_
+
+        If you want to customise the index behaviour on all_docs
+        you can build your own with extra options to the index
+        call using this context manager.
+
+        Example:
+
+        with view.custom_index(include_docs=True, reduce=False) as indx:
+            data = indx[100:200]
+
+        """
+        indx = Index(self, **options)
+        yield indx
+        del indx
 
     def keys(self, remote=False):
         """

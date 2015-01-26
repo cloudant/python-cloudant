@@ -95,8 +95,8 @@ class Index(object):
     Instantiated with the raw data callable such as the
     CloudantDatabase.all_docs or View.__call__ reference used to
     retrieve data, the index can also store optional extra args for
-    customisation and supports efficient, paged iteration over the
-    results to avoid large views blowing up memory
+    customisation and supports efficient, paged iteration over
+    the view to avoid large views blowing up memory
 
     """
     def __init__(self, method_ref, **options):
@@ -173,14 +173,35 @@ class Index(object):
 
     def __iter__(self):
         """
-        Implement iteration protocol by calling the
-        data method accessor and paging through the responses
+        Iteration Support for large views
 
-        Custom iteration ranges can be controlled via the ctor options
+        Uses skip/limit to consume a view in chunks controlled
+        by the page_size setting and retrieves a batch of records
+        from the view or index and then yields each element.
+
+        Since this uses skip/limit to perform the iteration, they
+        cannot be used as optional arguments to the index, but startkey
+        and endkey etc can be used to constrain the result of the iterator
 
         """
-        # TODO custom options need to be converted to couch friendly things
-        #     eg if iteration by page is between a start key and end key
-        #     verify that paging between startkey/endkey and integer
-        #     indexes works
-        # ALSO: Implement this
+        if 'skip' in self.options:
+            msg = "Cannot use skip for iteration"
+            raise CloudantArgumentError(msg)
+        if 'limit' in self.options:
+            msg = "Cannot use limit for iteration"
+            raise CloudantArgumentError(msg)
+
+        skip = 0
+        while True:
+            response = self._ref(limit=self._page_size, skip=skip, **self.options)
+            result = response.get('rows', [])
+            skip = skip + self._page_size
+            if len(result) > 0:
+                for x in result:
+                    yield x
+                del result
+            else:
+                break
+
+
+
