@@ -38,6 +38,12 @@ class CloudantDatabase(dict):
         )
 
     @property
+    def security_url(self):
+        parts = ['_api', 'v2', 'db', self._database_name,'_security']
+        url = posixpath.join(self._database_host, *parts)
+        return url
+
+    @property
     def creds(self):
         """
         _creds_
@@ -311,9 +317,7 @@ class CloudantDatabase(dict):
         GET _api/v2/db/<dbname>/_security
 
         """
-        parts = ['_api', 'v2', 'db', self._database_name,'_security']
-        url = posixpath.join(self._database_host, *parts)
-        resp = self._r_session.get(url)
+        resp = self._r_session.get(self.security_url)
         resp.raise_for_status()
         return resp.json()
 
@@ -334,11 +338,7 @@ class CloudantDatabase(dict):
         :param admin: Grant named user admin access if true
 
         """
-        parts = ['_api', 'v2', 'db', self._database_name,'_security']
-        url = posixpath.join(self._database_host, *parts)
-        resp = self._r_session.get(url)
-        resp.raise_for_status()
-        doc = resp.json()
+        doc = self.security_document()
         data = doc.get('cloudant', {})
         perms = []
         if reader:
@@ -350,7 +350,7 @@ class CloudantDatabase(dict):
 
         data[username] = perms
         resp = self._r_session.put(
-            url,
+            self.security_url,
             data=json.dumps(doc),
             headers={'Content-Type': 'application/json'}
             )
@@ -367,21 +367,19 @@ class CloudantDatabase(dict):
         use the share_database method
 
         """
-        parts = ['_api', 'v2', 'db', self._database_name,'_security']
-        url = posixpath.join(self._database_host, *parts)
-        resp = self._r_session.get(url)
-        resp.raise_for_status()
-        doc = resp.json()
+        doc = self.security_document()
         data = doc.get('cloudant', {})
         if username in data:
             del data[username]
         resp = self._r_session.put(
-            url,
+            self.security_url,
             data=json.dumps(doc),
             headers={'Content-Type': 'application/json'}
             )
         resp.raise_for_status()
         return resp.json()
+
+
 
     def bulk_docs(self, *keys):
         """
