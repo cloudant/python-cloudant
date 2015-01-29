@@ -311,7 +311,11 @@ class CloudantDatabase(dict):
         GET _api/v2/db/<dbname>/_security
 
         """
-        pass
+        parts = ['_api', 'v2', 'db', self._database_name,'_security']
+        url = posixpath.join(self._database_host, *parts)
+        resp = self._r_session.get(url)
+        resp.raise_for_status()
+        return resp.json()
 
     def share_database(self, username, reader=True, writer=False, admin=False):
         """
@@ -321,6 +325,8 @@ class CloudantDatabase(dict):
         You can grant varying degrees of access rights,
         default is to share read-only, but writing or admin
         permissions can be added by setting the appropriate flags
+        If the user already has this database shared with them it
+        will modify/overwrite the existing permissions
 
         :param username: Cloudant Username to share the database with
         :param reader: Grant named user read access if true
@@ -328,10 +334,54 @@ class CloudantDatabase(dict):
         :param admin: Grant named user admin access if true
 
         """
-        # GET _api/v2/db/<dbname>/_security
-        # modify to add user entry
-        # PUT _api/v2/db/<dbname>/_security
-        pass
+        parts = ['_api', 'v2', 'db', self._database_name,'_security']
+        url = posixpath.join(self._database_host, *parts)
+        resp = self._r_session.get(url)
+        resp.raise_for_status()
+        doc = resp.json()
+        data = doc.get('cloudant', {})
+        perms = []
+        if reader:
+            perms.append('_reader')
+        if writer:
+            perms.append('_writer')
+        if admin:
+            perms.append('_admin')
+
+        data[username] = perms
+        resp = self._r_session.put(
+            url,
+            data=json.dumps(doc),
+            headers={'Content-Type': 'application/json'}
+            )
+        resp.raise_for_status()
+        return resp.json()
+
+    def unshare_database(self, username):
+        """
+        _unshare_database_
+
+        Remove all sharing with the named user for this database.
+        This will remove the entry for the user from the security doc
+        To modify permissions, instead of remove thame,
+        use the share_database method
+
+        """
+        parts = ['_api', 'v2', 'db', self._database_name,'_security']
+        url = posixpath.join(self._database_host, *parts)
+        resp = self._r_session.get(url)
+        resp.raise_for_status()
+        doc = resp.json()
+        data = doc.get('cloudant', {})
+        if username in data:
+            del data[username]
+        resp = self._r_session.put(
+            url,
+            data=json.dumps(doc),
+            headers={'Content-Type': 'application/json'}
+            )
+        resp.raise_for_status()
+        return resp.json()
 
     def bulk_docs(self, *keys):
         """

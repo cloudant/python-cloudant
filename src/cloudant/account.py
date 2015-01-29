@@ -276,7 +276,6 @@ class Cloudant(dict):
             value.create()
         super(Cloudant, self).__setitem__(key, value)
 
-
     def bill(self, year=None, month=None):
         """
         _bill_
@@ -325,6 +324,39 @@ class Cloudant(dict):
         """
         # TODO implement this when available in v2
         POST /_api/v2/api_keys
+        """
+        pass
+
+    def cors_configuration(self):
+        """
+
+        GET /_api/v2/user/config/cors   Returns the current CORS configuration
+
+        """
+        pass
+
+    def disable_cors(self):
+        """
+        _disable_cors_
+
+        Switch CORS off for this account
+
+        """
+        pass
+
+    def cors_origins(self):
+        """
+        _cors_origins_
+
+        Retrieve a list of CORS origins
+
+        """
+
+    def update_cors_configuration(self, enable_cors=True,allow_credentials=True, *origins):
+        """
+
+        PUT /_api/v2/user/config/cors   Changes the CORS configuration
+
         """
         pass
 
