@@ -143,14 +143,6 @@ class Cloudant(dict):
         ))
         return "Basic {0}".format(hash_)
 
-    def set_permissions(self):
-        #TODO implement this when available in v2
-        pass
-
-    def generate_api_key(self):
-        # TODO implement this when available in v2
-        pass
-
     def all_dbs(self):
         """
         _all_dbs_
@@ -284,4 +276,55 @@ class Cloudant(dict):
             value.create()
         super(Cloudant, self).__setitem__(key, value)
 
+
+    def bill(self, year=None, month=None):
+        """
+        _bill_
+
+        Get your cloudant billing data, optionally for a given year/month
+
+        :param year: int, year, eg 2014
+        :param month: int, 1-12
+
+        :returns: JSON billing data structure
+        """
+        endpoint = posixpath.join(self._cloudant_url, '_api', 'v2', 'bill')
+        if year is not None:
+            endpoint = posixpath.join(endpoint, year)
+        if month is not None:
+            if year is None:
+                raise CloudantException(
+                    "must supply both year and month to get monthly bill"
+                )
+            endpoint = posixpath.join(endpoint, month)
+        resp = self._r_session.get(endpoint)
+        resp.raise_for_status()
+        return resp.json()
+
+    def volume_usage(self, year=None, month=None):
+        """
+        _api/v2/usage/data_volume/<int:year>/<int:month>
+        """
+        pass
+
+    def requests_usage(self, year=None, month=None):
+        """
+        _api/v2/usage/requests/<int:year>/<int:month>
+        """
+        pass
+
+    def shared_databases(self):
+        """
+
+        _api/v2/user/shared_databases
+
+        """
+        pass
+
+    def generate_api_key(self):
+        """
+        # TODO implement this when available in v2
+        POST /_api/v2/api_keys
+        """
+        pass
 
