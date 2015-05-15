@@ -1,5 +1,52 @@
 CIRRUS_UPDATE_SENTINEL
 
+Release: 0.0.4 Created: 2015-05-15T14:27:58.105505
+ - Commit History:
+ -- Author: jcounts
+ --- 2015-05-13T20:44:24Z: cirrus release: new release created for release/0.0.3
+ --- 2015-05-13T20:43:18Z: Merge pull request #16 from evansde77/feature/integrate-Feed-into-database-changes
+
+merged #16
+ --- 2015-05-13T19:57:16Z: using Feed
+ -- Author: evansde77
+ --- 2015-01-26T22:51:45Z: Merge pull request #12 from evansde77/feature/view-iter
+
+Feature/view iter
+ --- 2015-01-26T22:48:11Z: docstring updates
+ --- 2015-01-26T20:55:07Z: pep8
+ --- 2015-01-26T20:27:18Z: tweak custom_index for database
+ --- 2015-01-26T20:22:25Z: add iteration support to page through views using the index object
+ --- 2015-01-23T17:44:23Z: make argument errors first class exceptions
+ --- 2015-01-23T17:28:17Z: Merge pull request #11 from evansde77/feature/views-part-2
+
+Feature/views part 2
+ --- 2015-01-23T17:24:09Z: refactor python_to_couch to be more type driven, less if nightmare
+ --- 2015-01-23T16:53:42Z: saner skip/limit behaviour, code org
+ --- 2015-01-22T20:07:56Z: pr feedback
+ --- 2015-01-22T19:11:23Z: index support
+ --- 2015-01-22T18:56:33Z: common index class
+ --- 2015-01-22T02:32:31Z: refine slicing, add primary index to DB object
+ --- 2015-01-21T23:24:48Z: initial working view query API
+ --- 2015-01-21T17:31:55Z: Merge branch 'develop' into feature/views-part-2
+ --- 2015-01-21T17:31:30Z: pass ddoc instance to views
+ --- 2015-01-20T18:10:07Z: Merge pull request #10 from evansde77/feature/views
+
+Feature/views
+ --- 2015-01-20T17:42:39Z: pr feedback
+ --- 2015-01-20T16:46:09Z: expand test coverage for document
+ --- 2015-01-20T00:01:12Z: pep8
+ --- 2015-01-19T23:58:40Z: add unittest coverage
+ --- 2015-01-19T19:07:59Z: initial impl of DesignDocument and Views
+ --- 2015-01-16T23:27:32Z: checkpoint initial work on support for managing design docs
+ -- Author: petevg
+ --- 2015-01-09T14:18:45Z: cirrus release: new release created for release/0.0.2
+ --- 2015-01-09T14:18:24Z: Fixed setup.py -- needed to manually specify package_dir (couldn't figure out how to do it in cirrus.config.
+ --- 2015-01-08T20:57:24Z: Merge branch 'release/0.0.1' into develop
+
+Conflicts:
+	cirrus.conf
+ --- 2015-01-08T20:56:12Z: cirrus release: new release created for release/0.0.1
+
 Release: 0.0.3 Created: 2015-05-13T20:44:23.520073
  - Commit History:
  -- Author: petevg
