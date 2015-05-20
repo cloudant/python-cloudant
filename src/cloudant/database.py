@@ -214,7 +214,7 @@ class CloudantDatabase(dict):
         docs = self.all_docs()
         return [row['id'] for row in docs.get('rows', [])]
 
-    def changes(self, since=None, continuous=True):
+    def changes(self, since=None, continuous=True, include_docs=False):
         """
         Implement streaming from changes feed. Yields any changes that occur.
 
@@ -225,7 +225,8 @@ class CloudantDatabase(dict):
             self._r_session,
             posixpath.join(self.database_url, '_changes'),
             since=since,
-            continuous=continuous
+            continuous=continuous,
+            include_docs=include_docs
         )
 
         for change in changes_feed:
