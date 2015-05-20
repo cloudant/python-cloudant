@@ -19,7 +19,7 @@ class Feed(object):
     :params:
 
     """
-    def __init__(self, session, url, **kwargs):
+    def __init__(self, session, url, include_docs=False, **kwargs):
         self._session = session
         self._url = url
         self._resp = None
@@ -27,6 +27,9 @@ class Feed(object):
         self._last_seq = kwargs.get('since')
         self._continuous = kwargs.get('continuous', False)
         self._end_of_iteration = False
+        self._params = {'feed': 'continuous'}
+        if include_docs:
+            self._params['include_docs'] = 'true'
 
     def start(self):
         """
@@ -37,11 +40,10 @@ class Feed(object):
         if a last seq value is present, pass that along.
 
         """
-        params = {'feed':'continuous'}
+        params = self._params
         if self._last_seq is not None:
             params['since'] = self._last_seq
-            self.last_seq = None
-        self._resp = self._session.get(self._url, params=params ,stream=True)
+        self._resp = self._session.get(self._url, params=params, stream=True)
         self._resp.raise_for_status()
         self._line_iter = self._resp.iter_lines()
 
