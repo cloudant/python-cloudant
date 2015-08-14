@@ -12,18 +12,6 @@ import requests
 
 from .errors import CloudantException
 
-# Actions for the update function below
-ACTIONS = {
-    "append_elem": lambda doc, field, value: doc[field].append(value),
-    "remove_elem": lambda doc, field, value: doc[field].remove(value),
-    "replace": lambda doc, field, value: doc.update({field: value})
-}
-class InvalidAction(Exception):
-    """
-    Exception to raise in the case where we attempt to find a key that
-    doesn't exist in ACTIONS above.
-
-    """
 
 class CloudantDocument(dict):
     """
@@ -110,6 +98,12 @@ class CloudantDocument(dict):
         put_resp.raise_for_status()
         return
 
+    update_actions = {
+        "append_elem": lambda doc, field, value: doc[field].append(value),
+        "remove_elem": lambda doc, field, value: doc[field].remove(value),
+        "replace": lambda doc, field, value: doc.update({field: value})
+    }
+
     def _update_field(self, action, field, value, max_tries, tries=0):
         """
         Private update_field method. Wrapped by CloudantDocument.update.
@@ -119,11 +113,7 @@ class CloudantDocument(dict):
         # Refresh our view of the document.
         self.fetch()
 
-        # Attempt to apply our update.
-        try:
-            action = ACTIONS[action]
-        except KeyError:
-            raise InvalidAction(u"{} is an unknown action".format(action))
+        # Update the field.
         action(self, field, value)
 
         # Attempt to save, retrying conflicts up to max_tries.
@@ -148,11 +138,24 @@ class CloudantDocument(dict):
         the document in other fields, but also don't want the caller
         to implement logic to deal with conflicts.
 
-        @param action str: the type of update to apply.
+        @param action callable: A routine that takes three arguments:
+            A doc, a field, and a value. The routine should attempt to 
+            update a field in the doc with the given value, using 
+            whatever logic is appropraite. See this class's 
+            update_actions property for examples.
         @param field str: the name of the field to update
         @param value: the value to update the field with.
         @param max_tries: in the case of a conflict, give up after this
             number of retries.
+
+        For example, the following will append the string "foo" to the 
+        "words" list in a Cloudant Document.
+    
+        doc.update_field(
+            action=doc.update_actions['append_elem'],
+            field="words",
+            value="foo"
+        )
 
         """
         self._update_field(action, field, value, max_tries)
