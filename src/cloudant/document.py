@@ -98,11 +98,20 @@ class CloudantDocument(dict):
         put_resp.raise_for_status()
         return
 
-    update_actions = {
-        "append_elem": lambda doc, field, value: doc[field].append(value),
-        "remove_elem": lambda doc, field, value: doc[field].remove(value),
-        "replace": lambda doc, field, value: doc.update({field: value})
-    }
+    # Update Actions
+    # These are handy functions to use with update_field below.
+    @staticmethod
+    def field_append(doc, field, value):
+        """Append a value to a field in a doc."""
+        doc[field].append(value)
+    @staticmethod
+    def field_remove(doc, field, value):
+        """Remove a value from a field in a doc."""
+        doc[field].remove(value)
+    @staticmethod
+    def field_replace(doc, field, value):
+        """Replace a field in a doc with a value."""
+        doc[field] = value
 
     def _update_field(self, action, field, value, max_tries, tries=0):
         """
@@ -152,7 +161,7 @@ class CloudantDocument(dict):
         "words" list in a Cloudant Document.
     
         doc.update_field(
-            action=doc.update_actions['append_elem'],
+            action=doc.field_append,
             field="words",
             value="foo"
         )
