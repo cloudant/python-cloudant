@@ -148,18 +148,18 @@ class CloudantDocument(dict):
         to implement logic to deal with conflicts.
 
         @param action callable: A routine that takes three arguments:
-            A doc, a field, and a value. The routine should attempt to 
-            update a field in the doc with the given value, using 
-            whatever logic is appropraite. See this class's 
+            A doc, a field, and a value. The routine should attempt to
+            update a field in the doc with the given value, using
+            whatever logic is appropraite. See this class's
             update_actions property for examples.
         @param field str: the name of the field to update
         @param value: the value to update the field with.
         @param max_tries: in the case of a conflict, give up after this
             number of retries.
 
-        For example, the following will append the string "foo" to the 
+        For example, the following will append the string "foo" to the
         "words" list in a Cloudant Document.
-    
+
         doc.update_field(
             action=doc.field_append,
             field="words",
