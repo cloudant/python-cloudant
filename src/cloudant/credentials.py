@@ -9,12 +9,25 @@ to let users pass creds in
 import os
 import ConfigParser
 
+
+def read_dot_couch(
+        filename='~/.couch',
+        section='cloudant',
+        username='user',
+        password='password'):
+    config_file = os.path.expanduser(filename)
+    config = ConfigParser.RawConfigParser()
+    config.read(config_file)
+    username_value = config.get("couchdb", username)
+    password_value = config.get("couchdb", password)
+    return username_value, password_value
+
+
 def read_dot_cloudant(
-    filename='~/.cloudant',
-    section='cloudant',
-    username='user',
-    password='password'
-    ):
+        filename='~/.cloudant',
+        section='cloudant',
+        username='user',
+        password='password'):
     """
     _read_dot_cloudant_
 

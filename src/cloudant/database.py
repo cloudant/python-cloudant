@@ -211,7 +211,7 @@ class CouchDatabase(dict):
 
         """
         if not remote:
-            return super(CloudantDatabase, self).keys()
+            return super(CouchDatabase, self).keys()
         docs = self.all_docs()
         return [row['id'] for row in docs.get('rows', [])]
 

@@ -25,6 +25,9 @@ class CouchDB(dict):
     Maintains a requests.Session for working with the
     account specified in the ctor
 
+    :param database_url: Host name for couchdb server, defaults
+      to http://127.0.0.1:5984
+
     :param encoder: Optional json Encoder object used to encode
         documents for storage. defaults to json.JSONEncoder
 
@@ -36,6 +39,8 @@ class CouchDB(dict):
         self._cloudant_user = cloudant_user
         self._cloudant_token = auth_token
         self._cloudant_session = None
+        self._cloudant_url = kwargs.get("database_url", "http://127.0.0.1:5984")
+        self._cloudant_user_header = None
         self._encoder = kwargs.get('encoder') or json.JSONEncoder
 
     def connect(self):
@@ -47,9 +52,10 @@ class CouchDB(dict):
         """
         self._r_session = requests.Session()
         self._r_session.auth = (self._cloudant_user, self._cloudant_token)
-        self._r_session.headers.update(
-            {'X-Cloudant-User': self._cloudant_user_header}
-        )
+        if self._cloudant_user_header is not None:
+            self._r_session.headers.update(
+                {'X-Cloudant-User': self._cloudant_user_header}
+            )
         self.session_login(self._cloudant_user, self._cloudant_token)
         self._cloudant_session = self.session()
 
