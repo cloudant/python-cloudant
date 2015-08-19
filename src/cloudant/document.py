@@ -24,17 +24,17 @@ class CloudantDocument(dict):
     with document:
         document['x'] = 'y'
 
-    :param cloudant_database: CouchDatabase or CloudantDatabase instance
+    :param database: CouchDatabase or CloudantDatabase instance
       that the document belongs to
     :param document_id: optional document ID
 
     """
-    def __init__(self, cloudant_database, document_id=None):
-        self._cloudant_account = cloudant_database._cloudant_account
-        self._cloudant_database = cloudant_database
+    def __init__(self, database, document_id=None):
+        self._cloudant_account = database._cloudant_account
+        self._cloudant_database = database
         self._database_host = self._cloudant_account._cloudant_url
-        self._database_name = cloudant_database._database_name
-        self._r_session = cloudant_database._r_session
+        self._database_name = database._database_name
+        self._r_session = database._r_session
         self._document_id = document_id
         self._encoder = self._cloudant_account._encoder
 
