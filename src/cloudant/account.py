@@ -276,8 +276,7 @@ class CouchDB(dict):
         super(CouchDB, self).__setitem__(key, value)
 
 
-
-class Cloudant(dict):
+class Cloudant(CouchDB):
     """
     _Cloudant_
 
