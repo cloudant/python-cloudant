@@ -21,19 +21,29 @@ class CouchDatabase(dict):
     """
     _CouchDatabase_
 
+    dict based interface to a CouchDB Database.
+    Instantiated with a reference to an account/session
+    it supports accessing the documents, and various database
+    features such as the indexes, changes feed, and design documents
+
+    :param account: CouchAccount instance corresponding to the db server
+    :param database_name: Name of the database
+    :param fetch_limit: Optional, sets the max number of docs to fetch per query
+        during iteration cycles
 
     """
-    def __init__(self, cloudant, database_name, fetch_limit=100):
+    def __init__(self, account, database_name, fetch_limit=100):
         super(CouchDatabase, self).__init__()
-        self._cloudant_account = cloudant
-        self._database_host = cloudant._cloudant_url
+        self._cloudant_account = account
+        self._database_host = account._cloudant_url
         self._database_name = database_name
-        self._r_session = cloudant._r_session
+        self._r_session = account._r_session
         self._fetch_limit = fetch_limit
         self.index = Index(self.all_docs)
 
     @property
     def database_url(self):
+        """constructs and returns the database URL"""
         return posixpath.join(
             self._database_host,
             urllib.quote_plus(self._database_name)
@@ -54,18 +64,42 @@ class CouchDatabase(dict):
         }
 
     def exists(self):
+        """
+        performs an existence check on the database,
+
+        :returns: boolean, True if database exists
+        """
         resp = self._r_session.get(self.database_url)
         return resp.status_code == 200
 
     def metadata(self):
+        """
+        Get the database metadata dictionary
+
+        :returns: dictionary containing db info details
+        """
         resp = self._r_session.get(self.database_url)
         resp.raise_for_status()
         return resp.json()
 
     def doc_count(self):
+        """
+        :returns: number of documents in the database
+        """
         return self.metadata().get('doc_count')
 
     def create_document(self, data, throw_on_exists=False):
+        """
+        Create a new document in the database, using the data
+        provided, assuming that there is an _id field provided.
+
+        :param data: dictionary of document JSON data, containing _id
+        :param throw_on_exists: Optional control on wether to raise an exception
+           if the _id already exists as a document in the database
+
+        :returns: CloudantDocument instance corresponding to the new doc
+
+        """
         doc = CloudantDocument(self, data.get('_id'))
         doc.update(data)
         doc.create()
@@ -76,7 +110,11 @@ class CouchDatabase(dict):
         """
         _new_document_
 
-        Creates new, empty document
+        Creates new, empty document, autogenerating the _id.
+
+        :returns: CloudantDocument instance corresponding to newly created
+          document.
+
         """
         doc = CloudantDocument(self, None)
         doc.create()
@@ -115,7 +153,9 @@ class CouchDatabase(dict):
         """
         _create_
 
-        Create this database if it doesnt exist
+        Create this database if it doesnt exist,
+        raises a CloudantException if the operation fails.
+        Is a no-op if the database already exists
         """
         if self.exists():
             return self
@@ -209,6 +249,11 @@ class CouchDatabase(dict):
         """
         _keys_
 
+        return the list of document ids in the database
+
+        :param remote: If False will use the local in memory copy
+          of the document, if True will call out to the DB
+
         """
         if not remote:
             return super(CouchDatabase, self).keys()
@@ -235,6 +280,10 @@ class CouchDatabase(dict):
                 yield change
 
     def __getitem__(self, key):
+        """
+        override [] operator access to return the
+        appropriate instance of Document
+        """
         if key in self.keys():
             return super(CouchDatabase, self).__getitem__(key)
         if key.startswith('_design/'):
@@ -326,6 +375,9 @@ class CloudantDatabase(CouchDatabase):
     """
     _CloudantDatabase_
 
+    Extend the base CouchDB database to include additional
+    Cloudant database features
+
     """
     def __init__(self, cloudant, database_name, fetch_limit=100):
         super(CloudantDatabase, self).__init__(cloudant, database_name, fetch_limit=100)
@@ -340,12 +392,15 @@ class CloudantDatabase(CouchDatabase):
 
         GET _api/v2/db/<dbname>/_security
 
+        :returns: Security doc JSON data
+
         """
         resp = self._r_session.get(self.security_url)
         resp.raise_for_status()
         return resp.json()
 
     def security_url(self):
+        """construct the URL of the security document for this db"""
         parts = ['_api', 'v2', 'db', self._database_name, '_security']
         url = posixpath.join(self._database_host, *parts)
         return url

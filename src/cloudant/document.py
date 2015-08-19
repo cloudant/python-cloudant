@@ -17,6 +17,17 @@ class CloudantDocument(dict):
     """
     _CloudantDocument_
 
+    JSON document object, used to manipulate the documents
+    in a couch or cloudant database. In addition to basic CRUD
+    style operations this provides a context to edit the document:
+
+    with document:
+        document['x'] = 'y'
+
+    :param cloudant_database: CouchDatabase or CloudantDatabase instance
+      that the document belongs to
+    :param document_id: optional document ID
+
     """
     def __init__(self, cloudant_database, document_id=None):
         self._cloudant_account = cloudant_database._cloudant_account
@@ -28,25 +39,34 @@ class CloudantDocument(dict):
         self._encoder = self._cloudant_account._encoder
 
     _document_url = property(
-            lambda x: posixpath.join(
-                x._database_host,
-                urllib.quote_plus(x._database_name),
-                x._document_id
-            )
+        lambda x: posixpath.join(
+            x._database_host,
+            urllib.quote_plus(x._database_name),
+            x._document_id
         )
+    )
 
     def exists(self):
+        """
+        :returns: True if the document exists in the database, otherwise False
+        """
         resp = self._r_session.get(self._document_url)
         return resp.status_code == 200
 
     def json(self):
+        """
+        :returns: JSON string containing the document data, encoded
+            with the encoder specified in the owning account
+        """
         return json.dumps(dict(self), cls=self._encoder)
 
     def create(self):
         """
         _create_
 
-        Create this document
+        Create this document on the database server,
+        update the _id and _rev fields with those of the newly
+        created document
 
         """
         if self._document_id is not None:
