@@ -17,32 +17,37 @@ from .index import python_to_couch, Index
 from .changes import Feed
 
 
-class CloudantDatabase(dict):
+class CouchDatabase(dict):
     """
-    _CloudantDatabase_
+    _CouchDatabase_
+
+    dict based interface to a CouchDB Database.
+    Instantiated with a reference to an account/session
+    it supports accessing the documents, and various database
+    features such as the indexes, changes feed, and design documents
+
+    :param account: CouchAccount instance corresponding to the db server
+    :param database_name: Name of the database
+    :param fetch_limit: Optional, sets the max number of docs to fetch per query
+        during iteration cycles
 
     """
-    def __init__(self, cloudant, database_name, fetch_limit=100):
-        super(CloudantDatabase, self).__init__()
-        self._cloudant_account = cloudant
-        self._database_host = cloudant._cloudant_url
+    def __init__(self, account, database_name, fetch_limit=100):
+        super(CouchDatabase, self).__init__()
+        self._cloudant_account = account
+        self._database_host = account._cloudant_url
         self._database_name = database_name
-        self._r_session = cloudant._r_session
+        self._r_session = account._r_session
         self._fetch_limit = fetch_limit
         self.index = Index(self.all_docs)
 
     @property
     def database_url(self):
+        """constructs and returns the database URL"""
         return posixpath.join(
             self._database_host,
             urllib.quote_plus(self._database_name)
         )
-
-    @property
-    def security_url(self):
-        parts = ['_api', 'v2', 'db', self._database_name,'_security']
-        url = posixpath.join(self._database_host, *parts)
-        return url
 
     @property
     def creds(self):
@@ -59,33 +64,61 @@ class CloudantDatabase(dict):
         }
 
     def exists(self):
+        """
+        performs an existence check on the database,
+
+        :returns: boolean, True if database exists
+        """
         resp = self._r_session.get(self.database_url)
         return resp.status_code == 200
 
     def metadata(self):
+        """
+        Get the database metadata dictionary
+
+        :returns: dictionary containing db info details
+        """
         resp = self._r_session.get(self.database_url)
         resp.raise_for_status()
         return resp.json()
 
     def doc_count(self):
-        return self._metadata().get('doc_count')
+        """
+        :returns: number of documents in the database
+        """
+        return self.metadata().get('doc_count')
 
     def create_document(self, data, throw_on_exists=False):
+        """
+        Create a new document in the database, using the data
+        provided, assuming that there is an _id field provided.
+
+        :param data: dictionary of document JSON data, containing _id
+        :param throw_on_exists: Optional control on wether to raise an exception
+           if the _id already exists as a document in the database
+
+        :returns: CloudantDocument instance corresponding to the new doc
+
+        """
         doc = CloudantDocument(self, data.get('_id'))
         doc.update(data)
         doc.create()
-        super(CloudantDatabase, self).__setitem__(doc['_id'], doc)
+        super(CouchDatabase, self).__setitem__(doc['_id'], doc)
         return doc
 
     def new_document(self):
         """
         _new_document_
 
-        Creates new, empty document
+        Creates new, empty document, autogenerating the _id.
+
+        :returns: CloudantDocument instance corresponding to newly created
+          document.
+
         """
         doc = CloudantDocument(self, None)
         doc.create()
-        super(CloudantDatabase, self).__setitem__(doc['_id'], doc)
+        super(CouchDatabase, self).__setitem__(doc['_id'], doc)
         return doc
 
     def design_documents(self):
@@ -120,7 +153,9 @@ class CloudantDatabase(dict):
         """
         _create_
 
-        Create this database if it doesnt exist
+        Create this database if it doesnt exist,
+        raises a CloudantException if the operation fails.
+        Is a no-op if the database already exists
         """
         if self.exists():
             return self
@@ -214,9 +249,14 @@ class CloudantDatabase(dict):
         """
         _keys_
 
+        return the list of document ids in the database
+
+        :param remote: If False will use the local in memory copy
+          of the document, if True will call out to the DB
+
         """
         if not remote:
-            return super(CloudantDatabase, self).keys()
+            return super(CouchDatabase, self).keys()
         docs = self.all_docs()
         return [row['id'] for row in docs.get('rows', [])]
 
@@ -240,15 +280,19 @@ class CloudantDatabase(dict):
                 yield change
 
     def __getitem__(self, key):
+        """
+        override [] operator access to return the
+        appropriate instance of Document
+        """
         if key in self.keys():
-            return super(CloudantDatabase, self).__getitem__(key)
+            return super(CouchDatabase, self).__getitem__(key)
         if key.startswith('_design/'):
             doc = DesignDocument(self, key)
         else:
             doc = CloudantDocument(self, key)
         if doc.exists():
             doc.fetch()
-            super(CloudantDatabase, self).__setitem__(key, doc)
+            super(CouchDatabase, self).__setitem__(key, doc)
             return doc
         else:
             raise KeyError(key)
@@ -268,7 +312,7 @@ class CloudantDatabase(dict):
 
         """
         if not remote:
-            super(CloudantDatabase, self).__iter__()
+            super(CouchDatabase, self).__iter__()
         else:
             next_startkey = 0
             while next_startkey is not None:
@@ -289,13 +333,54 @@ class CloudantDatabase(dict):
                     next_startkey = None
 
                 for doc in docs:
-                    super(CloudantDatabase, self).__setitem__(
+                    super(CouchDatabase, self).__setitem__(
                         doc['id'],
                         doc['doc']
                     )
                     yield doc
 
             raise StopIteration
+
+    def bulk_docs(self, *keys):
+        """
+        _bulk_docs_
+
+        Retrieve documents for given list of keys via bulk doc API
+        POST    /db/_all_docs   Returns certain rows from the built-in view of all documents
+
+        """
+        pass
+
+    def bulk_insert(self, *docs):
+        """
+        _bulk_insert_
+
+        POST multiple docs for insert, each doc must be a dict containing
+        _id and _rev
+
+        POST    /db/_bulk_docs  Insert multiple documents in to the database in a single request
+
+        """
+        pass
+
+    def db_updates(self):
+        """
+        GET /_db_updates    Returns information about databases that have been updated
+
+        """
+        pass
+
+
+class CloudantDatabase(CouchDatabase):
+    """
+    _CloudantDatabase_
+
+    Extend the base CouchDB database to include additional
+    Cloudant database features
+
+    """
+    def __init__(self, cloudant, database_name, fetch_limit=100):
+        super(CloudantDatabase, self).__init__(cloudant, database_name, fetch_limit=100)
 
     def security_document(self):
         """
@@ -307,10 +392,18 @@ class CloudantDatabase(dict):
 
         GET _api/v2/db/<dbname>/_security
 
+        :returns: Security doc JSON data
+
         """
         resp = self._r_session.get(self.security_url)
         resp.raise_for_status()
         return resp.json()
+
+    def security_url(self):
+        """construct the URL of the security document for this db"""
+        parts = ['_api', 'v2', 'db', self._database_name, '_security']
+        url = posixpath.join(self._database_host, *parts)
+        return url
 
     def share_database(self, username, reader=True, writer=False, admin=False):
         """
@@ -371,35 +464,6 @@ class CloudantDatabase(dict):
             )
         resp.raise_for_status()
         return resp.json()
-
-    def bulk_docs(self, *keys):
-        """
-        _bulk_docs_
-
-        Retrieve documents for given list of keys via bulk doc API
-        POST    /db/_all_docs   Returns certain rows from the built-in view of all documents
-
-        """
-        pass
-
-    def bulk_insert(self, *docs):
-        """
-        _bulk_insert_
-
-        POST multiple docs for insert, each doc must be a dict containing
-        _id and _rev
-
-        POST    /db/_bulk_docs  Insert multiple documents in to the database in a single request
-
-        """
-        pass
-
-    def db_updates(self):
-        """
-        GET /_db_updates    Returns information about databases that have been updated
-
-        """
-        pass
 
     def shards(self):
         """

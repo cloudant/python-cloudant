@@ -10,46 +10,37 @@ import json
 import posixpath
 import requests
 
-from .database import CloudantDatabase
+from .database import CloudantDatabase, CouchDatabase
 from .errors import CloudantException
 
 
-class Cloudant(dict):
+class CouchDB(dict):
     """
-    _Cloudant_
+    _CouchDB_
 
-    Object that encapsulates a cloudant account,
-    handling top level user API calls, database
-    creation, token generation et al.
+    Object that encapsulates a CouchDB database
+    server and user account, handling top level user API calls,
+    database creation, token generation et al.
 
     Maintains a requests.Session for working with the
     account specified in the ctor
 
-    Optional parameters can be passed to control behaviour:
-
-    :param cloudant_url: Fully qualified https:// url for the
-      cloudant service, if not provided defaults to
-      https://<username>.cloudant.com
-
-    :param x_cloudant_user: Override the X-Cloudant-User setting
-      used to auth. This is needed to auth on someones behalf,
-      eg with an admin account
+    :param database_url: Host name for couchdb server, defaults
+      to http://127.0.0.1:5984
 
     :param encoder: Optional json Encoder object used to encode
         documents for storage. defaults to json.JSONEncoder
 
     """
+    _DATABASE_CLASS = CouchDatabase
+
     def __init__(self, cloudant_user, auth_token, **kwargs):
-        super(Cloudant, self).__init__()
+        super(CouchDB, self).__init__()
         self._cloudant_user = cloudant_user
         self._cloudant_token = auth_token
         self._cloudant_session = None
-        self._cloudant_url = kwargs.get(
-            "cloudant_url"
-            ) or "https://{0}.cloudant.com".format(self._cloudant_user)
-        self._cloudant_user_header = kwargs.get(
-            "x_cloudant_user"
-            ) or self._cloudant_user
+        self._cloudant_url = kwargs.get("database_url", "http://127.0.0.1:5984")
+        self._cloudant_user_header = None
         self._encoder = kwargs.get('encoder') or json.JSONEncoder
 
     def connect(self):
@@ -61,9 +52,10 @@ class Cloudant(dict):
         """
         self._r_session = requests.Session()
         self._r_session.auth = (self._cloudant_user, self._cloudant_token)
-        self._r_session.headers.update(
-            {'X-Cloudant-User': self._cloudant_user_header}
-        )
+        if self._cloudant_user_header is not None:
+            self._r_session.headers.update(
+                {'X-Cloudant-User': self._cloudant_user_header}
+            )
         self.session_login(self._cloudant_user, self._cloudant_token)
         self._cloudant_session = self.session()
 
@@ -179,14 +171,14 @@ class Cloudant(dict):
         :returns: newly created CloudantDatabase instance for the new db
 
         """
-        new_db = CloudantDatabase(self, dbname)
+        new_db = self._DATABASE_CLASS(self, dbname)
         if new_db.exists():
             if kwargs.get('throw_on_exists', True):
                 raise CloudantException(
                     "Database {0} already exists".format(dbname)
                 )
         new_db.create()
-        super(Cloudant, self).__setitem__(dbname, new_db)
+        super(CouchDB, self).__setitem__(dbname, new_db)
         return new_db
 
     def delete_database(self, dbname):
@@ -199,14 +191,14 @@ class Cloudant(dict):
         :param dbname: Name of the db to delete
 
         """
-        db = CloudantDatabase(self, dbname)
+        db = self._DATABASE_CLASS(self, dbname)
         if not db.exists():
             raise CloudantException(
                 "Database {0} doesnt exist".format(dbname)
             )
         db.delete()
         if dbname in self.keys():
-            super(Cloudant, self).__delitem__(dbname)
+            super(CouchDB, self).__delitem__(dbname)
 
     def keys(self, remote=False):
         """
@@ -218,7 +210,7 @@ class Cloudant(dict):
 
         """
         if not remote:
-            return super(Cloudant, self).keys()
+            return super(CouchDB, self).keys()
         return self.all_dbs()
 
     def __getitem__(self, key):
@@ -232,10 +224,10 @@ class Cloudant(dict):
 
         """
         if key in self.keys():
-            return super(Cloudant, self).__getitem__(key)
-        db = CloudantDatabase(self, key)
+            return super(CouchDB, self).__getitem__(key)
+        db = self._DATABASE_CLASS(self, key)
         if db.exists():
-            super(Cloudant, self).__setitem__(key, db)
+            super(CouchDB, self).__setitem__(key, db)
             return db
         else:
             raise KeyError(key)
@@ -249,7 +241,7 @@ class Cloudant(dict):
         cached object representing it
 
         """
-        super(Cloudant, self).__delitem__(key)
+        super(CouchDB, self).__delitem__(key)
         if remote:
             self.delete_database(key)
 
@@ -264,10 +256,10 @@ class Cloudant(dict):
 
         """
         if not remote:
-            return super(Cloudant, self).get(key, default)
-        db = CloudantDatabase(self, key)
+            return super(CouchDB, self).get(key, default)
+        db = self._DATABASE_CLASS(self, key)
         if db.exists():
-            super(Cloudant, self).__setitem__(key, db)
+            super(CouchDB, self).__setitem__(key, db)
             return db
         else:
             return default
@@ -282,12 +274,49 @@ class Cloudant(dict):
         remotely if it doesnt exist
 
         """
-        if not isinstance(value, CloudantDatabase):
+        if not isinstance(value, self._DATABASE_CLASS):
             msg = "Cannot set key to non CloudantDatabase object"
             raise CloudantException(msg)
         if remote and not value.exists():
             value.create()
-        super(Cloudant, self).__setitem__(key, value)
+        super(CouchDB, self).__setitem__(key, value)
+
+
+class Cloudant(CouchDB):
+    """
+    _Cloudant_
+
+    Object that encapsulates a cloudant account,
+    handling top level user API calls, database
+    creation, token generation et al.
+
+    Maintains a requests.Session for working with the
+    account specified in the ctor
+
+    Optional parameters can be passed to control behaviour:
+
+    :param cloudant_url: Fully qualified https:// url for the
+      cloudant service, if not provided defaults to
+      https://<username>.cloudant.com
+
+    :param x_cloudant_user: Override the X-Cloudant-User setting
+      used to auth. This is needed to auth on someones behalf,
+      eg with an admin account
+
+    :param encoder: Optional json Encoder object used to encode
+        documents for storage. defaults to json.JSONEncoder
+
+    """
+    _DATABASE_CLASS = CloudantDatabase
+
+    def __init__(self, cloudant_user, auth_token, **kwargs):
+        super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
+        self._cloudant_url = kwargs.get(
+            "cloudant_url"
+            ) or "https://{0}.cloudant.com".format(self._cloudant_user)
+        self._cloudant_user_header = kwargs.get(
+            "x_cloudant_user"
+            ) or self._cloudant_user
 
     def _usage_endpoint(self, endpoint, year=None, month=None):
         """

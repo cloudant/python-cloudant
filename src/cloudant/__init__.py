@@ -9,7 +9,7 @@ __version__="0.0.5"
 
 import contextlib
 
-from .account import Cloudant
+from .account import Cloudant, CouchDB
 
 
 @contextlib.contextmanager
@@ -22,6 +22,21 @@ def cloudant(user, passwd, **kwargs):
 
     """
     c = Cloudant(user, passwd, **kwargs)
+    c.connect()
+    yield c
+    c.disconnect()
+
+
+@contextlib.contextmanager
+def couchdb(user, passwd, **kwargs):
+    """
+    _couchdb_
+
+    Context helper to create a couchdb session and
+    provide access to databases, docs etc.
+
+    """
+    c = CouchDB(user, passwd, **kwargs)
     c.connect()
     yield c
     c.disconnect()
