@@ -27,14 +27,16 @@ class Cloudant(dict):
 
     Optional parameters can be passed to control behaviour:
 
-    :param cloudant_url: Fully qualified https:// url for the cloudant service,
-      if not provided defaults to https://<username>.cloudant.com
+    :param cloudant_url: Fully qualified https:// url for the
+      cloudant service, if not provided defaults to
+      https://<username>.cloudant.com
 
-    :param x_cloudant_user: Override the X-Cloudant-User setting used to auth. This
-      is needed to auth on someones behalf, eg with an admin account
+    :param x_cloudant_user: Override the X-Cloudant-User setting
+      used to auth. This is needed to auth on someones behalf,
+      eg with an admin account
 
-    :param encoder: Optional json Encoder object used to encode documents for storage.
-       defaults to json.JSONEncoder
+    :param encoder: Optional json Encoder object used to encode
+        documents for storage. defaults to json.JSONEncoder
 
     """
     def __init__(self, cloudant_user, auth_token, **kwargs):
@@ -42,9 +44,13 @@ class Cloudant(dict):
         self._cloudant_user = cloudant_user
         self._cloudant_token = auth_token
         self._cloudant_session = None
-        self._cloudant_url = kwargs.get("cloudant_url") or "https://{0}.cloudant.com".format(self._cloudant_user)
-        self._cloudant_user_header = kwargs.get("x_cloudant_user") or self._cloudant_user
-        self._encoder=kwargs.get('encoder') or json.JSONEncoder
+        self._cloudant_url = kwargs.get(
+            "cloudant_url"
+            ) or "https://{0}.cloudant.com".format(self._cloudant_user)
+        self._cloudant_user_header = kwargs.get(
+            "x_cloudant_user"
+            ) or self._cloudant_user
+        self._encoder = kwargs.get('encoder') or json.JSONEncoder
 
     def connect(self):
         """
@@ -55,7 +61,9 @@ class Cloudant(dict):
         """
         self._r_session = requests.Session()
         self._r_session.auth = (self._cloudant_user, self._cloudant_token)
-        self._r_session.headers.update({'X-Cloudant-User': self._cloudant_user_header})
+        self._r_session.headers.update(
+            {'X-Cloudant-User': self._cloudant_user_header}
+        )
         self.session_login(self._cloudant_user, self._cloudant_token)
         self._cloudant_session = self.session()
 
@@ -143,14 +151,6 @@ class Cloudant(dict):
         ))
         return "Basic {0}".format(hash_)
 
-    def set_permissions(self):
-        #TODO implement this when available in v2
-        pass
-
-    def generate_api_key(self):
-        # TODO implement this when available in v2
-        pass
-
     def all_dbs(self):
         """
         _all_dbs_
@@ -182,7 +182,9 @@ class Cloudant(dict):
         new_db = CloudantDatabase(self, dbname)
         if new_db.exists():
             if kwargs.get('throw_on_exists', True):
-                raise CloudantException("Database {0} already exists".format(dbname))
+                raise CloudantException(
+                    "Database {0} already exists".format(dbname)
+                )
         new_db.create()
         super(Cloudant, self).__setitem__(dbname, new_db)
         return new_db
@@ -199,7 +201,9 @@ class Cloudant(dict):
         """
         db = CloudantDatabase(self, dbname)
         if not db.exists():
-            raise CloudantException("Database {0} doesnt exist".format(dbname))
+            raise CloudantException(
+                "Database {0} doesnt exist".format(dbname)
+            )
         db.delete()
         if dbname in self.keys():
             super(Cloudant, self).__delitem__(dbname)
@@ -272,9 +276,10 @@ class Cloudant(dict):
         """
         _setitem_
 
-        Override setitem behaviour to verify that only CloudantDatabase instances
-        are added as keys.
-        If remote is True, will also create the database remotely if it doesnt exist
+        Override setitem behaviour to verify that only
+        CloudantDatabase instances are added as keys.
+        If remote is True, will also create the database
+        remotely if it doesnt exist
 
         """
         if not isinstance(value, CloudantDatabase):
@@ -284,4 +289,138 @@ class Cloudant(dict):
             value.create()
         super(Cloudant, self).__setitem__(key, value)
 
+    def _usage_endpoint(self, endpoint, year=None, month=None):
+        """
+        _usage_endpoint_
 
+        Common helper for getting usage and billing reports with
+        optional year and month URL elements
+
+        """
+        if year is not None:
+            endpoint = posixpath.join(endpoint, str(year))
+        if month is not None:
+            if year is None:
+                raise CloudantException(
+                    (
+                        "must supply both year and month "
+                        "to usage endpoint: {0}"
+                    ).format(endpoint)
+                )
+            endpoint = posixpath.join(endpoint, str(month))
+        resp = self._r_session.get(endpoint)
+        resp.raise_for_status()
+        return resp.json()
+
+    def bill(self, year=None, month=None):
+        """
+        _bill_
+
+        Get your cloudant billing data, optionally for a given year/month
+
+        :param year: int, year, eg 2014
+        :param month: int, 1-12
+
+        :returns: JSON billing data structure
+        """
+        endpoint = posixpath.join(self._cloudant_url, '_api', 'v2', 'bill')
+        return self._usage_endpoint(endpoint, year, month)
+
+    def volume_usage(self, year=None, month=None):
+        """
+        Volume usage for this account.
+
+        :param year: int, year, eg 2014
+        :param month: int, 1-12
+
+        """
+        endpoint = posixpath.join(
+            self._cloudant_url, '_api', 'v2', 'usage', 'data_volume'
+        )
+        return self._usage_endpoint(endpoint, year, month)
+
+    def requests_usage(self, year=None, month=None):
+        """
+        Requests usage for this account.
+
+        :param year: int, year, eg 2014
+        :param month: int, 1-12
+
+        """
+        endpoint = posixpath.join(
+            self._cloudant_url, '_api', 'v2', 'usage', 'requests'
+        )
+        return self._usage_endpoint(endpoint, year, month)
+
+    def shared_databases(self):
+        """
+        _shared_databases_
+
+        Get a list of databases shared with this account in the format
+        cloudant_user/database_name
+        """
+        endpoint = posixpath.join(
+            self._cloudant_url, '_api', 'v2', 'user', 'shared_databases'
+        )
+        resp = self._r_session.get(endpoint)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get('shared_databases', [])
+
+    def generate_api_key(self):
+        """
+        _generate_api_key_
+
+        Create a new API Key/pass pair for accessing this
+        account.
+
+        """
+        endpoint = posixpath.join(
+            self._cloudant_url, '_api', 'v2', 'api_keys'
+        )
+        resp = self._r_session.post(endpoint)
+        resp.raise_for_status()
+        return resp.json()
+
+    def cors_configuration(self):
+        """
+
+        GET /_api/v2/user/config/cors   Returns the current CORS configuration
+
+        """
+        endpoint = posixpath.join(
+            self._cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
+        )
+        resp = self._r_session.get(endpoint)
+        resp.raise_for_status()
+        return resp.json()
+
+    def disable_cors(self):
+        """
+        _disable_cors_
+
+        Switch CORS off for this account
+
+        """
+        pass
+
+    def cors_origins(self):
+        """
+        _cors_origins_
+
+        Retrieve a list of CORS origins
+
+        """
+        pass
+
+    def update_cors_configuration(
+            self,
+            enable_cors=True,
+            allow_credentials=True,
+            *origins):
+        """
+
+        PUT /_api/v2/user/config/cors   Changes the CORS configuration
+
+        """
+        pass

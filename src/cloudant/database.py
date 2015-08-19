@@ -39,6 +39,12 @@ class CloudantDatabase(dict):
         )
 
     @property
+    def security_url(self):
+        parts = ['_api', 'v2', 'db', self._database_name,'_security']
+        url = posixpath.join(self._database_host, *parts)
+        return url
+
+    @property
     def creds(self):
         """
         _creds_
@@ -290,3 +296,149 @@ class CloudantDatabase(dict):
                     yield doc
 
             raise StopIteration
+
+    def security_document(self):
+        """
+        _security_document_
+
+        Fetch the security document for this database
+        which contains information about who the database
+        is shared with
+
+        GET _api/v2/db/<dbname>/_security
+
+        """
+        resp = self._r_session.get(self.security_url)
+        resp.raise_for_status()
+        return resp.json()
+
+    def share_database(self, username, reader=True, writer=False, admin=False):
+        """
+        _share_database_
+
+        Share this database with the username provided.
+        You can grant varying degrees of access rights,
+        default is to share read-only, but writing or admin
+        permissions can be added by setting the appropriate flags
+        If the user already has this database shared with them it
+        will modify/overwrite the existing permissions
+
+        :param username: Cloudant Username to share the database with
+        :param reader: Grant named user read access if true
+        :param writer: Grant named user write access if true
+        :param admin: Grant named user admin access if true
+
+        """
+        doc = self.security_document()
+        data = doc.get('cloudant', {})
+        perms = []
+        if reader:
+            perms.append('_reader')
+        if writer:
+            perms.append('_writer')
+        if admin:
+            perms.append('_admin')
+
+        data[username] = perms
+        doc['cloudant'] = data
+        resp = self._r_session.put(
+            self.security_url,
+            data=json.dumps(doc),
+            headers={'Content-Type': 'application/json'}
+            )
+        resp.raise_for_status()
+        return resp.json()
+
+    def unshare_database(self, username):
+        """
+        _unshare_database_
+
+        Remove all sharing with the named user for this database.
+        This will remove the entry for the user from the security doc
+        To modify permissions, instead of remove thame,
+        use the share_database method
+
+        """
+        doc = self.security_document()
+        data = doc.get('cloudant', {})
+        if username in data:
+            del data[username]
+        doc['cloudant'] = data
+        resp = self._r_session.put(
+            self.security_url,
+            data=json.dumps(doc),
+            headers={'Content-Type': 'application/json'}
+            )
+        resp.raise_for_status()
+        return resp.json()
+
+    def bulk_docs(self, *keys):
+        """
+        _bulk_docs_
+
+        Retrieve documents for given list of keys via bulk doc API
+        POST    /db/_all_docs   Returns certain rows from the built-in view of all documents
+
+        """
+        pass
+
+    def bulk_insert(self, *docs):
+        """
+        _bulk_insert_
+
+        POST multiple docs for insert, each doc must be a dict containing
+        _id and _rev
+
+        POST    /db/_bulk_docs  Insert multiple documents in to the database in a single request
+
+        """
+        pass
+
+    def db_updates(self):
+        """
+        GET /_db_updates    Returns information about databases that have been updated
+
+        """
+        pass
+
+    def shards(self):
+        """
+        GET /db/_shards Returns information about the shards in a database or the shard a document belongs to
+
+        """
+        pass
+
+    def missing_revisions(self):
+        """
+        POST    /db/_missing_revs   Given a list of document revisions, returns the document revisions that do not exist in the database
+
+        """
+        pass
+
+    def revisions_diff(self, *revisions):
+        """
+        POST    /db/_revs_diff  Given a list of document revisions, returns differences between the given revisions and ones that are in the database
+
+        """
+        pass
+
+    def get_revision_limit(self, doc):
+        """
+        GET /db/_revs_limit Gets the limit of historical revisions to store for a single document in the database
+
+        """
+        pass
+
+    def set_revision_limit(self, doc, limit):
+        """
+        PUT /db/_revs_limit Sets the limit of historical revisions to store for a single document in the database
+
+        """
+        pass
+
+    def view_cleanup(self):
+        """
+        POST    /db/_view_cleanup   Removes view files that are not used by any design document
+
+        """
+        pass

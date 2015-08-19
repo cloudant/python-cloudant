@@ -6,6 +6,7 @@ Common exception classes for cloudant python client
 
 """
 
+
 class CloudantException(Exception):
     """
     _CloudantException_
