@@ -63,7 +63,7 @@ class CouchDatabase(dict):
         return resp.json()
 
     def doc_count(self):
-        return self._metadata().get('doc_count')
+        return self.metadata().get('doc_count')
 
     def create_document(self, data, throw_on_exists=False):
         doc = CloudantDocument(self, data.get('_id'))
