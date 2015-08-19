@@ -18,9 +18,9 @@ class CouchDB(dict):
     """
     _CouchDB_
 
-    Object that encapsulates a cloudant account,
-    handling top level user API calls, database
-    creation, token generation et al.
+    Object that encapsulates a CouchDB database
+    server and user account, handling top level user API calls,
+    database creation, token generation et al.
 
     Maintains a requests.Session for working with the
     account specified in the ctor
