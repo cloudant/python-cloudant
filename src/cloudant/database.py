@@ -17,13 +17,14 @@ from .index import python_to_couch, Index
 from .changes import Feed
 
 
-class CloudantDatabase(dict):
+class CouchDatabase(dict):
     """
-    _CloudantDatabase_
+    _CouchDatabase_
+
 
     """
     def __init__(self, cloudant, database_name, fetch_limit=100):
-        super(CloudantDatabase, self).__init__()
+        super(CouchDatabase, self).__init__()
         self._cloudant_account = cloudant
         self._database_host = cloudant._cloudant_url
         self._database_name = database_name
@@ -37,12 +38,6 @@ class CloudantDatabase(dict):
             self._database_host,
             urllib.quote_plus(self._database_name)
         )
-
-    @property
-    def security_url(self):
-        parts = ['_api', 'v2', 'db', self._database_name,'_security']
-        url = posixpath.join(self._database_host, *parts)
-        return url
 
     @property
     def creds(self):
@@ -74,7 +69,7 @@ class CloudantDatabase(dict):
         doc = CloudantDocument(self, data.get('_id'))
         doc.update(data)
         doc.create()
-        super(CloudantDatabase, self).__setitem__(doc['_id'], doc)
+        super(CouchDatabase, self).__setitem__(doc['_id'], doc)
         return doc
 
     def new_document(self):
@@ -85,7 +80,7 @@ class CloudantDatabase(dict):
         """
         doc = CloudantDocument(self, None)
         doc.create()
-        super(CloudantDatabase, self).__setitem__(doc['_id'], doc)
+        super(CouchDatabase, self).__setitem__(doc['_id'], doc)
         return doc
 
     def design_documents(self):
@@ -241,14 +236,14 @@ class CloudantDatabase(dict):
 
     def __getitem__(self, key):
         if key in self.keys():
-            return super(CloudantDatabase, self).__getitem__(key)
+            return super(CouchDatabase, self).__getitem__(key)
         if key.startswith('_design/'):
             doc = DesignDocument(self, key)
         else:
             doc = CloudantDocument(self, key)
         if doc.exists():
             doc.fetch()
-            super(CloudantDatabase, self).__setitem__(key, doc)
+            super(CouchDatabase, self).__setitem__(key, doc)
             return doc
         else:
             raise KeyError(key)
@@ -268,7 +263,7 @@ class CloudantDatabase(dict):
 
         """
         if not remote:
-            super(CloudantDatabase, self).__iter__()
+            super(CouchDatabase, self).__iter__()
         else:
             next_startkey = 0
             while next_startkey is not None:
@@ -289,13 +284,51 @@ class CloudantDatabase(dict):
                     next_startkey = None
 
                 for doc in docs:
-                    super(CloudantDatabase, self).__setitem__(
+                    super(CouchDatabase, self).__setitem__(
                         doc['id'],
                         doc['doc']
                     )
                     yield doc
 
             raise StopIteration
+
+    def bulk_docs(self, *keys):
+        """
+        _bulk_docs_
+
+        Retrieve documents for given list of keys via bulk doc API
+        POST    /db/_all_docs   Returns certain rows from the built-in view of all documents
+
+        """
+        pass
+
+    def bulk_insert(self, *docs):
+        """
+        _bulk_insert_
+
+        POST multiple docs for insert, each doc must be a dict containing
+        _id and _rev
+
+        POST    /db/_bulk_docs  Insert multiple documents in to the database in a single request
+
+        """
+        pass
+
+    def db_updates(self):
+        """
+        GET /_db_updates    Returns information about databases that have been updated
+
+        """
+        pass
+
+
+class CloudantDatabase(CouchDatabase):
+    """
+    _CloudantDatabase_
+
+    """
+    def __init__(self, cloudant, database_name, fetch_limit=100):
+        super(CloudantDatabase, self).__init__(cloudant, database_name, fetch_limit=100)
 
     def security_document(self):
         """
@@ -311,6 +344,11 @@ class CloudantDatabase(dict):
         resp = self._r_session.get(self.security_url)
         resp.raise_for_status()
         return resp.json()
+
+    def security_url(self):
+        parts = ['_api', 'v2', 'db', self._database_name, '_security']
+        url = posixpath.join(self._database_host, *parts)
+        return url
 
     def share_database(self, username, reader=True, writer=False, admin=False):
         """
@@ -371,35 +409,6 @@ class CloudantDatabase(dict):
             )
         resp.raise_for_status()
         return resp.json()
-
-    def bulk_docs(self, *keys):
-        """
-        _bulk_docs_
-
-        Retrieve documents for given list of keys via bulk doc API
-        POST    /db/_all_docs   Returns certain rows from the built-in view of all documents
-
-        """
-        pass
-
-    def bulk_insert(self, *docs):
-        """
-        _bulk_insert_
-
-        POST multiple docs for insert, each doc must be a dict containing
-        _id and _rev
-
-        POST    /db/_bulk_docs  Insert multiple documents in to the database in a single request
-
-        """
-        pass
-
-    def db_updates(self):
-        """
-        GET /_db_updates    Returns information about databases that have been updated
-
-        """
-        pass
 
     def shards(self):
         """
