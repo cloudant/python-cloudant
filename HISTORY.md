@@ -1,5 +1,53 @@
 CIRRUS_UPDATE_SENTINEL
 
+Release: 0.0.6 Created: 2015-08-19T21:24:47.097243
+ - Commit History:
+ -- Author: petevg
+ --- 2015-05-20T15:31:54Z: cirrus release: new release created for release/0.0.5
+ --- 2015-05-20T15:31:00Z: Merge pull request #19 from evansde77/feature/47293-include-docs-in-changes
+
+Changes feeds can now take an include_docs param.
+ --- 2015-05-20T15:14:37Z: Changes feeds can now take an include_docs param.
+ -- Author: jcounts
+ --- 2015-05-15T14:27:59Z: cirrus release: new release created for release/0.0.4
+ --- 2015-05-15T14:27:20Z: Merge pull request #17 from evansde77/feature/use-latest-requests
+
+merged #17
+ --- 2015-05-14T21:24:24Z: requests==2.7.0
+ --- 2015-05-14T21:15:19Z: grab latest version
+ --- 2015-05-13T20:44:24Z: cirrus release: new release created for release/0.0.3
+ --- 2015-05-13T20:43:18Z: Merge pull request #16 from evansde77/feature/integrate-Feed-into-database-changes
+
+merged #16
+ --- 2015-05-13T19:57:16Z: using Feed
+ -- Author: evansde77
+ --- 2015-01-26T22:51:45Z: Merge pull request #12 from evansde77/feature/view-iter
+
+Feature/view iter
+ --- 2015-01-26T22:48:11Z: docstring updates
+ --- 2015-01-26T20:55:07Z: pep8
+ --- 2015-01-26T20:27:18Z: tweak custom_index for database
+ --- 2015-01-26T20:22:25Z: add iteration support to page through views using the index object
+ --- 2015-01-23T17:44:23Z: make argument errors first class exceptions
+ --- 2015-01-23T17:28:17Z: Merge pull request #11 from evansde77/feature/views-part-2
+
+Feature/views part 2
+ --- 2015-01-23T17:24:09Z: refactor python_to_couch to be more type driven, less if nightmare
+ --- 2015-01-23T16:53:42Z: saner skip/limit behaviour, code org
+ --- 2015-01-22T20:07:56Z: pr feedback
+ --- 2015-01-22T19:11:23Z: index support
+ --- 2015-01-22T18:56:33Z: common index class
+ --- 2015-01-22T02:32:31Z: refine slicing, add primary index to DB object
+ --- 2015-01-21T23:24:48Z: initial working view query API
+ --- 2015-01-21T17:31:55Z: Merge branch 'develop' into feature/views-part-2
+ --- 2015-01-21T17:31:30Z: pass ddoc instance to views
+ --- 2015-01-20T18:10:07Z: Merge pull request #10 from evansde77/feature/views
+
+Feature/views
+ --- 2015-01-20T17:42:39Z: pr feedback
+ --- 2015-01-20T16:46:09Z: expand test coverage for document
+ --- 2015-01-20T00:01:12Z: pep8
+
 Release: 0.0.5 Created: 2015-05-20T15:31:54.154302
  - Commit History:
  -- Author: jcounts
