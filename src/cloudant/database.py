@@ -349,6 +349,7 @@ class CloudantDatabase(dict):
             perms.append('_admin')
 
         data[username] = perms
+        doc['cloudant'] = data
         resp = self._r_session.put(
             self.security_url,
             data=json.dumps(doc),
@@ -371,6 +372,7 @@ class CloudantDatabase(dict):
         data = doc.get('cloudant', {})
         if username in data:
             del data[username]
+        doc['cloudant'] = data
         resp = self._r_session.put(
             self.security_url,
             data=json.dumps(doc),
@@ -378,8 +380,6 @@ class CloudantDatabase(dict):
             )
         resp.raise_for_status()
         return resp.json()
-
-
 
     def bulk_docs(self, *keys):
         """
@@ -451,5 +451,3 @@ class CloudantDatabase(dict):
 
         """
         pass
-
-
