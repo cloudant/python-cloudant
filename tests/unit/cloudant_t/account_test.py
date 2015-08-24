@@ -9,11 +9,210 @@ import mock
 import unittest
 import requests
 
-from cloudant.account import Cloudant
+from cloudant.account import Cloudant, CouchDB
 from cloudant.errors import CloudantException
 
+class CouchDBAccountTests(unittest.TestCase):
+    def setUp(self):
+        """
+        mock out requests.Session
+        """
+        self.patcher = mock.patch.object(requests, "Session")
+        self.mock_session = self.patcher.start()
+        self.mock_instance = mock.Mock()
+        self.mock_instance.auth = None
+        self.mock_instance.headers = {}
+        self.mock_instance.cookies = {'AuthSession': 'COOKIE'}
+        self.mock_instance.get = mock.Mock()
+        self.mock_instance.post = mock.Mock()
+        self.mock_instance.delete = mock.Mock()
+        self.mock_instance.put = mock.Mock()
+        self.mock_session.return_value = self.mock_instance
+        self.username = "steve"
+        self.password = "abc123"
 
-class AccountTests(unittest.TestCase):
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_session_calls(self):
+        """test session related methods"""
+        c = CouchDB(self.username, self.password)
+        c.connect()
+
+        self.failUnless(self.mock_session.called)
+
+        self.assertEqual(
+            self.mock_instance.auth,
+            (self.username, self.password)
+        )
+        self.assertEqual(
+            self.mock_instance.headers,
+            {}
+        )
+
+        self.assertEqual('COOKIE', c.session_cookie())
+
+        self.failUnless(self.mock_instance.get.called)
+        self.mock_instance.get.assert_has_calls(
+            mock.call('http://127.0.0.1:5984/_session')
+        )
+
+        self.failUnless(self.mock_instance.post.called)
+        self.mock_instance.post.assert_has_calls(
+            mock.call(
+                'http://127.0.0.1:5984/_session',
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                data={'password': 'abc123', 'name': 'steve'}
+            )
+        )
+
+        c.disconnect()
+        self.failUnless(self.mock_instance.delete.called)
+        self.mock_instance.delete.assert_has_calls(
+            mock.call('http://127.0.0.1:5984/_session')
+        )
+
+    def test_create_delete_methods(self):
+
+        mock_resp = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = {}
+        mock_resp.text = "mock response"
+        mock_resp.status_code = 201
+
+        mock_del = mock.Mock()
+        mock_del.status_code = 200
+
+        mock_get = mock.Mock()
+        mock_get.status_code = 404
+
+        self.mock_instance.put.return_value = mock_resp
+        self.mock_instance.delete.return_value = mock_del
+        self.mock_instance.get.return_value = mock_get
+
+        # instantiate and connect
+        c = CouchDB(self.username, self.password)
+        c.connect()
+        self.failUnless(self.mock_session.called)
+        # create db call
+        c.create_database("unittest")
+        self.mock_instance.get.assert_has_calls(
+            mock.call('http://127.0.0.1:5984/unittest')
+        )
+        self.mock_instance.put.assert_has_calls(
+            mock.call('http://127.0.0.1:5984/unittest')
+        )
+
+        # delete db call
+        mock_get.reset_mocks()
+        mock_get.status_code = 200
+        c.delete_database("unittest")
+        self.mock_instance.get.assert_has_calls(
+            mock.call('http://127.0.0.1:5984/unittest')
+        )
+
+        self.mock_instance.delete.assert_has_calls(
+            mock.call('http://127.0.0.1:5984/unittest')
+        )
+
+        # create existing db fails
+        mock_get.reset_mocks()
+        mock_get.status_code = 200
+        self.assertRaises(CloudantException, c.create_database, "unittest")
+
+        # delete non-existing db fails
+        mock_get.reset_mocks()
+        mock_get.status_code = 404
+        self.assertRaises(CloudantException, c.delete_database, "unittest")
+
+    def test_basic_auth_str(self):
+        c = CouchDB(self.username, self.password)
+        auth_str = c.basic_auth_str()
+        self.assertTrue(auth_str.startswith("Basic"))
+        self.assertFalse(auth_str.endswith("Basic "))
+        self.assertFalse(auth_str.endswith("Basic"))
+
+    def test_all_dbs(self):
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = ['db1', 'db2']
+        self.mock_instance.get.return_value = mock_resp
+        c = CouchDB(self.username, self.password)
+        c.connect()
+        self.assertEqual(c.all_dbs(), mock_resp.json.return_value)
+        self.failUnless(mock_resp.raise_for_status.called)
+
+    def test_keys(self):
+        c = CouchDB(self.username, self.password)
+        c.connect()
+        c.all_dbs = mock.Mock()
+        c.all_dbs.return_value = ['db1', 'db2']
+        self.assertEqual(c.keys(), [])
+        self.assertEqual(c.keys(remote=True), c.all_dbs.return_value)
+
+    def test_getitem(self):
+        c = CouchDB(self.username, self.password)
+        c.connect()
+        c['a'] = c._DATABASE_CLASS(c, 'a')
+        c['b'] = c._DATABASE_CLASS(c, 'b')
+
+        self.failUnless(isinstance(c['a'], c._DATABASE_CLASS))
+        self.failUnless(isinstance(c['b'], c._DATABASE_CLASS))
+        self.assertRaises(KeyError, c.__getitem__, 'd')
+
+        with mock.patch('cloudant.account.CouchDatabase.exists') as mock_exists:
+            mock_exists.return_value = True
+            self.failUnless(isinstance(c['c'], c._DATABASE_CLASS))
+
+    def test_setitem(self):
+        c = CouchDB(self.username, self.password)
+        c.connect()
+        self.assertRaises(CloudantException, c.__setitem__, 'c', 'womp')
+
+        value = c._DATABASE_CLASS(c, 'a')
+        c.__setitem__('c', value)
+        self.failUnless(c['c'] == value)
+
+        value.exists = mock.Mock()
+        value.exists.return_value = False
+        value.create = mock.Mock()
+        c.__setitem__('c', value, remote=True)
+        self.failUnless(value.create.called)
+        self.failUnless(c['c'] == value)
+
+    def test_delitem(self):
+        c = CouchDB(self.username, self.password)
+        c.connect()
+        c.delete_database = mock.Mock()
+
+        c['a'] = c._DATABASE_CLASS(c, 'a')
+        c['b'] = c._DATABASE_CLASS(c, 'b')
+
+        del c['a']
+        self.failUnless('b' in c)
+        self.failUnless('a' not in c)
+
+        c.__delitem__('b', remote=True)
+        self.failUnless(c.delete_database.called)
+
+    def test_get(self):
+        c = CouchDB(self.username, self.password)
+        c.connect()
+
+        c['a'] = c._DATABASE_CLASS(c, 'a')
+
+        self.assertEqual(c.get('a'), c['a'])
+        self.assertEqual(c.get('d', None), None)
+
+        with mock.patch('cloudant.account.CouchDatabase.exists') as mock_exists:
+            mock_exists.return_value = True
+            self.failUnless(isinstance(c.get('b', remote=True), c._DATABASE_CLASS))
+
+        self.failUnless(c.get('d', None, remote=True) is None)
+
+
+class CloudantAccountTests(unittest.TestCase):
     """
     Unittests with mocked out remote calls
 
