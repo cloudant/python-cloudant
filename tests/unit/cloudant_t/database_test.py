@@ -86,48 +86,6 @@ class CouchDBTest(unittest.TestCase):
             ]
         }
 
-        self.changes = {
-            "results": [
-                {
-                    "seq": "1-g1AAAAEOeJzLYWBgYMlgTmGQS0lKzi9KdUhJMtbLT",
-                    "id": "cat",
-                    "changes": [
-                        {
-                            "rev": "2-97e93126a6337d173f9b2810c0b9c0b6"
-                        }
-                    ],
-                    "deleted": True
-                },
-                {
-                    "seq": "2-g1AAAAE9eJzLYWBgYMlgTmGQS0lKzi9KdUhJMtbLTc",
-                    "id": "kookaburra",
-                    "changes": [
-                        {
-                          "rev": "4-6038cf35dfe1211f85484dec951142c7"
-                        }
-                    ]
-                },
-                {
-                    "seq": "3-g1AAAAE9eJzLYWBgYMlgTmGQS0lKzi9KdUhJMtbLTczJL",
-                    "id": "badger",
-                    "changes": [
-                        {
-                          "rev": "4-51aa94e4b0ef37271082033bba52b850"
-                        }
-                    ]
-                },
-                {
-                    "seq": "4-g1AAAAE9eJzLYWBgYMlgTmGQS0lKzi9KdUhJMtbLTczJLy",
-                    "id": "panda",
-                    "changes": [
-                        {
-                          "rev": "2-f578490963b0bd266f6c5bbf92302977"
-                        }
-                    ]
-                }
-            ]
-        }
-
     def test_create(self):
         mock_resp = mock.Mock()
         mock_resp.status_code = 201
