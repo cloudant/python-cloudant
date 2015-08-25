@@ -7,6 +7,7 @@ import mock
 import unittest
 
 from cloudant.views import Code, View, DesignDocument
+from cloudant.index import Index
 from cloudant.document import Document
 
 
@@ -66,6 +67,16 @@ class ViewTests(unittest.TestCase):
             "https://bob.cloudant.com/unittest/_design/tests/_view/view1"
         )
 
+    def test_view_context(self):
+        db = mock.Mock()
+        db._database_name = 'unittest'
+        ddoc = DesignDocument(db, "_design/tests")
+        ddoc._database_host = "https://bob.cloudant.com"
+        view1 = View(ddoc, "view1", map_func=self.map_func)
+
+        with view1.custom_index() as v:
+            self.failUnless(isinstance(v, Index))
+
 
 class DesignDocTests(unittest.TestCase):
     """
@@ -90,6 +101,29 @@ class DesignDocTests(unittest.TestCase):
         self.assertEqual(view['view1']['map'], 'MAP')
         self.assertEqual(view['view1']['reduce'], 'REDUCE')
         self.failUnless('view1' in ddoc.views)
+
+    def test_ddoc_add_view(self):
+        mock_database = mock.Mock()
+        with mock.patch('cloudant.views.DesignDocument.save') as mock_save:
+            ddoc = DesignDocument(mock_database, '_design/unittest')
+            ddoc['views'] = {
+                'view1': {'map': "MAP", 'reduce': 'REDUCE'}
+            }
+            ddoc.add_view('view2', "MAP2")
+            self.failUnless('view2' in ddoc['views'])
+            self.assertEqual(ddoc['views']['view2'].map, 'MAP2')
+            self.assertEqual(ddoc['views']['view2'].reduce, None)
+            self.failUnless(mock_save.called)
+
+    def test_list_views(self):
+        mock_database = mock.Mock()
+        ddoc = DesignDocument(mock_database, '_design/unittest')
+        ddoc['views'] = {
+            'view1': {'map': "MAP", 'reduce': 'REDUCE'},
+            'view2': {'map': "MAP", 'reduce': 'REDUCE'},
+        }
+        self.assertEqual(ddoc.list_views(), ['view1', 'view2'])
+
 
 if __name__ == '__main__':
     unittest.main()
