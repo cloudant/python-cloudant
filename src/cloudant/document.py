@@ -13,9 +13,9 @@ import requests
 from .errors import CloudantException
 
 
-class CloudantDocument(dict):
+class Document(dict):
     """
-    _CloudantDocument_
+    _Document_
 
     JSON document object, used to manipulate the documents
     in a couch or cloudant database. In addition to basic CRUD
@@ -81,8 +81,8 @@ class CloudantDocument(dict):
         resp.raise_for_status()
         data = resp.json()
         self._document_id = data['id']
-        super(CloudantDocument, self).__setitem__('_id', data['id'])
-        super(CloudantDocument, self).__setitem__('_rev', data['rev'])
+        super(Document, self).__setitem__('_id', data['id'])
+        super(Document, self).__setitem__('_rev', data['rev'])
         return
 
     def fetch(self):
@@ -124,10 +124,12 @@ class CloudantDocument(dict):
     def field_append(doc, field, value):
         """Append a value to a field in a doc."""
         doc[field].append(value)
+
     @staticmethod
     def field_remove(doc, field, value):
         """Remove a value from a field in a doc."""
         doc[field].remove(value)
+
     @staticmethod
     def field_replace(doc, field, value):
         """Replace a field in a doc with a value."""

@@ -20,7 +20,7 @@ class DocumentTest(unittest.TestCase):
         )
 
     def tearDown(self):
-        with cloudant(self.user, self.passwd) as c:        
+        with cloudant(self.user, self.passwd) as c:
             c.delete_database(self.dbname)
 
     def test_delete(self):
@@ -35,5 +35,7 @@ class DocumentTest(unittest.TestCase):
             doc1.delete()
 
             self.assertRaises(requests.HTTPError, doc1.fetch)
-            
-            
+
+if __name__ == '__main__':
+    unittest.main()
+
