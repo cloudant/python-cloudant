@@ -7,7 +7,7 @@ import mock
 import unittest
 
 from cloudant.views import Code, View, DesignDocument
-from cloudant.document import CloudantDocument
+from cloudant.document import Document
 
 
 class CodeTests(unittest.TestCase):
@@ -72,7 +72,7 @@ class DesignDocTests(unittest.TestCase):
     tests for design doc object
 
     """
-    @mock.patch.object(CloudantDocument, 'fetch')
+    @mock.patch.object(Document, 'fetch')
     def test_design_doc(self, mock_fetch):
         """test overridden methods work as expected"""
         mock_database = mock.Mock()

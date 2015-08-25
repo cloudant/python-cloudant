@@ -2,7 +2,7 @@
 """
 _document_test_
 
-Test class for CloudantDocument class
+Test class for Document class
 
 """
 
@@ -12,10 +12,10 @@ import unittest
 
 from cloudant.errors import CloudantException
 from cloudant.database import CloudantDatabase
-from cloudant.document import CloudantDocument
+from cloudant.document import Document
 
 
-class CloudantDocumentTest(unittest.TestCase):
+class DocumentTest(unittest.TestCase):
 
     def setUp(self):
 
@@ -35,7 +35,7 @@ class CloudantDocumentTest(unittest.TestCase):
 
     def test_document_crud(self):
         """test basic crud operations with mocked backend"""
-        doc = CloudantDocument(self.database, "DUCKUMENT")
+        doc = Document(self.database, "DUCKUMENT")
         #exists
         mock_resp = mock.Mock()
         mock_resp.status_code = 200
@@ -147,7 +147,7 @@ class CloudantDocumentTest(unittest.TestCase):
         mock_encode = mock.Mock()
         mock_encode.encode = mock.Mock()
 
-        doc = CloudantDocument(self.database, "DUCKUMENT")
+        doc = Document(self.database, "DUCKUMENT")
         doc._encoder = mock.Mock()
         doc._encoder.return_value = mock_encode
 
@@ -181,7 +181,7 @@ class CloudantDocumentTest(unittest.TestCase):
                 raise err
 
         # Mock our our doc
-        doc = CloudantDocument(self.database, "HOWARD")
+        doc = Document(self.database, "HOWARD")
 
         mock_put_resp = mock.Mock()
         mock_put_resp.side_effect = mock.Mock()
@@ -226,7 +226,7 @@ class CloudantDocumentTest(unittest.TestCase):
             "baz": [1, 2, 3, 4, 5]
         }
 
-        c_doc = CloudantDocument(self.database, "HOWARD")
+        c_doc = Document(self.database, "HOWARD")
 
         c_doc.field_append(doc, "baz", 10)
         c_doc.field_remove(doc, "baz", 3)

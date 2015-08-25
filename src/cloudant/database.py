@@ -10,7 +10,7 @@ import contextlib
 import posixpath
 import urllib
 
-from .document import CloudantDocument
+from .document import Document
 from .views import DesignDocument
 from .errors import CloudantException
 from .index import python_to_couch, Index
@@ -97,10 +97,10 @@ class CouchDatabase(dict):
         :param throw_on_exists: Optional control on wether to raise an exception
            if the _id already exists as a document in the database
 
-        :returns: CloudantDocument instance corresponding to the new doc
+        :returns: Document instance corresponding to the new doc
 
         """
-        doc = CloudantDocument(self, data.get('_id'))
+        doc = Document(self, data.get('_id'))
         doc.update(data)
         doc.create()
         super(CouchDatabase, self).__setitem__(doc['_id'], doc)
@@ -112,11 +112,11 @@ class CouchDatabase(dict):
 
         Creates new, empty document, autogenerating the _id.
 
-        :returns: CloudantDocument instance corresponding to newly created
+        :returns: Document instance corresponding to newly created
           document.
 
         """
-        doc = CloudantDocument(self, None)
+        doc = Document(self, None)
         doc.create()
         super(CouchDatabase, self).__setitem__(doc['_id'], doc)
         return doc
@@ -289,7 +289,7 @@ class CouchDatabase(dict):
         if key.startswith('_design/'):
             doc = DesignDocument(self, key)
         else:
-            doc = CloudantDocument(self, key)
+            doc = Document(self, key)
         if doc.exists():
             doc.fetch()
             super(CouchDatabase, self).__setitem__(key, doc)

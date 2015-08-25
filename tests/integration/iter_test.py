@@ -81,4 +81,7 @@ class IterTest(unittest.TestCase):
 
             unique_ids = set([doc['id'] for doc in docs])
             self.assertTrue(len(unique_ids) == 300)
-        
+
+if __name__ == '__main__':
+    unittest.main()
+
