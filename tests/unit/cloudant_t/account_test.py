@@ -336,6 +336,106 @@ class CloudantAccountTests(unittest.TestCase):
         self.assertFalse(auth_str.endswith("Basic "))
         self.assertFalse(auth_str.endswith("Basic"))
 
+    def test_usage_endpoint(self):
+        """test the usage endpoint method"""
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = {'usage': 'mock'}
+
+        mock_get = mock.Mock()
+        mock_get.return_value = mock_resp
+        self.mock_instance.get = mock_get
+
+        c = Cloudant(self.username, self.password)
+        c.connect()
+
+        usage = c._usage_endpoint('endpoint', 2015, 12)
+        self.assertEqual(usage,  mock_resp.json.return_value)
+        self.failUnless(mock_resp.raise_for_status.called)
+
+        mock_get.assert_has_calls(mock.call('endpoint/2015/12'))
+
+        self.assertRaises(
+            CloudantException,
+            c._usage_endpoint, 'endpoint', month=12
+        )
+
+    def test_bill(self):
+        """test bill API call"""
+        with mock.patch(
+            'cloudant.account.Cloudant._usage_endpoint'
+        ) as mock_usage:
+            mock_usage.return_value = {'usage': 'mock'}
+            c = Cloudant(self.username, self.password)
+            c.connect()
+            bill = c.bill(2015, 12)
+            self.assertEqual(bill, mock_usage.return_value)
+
+    def test_volume_usage(self):
+        with mock.patch(
+            'cloudant.account.Cloudant._usage_endpoint'
+        ) as mock_usage:
+            mock_usage.return_value = {'usage': 'mock'}
+            c = Cloudant(self.username, self.password)
+            c.connect()
+            bill = c.volume_usage(2015, 12)
+            self.assertEqual(bill, mock_usage.return_value)
+
+    def test_requests_usage(self):
+        with mock.patch(
+            'cloudant.account.Cloudant._usage_endpoint'
+        ) as mock_usage:
+            mock_usage.return_value = {'usage': 'mock'}
+            c = Cloudant(self.username, self.password)
+            c.connect()
+            bill = c.requests_usage(2015, 12)
+            self.assertEqual(bill, mock_usage.return_value)
+
+    def test_shared_databases(self):
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = {'shared_databases': ['database1', 'database2']}
+        self.mock_instance.get = mock.Mock()
+        self.mock_instance.get.return_value = mock_resp
+
+        c = Cloudant(self.username, self.password)
+        c.connect()
+
+        shared = c.shared_databases()
+        self.assertEqual(shared, ['database1', 'database2'])
+        self.failUnless(mock_resp.raise_for_status.called)
+
+    def test_generate_api_key(self):
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = {'api': 'token'}
+        self.mock_instance.post = mock.Mock()
+        self.mock_instance.post.return_value = mock_resp
+
+        c = Cloudant(self.username, self.password)
+        c.connect()
+
+        api_key = c.generate_api_key()
+        self.assertEqual(api_key, {'api': 'token'})
+        self.failUnless(mock_resp.raise_for_status.called)
+
+    def test_cors_configuration(self):
+        """test getting cors config"""
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = {'cors': 'blimey'}
+        self.mock_instance.get = mock.Mock()
+        self.mock_instance.get.return_value = mock_resp
+
+        c = Cloudant(self.username, self.password)
+        c.connect()
+        cors = c.cors_configuration()
+        self.assertEqual(cors, mock_resp.json.return_value)
+        self.failUnless(mock_resp.raise_for_status.called)
 
 if __name__ == '__main__':
     unittest.main()
