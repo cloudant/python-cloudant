@@ -5,7 +5,7 @@ database unittests
 import mock
 import unittest
 
-from cloudant.database import CouchDatabase
+from cloudant.database import CouchDatabase, CloudantDatabase
 
 
 class CouchDBTest(unittest.TestCase):
@@ -148,6 +148,73 @@ class CouchDBTest(unittest.TestCase):
         self.assertDictContainsSubset({"id": "snipe"}, all_docs["rows"][0])
         self.assertDictContainsSubset({"id": "zebra"}, all_docs["rows"][1])
         self.assertListEqual(keys, ["snipe", "zebra"])
+
+
+class CloudantDBTest(unittest.TestCase):
+    """
+    Tests for additional Cloudant database features
+    """
+    def setUp(self):
+        self.mock_session = mock.Mock()
+        self.mock_session.get = mock.Mock()
+        self.mock_session.post = mock.Mock()
+        self.mock_session.put = mock.Mock()
+        self.mock_session.delete = mock.Mock()
+
+        self.account = mock.Mock()
+        self.account._cloudant_url = "https://bob.cloudant.com"
+        self.account._r_session = self.mock_session
+
+        self.username = "bob"
+        self.db_name = "testdb"
+        self.cl = CloudantDatabase(self.account, self.db_name)
+
+        self.sec_doc = {
+            "_id": "_security",
+            "cloudant": {
+                "someapikey": [
+                    "_reader"
+                ],
+                "nobody": [],
+                "bob": [
+                    "_writer",
+                    "_admin",
+                    "_replicator",
+                    "_reader"
+                ]
+            }
+        }
+
+    def test_security_doc(self):
+        mock_resp = mock.Mock()
+        mock_resp.json = mock.Mock(return_value=self.sec_doc)
+        self.mock_session.get = mock.Mock(return_value=mock_resp)
+
+        security_doc = self.cl.security_document()
+
+        self.failUnless(self.mock_session.get.called)
+        self.assertDictEqual(security_doc, self.sec_doc)
+
+    def test_shared_dbs(self):
+        # share database
+        mock_sec_doc = mock.Mock()
+        mock_sec_doc.json.return_value = self.sec_doc
+        self.mock_session.get.return_value = mock_sec_doc
+        self.mock_session.put.return_value = mock_sec_doc
+
+        shared_resp = self.cl.share_database(
+            'someotheruser',
+            reader=True,
+            writer=True
+        )
+
+        self.failUnless(self.mock_session.get.called)
+        self.failUnless(self.mock_session.put.called)
+        self.assertIn('someotheruser', shared_resp['cloudant'])
+
+        # unshare database
+        unshared_resp = self.cl.unshare_database('someotheruser')
+        self.assertNotIn('someotheruser', unshared_resp['cloudant'])
 
 if __name__ == '__main__':
     unittest.main()
