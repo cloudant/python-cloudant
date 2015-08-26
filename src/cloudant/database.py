@@ -359,7 +359,7 @@ class CouchDatabase(dict):
             url,
             data=json.dumps(data)
         )
-        resp.raise_for_status
+        resp.raise_for_status()
         return resp.json()
 
     def bulk_insert(self, docs):
@@ -383,7 +383,7 @@ class CouchDatabase(dict):
             data=json.dumps(data),
             headers=headers
         )
-        resp.raise_for_status
+        resp.raise_for_status()
         return resp.json()
 
     def db_updates(self):
