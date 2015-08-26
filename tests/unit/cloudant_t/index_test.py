@@ -76,7 +76,6 @@ class IndexTests(unittest.TestCase):
         self.assertEqual(idx[["abc", "def"]], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(key=['abc', 'def']))
 
-
         # list slice
         self.assertEqual(idx["abc":"def"], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(startkey='abc', endkey='def'))
@@ -97,7 +96,32 @@ class IndexTests(unittest.TestCase):
 
         self.assertRaises(CloudantArgumentError, idx.__getitem__, {})
 
+    def test_iter_method(self):
+        """test basics of iter method"""
+        ref = mock.Mock()
+        ref.side_effect = [{'rows': [1,2,3]}, {'rows': []}]
+        idx = Index(ref)
+        results = [x for x in idx]
+        self.assertEqual(results, [1,2,3])
 
+        run_iter = lambda x: [y for y in x]
+
+        idx = Index(ref, skip=1000)
+        self.assertRaises(CloudantArgumentError, run_iter, idx)
+
+        idx = Index(ref, limit=1000)
+        self.assertRaises(CloudantArgumentError, run_iter, idx)
+
+    def test_iter_paging(self):
+        """iterate with multiple pages of data"""
+        ref = mock.Mock()
+        ref.side_effect = [
+            {'rows': [x for x in range(100)]},
+            {'rows': []}
+        ]
+        idx = Index(ref, page_size=10)
+        results = [x for x in idx]
+        self.assertEqual(len(results), 100)
 
 if __name__ == '__main__':
     unittest.main()
