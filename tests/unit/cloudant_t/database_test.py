@@ -4,6 +4,8 @@ database unittests
 
 import mock
 import unittest
+import posixpath
+import json
 
 from cloudant.database import CouchDatabase, CloudantDatabase
 
@@ -22,6 +24,8 @@ class CouchDBTest(unittest.TestCase):
 
         self.username = "bob"
         self.db_name = "testdb"
+
+        self.db_url = posixpath.join(self.account._cloudant_url, self.db_name)
         self.c = CouchDatabase(self.account, self.db_name)
 
         self.db_info = {
@@ -148,6 +152,43 @@ class CouchDBTest(unittest.TestCase):
         self.assertDictContainsSubset({"id": "snipe"}, all_docs["rows"][0])
         self.assertDictContainsSubset({"id": "zebra"}, all_docs["rows"][1])
         self.assertListEqual(keys, ["snipe", "zebra"])
+
+    def test_bulk_docs(self):
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock(return_value=False)
+        self.mock_session.post = mock.Mock(return_value=mock_resp)
+
+        self.c.bulk_docs(['a', 'b', 'c'])
+
+        self.mock_session.post.assert_called_once_with(
+            posixpath.join(self.db_url, '_all_docs'),
+            data=json.dumps({'keys': ['a', 'b', 'c']})
+        )
+
+    def test_bulk_insert(self):
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock(return_value=False)
+        self.mock_session.post = mock.Mock(return_value=mock_resp)
+
+        docs = [
+            {
+                '_id': 'somedoc',
+                'foo': 'bar'
+            },
+            {
+                '_id': 'anotherdoc',
+                '_rev': '1-ahsdjkasdgf',
+                'hello': 'world'
+            }
+        ]
+
+        self.c.bulk_insert(docs)
+
+        self.mock_session.post.assert_called_once_with(
+            posixpath.join(self.db_url, '_bulk_docs'),
+            data=json.dumps({'docs': docs}),
+            headers={'Content-Type': 'application/json'}
+        )
 
 
 class CloudantDBTest(unittest.TestCase):

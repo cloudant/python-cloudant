@@ -341,33 +341,57 @@ class CouchDatabase(dict):
 
             raise StopIteration
 
-    def bulk_docs(self, *keys):
+    def bulk_docs(self, keys):
         """
         _bulk_docs_
 
         Retrieve documents for given list of keys via bulk doc API
-        POST    /db/_all_docs   Returns certain rows from the built-in view of all documents
+
+        POST    /db/_all_docs   Returns certain rows from the built-in view of
+        all documents
+
+        :param list keys: list of document _ids to retrieve
 
         """
-        pass
+        url = posixpath.join(self.database_url, '_all_docs')
+        data = {'keys': keys}
+        resp = self._r_session.post(
+            url,
+            data=json.dumps(data)
+        )
+        resp.raise_for_status()
+        return resp.json()
 
-    def bulk_insert(self, *docs):
+    def bulk_insert(self, docs):
         """
         _bulk_insert_
 
-        POST multiple docs for insert, each doc must be a dict containing
-        _id and _rev
+        POST multiple docs for insert, each doc must be a dict containing _id
+        and _rev if the included document is being updated
 
-        POST    /db/_bulk_docs  Insert multiple documents in to the database in a single request
+        POST    /db/_bulk_docs  Insert multiple documents in to the database in
+        a single request
+
+        :param list docs: List of documents to be created/updated
 
         """
-        pass
+        url = posixpath.join(self.database_url, '_bulk_docs')
+        data = {'docs': docs}
+        headers = {'Content-Type': 'application/json'}
+        resp = self._r_session.post(
+            url,
+            data=json.dumps(data),
+            headers=headers
+        )
+        resp.raise_for_status()
+        return resp.json()
 
     def db_updates(self):
         """
         GET /_db_updates    Returns information about databases that have been updated
 
         """
+
         pass
 
 
