@@ -113,7 +113,8 @@ class ReplicatorDatabase(CloudantDatabase):
             repl_doc = self[repl_id]
         except KeyError:
             raise CloudantException(
-                "Replication {} not found".format(replication_id))
+                "Replication {} not found".format(repl_id)
+            )
         repl_doc.fetch()
         return repl_doc.get('_replication_state')
 
