@@ -127,6 +127,27 @@ class DocumentTest(unittest.TestCase):
         del doc['_rev']
         self.assertRaises(CloudantException, doc.delete)
 
+    def test_save_non_exists(self):
+        """cover save case where doc doesnt exist"""
+        mock_resp = mock.Mock()
+        mock_resp.status_code = 404
+        self.mock_session.get.return_value = mock_resp
+
+        mock_post = mock.Mock()
+        mock_post.raise_for_status = mock.Mock()
+        mock_post.json = mock.Mock()
+        mock_post.json.return_value = {'id': "created", "rev": "created"}
+        mock_put = mock.Mock()
+        mock_put.raise_for_status = mock.Mock()
+        self.mock_session.post.return_value = mock_post
+        self.mock_session.put.return_value = mock_put
+
+        doc = Document(self.database, "DUCKUMENT")
+        doc.save()
+
+        self.assertEqual(doc['_id'], "created")
+        self.assertEqual(doc['_rev'], "created")
+
     def test_document_edit_context(self):
         """test the editing context"""
 

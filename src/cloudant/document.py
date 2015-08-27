@@ -156,7 +156,6 @@ class Document(dict):
                     action, field, value, max_tries, tries=tries+1)
             raise
 
-
     def update_field(self, action, field, value, max_tries=10):
         """
         _update_field_
