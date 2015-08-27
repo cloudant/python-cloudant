@@ -11,7 +11,6 @@ import requests
 import unittest
 
 from cloudant.errors import CloudantException
-from cloudant.database import CloudantDatabase
 from cloudant.document import Document
 
 
@@ -36,7 +35,7 @@ class DocumentTest(unittest.TestCase):
     def test_document_crud(self):
         """test basic crud operations with mocked backend"""
         doc = Document(self.database, "DUCKUMENT")
-        #exists
+        # exists
         mock_resp = mock.Mock()
         mock_resp.status_code = 200
         self.mock_session.get.return_value = mock_resp
@@ -47,7 +46,7 @@ class DocumentTest(unittest.TestCase):
         )
         self.mock_session.get.reset_mock()
 
-        #create
+        # create
         mock_resp = mock.Mock()
         mock_resp.raise_for_status = mock.Mock()
         mock_resp.status_code = 200
@@ -97,14 +96,14 @@ class DocumentTest(unittest.TestCase):
 
         self.mock_session.get.call.assert_has_call(
             mock.call('https://bob.cloudant.com/unittest/DUCKUMENT')
-            )
+        )
         self.mock_session.put.assert_has_call(
             mock.call(
                 'https://bob.cloudant.com/unittest/DUCKUMENT',
                 headers={'Content-Type': 'application/json'},
                 data=mock.ANY
-                )
             )
+        )
         self.mock_session.get.reset_mock()
         self.mock_session.put.reset_mock()
 
@@ -193,6 +192,7 @@ class DocumentTest(unittest.TestCase):
 
         # Setup a routine for testing conflict handing.
         errors = {'conflicts': 0}
+
         def raise_conflict(conflicts=3):
             if errors['conflicts'] < conflicts:
                 errors['conflicts'] += 1
@@ -256,6 +256,93 @@ class DocumentTest(unittest.TestCase):
         self.assertTrue(10 in doc['baz'])
         self.assertFalse(3 in doc['baz'])
         self.assertEqual(doc['foo'], "qux")
+
+    def test_attachment_put(self):
+        """
+        _test_attachment_put_
+        """
+        doc = Document(self.database, "DUCKUMENT")
+        doc_id = 'DUCKUMENT'
+        attachment = 'herpderp.txt'
+        data = '/path/to/herpderp.txt'
+
+        mock_get = mock.Mock()
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.json = mock.Mock()
+        mock_get.json.return_value = {'_id': doc_id, '_rev': '1-abc'}
+        self.mock_session.get.return_value = mock_get
+
+        mock_put = mock.Mock()
+        mock_put.raise_for_status = mock.Mock()
+        mock_put.status_code = 201
+        mock_put.json = mock.Mock()
+        mock_put.json.return_value = {'id': doc_id, 'rev': '2-def', 'ok': True}
+        self.mock_session.put.return_value = mock_put
+
+        resp = doc.put_attachment(
+            attachment,
+            content_type='text/plain',
+            data=data
+        )
+
+        self.assertEqual(resp['id'], doc_id)
+        self.assertTrue(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.put.called)
+
+    def test_attachment_get(self):
+        """
+        _test_attachment_get_
+        """
+        doc = Document(self.database, "DUCKUMENT")
+        doc_id = 'DUCKUMENT'
+        attachment = 'herpderp.txt'
+
+        mock_get = mock.Mock()
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.json = mock.Mock()
+        mock_get.json.return_value = {'_id': doc_id, '_rev': '1-abc'}
+
+        mock_get_attch = mock.Mock()
+        mock_get_attch.raise_for_status = mock.Mock()
+        mock_get_attch.status_code = 200
+        mock_get_attch.content = 'herp derp foo bar'
+
+        self.mock_session.get.side_effect = [mock_get, mock_get_attch]
+
+        resp = doc.get_attachment(attachment, attachment_type='binary')
+
+        self.assertEqual(resp, mock_get_attch.content)
+        self.assertEqual(self.mock_session.get.call_count, 2)
+
+    def test_attachment_delete(self):
+        """
+        _test_attachment_delete_
+        """
+        doc = Document(self.database, "DUCKUMENT")
+        doc_id = 'DUCKUMENT'
+        attachment = 'herpderp.txt'
+
+        mock_get = mock.Mock()
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.json = mock.Mock()
+        mock_get.json.return_value = {'_id': doc_id, '_rev': '2-def'}
+        self.mock_session.get.return_value = mock_get
+
+        mock_del = mock.Mock()
+        mock_del.raise_for_status = mock.Mock()
+        mock_del.status_code = 200
+        mock_del.json = mock.Mock()
+        mock_del.json.return_value = {'id': doc_id, 'rev': '3-ghi', 'ok': True}
+        self.mock_session.delete.return_value = mock_del
+
+        resp = doc.delete_attachment(attachment)
+
+        self.assertEqual(resp['id'], doc_id)
+        self.assertTrue(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.delete.called)
 
 if __name__ == '__main__':
     unittest.main()
