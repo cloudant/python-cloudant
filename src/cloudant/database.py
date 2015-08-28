@@ -569,7 +569,14 @@ class CloudantDatabase(CouchDatabase):
         resp = self._r_session.get(url)
         resp.raise_for_status()
 
-        return resp.json()
+        try:
+            ret = int(resp.json())
+        except ValueError:
+            raise ValueError(
+                'Error - Invalid Response Value: {}'.format(resp.json())
+            )
+
+        return ret
 
     def set_revision_limit(self, limit):
         """

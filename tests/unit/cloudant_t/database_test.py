@@ -388,6 +388,17 @@ class CloudantDBTest(unittest.TestCase):
         self.mock_session.get.assert_called_once_with(expected_url)
         self.assertEqual(get_limit, limit)
 
+    def test_get_revs_limit_bad_resp(self):
+        mock_get = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.json = mock.Mock(return_value='bloop')
+        self.mock_session.get.return_value = mock_get
+
+        with self.assertRaises(ValueError):
+            self.cl.get_revision_limit()
+            self.failUnless(self.mock_session.put.called)
+
     def test_view_cleanup(self):
         expected_url = posixpath.join(
             self.account._cloudant_url,
