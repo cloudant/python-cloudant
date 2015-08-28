@@ -219,3 +219,118 @@ class Document(dict):
 
     def __exit__(self, *args):
         self.save()
+
+    def get_attachment(
+        self,
+        attachment,
+        headers=None,
+        write_to=None,
+        attachment_type="json"
+    ):
+        """
+        _get_attachment_
+
+        Retrieve a document's attachment
+
+        :param str attachment: the attachment file name
+        :param dict headers: Extra headers to be sent with request
+        :param str write_to: File handler to write the attachment to,
+          if None do not write. write_to file must be also be opened
+          for writing.
+        :param str attachment_type: Describes the data format of the attachment
+          'json' and 'binary' are currently the only expected values.
+
+        """
+        attachment_url = posixpath.join(self._document_url, attachment)
+
+        # need latest rev
+        doc_resp = self._r_session.get(self._document_url)
+        doc_resp.raise_for_status()
+        doc_json = doc_resp.json()
+        if headers is None:
+            headers = {'If-Match': doc_json['_rev']}
+        else:
+            headers['If-Match'] = doc_json['_rev']
+
+        resp = self._r_session.get(
+            attachment_url,
+            headers=headers
+        )
+        resp.raise_for_status()
+        if write_to is not None:
+            write_to.write(resp.raw)
+
+        if attachment_type == 'json':
+            return resp.json()
+        return resp.content
+
+    def delete_attachment(self, attachment, headers=None):
+        """
+        _delete_attachment_
+
+        Delete an attachment from a document
+
+        :param str attachment: the attachment file name
+        :param dict headers: Extra headers to be sent with request
+
+        """
+        attachment_url = posixpath.join(self._document_url, attachment)
+
+        # need latest rev
+        doc_resp = self._r_session.get(self._document_url)
+        doc_resp.raise_for_status()
+        doc_json = doc_resp.json()
+        if headers is None:
+            headers = {'If-Match': doc_json['_rev']}
+        else:
+            headers['If-Match'] = doc_json['_rev']
+
+        resp = self._r_session.delete(
+            attachment_url,
+            headers=headers
+        )
+        resp.raise_for_status()
+
+        return resp.json()
+
+    def put_attachment(
+        self,
+        attachment,
+        content_type,
+        data,
+        headers=None
+    ):
+        """
+        _put_attachment_
+        Add a new attachment, or update existing, to
+        specified document
+
+        :param attachment: name of attachment to be added/updated
+        :param content_type: http 'Content-Type' of the attachment
+        :param data: attachment data
+        :param headers: headers to send with request
+
+        """
+        attachment_url = posixpath.join(self._document_url, attachment)
+
+        # need latest rev
+        doc_resp = self._r_session.get(self._document_url)
+        doc_resp.raise_for_status()
+        doc_json = doc_resp.json()
+        if headers is None:
+            headers = {
+                'If-Match': doc_json['_rev'],
+                'Content-Type': content_type
+            }
+        else:
+            headers['If-Match'] = doc_json['_rev']
+            headers['Content-Type'] = content_type
+
+        resp = self._r_session.put(
+            attachment_url,
+            data=data,
+            headers=headers
+        )
+        resp.raise_for_status()
+
+        return resp.json()
