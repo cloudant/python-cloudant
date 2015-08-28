@@ -235,7 +235,8 @@ class Document(dict):
         :param str attachment: the attachment file name
         :param dict headers: Extra headers to be sent with request
         :param str write_to: File handler to write the attachment to,
-          if None do not write
+          if None do not write. write_to file must be also be opened
+          for writing.
         :param str attachment_type: Describes the data format of the attachment
           'json' and 'binary' are currently the only expected values.
 
