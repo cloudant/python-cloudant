@@ -379,7 +379,7 @@ class CloudantDBTest(unittest.TestCase):
         mock_get = mock.Mock()
         mock_get.status_code = 200
         mock_get.raise_for_status = mock.Mock()
-        mock_get.text = limit
+        mock_get.json = mock.Mock(return_value=limit)
         self.mock_session.get.return_value = mock_get
 
         get_limit = self.cl.get_revision_limit()

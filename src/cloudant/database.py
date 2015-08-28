@@ -569,7 +569,7 @@ class CloudantDatabase(CouchDatabase):
         resp = self._r_session.get(url)
         resp.raise_for_status()
 
-        return resp.text
+        return resp.json()
 
     def set_revision_limit(self, limit):
         """
