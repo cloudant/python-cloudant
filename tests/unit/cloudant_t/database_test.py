@@ -191,6 +191,21 @@ class CouchDBTest(unittest.TestCase):
             headers={'Content-Type': 'application/json'}
         )
 
+    @mock.patch('cloudant.changes.Feed')
+    def test_db_updates(self, mock_feed):
+        updates_feed = """
+            {"dbname": "somedb3", "type": "created", "account": "bob", "seq": "3-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJzLlAIfa0tKQUQ2NTIkzIAgD_wSJc"}
+            {"dbname": "somedb2", "type": "updated", "account": "bob", "seq": "4-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJLLlAIfa0tKQUQ2NTIkzIAgAAASJd"}
+            {"dbname": "somedb1", "type": "deleted", "account": "bob", "seq": "9-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJnLlAIfa0tKQUQ2NTIkzIAgAA9iJi"}
+            {"dbname": "somedb2", "type": "created", "account": "bob", "seq": "11-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJ3LlAIfa0tKQUQ2NTIkzIAgABWCJk"}
+            {"dbname": "somedb1", "type": "updated", "account": "bob", "seq": "12-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJPLlAIfa0tKQUQ2NTIkzIAgABiSJl"}
+        """
+        mock_iter = mock.MagicMock()
+        mock_iter.__iter__.return_value = (x for x in updates_feed.split('\n'))
+        mock_feed.return_value = mock_iter
+
+        db_updates = self.c.db_updates()
+
 
 class CloudantDBTest(unittest.TestCase):
     """
