@@ -191,8 +191,7 @@ class CouchDBTest(unittest.TestCase):
             headers={'Content-Type': 'application/json'}
         )
 
-    @mock.patch('cloudant.changes.Feed')
-    def test_db_updates(self, mock_feed):
+    def test_db_updates(self):
         updates_feed = """
             {"dbname": "somedb3", "type": "created", "account": "bob", "seq": "3-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJzLlAIfa0tKQUQ2NTIkzIAgD_wSJc"}
             {"dbname": "somedb2", "type": "updated", "account": "bob", "seq": "4-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJLLlAIfa0tKQUQ2NTIkzIAgAAASJd"}
@@ -200,11 +199,14 @@ class CouchDBTest(unittest.TestCase):
             {"dbname": "somedb2", "type": "created", "account": "bob", "seq": "11-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJ3LlAIfa0tKQUQ2NTIkzIAgABWCJk"}
             {"dbname": "somedb1", "type": "updated", "account": "bob", "seq": "12-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJPLlAIfa0tKQUQ2NTIkzIAgABiSJl"}
         """
-        mock_iter = mock.MagicMock()
-        mock_iter.__iter__.return_value = (x for x in updates_feed.split('\n'))
-        mock_feed.return_value = mock_iter
+        with mock.patch('cloudant.database.Feed') as mock_feed:
+            feed = (x.strip() for x in updates_feed.split('\n'))
+            mock_feed.__iter__ = mock.MagicMock()
+            mock_feed.return_value = feed
 
-        db_updates = self.c.db_updates()
+            updates = [u for u in self.c.db_updates()]
+
+            self.assertEqual(len(updates), 5)
 
 
 class CloudantDBTest(unittest.TestCase):
