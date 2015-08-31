@@ -454,7 +454,7 @@ class Cloudant(CouchDB):
             self,
             enable_cors=True,
             allow_credentials=True,
-            origins=[],
+            origins=None,
             overwrite_origins=False):
         """
         _update_cors_configuration_
@@ -470,6 +470,9 @@ class Cloudant(CouchDB):
         :param boolean overwrite_origins: Default concatinate new 'origins'
             list to old one, else replace 'origins' with new list
         """
+        if origins is None:
+            origins = []
+
         cors_config = {
             'enable_cors': enable_cors,
             'allow_credentials': allow_credentials,
@@ -485,12 +488,15 @@ class Cloudant(CouchDB):
         updated_config = old_config.copy()
 
         updated_config['enable_cors'] = cors_config.get('enable_cors')
-        updated_config['allow_credentials'] = cors_config.get('allow_credenials')
+        updated_config['allow_credentials'] = cors_config.get('allow_credentials')
 
         if cors_config.get('origins') == ["*"]:
             updated_config['origins'] = ["*"]
         elif old_config.get('origins') != cors_config.get('origins'):
-            updated_config['origins'] = old_config.get('origins') + cors_config.get('origins')
+            new_origins = list(
+                set(old_config.get('origins')).union(set(cors_config.get('origins')))
+            )
+            updated_config['origins'] = new_origins
 
         return self._write_cors_configuration(updated_config)
 
@@ -498,9 +504,11 @@ class Cloudant(CouchDB):
         """
         _write_cors_configuration_
 
+        Overwrites the entire CORS config with the values updated in
+          update_cors_configuration
+
         :param dict config: Dictionary containing the updated CORS config
 
-        PUT /_api/v2/user/config/cors   Changes the CORS configuration
         """
         endpoint = posixpath.join(
             self._cloudant_url, '_api', 'v2', 'user', 'config', 'cors'

@@ -474,8 +474,45 @@ class CloudantAccountTests(unittest.TestCase):
             enable_cors=True,
             allow_credentials=True,
             origins=[
-                "https://www.example.com"
+                "https://www.example.com",
+                "https://example.com"
             ]
+        )
+
+        self.assertEqual(cors, resp)
+        self.failUnless(self.mock_instance.get.called)
+        self.failUnless(self.mock_instance.put.called)
+
+    def test_cors_update_origins_none(self):
+        """test updating the cors config"""
+        resp = {
+            "enable_cors": True,
+            "allow_credentials": True,
+            "origins": []
+        }
+
+        mock_get = mock.Mock()
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.json = mock.Mock()
+        mock_get.json.return_value = {
+            "enable_cors": True,
+            "allow_credentials": True,
+            "origins": ["https://example.com"]
+        }
+        self.mock_instance.get = mock.Mock()
+        self.mock_instance.get.return_value = mock_get
+
+        mock_put = mock.Mock()
+        mock_put.raise_for_status = mock.Mock()
+        mock_put.json = mock.Mock()
+        mock_put.json.return_value = resp
+        self.mock_instance.put.return_value = mock_put
+
+        c = Cloudant(self.username, self.password)
+        c.connect()
+        cors = c.update_cors_configuration(
+            enable_cors=True,
+            allow_credentials=True
         )
 
         self.assertEqual(cors, resp)
