@@ -8,6 +8,7 @@ import posixpath
 import json
 
 from cloudant.database import CouchDatabase, CloudantDatabase
+from cloudant.errors import CloudantException
 
 
 class CouchDBTest(unittest.TestCase):
@@ -226,6 +227,31 @@ class CloudantDBTest(unittest.TestCase):
             }
         }
 
+        self.shards = {
+            "shards": {
+                "00000000-3fffffff": [
+                    "dbcore@db1.cluster.cloudant.net",
+                    "dbcore@db4.cluster.cloudant.net",
+                    "dbcore@db3.cluster.cloudant.net"
+                ],
+                "40000000-7fffffff": [
+                    "dbcore@db1.cluster.cloudant.net",
+                    "dbcore@db4.cluster.cloudant.net",
+                    "dbcore@db6.cluster.cloudant.net"
+                ],
+                "80000000-bfffffff": [
+                    "dbcore@db7.cluster.cloudant.net",
+                    "dbcore@db4.cluster.cloudant.net",
+                    "dbcore@db3.cluster.cloudant.net"
+                ],
+                "c0000000-ffffffff": [
+                    "dbcore@db1.cluster.cloudant.net",
+                    "dbcore@db4.cluster.cloudant.net",
+                    "dbcore@db3.cluster.cloudant.net"
+                ]
+            }
+        }
+
     def test_security_doc(self):
         mock_resp = mock.Mock()
         mock_resp.json = mock.Mock(return_value=self.sec_doc)
@@ -256,6 +282,143 @@ class CloudantDBTest(unittest.TestCase):
         # unshare database
         unshared_resp = self.cl.unshare_database('someotheruser')
         self.assertNotIn('someotheruser', unshared_resp['cloudant'])
+
+    def test_shards(self):
+        mock_resp = mock.Mock()
+        mock_resp.status_code = 200
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock(return_value=self.shards)
+        self.mock_session.get.return_value = mock_resp
+
+        r = self.cl.shards()
+
+        self.failUnless(self.mock_session.get.called)
+        self.assertEqual(r, self.shards)
+
+    def test_missing_revs(self):
+        doc_id = 'somedocument'
+        ret_val = {
+            "missed_revs": {doc_id: ['rev1']}
+        }
+        mock_resp = mock.Mock()
+        mock_resp.status_code = 201
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock(return_value=ret_val)
+        self.mock_session.post.return_value = mock_resp
+
+        missed_revs = self.cl.missing_revisions(doc_id, 'rev1', 'rev2', 'rev3')
+
+        expected_data = {doc_id: ['rev1', 'rev2', 'rev3']}
+        expected_url = posixpath.join(
+            self.account._cloudant_url,
+            self.db_name,
+            '_missing_revs'
+        )
+        self.failUnless(self.mock_session.post.called)
+        self.mock_session.post.assert_called_once_with(
+            expected_url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(expected_data)
+        )
+        self.assertEqual(missed_revs, ret_val["missed_revs"][doc_id])
+
+    def test_revs_diff(self):
+        doc_id = 'somedocument'
+        ret_val = {
+            doc_id: {
+                "missing": ['rev1', 'rev3'],
+                "possible_ancestors": ['rev2']
+            }
+        }
+        mock_resp = mock.Mock()
+        mock_resp.status_code = 201
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock(return_value=ret_val)
+        self.mock_session.post.return_value = mock_resp
+
+        revs_diff = self.cl.revisions_diff(doc_id, 'rev1', 'rev2', 'rev3')
+
+        expected_data = {doc_id: ['rev1', 'rev2', 'rev3']}
+        expected_url = posixpath.join(
+            self.account._cloudant_url,
+            self.db_name,
+            '_revs_diff'
+        )
+        self.failUnless(self.mock_session.post.called)
+        self.mock_session.post.assert_called_once_with(
+            expected_url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(expected_data)
+        )
+        self.assertEqual(revs_diff, ret_val)
+
+    def test_revs_limit(self):
+        limit = 500
+        expected_url = posixpath.join(
+            self.account._cloudant_url,
+            self.db_name,
+            '_revs_limit'
+        )
+
+        # set rev limit
+        mock_put = mock.Mock()
+        mock_put.status_code = 201
+        mock_put.raise_for_status = mock.Mock()
+        mock_put.json = mock.Mock(return_value='{"ok": true}')
+        self.mock_session.put.return_value = mock_put
+
+        set_limit = self.cl.set_revision_limit(limit)
+
+        self.failUnless(self.mock_session.put.called)
+        self.mock_session.put.assert_called_once_with(
+            expected_url,
+            data=limit
+        )
+        self.assertEqual(set_limit, '{"ok": true}')
+
+        # get rev limit
+        mock_get = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.text = limit
+        self.mock_session.get.return_value = mock_get
+
+        get_limit = self.cl.get_revision_limit()
+
+        self.failUnless(self.mock_session.put.called)
+        self.mock_session.get.assert_called_once_with(expected_url)
+        self.assertEqual(get_limit, limit)
+
+    def test_get_revs_limit_bad_resp(self):
+        mock_get = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.text = 'bloop'
+        self.mock_session.get.return_value = mock_get
+
+        with self.assertRaises(CloudantException):
+            resp = self.cl.get_revision_limit()
+            self.failUnless(self.mock_session.get.called)
+            self.assertEqual(resp.status_code, 400)
+
+    def test_view_cleanup(self):
+        expected_url = posixpath.join(
+            self.account._cloudant_url,
+            self.db_name,
+            '_view_cleanup'
+        )
+
+        mock_post = mock.Mock()
+        mock_post.status_code = 201
+        mock_post.raise_for_status = mock.Mock()
+        mock_post.json = mock.Mock(return_value='{"ok": true}')
+        self.mock_session.post.return_value = mock_post
+
+        cleanup = self.cl.view_cleanup()
+
+        self.failUnless(self.mock_session.post.called)
+        self.mock_session.post.assert_called_once_with(expected_url)
+        self.assertEqual(cleanup, '{"ok": true}')
 
 if __name__ == '__main__':
     unittest.main()

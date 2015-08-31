@@ -28,8 +28,8 @@ class CouchDatabase(dict):
 
     :param account: CouchAccount instance corresponding to the db server
     :param database_name: Name of the database
-    :param fetch_limit: Optional, sets the max number of docs to fetch per query
-        during iteration cycles
+    :param fetch_limit: Optional, sets the max number of docs to fetch per
+      query during iteration cycles
 
     """
     def __init__(self, account, database_name, fetch_limit=100):
@@ -94,8 +94,8 @@ class CouchDatabase(dict):
         provided, assuming that there is an _id field provided.
 
         :param data: dictionary of document JSON data, containing _id
-        :param throw_on_exists: Optional control on wether to raise an exception
-           if the _id already exists as a document in the database
+        :param throw_on_exists: Optional control on wether to raise an
+          exception if the _id already exists as a document in the database
 
         :returns: Document instance corresponding to the new doc
 
@@ -388,7 +388,8 @@ class CouchDatabase(dict):
 
     def db_updates(self):
         """
-        GET /_db_updates    Returns information about databases that have been updated
+        GET /_db_updates    Returns information about databases that have been
+          updated
 
         """
 
@@ -404,7 +405,11 @@ class CloudantDatabase(CouchDatabase):
 
     """
     def __init__(self, cloudant, database_name, fetch_limit=100):
-        super(CloudantDatabase, self).__init__(cloudant, database_name, fetch_limit=100)
+        super(CloudantDatabase, self).__init__(
+            cloudant,
+            database_name,
+            fetch_limit=100
+        )
 
     def security_document(self):
         """
@@ -423,6 +428,7 @@ class CloudantDatabase(CouchDatabase):
         resp.raise_for_status()
         return resp.json()
 
+    @property
     def security_url(self):
         """construct the URL of the security document for this db"""
         parts = ['_api', 'v2', 'db', self._database_name, '_security']
@@ -462,7 +468,7 @@ class CloudantDatabase(CouchDatabase):
             self.security_url,
             data=json.dumps(doc),
             headers={'Content-Type': 'application/json'}
-            )
+        )
         resp.raise_for_status()
         return resp.json()
 
@@ -485,48 +491,120 @@ class CloudantDatabase(CouchDatabase):
             self.security_url,
             data=json.dumps(doc),
             headers={'Content-Type': 'application/json'}
-            )
+        )
         resp.raise_for_status()
         return resp.json()
 
     def shards(self):
         """
-        GET /db/_shards Returns information about the shards in a database or the shard a document belongs to
+        _shards_
+
+        Returns information about the shards in a database
 
         """
-        pass
+        url = posixpath.join(self.database_url, '_shards')
+        resp = self._r_session.get(url)
+        resp.raise_for_status()
 
-    def missing_revisions(self):
-        """
-        POST    /db/_missing_revs   Given a list of document revisions, returns the document revisions that do not exist in the database
+        return resp.json()
 
+    def missing_revisions(self, doc_id, *revisions):
         """
-        pass
+        _missing_revisions_
 
-    def revisions_diff(self, *revisions):
-        """
-        POST    /db/_revs_diff  Given a list of document revisions, returns differences between the given revisions and ones that are in the database
+        Given a document id and list of document revisions, returns the
+          document revisions that do not exist in the database
 
-        """
-        pass
-
-    def get_revision_limit(self, doc):
-        """
-        GET /db/_revs_limit Gets the limit of historical revisions to store for a single document in the database
+        :param doc_id: document _id to check for missing revisions on
+        :param revisions: document _revs to check
 
         """
-        pass
+        url = posixpath.join(self.database_url, '_missing_revs')
+        data = {doc_id: list(revisions)}
 
-    def set_revision_limit(self, doc, limit):
+        resp = self._r_session.post(
+            url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(data)
+        )
+        resp.raise_for_status()
+
+        resp_json = resp.json()
+        missed_revs = resp_json['missed_revs'][doc_id]
+
+        return missed_revs
+
+    def revisions_diff(self, doc_id, *revisions):
         """
-        PUT /db/_revs_limit Sets the limit of historical revisions to store for a single document in the database
+        _revisions_diff_
+
+        Given a list of document revisions, returns differences between the
+          given revisions and ones that are in the database
+
+        :param doc_id: document _id to check for missing revisions on
+        :param revisions: document _revs to check
 
         """
-        pass
+        url = posixpath.join(self.database_url, '_revs_diff')
+        data = {doc_id: list(revisions)}
+
+        resp = self._r_session.post(
+            url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(data)
+        )
+        resp.raise_for_status()
+
+        return resp.json()
+
+    def get_revision_limit(self):
+        """
+        _get_revision_limit_
+
+        Gets the limit of historical revisions to store for a single document
+          in the database
+
+        """
+        url = posixpath.join(self.database_url, '_revs_limit')
+        resp = self._r_session.get(url)
+        resp.raise_for_status()
+
+        try:
+            ret = int(resp.text)
+        except ValueError:
+            resp.status_code = 400
+            raise CloudantException(
+                'Error - Invalid Response Value: {}'.format(resp.json())
+            )
+
+        return ret
+
+    def set_revision_limit(self, limit):
+        """
+        _set_revision_limit_
+
+        Sets the limit of historical revisions to store for a single document
+          in the database
+
+        :param int limit: Number of revisions to store for a document
+
+        """
+        url = posixpath.join(self.database_url, '_revs_limit')
+
+        resp = self._r_session.put(url, data=limit)
+        resp.raise_for_status()
+
+        return resp.json()
 
     def view_cleanup(self):
         """
-        POST    /db/_view_cleanup   Removes view files that are not used by any design document
+        _view_cleanup_
+
+        Removes view files that are not used by any design document
 
         """
-        pass
+        url = posixpath.join(self.database_url, '_view_cleanup')
+        resp = self._r_session.post(url)
+        resp.raise_for_status()
+
+        return resp.json()
