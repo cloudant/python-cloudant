@@ -12,6 +12,7 @@ import requests
 from cloudant.account import Cloudant, CouchDB
 from cloudant.errors import CloudantException
 
+
 class CouchDBAccountTests(unittest.TestCase):
     def setUp(self):
         """
@@ -351,7 +352,7 @@ class CloudantAccountTests(unittest.TestCase):
         c.connect()
 
         usage = c._usage_endpoint('endpoint', 2015, 12)
-        self.assertEqual(usage,  mock_resp.json.return_value)
+        self.assertEqual(usage, mock_resp.json.return_value)
         self.failUnless(mock_resp.raise_for_status.called)
 
         mock_get.assert_has_calls(mock.call('endpoint/2015/12'))

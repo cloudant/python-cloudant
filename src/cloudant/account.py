@@ -483,7 +483,6 @@ class Cloudant(CouchDB):
 
         # update config values
         updated_config = old_config.copy()
-        updated_config.update(cors_config)
 
         updated_config['enable_cors'] = cors_config.get('enable_cors')
         updated_config['allow_credentials'] = cors_config.get('allow_credenials')
