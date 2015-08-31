@@ -437,5 +437,81 @@ class CloudantAccountTests(unittest.TestCase):
         self.assertEqual(cors, mock_resp.json.return_value)
         self.failUnless(mock_resp.raise_for_status.called)
 
+    def test_cors_update(self):
+        """test updating the cors config"""
+        resp = {
+            "enable_cors": True,
+            "allow_credentials": True,
+            "origins": [
+                "https://example.com",
+                "https://www.example.com"
+            ]
+        }
+
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = resp
+        self.mock_instance.put.return_value = mock_resp
+
+        c = Cloudant(self.username, self.password)
+        c.connect()
+        cors = c.update_cors_configuration(
+            enable_cors=True,
+            allow_credentials=True,
+            origins=[
+                "https://example.com",
+                "https://www.example.com"
+            ]
+        )
+
+        self.assertEqual(cors, resp)
+        self.failUnless(self.mock_instance.put.called)
+
+    def test_cors_origins_get(self):
+        """test getting cors origins"""
+        resp = {
+            "enable_cors": True,
+            "allow_credentials": True,
+            "origins": [
+                "https://example.com",
+                "https://www.example.com"
+            ]
+        }
+
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = resp
+        self.mock_instance.get.return_value = mock_resp
+
+        c = Cloudant(self.username, self.password)
+        c.connect()
+        origins = c.cors_origins()
+
+        self.assertEqual(origins, resp['origins'])
+        self.failUnless(self.mock_instance.get.called)
+
+    def test_disable_cors(self):
+        resp = {
+            "enable_cors": False,
+            "allow_credentials": False,
+            "origins": []
+        }
+
+        mock_resp = mock.Mock()
+        mock_resp.raise_for_status = mock.Mock()
+        mock_resp.json = mock.Mock()
+        mock_resp.json.return_value = resp
+        self.mock_instance.put.return_value = mock_resp
+
+        c = Cloudant(self.username, self.password)
+        c.connect()
+        cors = c.disable_cors()
+
+        self.assertEqual(cors, resp)
+        self.failUnless(self.mock_instance.put.called)
+
+
 if __name__ == '__main__':
     unittest.main()

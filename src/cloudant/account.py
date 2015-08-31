@@ -422,6 +422,7 @@ class Cloudant(CouchDB):
         )
         resp = self._r_session.get(endpoint)
         resp.raise_for_status()
+
         return resp.json()
 
     def disable_cors(self):
@@ -431,7 +432,10 @@ class Cloudant(CouchDB):
         Switch CORS off for this account
 
         """
-        pass
+        return self.update_cors_configuration(
+            enable_cors=False,
+            allow_credentials=False
+        )
 
     def cors_origins(self):
         """
@@ -440,16 +444,41 @@ class Cloudant(CouchDB):
         Retrieve a list of CORS origins
 
         """
-        pass
+        cors = self.cors_configuration()
+
+        return cors['origins']
 
     def update_cors_configuration(
             self,
             enable_cors=True,
             allow_credentials=True,
-            *origins):
+            origins=[]):
         """
+        _update_cors_configuration_
 
         PUT /_api/v2/user/config/cors   Changes the CORS configuration
 
+        :param boolean enable_cors: Enable/disables cors
+        :param boolean allow_credentials: Allows authentication creds
+        :param list origins: Allowed CORS origin(s)
+            ["*"]: any origin
+            []: disabled/no origin(s)
+
         """
-        pass
+        cors_config = {
+            'enable_cors': enable_cors,
+            'allow_credentials': allow_credentials,
+            'origins': origins
+        }
+        print cors_config
+        endpoint = posixpath.join(
+            self._cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
+        )
+        resp = self._r_session.put(
+            endpoint,
+            data=json.dumps(cors_config),
+            headers={'Content-Type': 'application/json'}
+        )
+        resp.raise_for_status()
+
+        return resp.json()
