@@ -570,9 +570,10 @@ class CloudantDatabase(CouchDatabase):
         resp.raise_for_status()
 
         try:
-            ret = int(resp.json())
+            ret = int(resp.text)
         except ValueError:
-            raise ValueError(
+            resp.status_code = 400
+            raise CloudantException(
                 'Error - Invalid Response Value: {}'.format(resp.json())
             )
 

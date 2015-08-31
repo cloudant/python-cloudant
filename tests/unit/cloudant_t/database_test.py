@@ -8,6 +8,7 @@ import posixpath
 import json
 
 from cloudant.database import CouchDatabase, CloudantDatabase
+from cloudant.errors import CloudantException
 
 
 class CouchDBTest(unittest.TestCase):
@@ -379,7 +380,7 @@ class CloudantDBTest(unittest.TestCase):
         mock_get = mock.Mock()
         mock_get.status_code = 200
         mock_get.raise_for_status = mock.Mock()
-        mock_get.json = mock.Mock(return_value=limit)
+        mock_get.text = limit
         self.mock_session.get.return_value = mock_get
 
         get_limit = self.cl.get_revision_limit()
@@ -392,12 +393,13 @@ class CloudantDBTest(unittest.TestCase):
         mock_get = mock.Mock()
         mock_get.status_code = 200
         mock_get.raise_for_status = mock.Mock()
-        mock_get.json = mock.Mock(return_value='bloop')
+        mock_get.text = 'bloop'
         self.mock_session.get.return_value = mock_get
 
-        with self.assertRaises(ValueError):
-            self.cl.get_revision_limit()
-            self.failUnless(self.mock_session.put.called)
+        with self.assertRaises(CloudantException):
+            resp = self.cl.get_revision_limit()
+            self.failUnless(self.mock_session.get.called)
+            self.assertEqual(resp.status_code, 400)
 
     def test_view_cleanup(self):
         expected_url = posixpath.join(
