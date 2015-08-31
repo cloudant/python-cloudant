@@ -386,14 +386,30 @@ class CouchDatabase(dict):
         resp.raise_for_status()
         return resp.json()
 
-    def db_updates(self):
+    def db_updates(self, since=None, continuous=True, include_docs=False):
         """
-        GET /_db_updates    Returns information about databases that have been
-          updated
+        _db_updates_
+
+        Implement streaming from _db_updates feed. Yields information about
+          databases that have been updated
+
+        :param str since: Start from this sequence
+        :param boolean continuous: Stream results?
+        :param boolean include_docs: Include/exclude document bodies in the
+          results
 
         """
+        db_updates_feed = Feed(
+            self._r_session,
+            posixpath.join(self._database_host, '_db_updates'),
+            since=since,
+            continuous=continuous,
+            include_docs=include_docs
+        )
 
-        pass
+        for update in db_updates_feed:
+            if update:
+                yield update
 
 
 class CloudantDatabase(CouchDatabase):
