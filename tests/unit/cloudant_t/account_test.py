@@ -448,11 +448,24 @@ class CloudantAccountTests(unittest.TestCase):
             ]
         }
 
-        mock_resp = mock.Mock()
-        mock_resp.raise_for_status = mock.Mock()
-        mock_resp.json = mock.Mock()
-        mock_resp.json.return_value = resp
-        self.mock_instance.put.return_value = mock_resp
+        mock_get = mock.Mock()
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.json = mock.Mock()
+        mock_get.json.return_value = {
+            "enable_cors": True,
+            "allow_credentials": True,
+            "origins": [
+                "https://example.com"
+            ]
+        }
+        self.mock_instance.get = mock.Mock()
+        self.mock_instance.get.return_value = mock_get
+
+        mock_put = mock.Mock()
+        mock_put.raise_for_status = mock.Mock()
+        mock_put.json = mock.Mock()
+        mock_put.json.return_value = resp
+        self.mock_instance.put.return_value = mock_put
 
         c = Cloudant(self.username, self.password)
         c.connect()
@@ -460,12 +473,12 @@ class CloudantAccountTests(unittest.TestCase):
             enable_cors=True,
             allow_credentials=True,
             origins=[
-                "https://example.com",
                 "https://www.example.com"
             ]
         )
 
         self.assertEqual(cors, resp)
+        self.failUnless(self.mock_instance.get.called)
         self.failUnless(self.mock_instance.put.called)
 
     def test_cors_origins_get(self):
@@ -492,24 +505,26 @@ class CloudantAccountTests(unittest.TestCase):
         self.assertEqual(origins, resp['origins'])
         self.failUnless(self.mock_instance.get.called)
 
-    def test_disable_cors(self):
+    def test_cors_disable(self):
+        """test disabling cors"""
         resp = {
             "enable_cors": False,
             "allow_credentials": False,
             "origins": []
         }
 
-        mock_resp = mock.Mock()
-        mock_resp.raise_for_status = mock.Mock()
-        mock_resp.json = mock.Mock()
-        mock_resp.json.return_value = resp
-        self.mock_instance.put.return_value = mock_resp
+        mock_put = mock.Mock()
+        mock_put.raise_for_status = mock.Mock()
+        mock_put.json = mock.Mock()
+        mock_put.json.return_value = resp
+        self.mock_instance.put.return_value = mock_put
 
         c = Cloudant(self.username, self.password)
         c.connect()
         cors = c.disable_cors()
 
         self.assertEqual(cors, resp)
+        self.failUnless(self.mock_instance.get.called)
         self.failUnless(self.mock_instance.put.called)
 
 

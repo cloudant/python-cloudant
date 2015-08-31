@@ -434,7 +434,9 @@ class Cloudant(CouchDB):
         """
         return self.update_cors_configuration(
             enable_cors=False,
-            allow_credentials=False
+            allow_credentials=False,
+            origins=[],
+            overwrite_origins=True
         )
 
     def cors_origins(self):
@@ -452,31 +454,61 @@ class Cloudant(CouchDB):
             self,
             enable_cors=True,
             allow_credentials=True,
-            origins=[]):
+            origins=[],
+            overwrite_origins=False):
         """
         _update_cors_configuration_
 
-        PUT /_api/v2/user/config/cors   Changes the CORS configuration
+        Merge existing CORS config with updated values and write to
+          the API endpoint
 
         :param boolean enable_cors: Enable/disables cors
         :param boolean allow_credentials: Allows authentication creds
         :param list origins: Allowed CORS origin(s)
             ["*"]: any origin
             []: disabled/no origin(s)
-
+        :param boolean overwrite_origins: Default concatinate new 'origins'
+            list to old one, else replace 'origins' with new list
         """
         cors_config = {
             'enable_cors': enable_cors,
             'allow_credentials': allow_credentials,
             'origins': origins
         }
-        print cors_config
+
+        if overwrite_origins:
+            return self._write_cors_configuration(cors_config)
+
+        old_config = self.cors_configuration()
+
+        # update config values
+        updated_config = old_config.copy()
+        updated_config.update(cors_config)
+
+        updated_config['enable_cors'] = cors_config.get('enable_cors')
+        updated_config['allow_credentials'] = cors_config.get('allow_credenials')
+
+        if cors_config.get('origins') == ["*"]:
+            updated_config['origins'] = ["*"]
+        elif old_config.get('origins') != cors_config.get('origins'):
+            updated_config['origins'] = old_config.get('origins') + cors_config.get('origins')
+
+        return self._write_cors_configuration(updated_config)
+
+    def _write_cors_configuration(self, config):
+        """
+        _write_cors_configuration_
+
+        :param dict config: Dictionary containing the updated CORS config
+
+        PUT /_api/v2/user/config/cors   Changes the CORS configuration
+        """
         endpoint = posixpath.join(
             self._cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
         )
         resp = self._r_session.put(
             endpoint,
-            data=json.dumps(cors_config),
+            data=json.dumps(config),
             headers={'Content-Type': 'application/json'}
         )
         resp.raise_for_status()
