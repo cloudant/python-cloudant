@@ -8,7 +8,7 @@ Utilities for handling design docs and the resulting views they create
 import contextlib
 import posixpath
 
-from .document import CloudantDocument
+from .document import Document
 from .index import Index, python_to_couch
 
 
@@ -169,7 +169,7 @@ class View(dict):
         del indx
 
 
-class DesignDocument(CloudantDocument):
+class DesignDocument(Document):
     """
     _DesignDocument_
 

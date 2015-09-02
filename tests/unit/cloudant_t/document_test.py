@@ -2,7 +2,7 @@
 """
 _document_test_
 
-Test class for CloudantDocument class
+Test class for Document class
 
 """
 
@@ -11,11 +11,10 @@ import requests
 import unittest
 
 from cloudant.errors import CloudantException
-from cloudant.database import CloudantDatabase
-from cloudant.document import CloudantDocument
+from cloudant.document import Document
 
 
-class CloudantDocumentTest(unittest.TestCase):
+class DocumentTest(unittest.TestCase):
 
     def setUp(self):
 
@@ -35,8 +34,8 @@ class CloudantDocumentTest(unittest.TestCase):
 
     def test_document_crud(self):
         """test basic crud operations with mocked backend"""
-        doc = CloudantDocument(self.database, "DUCKUMENT")
-        #exists
+        doc = Document(self.database, "DUCKUMENT")
+        # exists
         mock_resp = mock.Mock()
         mock_resp.status_code = 200
         self.mock_session.get.return_value = mock_resp
@@ -47,7 +46,7 @@ class CloudantDocumentTest(unittest.TestCase):
         )
         self.mock_session.get.reset_mock()
 
-        #create
+        # create
         mock_resp = mock.Mock()
         mock_resp.raise_for_status = mock.Mock()
         mock_resp.status_code = 200
@@ -97,14 +96,14 @@ class CloudantDocumentTest(unittest.TestCase):
 
         self.mock_session.get.call.assert_has_call(
             mock.call('https://bob.cloudant.com/unittest/DUCKUMENT')
-            )
+        )
         self.mock_session.put.assert_has_call(
             mock.call(
                 'https://bob.cloudant.com/unittest/DUCKUMENT',
                 headers={'Content-Type': 'application/json'},
                 data=mock.ANY
-                )
             )
+        )
         self.mock_session.get.reset_mock()
         self.mock_session.put.reset_mock()
 
@@ -127,6 +126,27 @@ class CloudantDocumentTest(unittest.TestCase):
         del doc['_rev']
         self.assertRaises(CloudantException, doc.delete)
 
+    def test_save_non_exists(self):
+        """cover save case where doc doesnt exist"""
+        mock_resp = mock.Mock()
+        mock_resp.status_code = 404
+        self.mock_session.get.return_value = mock_resp
+
+        mock_post = mock.Mock()
+        mock_post.raise_for_status = mock.Mock()
+        mock_post.json = mock.Mock()
+        mock_post.json.return_value = {'id': "created", "rev": "created"}
+        mock_put = mock.Mock()
+        mock_put.raise_for_status = mock.Mock()
+        self.mock_session.post.return_value = mock_post
+        self.mock_session.put.return_value = mock_put
+
+        doc = Document(self.database, "DUCKUMENT")
+        doc.save()
+
+        self.assertEqual(doc['_id'], "created")
+        self.assertEqual(doc['_rev'], "created")
+
     def test_document_edit_context(self):
         """test the editing context"""
 
@@ -147,7 +167,7 @@ class CloudantDocumentTest(unittest.TestCase):
         mock_encode = mock.Mock()
         mock_encode.encode = mock.Mock()
 
-        doc = CloudantDocument(self.database, "DUCKUMENT")
+        doc = Document(self.database, "DUCKUMENT")
         doc._encoder = mock.Mock()
         doc._encoder.return_value = mock_encode
 
@@ -172,6 +192,7 @@ class CloudantDocumentTest(unittest.TestCase):
 
         # Setup a routine for testing conflict handing.
         errors = {'conflicts': 0}
+
         def raise_conflict(conflicts=3):
             if errors['conflicts'] < conflicts:
                 errors['conflicts'] += 1
@@ -181,7 +202,7 @@ class CloudantDocumentTest(unittest.TestCase):
                 raise err
 
         # Mock our our doc
-        doc = CloudantDocument(self.database, "HOWARD")
+        doc = Document(self.database, "HOWARD")
 
         mock_put_resp = mock.Mock()
         mock_put_resp.side_effect = mock.Mock()
@@ -226,7 +247,7 @@ class CloudantDocumentTest(unittest.TestCase):
             "baz": [1, 2, 3, 4, 5]
         }
 
-        c_doc = CloudantDocument(self.database, "HOWARD")
+        c_doc = Document(self.database, "HOWARD")
 
         c_doc.field_append(doc, "baz", 10)
         c_doc.field_remove(doc, "baz", 3)
@@ -235,6 +256,93 @@ class CloudantDocumentTest(unittest.TestCase):
         self.assertTrue(10 in doc['baz'])
         self.assertFalse(3 in doc['baz'])
         self.assertEqual(doc['foo'], "qux")
+
+    def test_attachment_put(self):
+        """
+        _test_attachment_put_
+        """
+        doc = Document(self.database, "DUCKUMENT")
+        doc_id = 'DUCKUMENT'
+        attachment = 'herpderp.txt'
+        data = '/path/to/herpderp.txt'
+
+        mock_get = mock.Mock()
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.json = mock.Mock()
+        mock_get.json.return_value = {'_id': doc_id, '_rev': '1-abc'}
+        self.mock_session.get.return_value = mock_get
+
+        mock_put = mock.Mock()
+        mock_put.raise_for_status = mock.Mock()
+        mock_put.status_code = 201
+        mock_put.json = mock.Mock()
+        mock_put.json.return_value = {'id': doc_id, 'rev': '2-def', 'ok': True}
+        self.mock_session.put.return_value = mock_put
+
+        resp = doc.put_attachment(
+            attachment,
+            content_type='text/plain',
+            data=data
+        )
+
+        self.assertEqual(resp['id'], doc_id)
+        self.assertTrue(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.put.called)
+
+    def test_attachment_get(self):
+        """
+        _test_attachment_get_
+        """
+        doc = Document(self.database, "DUCKUMENT")
+        doc_id = 'DUCKUMENT'
+        attachment = 'herpderp.txt'
+
+        mock_get = mock.Mock()
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.json = mock.Mock()
+        mock_get.json.return_value = {'_id': doc_id, '_rev': '1-abc'}
+
+        mock_get_attch = mock.Mock()
+        mock_get_attch.raise_for_status = mock.Mock()
+        mock_get_attch.status_code = 200
+        mock_get_attch.content = 'herp derp foo bar'
+
+        self.mock_session.get.side_effect = [mock_get, mock_get_attch]
+
+        resp = doc.get_attachment(attachment, attachment_type='binary')
+
+        self.assertEqual(resp, mock_get_attch.content)
+        self.assertEqual(self.mock_session.get.call_count, 2)
+
+    def test_attachment_delete(self):
+        """
+        _test_attachment_delete_
+        """
+        doc = Document(self.database, "DUCKUMENT")
+        doc_id = 'DUCKUMENT'
+        attachment = 'herpderp.txt'
+
+        mock_get = mock.Mock()
+        mock_get.raise_for_status = mock.Mock()
+        mock_get.status_code = 200
+        mock_get.json = mock.Mock()
+        mock_get.json.return_value = {'_id': doc_id, '_rev': '2-def'}
+        self.mock_session.get.return_value = mock_get
+
+        mock_del = mock.Mock()
+        mock_del.raise_for_status = mock.Mock()
+        mock_del.status_code = 200
+        mock_del.json = mock.Mock()
+        mock_del.json.return_value = {'id': doc_id, 'rev': '3-ghi', 'ok': True}
+        self.mock_session.delete.return_value = mock_del
+
+        resp = doc.delete_attachment(attachment)
+
+        self.assertEqual(resp['id'], doc_id)
+        self.assertTrue(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.delete.called)
 
 if __name__ == '__main__':
     unittest.main()

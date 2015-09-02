@@ -13,9 +13,9 @@ import requests
 from .errors import CloudantException
 
 
-class CloudantDocument(dict):
+class Document(dict):
     """
-    _CloudantDocument_
+    _Document_
 
     JSON document object, used to manipulate the documents
     in a couch or cloudant database. In addition to basic CRUD
@@ -81,8 +81,8 @@ class CloudantDocument(dict):
         resp.raise_for_status()
         data = resp.json()
         self._document_id = data['id']
-        super(CloudantDocument, self).__setitem__('_id', data['id'])
-        super(CloudantDocument, self).__setitem__('_rev', data['rev'])
+        super(Document, self).__setitem__('_id', data['id'])
+        super(Document, self).__setitem__('_rev', data['rev'])
         return
 
     def fetch(self):
@@ -124,10 +124,12 @@ class CloudantDocument(dict):
     def field_append(doc, field, value):
         """Append a value to a field in a doc."""
         doc[field].append(value)
+
     @staticmethod
     def field_remove(doc, field, value):
         """Remove a value from a field in a doc."""
         doc[field].remove(value)
+
     @staticmethod
     def field_replace(doc, field, value):
         """Replace a field in a doc with a value."""
@@ -153,7 +155,6 @@ class CloudantDocument(dict):
                 return self._update_field(
                     action, field, value, max_tries, tries=tries+1)
             raise
-
 
     def update_field(self, action, field, value, max_tries=10):
         """
@@ -218,3 +219,118 @@ class CloudantDocument(dict):
 
     def __exit__(self, *args):
         self.save()
+
+    def get_attachment(
+        self,
+        attachment,
+        headers=None,
+        write_to=None,
+        attachment_type="json"
+    ):
+        """
+        _get_attachment_
+
+        Retrieve a document's attachment
+
+        :param str attachment: the attachment file name
+        :param dict headers: Extra headers to be sent with request
+        :param str write_to: File handler to write the attachment to,
+          if None do not write. write_to file must be also be opened
+          for writing.
+        :param str attachment_type: Describes the data format of the attachment
+          'json' and 'binary' are currently the only expected values.
+
+        """
+        attachment_url = posixpath.join(self._document_url, attachment)
+
+        # need latest rev
+        doc_resp = self._r_session.get(self._document_url)
+        doc_resp.raise_for_status()
+        doc_json = doc_resp.json()
+        if headers is None:
+            headers = {'If-Match': doc_json['_rev']}
+        else:
+            headers['If-Match'] = doc_json['_rev']
+
+        resp = self._r_session.get(
+            attachment_url,
+            headers=headers
+        )
+        resp.raise_for_status()
+        if write_to is not None:
+            write_to.write(resp.raw)
+
+        if attachment_type == 'json':
+            return resp.json()
+        return resp.content
+
+    def delete_attachment(self, attachment, headers=None):
+        """
+        _delete_attachment_
+
+        Delete an attachment from a document
+
+        :param str attachment: the attachment file name
+        :param dict headers: Extra headers to be sent with request
+
+        """
+        attachment_url = posixpath.join(self._document_url, attachment)
+
+        # need latest rev
+        doc_resp = self._r_session.get(self._document_url)
+        doc_resp.raise_for_status()
+        doc_json = doc_resp.json()
+        if headers is None:
+            headers = {'If-Match': doc_json['_rev']}
+        else:
+            headers['If-Match'] = doc_json['_rev']
+
+        resp = self._r_session.delete(
+            attachment_url,
+            headers=headers
+        )
+        resp.raise_for_status()
+
+        return resp.json()
+
+    def put_attachment(
+        self,
+        attachment,
+        content_type,
+        data,
+        headers=None
+    ):
+        """
+        _put_attachment_
+        Add a new attachment, or update existing, to
+        specified document
+
+        :param attachment: name of attachment to be added/updated
+        :param content_type: http 'Content-Type' of the attachment
+        :param data: attachment data
+        :param headers: headers to send with request
+
+        """
+        attachment_url = posixpath.join(self._document_url, attachment)
+
+        # need latest rev
+        doc_resp = self._r_session.get(self._document_url)
+        doc_resp.raise_for_status()
+        doc_json = doc_resp.json()
+        if headers is None:
+            headers = {
+                'If-Match': doc_json['_rev'],
+                'Content-Type': content_type
+            }
+        else:
+            headers['If-Match'] = doc_json['_rev']
+            headers['Content-Type'] = content_type
+
+        resp = self._r_session.put(
+            attachment_url,
+            data=data,
+            headers=headers
+        )
+        resp.raise_for_status()
+
+        return resp.json()
