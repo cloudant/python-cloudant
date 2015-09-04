@@ -13,7 +13,7 @@ import urllib
 from .document import Document
 from .views import DesignDocument
 from .errors import CloudantException
-from .index import python_to_couch, Index
+from .result import python_to_couch, Result
 from .changes import Feed
 
 
@@ -24,7 +24,8 @@ class CouchDatabase(dict):
     dict based interface to a CouchDB Database.
     Instantiated with a reference to an account/session
     it supports accessing the documents, and various database
-    features such as the indexes, changes feed, and design documents
+    features such as the document indexes, changes feed, and 
+    design documents.
 
     :param account: CouchAccount instance corresponding to the db server
     :param database_name: Name of the database
@@ -39,7 +40,7 @@ class CouchDatabase(dict):
         self._database_name = database_name
         self._r_session = account._r_session
         self._fetch_limit = fetch_limit
-        self.index = Index(self.all_docs)
+        self.result = Result(self.all_docs)
 
     @property
     def database_url(self):
@@ -187,11 +188,11 @@ class CouchDatabase(dict):
 
         Wraps the _all_docs primary index on the database,
         and returns the results by value. This can be used
-        as a direct query to the couch db all_docs endpoint.
-        More convienient/efficient access using slices
-        and iterators can be accessed via the index attribute
+        as a direct query to the CouchDB all_docs endpoint.
+        More convenient/efficient access using slices
+        and iterators can be accessed via the result attribute.
 
-        Keyword arguments supported are those of the couch
+        Keyword arguments supported are those of the CouchDB
         view/index access API.
 
         :param descending: Boolean. Return the documents in descending by key
@@ -227,23 +228,23 @@ class CouchDatabase(dict):
         return data
 
     @contextlib.contextmanager
-    def custom_index(self, **options):
+    def custom_result(self, **options):
         """
-        _custom_index_
+        _custom_result_
 
-        If you want to customise the index behaviour on all_docs
-        you can build your own with extra options to the index
+        If you want to customise the result behaviour on all_docs
+        you can build your own with extra options to the result
         call using this context manager.
 
         Example:
 
-        with view.custom_index(include_docs=True, reduce=False) as indx:
-            data = indx[100:200]
+        with view.custom_result(include_docs=True, reduce=False) as rslt:
+            data = rslt[100:200]
 
         """
-        indx = Index(self.all_docs, **options)
-        yield indx
-        del indx
+        rslt = Result(self.all_docs, **options)
+        yield rslt
+        del rslt
 
     def keys(self, remote=False):
         """
