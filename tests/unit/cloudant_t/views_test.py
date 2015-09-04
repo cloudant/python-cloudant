@@ -7,7 +7,7 @@ import mock
 import unittest
 
 from cloudant.views import Code, View, DesignDocument
-from cloudant.index import Index
+from cloudant.result import Result
 from cloudant.document import Document
 
 
@@ -74,8 +74,8 @@ class ViewTests(unittest.TestCase):
         ddoc._database_host = "https://bob.cloudant.com"
         view1 = View(ddoc, "view1", map_func=self.map_func)
 
-        with view1.custom_index() as v:
-            self.failUnless(isinstance(v, Index))
+        with view1.custom_result() as v:
+            self.failUnless(isinstance(v, Result))
 
 
 class DesignDocTests(unittest.TestCase):
