@@ -42,7 +42,7 @@ class DocumentTest(unittest.TestCase):
         self.failUnless(doc.exists())
         self.failUnless(self.mock_session.get.called)
         self.mock_session.get.assert_has_calls(
-            mock.call('https://bob.cloudant.com/unittest/DUCKUMENT')
+            [ mock.call('https://bob.cloudant.com/unittest/DUCKUMENT') ]
         )
         self.mock_session.get.reset_mock()
 
@@ -77,7 +77,7 @@ class DocumentTest(unittest.TestCase):
 
         self.failUnless(self.mock_session.get.called)
         self.mock_session.get.assert_has_calls(
-            mock.call('https://bob.cloudant.com/unittest/DUCKUMENT')
+            [ mock.call('https://bob.cloudant.com/unittest/DUCKUMENT') ]
         )
         self.mock_session.get.reset_mock()
 
@@ -94,15 +94,15 @@ class DocumentTest(unittest.TestCase):
         self.failUnless(self.mock_session.get.called)
         self.failUnless(self.mock_session.put.called)
 
-        self.mock_session.get.call.assert_has_call(
-            mock.call('https://bob.cloudant.com/unittest/DUCKUMENT')
+        self.mock_session.get.assert_has_calls(
+            [ mock.call('https://bob.cloudant.com/unittest/DUCKUMENT') ]
         )
-        self.mock_session.put.assert_has_call(
-            mock.call(
-                'https://bob.cloudant.com/unittest/DUCKUMENT',
-                headers={'Content-Type': 'application/json'},
-                data=mock.ANY
-            )
+        self.mock_session.put.assert_has_calls(
+            [ mock.call(
+                  'https://bob.cloudant.com/unittest/DUCKUMENT',
+                  headers={'Content-Type': 'application/json'},
+                  data=mock.ANY
+            ) ]
         )
         self.mock_session.get.reset_mock()
         self.mock_session.put.reset_mock()
@@ -115,11 +115,11 @@ class DocumentTest(unittest.TestCase):
         doc.delete()
 
         self.failUnless(self.mock_session.delete.called)
-        self.mock_session.delete.assert_has_call(
-            mock.call(
-                'https://bob.cloudant.com/unittest/DUCKUMENT',
-                params={'rev': 'DUCK2'}
-            )
+        self.mock_session.delete.assert_has_calls(
+            [ mock.call(
+                  'https://bob.cloudant.com/unittest/DUCKUMENT',
+                  params={'rev': 'DUCK2'}
+            ) ]
         )
         self.mock_session.delete.reset_mock()
         # test delete with no rev explodes as expected

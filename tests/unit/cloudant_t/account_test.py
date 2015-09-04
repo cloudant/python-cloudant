@@ -55,22 +55,22 @@ class CouchDBAccountTests(unittest.TestCase):
 
         self.failUnless(self.mock_instance.get.called)
         self.mock_instance.get.assert_has_calls(
-            mock.call('http://127.0.0.1:5984/_session')
+            [ mock.call('http://127.0.0.1:5984/_session') ]
         )
 
         self.failUnless(self.mock_instance.post.called)
         self.mock_instance.post.assert_has_calls(
-            mock.call(
-                'http://127.0.0.1:5984/_session',
-                headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                data={'password': 'abc123', 'name': 'steve'}
-            )
+            [ mock.call(
+                  'http://127.0.0.1:5984/_session',
+                  headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                  data={'password': 'abc123', 'name': 'steve'}
+            ) ]
         )
 
         c.disconnect()
         self.failUnless(self.mock_instance.delete.called)
         self.mock_instance.delete.assert_has_calls(
-            mock.call('http://127.0.0.1:5984/_session')
+            [ mock.call('http://127.0.0.1:5984/_session') ]
         )
 
     def test_create_delete_methods(self):
@@ -98,10 +98,10 @@ class CouchDBAccountTests(unittest.TestCase):
         # create db call
         c.create_database("unittest")
         self.mock_instance.get.assert_has_calls(
-            mock.call('http://127.0.0.1:5984/unittest')
+            [ mock.call('http://127.0.0.1:5984/unittest') ]
         )
         self.mock_instance.put.assert_has_calls(
-            mock.call('http://127.0.0.1:5984/unittest')
+            [ mock.call('http://127.0.0.1:5984/unittest') ]
         )
 
         # delete db call
@@ -109,11 +109,11 @@ class CouchDBAccountTests(unittest.TestCase):
         mock_get.status_code = 200
         c.delete_database("unittest")
         self.mock_instance.get.assert_has_calls(
-            mock.call('http://127.0.0.1:5984/unittest')
+            [ mock.call('http://127.0.0.1:5984/unittest') ]
         )
 
         self.mock_instance.delete.assert_has_calls(
-            mock.call('http://127.0.0.1:5984/unittest')
+            [ mock.call('http://127.0.0.1:5984/unittest') ]
         )
 
         # create existing db fails
@@ -259,22 +259,22 @@ class CloudantAccountTests(unittest.TestCase):
 
         self.failUnless(self.mock_instance.get.called)
         self.mock_instance.get.assert_has_calls(
-            mock.call('https://steve.cloudant.com/_session')
+            [ mock.call('https://steve.cloudant.com/_session') ]
         )
 
         self.failUnless(self.mock_instance.post.called)
         self.mock_instance.post.assert_has_calls(
-            mock.call(
-                'https://steve.cloudant.com/_session',
-                headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                data={'password': 'abc123', 'name': 'steve'}
-            )
+            [ mock.call(
+                  'https://steve.cloudant.com/_session',
+                  headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                  data={'password': 'abc123', 'name': 'steve'}
+            ) ]
         )
 
         c.disconnect()
         self.failUnless(self.mock_instance.delete.called)
         self.mock_instance.delete.assert_has_calls(
-            mock.call('https://steve.cloudant.com/_session')
+            [ mock.call('https://steve.cloudant.com/_session') ]
         )
 
     def test_create_delete_methods(self):
@@ -302,10 +302,10 @@ class CloudantAccountTests(unittest.TestCase):
         # create db call
         c.create_database("unittest")
         self.mock_instance.get.assert_has_calls(
-            mock.call('https://steve.cloudant.com/unittest')
+            [ mock.call('https://steve.cloudant.com/unittest') ]
         )
         self.mock_instance.put.assert_has_calls(
-            mock.call('https://steve.cloudant.com/unittest')
+            [ mock.call('https://steve.cloudant.com/unittest') ]
         )
 
         # delete db call
@@ -313,11 +313,11 @@ class CloudantAccountTests(unittest.TestCase):
         mock_get.status_code = 200
         c.delete_database("unittest")
         self.mock_instance.get.assert_has_calls(
-            mock.call('https://steve.cloudant.com/unittest')
+            [ mock.call('https://steve.cloudant.com/unittest') ]
         )
 
         self.mock_instance.delete.assert_has_calls(
-            mock.call('https://steve.cloudant.com/unittest')
+            [ mock.call('https://steve.cloudant.com/unittest') ]
         )
 
         # create existing db fails
@@ -355,7 +355,7 @@ class CloudantAccountTests(unittest.TestCase):
         self.assertEqual(usage, mock_resp.json.return_value)
         self.failUnless(mock_resp.raise_for_status.called)
 
-        mock_get.assert_has_calls(mock.call('endpoint/2015/12'))
+        mock_get.assert_has_calls( [ mock.call('endpoint/2015/12') ] )
 
         self.assertRaises(
             CloudantException,
