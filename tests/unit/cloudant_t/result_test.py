@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
-Index unittests
+Result unittests
 
 """
 import datetime
 import unittest
 
-from cloudant.index import python_to_couch, Index, type_or_none
+from cloudant.result import python_to_couch, Result, type_or_none
 from cloudant.errors import CloudantArgumentError
 
 import mock
@@ -61,56 +61,56 @@ class PythonToCouchTests(unittest.TestCase):
         self.failUnless(not type_or_none((int, float), "womp"))
 
 
-class IndexTests(unittest.TestCase):
+class ResultTests(unittest.TestCase):
     """
-    tests for Index class
+    tests for Result class
     """
-    def test_index_getitem(self):
+    def test_result_getitem(self):
         ref = mock.Mock()
         ref.return_value = {'rows': [1,2,3]}
-        idx = Index(ref)
+        rslt = Result(ref)
 
         # string key:
-        self.assertEqual(idx["abc"], [1,2,3])
+        self.assertEqual(rslt["abc"], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(key='abc'))
-        self.assertEqual(idx[["abc", "def"]], [1,2,3])
+        self.assertEqual(rslt[["abc", "def"]], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(key=['abc', 'def']))
 
         # list slice
-        self.assertEqual(idx["abc":"def"], [1,2,3])
+        self.assertEqual(rslt["abc":"def"], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(startkey='abc', endkey='def'))
-        self.assertEqual(idx["abc":], [1,2,3])
+        self.assertEqual(rslt["abc":], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(startkey='abc'))
-        self.assertEqual(idx[:"def"], [1,2,3])
+        self.assertEqual(rslt[:"def"], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(endkey='def'))
-        self.assertEqual(idx[:], [1,2,3])
+        self.assertEqual(rslt[:], [1,2,3])
         self.assertEqual(ref.call_args, mock.call())
 
         # int slice
-        self.assertEqual(idx[1:100], [1,2,3])
+        self.assertEqual(rslt[1:100], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(skip=1, limit=99))
-        self.assertEqual(idx[1:], [1,2,3])
+        self.assertEqual(rslt[1:], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(skip=1))
-        self.assertEqual(idx[:100], [1,2,3])
+        self.assertEqual(rslt[:100], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(limit=100))
 
-        self.assertRaises(CloudantArgumentError, idx.__getitem__, {})
+        self.assertRaises(CloudantArgumentError, rslt.__getitem__, {})
 
     def test_iter_method(self):
         """test basics of iter method"""
         ref = mock.Mock()
         ref.side_effect = [{'rows': [1,2,3]}, {'rows': []}]
-        idx = Index(ref)
-        results = [x for x in idx]
-        self.assertEqual(results, [1,2,3])
+        rslt = Result(ref)
+        collection = [x for x in rslt]
+        self.assertEqual(collection, [1,2,3])
 
         run_iter = lambda x: [y for y in x]
 
-        idx = Index(ref, skip=1000)
-        self.assertRaises(CloudantArgumentError, run_iter, idx)
+        rslt = Result(ref, skip=1000)
+        self.assertRaises(CloudantArgumentError, run_iter, rslt)
 
-        idx = Index(ref, limit=1000)
-        self.assertRaises(CloudantArgumentError, run_iter, idx)
+        rslt = Result(ref, limit=1000)
+        self.assertRaises(CloudantArgumentError, run_iter, rslt)
 
     def test_iter_paging(self):
         """iterate with multiple pages of data"""
@@ -119,9 +119,9 @@ class IndexTests(unittest.TestCase):
             {'rows': [x for x in range(100)]},
             {'rows': []}
         ]
-        idx = Index(ref, page_size=10)
-        results = [x for x in idx]
-        self.assertEqual(len(results), 100)
+        rslt = Result(ref, page_size=10)
+        collection = [x for x in rslt]
+        self.assertEqual(len(collection), 100)
 
 if __name__ == '__main__':
     unittest.main()

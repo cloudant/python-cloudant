@@ -9,7 +9,7 @@ import contextlib
 import posixpath
 
 from .document import Document
-from .index import Index, python_to_couch
+from .result import Result, python_to_couch
 
 
 class Code(str):
@@ -39,46 +39,46 @@ class View(dict):
     Dictionary based object representing a view, exposing the map, reduce
     functions as attributes and supporting query/data access via the view
 
-    Provides a sliceable and iterable default index that can be used to
-    query the view data via the index attribute.
+    Provides a sliceable and iterable default result collection that can 
+    be used to query the view data via the result attribute.
 
     Eg:
 
     Using integers to skip/limit:
-    view.index[100:200]
-    view.index[:200]
-    view.index[100:]
+    view.result[100:200]
+    view.result[:200]
+    view.result[100:]
 
     Using strings or lists as startkey/endkey:
 
-    view.index[ ["2013","10"]:["2013","11"] ]
-    view.index[["2013","10"]]
-    view.index[["2013","10"]:]
+    view.result[ ["2013","10"]:["2013","11"] ]
+    view.result[["2013","10"]]
+    view.result[["2013","10"]:]
 
-    For large views, iteration is supported via index:
+    For large views, iteration is supported via result:
 
-    for doc in view.index:
+    for doc in view.result:
         print doc
 
-    The default index provides basic functionality, which can
-    be customised with other arguments to the view URL using
-    the custom_index context.
+    The default result collection provides basic functionality, 
+    which can be customised with other arguments to the view URL 
+    using the custom_result context.
 
     For example:
 
     #including documents
-    with view.custom_index(include_docs=True) as idx:
-        idx[100:200] # slice by index
-        idx[["2013","10"]:["2013","11"]] # slice by startkey/endkey
+    with view.custom_result(include_docs=True) as rslt:
+        rslt[100:200] # slice by result
+        rslt[["2013","10"]:["2013","11"]] # slice by startkey/endkey
 
         #iteration
-        for doc in idx:
+        for doc in rslt:
             print doc
 
     Iteration over a view within startkey/endkey range:
 
-    with view.custom_index(startkey="2013", endkey="2014") as idx:
-        for doc in idx:
+    with view.custom_result(startkey="2013", endkey="2014") as rslt:
+        for doc in rslt:
             print doc
 
     """
@@ -90,7 +90,7 @@ class View(dict):
         self[self.view_name] = {}
         self[self.view_name]['map'] = _codify(map_func)
         self[self.view_name]['reduce'] = _codify(reduce_func)
-        self.index = Index(self)
+        self.result = Result(self)
 
     @property
     def map(self):
@@ -150,23 +150,23 @@ class View(dict):
         return resp.json()
 
     @contextlib.contextmanager
-    def custom_index(self, **options):
+    def custom_result(self, **options):
         """
-        _custom_index_
+        _custom_result_
 
-        If you want to customise the index behaviour,
-        you can build your own with extra options to the index
+        If you want to customise the result behaviour,
+        you can build your own with extra options to the result
         call using this context manager.
 
         Example:
 
-        with view.custom_index(include_docs=True, reduce=False) as indx:
-            data = indx[100:200]
+        with view.custom_result(include_docs=True, reduce=False) as rslt:
+            data = rslt[100:200]
 
         """
-        indx = Index(self, **options)
-        yield indx
-        del indx
+        rslt = Result(self, **options)
+        yield rslt
+        del rslt
 
 
 class DesignDocument(Document):

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 """
-_index_
+_result_
 
-Support for accessing couchdb indexes such as _all_docs
-and views
-
+Support for accessing CouchDB and Cloudant 
+result collections
 """
 import json
 import types
@@ -50,7 +49,7 @@ def python_to_couch(options):
     Translator method to flip python style
     options into couch query options, eg True => 'true'
     """
-    result = {}
+    translation = {}
     for k, v in options.iteritems():
         if k not in ARG_TYPES:
             msg = "Invalid Argument {0}".format(k)
@@ -71,14 +70,14 @@ def python_to_couch(options):
                 raise CloudantArgumentError(msg)
         try:
             if v is None:
-                result[k] = None
+                translation[k] = None
             else:
-                result[k] = arg_converter(v)
+                translation[k] = arg_converter(v)
         except Exception as ex:
             msg = "Error converting arg {0}: {1}".format(k, ex)
             raise CloudantArgumentError(msg)
 
-    return result
+    return translation
 
 
 def type_or_none(typerefs, value):
@@ -86,18 +85,18 @@ def type_or_none(typerefs, value):
     return isinstance(value, typerefs) or value is None
 
 
-class Index(object):
+class Result(object):
     """
-    _Index_
+    _Result_
 
     Sliceable and iterable interface to CouchDB View like things, such
     as the CloudantDatabase and View objects in this package.
 
     Instantiated with the raw data callable such as the
     CloudantDatabase.all_docs or View.__call__ reference used to
-    retrieve data, the index can also store optional extra args for
+    retrieve data, the result can also store optional extra args for
     customisation and supports efficient, paged iteration over
-    the view to avoid large views blowing up memory
+    the view to avoid large views blowing up memory.
 
     In python, slicing returns by value, wheras iteration will yield
     elements of the sequence, which means that using slices is better
@@ -107,36 +106,36 @@ class Index(object):
     Examples:
 
     Access by key:
-    index['key'] # get all records matching key
+    result['key'] # get all records matching key
 
     Slicing by startkey/endkey
 
-    index[["2013","10"]:["2013","11"]] # results between compound keys
-    index["2013":"2014"] # results between string keys
-    index["2013":] # all results after key
-    index[:"2014"] # all results up to key
+    result[["2013","10"]:["2013","11"]] # results between compound keys
+    result["2013":"2014"] # results between string keys
+    result["2013":] # all results after key
+    result[:"2014"] # all results up to key
 
     Slicing by value:
 
-    index[100:200] # get records 100-200
-    index[:200]  # get records up to 200th
-    index[100:]  # get all records after 100th
+    result[100:200] # get records 100-200
+    result[:200]  # get records up to 200th
+    result[100:]  # get all records after 100th
 
     Iteration:
 
     # iterate over all records
-    index = Index(callable)
-    for i in index:
+    result = Result(callable)
+    for i in result:
         print i
 
     # iterate over records between startkey/endkey
-    index = Index(callable, startkey="2013", endkey="2014")
-    for i in index:
+    result = Result(callable, startkey="2013", endkey="2014")
+    for i in result:
         print i
 
     # iterate over records including docs and in 1000 record batches
-    index = Index(callable, include_docs=True, page_size=1000)
-    for i in index:
+    result = Result(callable, include_docs=True, page_size=1000)
+    for i in result:
         print i
 
     """
@@ -208,7 +207,7 @@ class Index(object):
                 return data['rows']
         msg = (
             "Failed to interpret the argument {0} passed to "
-            "Index.__getitem__ as a key value or as a slice"
+            "Result.__getitem__ as a key value or as a slice"
         ).format(key)
         raise CloudantArgumentError(msg)
 
@@ -218,10 +217,10 @@ class Index(object):
 
         Uses skip/limit to consume a view in chunks controlled
         by the page_size setting and retrieves a batch of records
-        from the view or index and then yields each element.
+        from the view or result and then yields each element.
 
         Since this uses skip/limit to perform the iteration, they
-        cannot be used as optional arguments to the index, but startkey
+        cannot be used as optional arguments to the result, but startkey
         and endkey etc can be used to constrain the result of the iterator
 
         """
