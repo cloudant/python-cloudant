@@ -11,7 +11,7 @@ import posixpath
 import urllib
 
 from .document import Document
-from .views import DesignDocument
+from .design_document import DesignDocument
 from .errors import CloudantException
 from .result import python_to_couch, Result
 from .changes import Feed
