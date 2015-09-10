@@ -87,32 +87,31 @@ class View(dict):
         self.design_doc = ddoc
         self._r_session = self.design_doc._r_session
         self.view_name = view_name
-        self[self.view_name] = {}
-        self[self.view_name]['map'] = _codify(map_func)
-        self[self.view_name]['reduce'] = _codify(reduce_func)
+        if map_func is not None:
+            self['map'] = _codify(map_func)
+        if reduce_func is not None:
+            self['reduce'] = _codify(reduce_func)
         self.result = Result(self)
 
     @property
     def map(self):
         """map property getter"""
-        return self[self.view_name]['map']
+        return self.get('map')
 
     @map.setter
     def map(self, js_func):
         """map property setter, accepts str or Code obj"""
-        f = _codify(js_func)
-        self[self.view_name]['map'] = f
+        self['map'] = _codify(js_func)
 
     @property
     def reduce(self):
         """reduce property getter"""
-        return self[self.view_name]['reduce']
+        return self.get('reduce')
 
     @reduce.setter
     def reduce(self, js_func):
         """reduce property setter, accepts str or Code obj"""
-        f = _codify(js_func)
-        self[self.view_name]['reduce'] = f
+        self['reduce'] = _codify(js_func)
 
     @property
     def url(self):

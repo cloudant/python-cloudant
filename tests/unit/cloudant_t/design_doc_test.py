@@ -26,15 +26,26 @@ class DesignDocTests(unittest.TestCase):
         ddoc.fetch()
 
         self.failUnless(mock_fetch.called)
-        views = [ x for _,x in ddoc.iterviews() ]
+        views = [ x for x in ddoc.iterviews() ]
         self.assertEqual(len(views), 1)
         view = views[0]
         self.failUnless('view1' in view)
-        self.assertEqual(view['view1']['map'], 'MAP')
-        self.assertEqual(view['view1']['reduce'], 'REDUCE')
+        funcs = view[1]
+        self.assertEqual(funcs['map'], 'MAP')
+        self.assertEqual(funcs['reduce'], 'REDUCE')
         self.failUnless('view1' in ddoc.views)
 
-    def test_ddoc_add_view(self):
+    def test_new_ddoc_add_view(self):
+        mock_database = mock.Mock()
+        with mock.patch('cloudant.design_document.DesignDocument.save') as mock_save:
+            ddoc = DesignDocument(mock_database, '_design/unittest')
+            ddoc.add_view('view1', "MAP")
+            self.failUnless('view1' in ddoc['views'])
+            self.assertEqual(ddoc['views']['view1'].map, 'MAP')
+            self.assertEqual(ddoc['views']['view1'].reduce, None)
+            self.failUnless(mock_save.called)
+
+    def test_existing_ddoc_add_view(self):
         mock_database = mock.Mock()
         with mock.patch('cloudant.design_document.DesignDocument.save') as mock_save:
             ddoc = DesignDocument(mock_database, '_design/unittest')
