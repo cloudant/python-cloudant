@@ -19,11 +19,12 @@ class DesignDocument(Document):
     """
     def __init__(self, cloudant_database, document_id=None):
         super(DesignDocument, self).__init__(cloudant_database, document_id)
+        self.setdefault('views', {})
 
     @property
     def views(self):
         """accessor property for views dictionary"""
-        return self['views']
+        return self.get('views')
 
     def add_view(self, view_name, map_func, reduce_func=None):
         """
