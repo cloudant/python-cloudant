@@ -7,6 +7,7 @@ Class representing a Cloudant design document
 """
 from .document import Document
 from .views import View
+from .errors import CloudantArgumentError
 
 
 class DesignDocument(Document):
@@ -37,15 +38,52 @@ class DesignDocument(Document):
         :param map_func: str or Code object containing js map function
         :param reduce_func: str or Code object containing js reduce function
         """
+        if self.get_view(view_name) is not None:
+            msg = "View {0} already exists in this design doc".format(view_name)
+            raise CloudantArgumentError(msg)
         v = View(self, view_name, map_func, reduce_func)
         self.views[view_name] = v
         self.save()
+
+    def update_view(self, view_name, map_func, reduce_func=None):
+        """
+        _update_view_
+
+        Modify an existing view on this design document, given a map function
+        and optional reduce function.
+
+        :param view_name: Name of the view
+        :param map_func: str or Code object containing js map function
+        :param reduce_func: str or Code object containing js reduce function
+        """
+        v = self.get_view(view_name)
+        if v is None:
+            msg = "View {0} does not exist in this design doc".format(view_name)
+            raise CloudantArgumentError(msg)
+        v.map = map_func
+        if reduce_func is not None:
+            v.reduce = reduce_func
+        self.views[view_name] = v
+        self.save()
+
+    def delete_view(self, view_name):
+        """
+        _delete_view_
+
+        Remove a view from this design document.
+
+        :param view_name: Name of the view
+        """
+        if self.get_view(view_name) is not None:
+            del self.views[view_name]
+            self.save()
 
     def fetch(self):
         """
         _fetch_
 
-        Grab the remote document and populate build the View structure
+        Grab the remote document and populate the View structure.
+        Other structures to follow...
 
         """
         super(DesignDocument, self).fetch()

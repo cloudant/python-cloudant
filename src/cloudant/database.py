@@ -9,6 +9,7 @@ import json
 import contextlib
 import posixpath
 import urllib
+from requests.exceptions import HTTPError
 
 from .document import Document
 from .design_document import DesignDocument
@@ -95,7 +96,7 @@ class CouchDatabase(dict):
         provided, assuming that there is an _id field provided.
 
         :param data: dictionary of document JSON data, containing _id
-        :param throw_on_exists: Optional control on wether to raise an
+        :param throw_on_exists: Optional control on whether to raise an
           exception if the _id already exists as a document in the database
 
         :returns: Document instance corresponding to the new doc
@@ -150,11 +151,30 @@ class CouchDatabase(dict):
         data = resp.json()
         return [x.get('key') for x in data.get('rows', [])]
 
+    def get_design_document(self, ddoc_id):
+        """
+        _get_design_document_
+
+        Returns a DesignDocument object.  If a remote design
+        document exists with the specified id then the 
+        returned DesignDocument is populated with the remote
+        design document content.
+
+        """
+        ddoc = DesignDocument(self, ddoc_id)
+        try:
+            ddoc.fetch()
+        except HTTPError as e:
+            if e.response.status_code != 404:
+                raise
+
+        return ddoc
+
     def create(self):
         """
         _create_
 
-        Create this database if it doesnt exist,
+        Create this database if it does not exist,
         raises a CloudantException if the operation fails.
         Is a no-op if the database already exists
         """
