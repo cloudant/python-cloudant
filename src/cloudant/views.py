@@ -148,6 +148,13 @@ class View(dict):
         resp.raise_for_status()
         return resp.json()
 
+    def make_result(self, **options):
+        """
+        Wrap the call to get result data in a Result object.
+        
+        """
+        return Result(self, **options)
+
     @contextlib.contextmanager
     def custom_result(self, **options):
         """
@@ -163,6 +170,6 @@ class View(dict):
             data = rslt[100:200]
 
         """
-        rslt = Result(self, **options)
+        rslt = self.make_result(**options)
         yield rslt
         del rslt
