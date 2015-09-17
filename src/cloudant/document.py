@@ -9,6 +9,7 @@ import json
 import posixpath
 import urllib
 import requests
+from requests.exceptions import HTTPError
 
 from .errors import CloudantException
 
@@ -214,7 +215,16 @@ class Document(dict):
         """
         support context like editing of document fields
         """
-        self.fetch()
+
+        # We don't want to raise an exception if the document is not found
+        # because upon __exit__ the save() call will create the document 
+        # if necessary.
+        try:
+            self.fetch()
+        except HTTPError as e:
+            if e.response.status_code != 404:
+                raise
+        
         return self
 
     def __exit__(self, *args):
