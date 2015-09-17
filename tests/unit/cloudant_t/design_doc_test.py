@@ -37,26 +37,47 @@ class DesignDocTests(unittest.TestCase):
 
     def test_new_ddoc_add_view(self):
         mock_database = mock.Mock()
-        with mock.patch('cloudant.design_document.DesignDocument.save') as mock_save:
-            ddoc = DesignDocument(mock_database, '_design/unittest')
-            ddoc.add_view('view1', "MAP")
-            self.failUnless('view1' in ddoc['views'])
-            self.assertEqual(ddoc['views']['view1'].map, 'MAP')
-            self.assertEqual(ddoc['views']['view1'].reduce, None)
-            self.failUnless(mock_save.called)
+        ddoc = DesignDocument(mock_database, '_design/unittest')
+        ddoc.add_view('view1', "MAP")
+        self.failUnless('view1' in ddoc['views'])
+        self.assertEqual(ddoc['views']['view1'].map, 'MAP')
+        self.assertEqual(ddoc['views']['view1'].reduce, None)
 
     def test_existing_ddoc_add_view(self):
         mock_database = mock.Mock()
-        with mock.patch('cloudant.design_document.DesignDocument.save') as mock_save:
-            ddoc = DesignDocument(mock_database, '_design/unittest')
-            ddoc['views'] = {
-                'view1': {'map': "MAP", 'reduce': 'REDUCE'}
-            }
-            ddoc.add_view('view2', "MAP2")
-            self.failUnless('view2' in ddoc['views'])
-            self.assertEqual(ddoc['views']['view2'].map, 'MAP2')
-            self.assertEqual(ddoc['views']['view2'].reduce, None)
-            self.failUnless(mock_save.called)
+        ddoc = DesignDocument(mock_database, '_design/unittest')
+        ddoc['views'] = {
+           'view1': {'map': "MAP", 'reduce': 'REDUCE'}
+        }
+        ddoc.add_view('view2', "MAP2")
+        self.failUnless('view1' in ddoc['views'])
+        self.failUnless('view2' in ddoc['views'])
+        self.assertEqual(ddoc['views']['view2'].map, 'MAP2')
+        self.assertEqual(ddoc['views']['view2'].reduce, None)
+
+    def test_ddoc_update_view(self):
+        mock_database = mock.Mock()
+        ddoc = DesignDocument(mock_database, '_design/unittest')
+        ddoc.add_view('view1', "MAP", "REDUCE")
+        
+        ddoc.update_view('view1', "UPDATED_MAP")
+        self.failUnless('view1' in ddoc['views'])
+        self.assertEqual(ddoc['views']['view1'].map, 'UPDATED_MAP')
+        self.assertEqual(ddoc['views']['view1'].reduce, 'REDUCE')
+
+    def test_ddoc_delete_view(self):
+        mock_database = mock.Mock()
+        ddoc = DesignDocument(mock_database, '_design/unittest')
+        ddoc.add_view('view1', "MAP", "REDUCE")
+        ddoc.add_view('view2', "MAP", "REDUCE")
+        self.failUnless('view1' in ddoc['views'])
+        self.failUnless('view2' in ddoc['views'])
+        
+        ddoc.delete_view('view2')
+        self.failUnless('view1' in ddoc['views'])
+        self.failUnless('view2' not in ddoc['views'])
+        self.assertEqual(ddoc['views']['view1'].map, 'MAP')
+        self.assertEqual(ddoc['views']['view1'].reduce, 'REDUCE')
 
     def test_list_views(self):
         mock_database = mock.Mock()

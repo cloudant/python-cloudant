@@ -43,7 +43,6 @@ class DesignDocument(Document):
             raise CloudantArgumentError(msg)
         v = View(self, view_name, map_func, reduce_func)
         self.views[view_name] = v
-        self.save()
 
     def update_view(self, view_name, map_func, reduce_func=None):
         """
@@ -64,7 +63,6 @@ class DesignDocument(Document):
         if reduce_func is not None:
             v.reduce = reduce_func
         self.views[view_name] = v
-        self.save()
 
     def delete_view(self, view_name):
         """
@@ -76,7 +74,6 @@ class DesignDocument(Document):
         """
         if self.get_view(view_name) is not None:
             del self.views[view_name]
-            self.save()
 
     def fetch(self):
         """
