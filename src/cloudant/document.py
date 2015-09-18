@@ -117,6 +117,8 @@ class Document(dict):
             headers=headers
         )
         put_resp.raise_for_status()
+        data = put_resp.json()
+        super(Document, self).__setitem__('_rev', data['rev'])
         return
 
     # Update Actions
