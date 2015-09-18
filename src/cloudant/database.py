@@ -9,9 +9,11 @@ import json
 import contextlib
 import posixpath
 import urllib
+from requests.exceptions import HTTPError
 
 from .document import Document
 from .design_document import DesignDocument
+from .views import View
 from .errors import CloudantException
 from .result import python_to_couch, Result
 from .changes import Feed
@@ -95,7 +97,7 @@ class CouchDatabase(dict):
         provided, assuming that there is an _id field provided.
 
         :param data: dictionary of document JSON data, containing _id
-        :param throw_on_exists: Optional control on wether to raise an
+        :param throw_on_exists: Optional control on whether to raise an
           exception if the _id already exists as a document in the database
 
         :returns: Document instance corresponding to the new doc
@@ -150,11 +152,132 @@ class CouchDatabase(dict):
         data = resp.json()
         return [x.get('key') for x in data.get('rows', [])]
 
+    def get_design_document(self, ddoc_id):
+        """
+        _get_design_document_
+
+        Returns a DesignDocument object.  If a remote design
+        document exists with the specified id then the 
+        returned DesignDocument is populated with the remote
+        design document content.
+
+        :param ddoc_id: Design document id
+
+        :returns: Design document instance (possibly populated)
+
+        """
+        ddoc = DesignDocument(self, ddoc_id)
+        try:
+            ddoc.fetch()
+        except HTTPError as e:
+            if e.response.status_code != 404:
+                raise
+
+        return ddoc
+
+    def get_view_result(self, ddoc_id, view_name, **kwargs):
+        """
+        _get_view_result_
+
+        Returns a Result object based on the design document
+        and view name.  If you intend to iterate through the 
+        result, do not use skip and/or limit in the kwargs as 
+        that is handled in the Result.  If you would like to
+        manage paging and iteration manually over the result
+        then try the get_view_raw_result method instead.
+
+        For example to retrieve the default Result object 
+        from a view do:
+
+        db.get_view_result('_design/ddoc_id_001', 'view_001')
+
+        or to index the Result object do something like:
+
+        db.get_view_raw_result('_design/ddoc_id_001', 'view_001',
+            include_docs=True, reduce=False)
+
+        For more detail on slicing and iteration using a Result
+        object, refer to the Result Class docstring.
+        
+        :param ddoc_id: Design document id
+        :param view_name: Name of the view
+        :param **kwargs: Parameters to index the query results by
+            Valid parameters include:
+
+            descending bool
+            endkey string or array
+            endkey_docid  string
+            group bool
+            group_level ??
+            include_docs bool
+            inclusive_end  bool
+            key string
+            reduce  boolean
+            stale   enum(ok, update_after)
+            startkey  string or array
+            startkey_docid  string
+
+        :returns: The result content wrapped in a Result object that
+            allows for paging and pythonic slicing and iteration over 
+            the result data
+
+        """
+        view = View(DesignDocument(self, ddoc_id), view_name)
+        if kwargs:
+            return view.make_result(**kwargs)
+        else:
+            return view.result
+
+    def get_view_raw_result(self, ddoc_id, view_name, **kwargs):
+        """
+        _get_view_raw_result_
+
+        Returns the raw response JSON content for the view query
+        based on the design document, view name and parameters 
+        depicted as the kwargs.
+
+        For example to retrieve the full resulting set of raw data 
+        from a view do:
+
+        db.get_view_raw_result('_design/ddoc_id_001', 'view_001')
+
+        or to provide parameters the view query and return a 
+        resulting set of raw data do something like:
+
+        db.get_view_raw_result('_design/ddoc_id_001', 'view_001',
+            include_docs=True, reduce=False)
+
+        :param ddoc_id: Design document id
+        :param view_name: Name of the view
+        :param **kwargs: Parameters to index the query results by
+            Valid parameters include:
+
+            descending bool
+            endkey string or array
+            endkey_docid  string
+            group bool
+            group_level ??
+            include_docs bool
+            inclusive_end  bool
+            key string
+            limit   int
+            reduce  boolean
+            skip    int
+            stale   enum(ok, update_after)
+            startkey  string or array
+            startkey_docid  string
+
+        :returns: The raw JSON response content for the query requested
+
+        """
+        view = View(DesignDocument(self, ddoc_id), view_name)
+        return view(**kwargs)
+
     def create(self):
         """
         _create_
 
-        Create this database if it doesnt exist,
+        Create this database if it does not exist,
         raises a CloudantException if the operation fails.
         Is a no-op if the database already exists
         """
