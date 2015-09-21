@@ -85,12 +85,16 @@ class DocumentTest(unittest.TestCase):
         mock_put_resp = mock.Mock()
         mock_put_resp.status_code = 200
         mock_put_resp.raise_for_status = mock.Mock()
+        mock_put_resp.json = mock.Mock()
+        mock_put_resp.json.return_value = {'id': 'DUCKUMENT', 'rev': 'DUCK3'}
         self.mock_session.put.return_value = mock_put_resp
         mock_get_resp = mock.Mock()
         mock_get_resp.status_code = 200
         self.mock_session.get.return_value = mock_get_resp
 
         doc.save()
+        self.assertEqual(doc['_rev'], 'DUCK3')
+        self.assertEqual(doc['_id'], 'DUCKUMENT')
         self.failUnless(self.mock_session.get.called)
         self.failUnless(self.mock_session.put.called)
 
@@ -118,7 +122,7 @@ class DocumentTest(unittest.TestCase):
         self.mock_session.delete.assert_has_calls(
             [ mock.call(
                   'https://bob.cloudant.com/unittest/DUCKUMENT',
-                  params={'rev': 'DUCK2'}
+                  params={'rev': 'DUCK3'}
             ) ]
         )
         self.mock_session.delete.reset_mock()
@@ -162,6 +166,8 @@ class DocumentTest(unittest.TestCase):
         mock_save_resp = mock.Mock()
         mock_save_resp.status_code = 200
         mock_save_resp.raise_for_status = mock.Mock()
+        mock_save_resp.json = mock.Mock()
+        mock_save_resp.json.return_value = {'id': "ID", "rev": "updated"}
         self.mock_session.put.return_value = mock_save_resp
 
         mock_encode = mock.Mock()
@@ -208,6 +214,7 @@ class DocumentTest(unittest.TestCase):
         mock_put_resp.side_effect = mock.Mock()
         mock_put_resp.status_code = 200
         mock_put_resp.raise_for_status = raise_conflict
+        mock_put_resp.json.side_effect = lambda: {'id': "ID", "rev": "updated"}
         self.mock_session.put.return_value = mock_put_resp
         mock_get_resp = mock.Mock()
         mock_get_resp.status_code = 200
