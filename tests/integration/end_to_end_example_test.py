@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-E2E Examples Integ test
+_end_to_end_example_test_
+
+End to end integration tests
 
 """
 import uuid
@@ -42,29 +44,30 @@ class E2ECouchTest(unittest.TestCase):
             db = c.create_database(self.dbname)
 
             try:
-                self.failUnless(self.dbname in c)
-                self.failUnless(db.exists())
+                self.assertTrue(self.dbname in c)
+                self.assertTrue(db.exists())
 
                 # creating docs
                 doc1 = db.new_document()
-                doc2 = db.create_document({'_id': 'womp', "testing": "document2"})
+                doc2 = db.create_document({'_id': 'womp', 
+                    "testing": "document2"})
                 doc3 = db.create_document({"testing": "document3"})
 
-                self.failUnless('_id' in doc1)
-                self.failUnless('_rev' in doc1)
-                self.failUnless('_id' in doc2)
-                self.failUnless('_rev' in doc2)
-                self.failUnless('_id' in doc3)
-                self.failUnless('_rev' in doc3)
+                self.assertTrue('_id' in doc1)
+                self.assertTrue('_rev' in doc1)
+                self.assertTrue('_id' in doc2)
+                self.assertTrue('_rev' in doc2)
+                self.assertTrue('_id' in doc3)
+                self.assertTrue('_rev' in doc3)
 
                 # verifying access via dict api
-                self.failUnless(doc1['_id'] in db)
-                self.failUnless(doc2['_id'] in db)
-                self.failUnless(doc3['_id'] in db)
+                self.assertTrue(doc1['_id'] in db)
+                self.assertTrue(doc2['_id'] in db)
+                self.assertTrue(doc3['_id'] in db)
 
-                self.failUnless(db[doc1['_id']] == doc1)
-                self.failUnless(db[doc2['_id']] == doc2)
-                self.failUnless(db[doc3['_id']] == doc3)
+                self.assertTrue(db[doc1['_id']] == doc1)
+                self.assertTrue(db[doc2['_id']] == doc2)
+                self.assertTrue(db[doc3['_id']] == doc3)
                 # test working context for updating docs
                 with doc2 as working_doc:
                     working_doc['field1'] = [1, 2, 3]
@@ -103,29 +106,30 @@ class E2ECloudantTest(unittest.TestCase):
 
             try:
 
-                self.failUnless(self.dbname in c)
-                self.failUnless(db.exists())
+                self.assertTrue(self.dbname in c)
+                self.assertTrue(db.exists())
 
                 # creating docs
                 doc1 = db.new_document()
-                doc2 = db.create_document({'_id': 'womp', "testing": "document2"})
+                doc2 = db.create_document({'_id': 'womp', 
+                    "testing": "document2"})
                 doc3 = db.create_document({"testing": "document3"})
 
-                self.failUnless('_id' in doc1)
-                self.failUnless('_rev' in doc1)
-                self.failUnless('_id' in doc2)
-                self.failUnless('_rev' in doc2)
-                self.failUnless('_id' in doc3)
-                self.failUnless('_rev' in doc3)
+                self.assertTrue('_id' in doc1)
+                self.assertTrue('_rev' in doc1)
+                self.assertTrue('_id' in doc2)
+                self.assertTrue('_rev' in doc2)
+                self.assertTrue('_id' in doc3)
+                self.assertTrue('_rev' in doc3)
 
                 # verifying access via dict api
-                self.failUnless(doc1['_id'] in db)
-                self.failUnless(doc2['_id'] in db)
-                self.failUnless(doc3['_id'] in db)
+                self.assertTrue(doc1['_id'] in db)
+                self.assertTrue(doc2['_id'] in db)
+                self.assertTrue(doc3['_id'] in db)
 
-                self.failUnless(db[doc1['_id']] == doc1)
-                self.failUnless(db[doc2['_id']] == doc2)
-                self.failUnless(db[doc3['_id']] == doc3)
+                self.assertTrue(db[doc1['_id']] == doc1)
+                self.assertTrue(db[doc2['_id']] == doc2)
+                self.assertTrue(db[doc3['_id']] == doc3)
 
                 # test working context for updating docs
                 with doc2 as working_doc:

@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-Test document processing
+_document_test_
+
+document module integration tests
+
 """
 
 import posixpath
