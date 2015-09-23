@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-_changes tests_
+_changes_test_
 
-Tests for the changes module
+changes module unit tests
 
 """
 import requests

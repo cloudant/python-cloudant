@@ -15,6 +15,8 @@
 """
 _views_test_
 
+views module unit tests
+
 """
 import mock
 import unittest
@@ -32,7 +34,7 @@ class CodeTests(unittest.TestCase):
 
 
 class ViewTests(unittest.TestCase):
-    """tests for View class"""
+    """Tests for View class"""
     def setUp(self):
         self.map_func = "function(doc){emit(doc._id, 1)}"
         self.reduce_func = "_sum"
@@ -40,9 +42,11 @@ class ViewTests(unittest.TestCase):
     def test_view_class(self):
         """test various methods of instantiation and properties"""
         ddoc = DesignDocument(mock.Mock(), "_design/tests")
-        view1 = View(ddoc, "view1", map_func=self.map_func, reduce_func=self.reduce_func)
+        view1 = View(ddoc, "view1", map_func=self.map_func, 
+            reduce_func=self.reduce_func)
         view2 = View(ddoc, "view2", map_func=self.map_func)
-        view3 = View(ddoc, "view1", map_func=Code(self.map_func), reduce_func=Code(self.reduce_func))
+        view3 = View(ddoc, "view1", map_func=Code(self.map_func), 
+            reduce_func=Code(self.reduce_func))
         view4 = View(ddoc, "view1", map_func=Code(self.map_func))
 
         self.assertEqual(view1.map, Code(self.map_func))
@@ -88,7 +92,7 @@ class ViewTests(unittest.TestCase):
         view1 = View(ddoc, "view1", map_func=self.map_func)
 
         with view1.custom_result() as v:
-            self.failUnless(isinstance(v, Result))
+            self.assertTrue(isinstance(v, Result))
 
 
 if __name__ == '__main__':

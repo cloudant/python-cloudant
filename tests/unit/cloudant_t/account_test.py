@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-_account_
+_account_test_
 
-Cloudant Account tests
+account module unit tests
 
 """
 import mock
@@ -53,7 +53,7 @@ class CouchDBAccountTests(unittest.TestCase):
         c = CouchDB(self.username, self.password)
         c.connect()
 
-        self.failUnless(self.mock_session.called)
+        self.assertTrue(self.mock_session.called)
 
         self.assertEqual(
             self.mock_instance.auth,
@@ -66,12 +66,12 @@ class CouchDBAccountTests(unittest.TestCase):
 
         self.assertEqual('COOKIE', c.session_cookie())
 
-        self.failUnless(self.mock_instance.get.called)
+        self.assertTrue(self.mock_instance.get.called)
         self.mock_instance.get.assert_has_calls(
             [ mock.call('http://127.0.0.1:5984/_session') ]
         )
 
-        self.failUnless(self.mock_instance.post.called)
+        self.assertTrue(self.mock_instance.post.called)
         self.mock_instance.post.assert_has_calls(
             [ mock.call(
                   'http://127.0.0.1:5984/_session',
@@ -81,7 +81,7 @@ class CouchDBAccountTests(unittest.TestCase):
         )
 
         c.disconnect()
-        self.failUnless(self.mock_instance.delete.called)
+        self.assertTrue(self.mock_instance.delete.called)
         self.mock_instance.delete.assert_has_calls(
             [ mock.call('http://127.0.0.1:5984/_session') ]
         )
@@ -107,7 +107,7 @@ class CouchDBAccountTests(unittest.TestCase):
         # instantiate and connect
         c = CouchDB(self.username, self.password)
         c.connect()
-        self.failUnless(self.mock_session.called)
+        self.assertTrue(self.mock_session.called)
         # create db call
         c.create_database("unittest")
         self.mock_instance.get.assert_has_calls(
@@ -155,7 +155,7 @@ class CouchDBAccountTests(unittest.TestCase):
         c = CouchDB(self.username, self.password)
         c.connect()
         self.assertEqual(c.all_dbs(), mock_resp.json.return_value)
-        self.failUnless(mock_resp.raise_for_status.called)
+        self.assertTrue(mock_resp.raise_for_status.called)
 
     def test_keys(self):
         c = CouchDB(self.username, self.password)
@@ -171,13 +171,13 @@ class CouchDBAccountTests(unittest.TestCase):
         c['a'] = c._DATABASE_CLASS(c, 'a')
         c['b'] = c._DATABASE_CLASS(c, 'b')
 
-        self.failUnless(isinstance(c['a'], c._DATABASE_CLASS))
-        self.failUnless(isinstance(c['b'], c._DATABASE_CLASS))
+        self.assertTrue(isinstance(c['a'], c._DATABASE_CLASS))
+        self.assertTrue(isinstance(c['b'], c._DATABASE_CLASS))
         self.assertRaises(KeyError, c.__getitem__, 'd')
 
         with mock.patch('cloudant.account.CouchDatabase.exists') as mock_exists:
             mock_exists.return_value = True
-            self.failUnless(isinstance(c['c'], c._DATABASE_CLASS))
+            self.assertTrue(isinstance(c['c'], c._DATABASE_CLASS))
 
     def test_setitem(self):
         c = CouchDB(self.username, self.password)
@@ -186,14 +186,14 @@ class CouchDBAccountTests(unittest.TestCase):
 
         value = c._DATABASE_CLASS(c, 'a')
         c.__setitem__('c', value)
-        self.failUnless(c['c'] == value)
+        self.assertTrue(c['c'] == value)
 
         value.exists = mock.Mock()
         value.exists.return_value = False
         value.create = mock.Mock()
         c.__setitem__('c', value, remote=True)
-        self.failUnless(value.create.called)
-        self.failUnless(c['c'] == value)
+        self.assertTrue(value.create.called)
+        self.assertTrue(c['c'] == value)
 
     def test_delitem(self):
         c = CouchDB(self.username, self.password)
@@ -204,11 +204,11 @@ class CouchDBAccountTests(unittest.TestCase):
         c['b'] = c._DATABASE_CLASS(c, 'b')
 
         del c['a']
-        self.failUnless('b' in c)
-        self.failUnless('a' not in c)
+        self.assertTrue('b' in c)
+        self.assertTrue('a' not in c)
 
         c.__delitem__('b', remote=True)
-        self.failUnless(c.delete_database.called)
+        self.assertTrue(c.delete_database.called)
 
     def test_get(self):
         c = CouchDB(self.username, self.password)
@@ -221,9 +221,9 @@ class CouchDBAccountTests(unittest.TestCase):
 
         with mock.patch('cloudant.account.CouchDatabase.exists') as mock_exists:
             mock_exists.return_value = True
-            self.failUnless(isinstance(c.get('b', remote=True), c._DATABASE_CLASS))
+            self.assertTrue(isinstance(c.get('b', remote=True), c._DATABASE_CLASS))
 
-        self.failUnless(c.get('d', None, remote=True) is None)
+        self.assertTrue(c.get('d', None, remote=True) is None)
 
 
 class CloudantAccountTests(unittest.TestCase):
@@ -257,7 +257,7 @@ class CloudantAccountTests(unittest.TestCase):
         c = Cloudant(self.username, self.password)
         c.connect()
 
-        self.failUnless(self.mock_session.called)
+        self.assertTrue(self.mock_session.called)
 
         self.assertEqual(
             self.mock_instance.auth,
@@ -270,12 +270,12 @@ class CloudantAccountTests(unittest.TestCase):
 
         self.assertEqual('COOKIE', c.session_cookie())
 
-        self.failUnless(self.mock_instance.get.called)
+        self.assertTrue(self.mock_instance.get.called)
         self.mock_instance.get.assert_has_calls(
             [ mock.call('https://steve.cloudant.com/_session') ]
         )
 
-        self.failUnless(self.mock_instance.post.called)
+        self.assertTrue(self.mock_instance.post.called)
         self.mock_instance.post.assert_has_calls(
             [ mock.call(
                   'https://steve.cloudant.com/_session',
@@ -285,7 +285,7 @@ class CloudantAccountTests(unittest.TestCase):
         )
 
         c.disconnect()
-        self.failUnless(self.mock_instance.delete.called)
+        self.assertTrue(self.mock_instance.delete.called)
         self.mock_instance.delete.assert_has_calls(
             [ mock.call('https://steve.cloudant.com/_session') ]
         )
@@ -311,7 +311,7 @@ class CloudantAccountTests(unittest.TestCase):
         # instantiate and connect
         c = Cloudant(self.username, self.password)
         c.connect()
-        self.failUnless(self.mock_session.called)
+        self.assertTrue(self.mock_session.called)
         # create db call
         c.create_database("unittest")
         self.mock_instance.get.assert_has_calls(
@@ -366,7 +366,7 @@ class CloudantAccountTests(unittest.TestCase):
 
         usage = c._usage_endpoint('endpoint', 2015, 12)
         self.assertEqual(usage, mock_resp.json.return_value)
-        self.failUnless(mock_resp.raise_for_status.called)
+        self.assertTrue(mock_resp.raise_for_status.called)
 
         mock_get.assert_has_calls( [ mock.call('endpoint/2015/12') ] )
 
@@ -419,7 +419,7 @@ class CloudantAccountTests(unittest.TestCase):
 
         shared = c.shared_databases()
         self.assertEqual(shared, ['database1', 'database2'])
-        self.failUnless(mock_resp.raise_for_status.called)
+        self.assertTrue(mock_resp.raise_for_status.called)
 
     def test_generate_api_key(self):
         mock_resp = mock.Mock()
@@ -434,7 +434,7 @@ class CloudantAccountTests(unittest.TestCase):
 
         api_key = c.generate_api_key()
         self.assertEqual(api_key, {'api': 'token'})
-        self.failUnless(mock_resp.raise_for_status.called)
+        self.assertTrue(mock_resp.raise_for_status.called)
 
     def test_cors_configuration(self):
         """test getting cors config"""
@@ -449,7 +449,7 @@ class CloudantAccountTests(unittest.TestCase):
         c.connect()
         cors = c.cors_configuration()
         self.assertEqual(cors, mock_resp.json.return_value)
-        self.failUnless(mock_resp.raise_for_status.called)
+        self.assertTrue(mock_resp.raise_for_status.called)
 
     def test_cors_update(self):
         """test updating the cors config"""
@@ -493,8 +493,8 @@ class CloudantAccountTests(unittest.TestCase):
         )
 
         self.assertEqual(cors, resp)
-        self.failUnless(self.mock_instance.get.called)
-        self.failUnless(self.mock_instance.put.called)
+        self.assertTrue(self.mock_instance.get.called)
+        self.assertTrue(self.mock_instance.put.called)
 
     def test_cors_update_origins_none(self):
         """test updating the cors config"""
@@ -529,8 +529,8 @@ class CloudantAccountTests(unittest.TestCase):
         )
 
         self.assertEqual(cors, resp)
-        self.failUnless(self.mock_instance.get.called)
-        self.failUnless(self.mock_instance.put.called)
+        self.assertTrue(self.mock_instance.get.called)
+        self.assertTrue(self.mock_instance.put.called)
 
     def test_cors_origins_get(self):
         """test getting cors origins"""
@@ -554,7 +554,7 @@ class CloudantAccountTests(unittest.TestCase):
         origins = c.cors_origins()
 
         self.assertEqual(origins, resp['origins'])
-        self.failUnless(self.mock_instance.get.called)
+        self.assertTrue(self.mock_instance.get.called)
 
     def test_cors_disable(self):
         """test disabling cors"""
@@ -575,8 +575,8 @@ class CloudantAccountTests(unittest.TestCase):
         cors = c.disable_cors()
 
         self.assertEqual(cors, resp)
-        self.failUnless(self.mock_instance.get.called)
-        self.failUnless(self.mock_instance.put.called)
+        self.assertTrue(self.mock_instance.get.called)
+        self.assertTrue(self.mock_instance.put.called)
 
 
 if __name__ == '__main__':
