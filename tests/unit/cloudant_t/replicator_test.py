@@ -15,7 +15,8 @@
 """
 _replicator_test_
 
-Tests for the cloudant.replicator module
+replicator module unit tests
+
 """
 
 import unittest
@@ -28,7 +29,7 @@ from cloudant.document import Document
 
 class ReplicatorDatabaseTests(unittest.TestCase):
     """
-    tests for ReplicatorDatabase class
+    Tests for ReplicatorDatabase class
 
     """
     def setUp(self):
@@ -74,10 +75,10 @@ class ReplicatorDatabaseTests(unittest.TestCase):
                 mock_source, mock_target, "REPLID"
                 )
 
-        self.failUnless(mock_create.called)
+        self.assertTrue(mock_create.called)
         repl_doc = mock_create.call_args[0][0]
-        self.failUnless('source' in repl_doc)
-        self.failUnless('target' in repl_doc)
+        self.assertTrue('source' in repl_doc)
+        self.assertTrue('target' in repl_doc)
         self.assertEqual(repl_doc['_id'], 'REPLID')
         self.assertEqual(
             repl_doc['source']['url'],
@@ -172,8 +173,8 @@ class ReplicatorDatabaseTests(unittest.TestCase):
 
         repl['replication_1'] = mock_doc
         repl.stop_replication('replication_1')
-        self.failUnless(mock_doc.fetch.called)
-        self.failUnless(mock_doc.delete.called)
+        self.assertTrue(mock_doc.fetch.called)
+        self.assertTrue(mock_doc.delete.called)
 
         with mock.patch('cloudant.replicator.ReplicatorDatabase.__getitem__') as mock_gi:
             mock_gi.side_effect = KeyError("womp")

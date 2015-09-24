@@ -15,7 +15,7 @@
 """
 _document_test_
 
-Test class for Document class
+document module unit tests
 
 """
 
@@ -52,8 +52,8 @@ class DocumentTest(unittest.TestCase):
         mock_resp = mock.Mock()
         mock_resp.status_code = 200
         self.mock_session.get.return_value = mock_resp
-        self.failUnless(doc.exists())
-        self.failUnless(self.mock_session.get.called)
+        self.assertTrue(doc.exists())
+        self.assertTrue(self.mock_session.get.called)
         self.mock_session.get.assert_has_calls(
             [ mock.call('https://bob.cloudant.com/unittest/DUCKUMENT') ]
         )
@@ -70,7 +70,7 @@ class DocumentTest(unittest.TestCase):
         doc.create()
         self.assertEqual(doc['_rev'], 'DUCK2')
         self.assertEqual(doc['_id'], 'DUCKUMENT')
-        self.failUnless(self.mock_session.post.called)
+        self.assertTrue(self.mock_session.post.called)
         self.mock_session.post.reset_mock()
 
         # fetch
@@ -83,12 +83,12 @@ class DocumentTest(unittest.TestCase):
         }
         self.mock_session.get.return_value = mock_resp
         doc.fetch()
-        self.failUnless('herp' in doc)
-        self.failUnless('derp' in doc)
+        self.assertTrue('herp' in doc)
+        self.assertTrue('derp' in doc)
         self.assertEqual(doc['herp'], 'HERP')
         self.assertEqual(doc['derp'], 'DERP')
 
-        self.failUnless(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.get.called)
         self.mock_session.get.assert_has_calls(
             [ mock.call('https://bob.cloudant.com/unittest/DUCKUMENT') ]
         )
@@ -108,8 +108,8 @@ class DocumentTest(unittest.TestCase):
         doc.save()
         self.assertEqual(doc['_rev'], 'DUCK3')
         self.assertEqual(doc['_id'], 'DUCKUMENT')
-        self.failUnless(self.mock_session.get.called)
-        self.failUnless(self.mock_session.put.called)
+        self.assertTrue(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.put.called)
 
         self.mock_session.get.assert_has_calls(
             [ mock.call('https://bob.cloudant.com/unittest/DUCKUMENT') ]
@@ -131,7 +131,7 @@ class DocumentTest(unittest.TestCase):
         self.mock_session.delete.return_value = mock_resp
         doc.delete()
 
-        self.failUnless(self.mock_session.delete.called)
+        self.assertTrue(self.mock_session.delete.called)
         self.mock_session.delete.assert_has_calls(
             [ mock.call(
                   'https://bob.cloudant.com/unittest/DUCKUMENT',
@@ -193,13 +193,13 @@ class DocumentTest(unittest.TestCase):
         with doc as d:
             d['new_field'] = "NARP"
 
-        self.failUnless(self.mock_session.get.called)
-        self.failUnless(self.mock_session.put.called)
-        self.failUnless(mock_encode.encode.called)
+        self.assertTrue(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.put.called)
+        self.assertTrue(mock_encode.encode.called)
         payload = mock_encode.encode.call_args[0][0]
 
         for k, v in payload.iteritems():
-            self.failUnless(k in doc)
+            self.assertTrue(k in doc)
             self.assertEqual(doc[k], v)
 
     def test_document_update_field(self):

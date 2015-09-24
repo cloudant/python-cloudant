@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-database unittests
+_database_test_
+
+database module unit tests
+
 """
 
 import mock
@@ -113,7 +116,7 @@ class CouchDBTest(unittest.TestCase):
 
         self.c.create()
 
-        self.failUnless(self.mock_session.put.called)
+        self.assertTrue(self.mock_session.put.called)
 
     def test_delete(self):
         mock_resp = mock.Mock()
@@ -123,7 +126,7 @@ class CouchDBTest(unittest.TestCase):
 
         self.c.delete()
 
-        self.failUnless(self.mock_session.delete.called)
+        self.assertTrue(self.mock_session.delete.called)
 
     def test_db_info(self):
         mock_resp = mock.Mock()
@@ -135,7 +138,7 @@ class CouchDBTest(unittest.TestCase):
         meta_resp = self.c.metadata()
         count_resp = self.c.doc_count()
 
-        self.failUnless(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.get.called)
         self.assertEqual(self.mock_session.get.call_count, 3)
         self.assertEqual(exists_resp, True)
         self.assertEqual(meta_resp, self.db_info)
@@ -150,7 +153,7 @@ class CouchDBTest(unittest.TestCase):
         ddocs = self.c.design_documents()
         ddoc_list = self.c.list_design_documents()
 
-        self.failUnless(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.get.called)
         self.assertEqual(self.mock_session.get.call_count, 2)
         self.assertEqual(ddocs[0]["id"], "_design/test")
         self.assertEqual(ddoc_list[0], "_design/test")
@@ -163,7 +166,7 @@ class CouchDBTest(unittest.TestCase):
         all_docs = self.c.all_docs()
         keys = self.c.keys(remote=True)
 
-        self.failUnless(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.get.called)
         self.assertDictContainsSubset({"id": "snipe"}, all_docs["rows"][0])
         self.assertDictContainsSubset({"id": "zebra"}, all_docs["rows"][1])
         self.assertListEqual(keys, ["snipe", "zebra"])
@@ -290,7 +293,7 @@ class CloudantDBTest(unittest.TestCase):
 
         security_doc = self.cl.security_document()
 
-        self.failUnless(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.get.called)
         self.assertDictEqual(security_doc, self.sec_doc)
 
     def test_shared_dbs(self):
@@ -306,8 +309,8 @@ class CloudantDBTest(unittest.TestCase):
             writer=True
         )
 
-        self.failUnless(self.mock_session.get.called)
-        self.failUnless(self.mock_session.put.called)
+        self.assertTrue(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.put.called)
         self.assertIn('someotheruser', shared_resp['cloudant'])
 
         # unshare database
@@ -323,7 +326,7 @@ class CloudantDBTest(unittest.TestCase):
 
         r = self.cl.shards()
 
-        self.failUnless(self.mock_session.get.called)
+        self.assertTrue(self.mock_session.get.called)
         self.assertEqual(r, self.shards)
 
     def test_missing_revs(self):
@@ -345,7 +348,7 @@ class CloudantDBTest(unittest.TestCase):
             self.db_name,
             '_missing_revs'
         )
-        self.failUnless(self.mock_session.post.called)
+        self.assertTrue(self.mock_session.post.called)
         self.mock_session.post.assert_called_once_with(
             expected_url,
             headers={'Content-Type': 'application/json'},
@@ -375,7 +378,7 @@ class CloudantDBTest(unittest.TestCase):
             self.db_name,
             '_revs_diff'
         )
-        self.failUnless(self.mock_session.post.called)
+        self.assertTrue(self.mock_session.post.called)
         self.mock_session.post.assert_called_once_with(
             expected_url,
             headers={'Content-Type': 'application/json'},
@@ -400,7 +403,7 @@ class CloudantDBTest(unittest.TestCase):
 
         set_limit = self.cl.set_revision_limit(limit)
 
-        self.failUnless(self.mock_session.put.called)
+        self.assertTrue(self.mock_session.put.called)
         self.mock_session.put.assert_called_once_with(
             expected_url,
             data=limit
@@ -416,7 +419,7 @@ class CloudantDBTest(unittest.TestCase):
 
         get_limit = self.cl.get_revision_limit()
 
-        self.failUnless(self.mock_session.put.called)
+        self.assertTrue(self.mock_session.put.called)
         self.mock_session.get.assert_called_once_with(expected_url)
         self.assertEqual(get_limit, limit)
 
@@ -429,7 +432,7 @@ class CloudantDBTest(unittest.TestCase):
 
         with self.assertRaises(CloudantException):
             resp = self.cl.get_revision_limit()
-            self.failUnless(self.mock_session.get.called)
+            self.assertTrue(self.mock_session.get.called)
             self.assertEqual(resp.status_code, 400)
 
     def test_view_cleanup(self):
@@ -447,7 +450,7 @@ class CloudantDBTest(unittest.TestCase):
 
         cleanup = self.cl.view_cleanup()
 
-        self.failUnless(self.mock_session.post.called)
+        self.assertTrue(self.mock_session.post.called)
         self.mock_session.post.assert_called_once_with(expected_url)
         self.assertEqual(cleanup, '{"ok": true}')
 

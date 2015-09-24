@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-Test db changes feed
+_changes_test_
+
+changes module integration tests
+
 """
 
 import logging

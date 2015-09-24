@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-Result unittests
+_result_test_
+
+result module unit tests
 
 """
 import datetime
@@ -60,18 +62,22 @@ class PythonToCouchTests(unittest.TestCase):
         self.assertEqual(result['skip'], None)
 
     def test_invalid_option_raises(self):
-        self.assertRaises(CloudantArgumentError, python_to_couch, {"womp": "womp"})
-        self.assertRaises(CloudantArgumentError, python_to_couch, {"group": "womp"})
-        self.assertRaises(CloudantArgumentError, python_to_couch, {"stale": "womp"})
+        self.assertRaises(CloudantArgumentError, python_to_couch, 
+            {"womp": "womp"})
+        self.assertRaises(CloudantArgumentError, python_to_couch, 
+            {"group": "womp"})
+        self.assertRaises(CloudantArgumentError, python_to_couch, 
+            {"stale": "womp"})
 
         # this datetime triggers an argument conversion error
-        self.assertRaises(CloudantArgumentError, python_to_couch, {'endkey': [1,2,3, datetime.datetime.utcnow()]})
+        self.assertRaises(CloudantArgumentError, python_to_couch, 
+            {'endkey': [1,2,3, datetime.datetime.utcnow()]})
 
     def test_type_or_none(self):
-        self.failUnless(type_or_none((int, float), 1))
-        self.failUnless(type_or_none((int, float), 1.0))
-        self.failUnless(type_or_none((int, float), None))
-        self.failUnless(not type_or_none((int, float), "womp"))
+        self.assertTrue(type_or_none((int, float), 1))
+        self.assertTrue(type_or_none((int, float), 1.0))
+        self.assertTrue(type_or_none((int, float), None))
+        self.assertTrue(not type_or_none((int, float), "womp"))
 
 
 class ResultTests(unittest.TestCase):

@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-Database iterator test
+_iter_test_
+
+Database iterator integration tests
 
 """
 
