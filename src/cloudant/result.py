@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 # Copyright (c) 2015 IBM. All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
 # limitations under the License.
 """
 _result_
 
-Support for accessing CouchDB and Cloudant 
-result collections
+Support for accessing CouchDB and Cloudant result collections
+
 """
 import json
 import types
@@ -42,6 +42,7 @@ ARG_TYPES = {
     "startkey_docid": basestring,
 }
 
+# pylint: disable=unnecessary-lambda
 TYPE_CONVERTERS = {
     basestring: lambda x: json.dumps(x),
     str: lambda x: json.dumps(x),
@@ -63,31 +64,31 @@ def python_to_couch(options):
     options into couch query options, eg True => 'true'
     """
     translation = {}
-    for k, v in options.iteritems():
-        if k not in ARG_TYPES:
-            msg = "Invalid Argument {0}".format(k)
+    for key, val in options.iteritems():
+        if key not in ARG_TYPES:
+            msg = "Invalid Argument {0}".format(key)
             raise CloudantArgumentError(msg)
-        if not isinstance(v, ARG_TYPES[k]):
+        if not isinstance(val, ARG_TYPES[key]):
             msg = "Argument {0} not instance of expected type: {1}".format(
-                k,
-                ARG_TYPES[k]
+                key,
+                ARG_TYPES[key]
             )
             raise CloudantArgumentError(msg)
-        arg_converter = TYPE_CONVERTERS.get(type(v))
-        if k == 'stale':
-            if v not in ('ok', 'update_after'):
+        arg_converter = TYPE_CONVERTERS.get(type(val))
+        if key == 'stale':
+            if val not in ('ok', 'update_after'):
                 msg = (
                     "Invalid value for stale option {0} "
                     "must be ok or update_after"
-                ).format(v)
+                ).format(val)
                 raise CloudantArgumentError(msg)
         try:
-            if v is None:
-                translation[k] = None
+            if val is None:
+                translation[key] = None
             else:
-                translation[k] = arg_converter(v)
+                translation[key] = arg_converter(val)
         except Exception as ex:
-            msg = "Error converting arg {0}: {1}".format(k, ex)
+            msg = "Error converting arg {0}: {1}".format(key, ex)
             raise CloudantArgumentError(msg)
 
     return translation
@@ -254,8 +255,8 @@ class Result(object):
             result = response.get('rows', [])
             skip = skip + self._page_size
             if len(result) > 0:
-                for x in result:
-                    yield x
+                for row in result:
+                    yield row
                 del result
             else:
                 break
