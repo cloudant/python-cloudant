@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # Copyright (c) 2015 IBM. All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
 # limitations under the License.
 """
 _design_document_
@@ -54,8 +54,8 @@ class DesignDocument(Document):
         if self.get_view(view_name) is not None:
             msg = "View {0} already exists in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
-        v = View(self, view_name, map_func, reduce_func)
-        self.views[view_name] = v
+        view = View(self, view_name, map_func, reduce_func)
+        self.views[view_name] = view
 
     def update_view(self, view_name, map_func, reduce_func=None):
         """
@@ -68,14 +68,14 @@ class DesignDocument(Document):
         :param map_func: str or Code object containing js map function
         :param reduce_func: str or Code object containing js reduce function
         """
-        v = self.get_view(view_name)
-        if v is None:
+        view = self.get_view(view_name)
+        if view is None:
             msg = "View {0} does not exist in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
-        v.map = map_func
+        view.map = map_func
         if reduce_func is not None:
-            v.reduce = reduce_func
-        self.views[view_name] = v
+            view.reduce = reduce_func
+        self.views[view_name] = view
 
     def delete_view(self, view_name):
         """
@@ -138,7 +138,7 @@ class DesignDocument(Document):
 
         GET databasename/_design/test/_info
         """
-        raise NotImplemented("info not yet implemented")
+        raise NotImplementedError("info not yet implemented")
 
     def cleanup(self):
         """
@@ -146,10 +146,10 @@ class DesignDocument(Document):
         POST /some_database/_view_cleanup
 
         """
-        raise NotImplemented("cleanup not yet implemented")
+        raise NotImplementedError("cleanup not yet implemented")
 
     def compact(self):
         """
         POST /some_database/_compact/designname
         """
-        raise NotImplemented("compact not yet implemented")
+        raise NotImplementedError("compact not yet implemented")
