@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # Copyright (c) 2015 IBM. All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
-# You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License a
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
 # limitations under the License.
 """
 _database_
@@ -39,7 +39,7 @@ class CouchDatabase(dict):
     dict based interface to a CouchDB Database.
     Instantiated with a reference to an account/session
     it supports accessing the documents, and various database
-    features such as the document indexes, changes feed, and 
+    features such as the document indexes, changes feed, and
     design documents.
 
     :param account: CouchAccount instance corresponding to the db server
@@ -50,10 +50,10 @@ class CouchDatabase(dict):
     """
     def __init__(self, account, database_name, fetch_limit=100):
         super(CouchDatabase, self).__init__()
-        self._cloudant_account = account
-        self._database_host = account._cloudant_url
-        self._database_name = database_name
-        self._r_session = account._r_session
+        self.cloudant_account = account
+        self._database_host = account.cloudant_url
+        self.database_name = database_name
+        self.r_session = account.r_session
         self._fetch_limit = fetch_limit
         self.result = Result(self.all_docs)
 
@@ -62,7 +62,7 @@ class CouchDatabase(dict):
         """constructs and returns the database URL"""
         return posixpath.join(
             self._database_host,
-            urllib.quote_plus(self._database_name)
+            urllib.quote_plus(self.database_name)
         )
 
     @property
@@ -75,8 +75,8 @@ class CouchDatabase(dict):
 
         """
         return {
-            "basic_auth": self._cloudant_account.basic_auth_str(),
-            "user_ctx": self._cloudant_account.session()['userCtx']
+            "basic_auth": self.cloudant_account.basic_auth_str(),
+            "user_ctx": self.cloudant_account.session()['userCtx']
         }
 
     def exists(self):
@@ -85,7 +85,7 @@ class CouchDatabase(dict):
 
         :returns: boolean, True if database exists
         """
-        resp = self._r_session.get(self.database_url)
+        resp = self.r_session.get(self.database_url)
         return resp.status_code == 200
 
     def metadata(self):
@@ -94,7 +94,7 @@ class CouchDatabase(dict):
 
         :returns: dictionary containing db info details
         """
-        resp = self._r_session.get(self.database_url)
+        resp = self.r_session.get(self.database_url)
         resp.raise_for_status()
         return resp.json()
 
@@ -116,7 +116,13 @@ class CouchDatabase(dict):
         :returns: Document instance corresponding to the new doc
 
         """
-        doc = Document(self, data.get('_id'))
+        docid = data.get('_id')
+        doc = Document(self, docid)
+        if throw_on_exists:
+            if doc.exists():
+                raise CloudantException(
+                    'Error - Document with id {0} already exists.'.format(docid)
+                    )
         doc.update(data)
         doc.create()
         super(CouchDatabase, self).__setitem__(doc['_id'], doc)
@@ -146,7 +152,7 @@ class CouchDatabase(dict):
         """
         url = posixpath.join(self.database_url, '_all_docs')
         query = "startkey=\"_design\"&endkey=\"_design0\"&include_docs=true"
-        resp = self._r_session.get(url, params=query)
+        resp = self.r_session.get(url, params=query)
         resp.raise_for_status()
         data = resp.json()
         return data['rows']
@@ -160,7 +166,7 @@ class CouchDatabase(dict):
         """
         url = posixpath.join(self.database_url, '_all_docs')
         query = "startkey=\"_design\"&endkey=\"_design0\""
-        resp = self._r_session.get(url, params=query)
+        resp = self.r_session.get(url, params=query)
         resp.raise_for_status()
         data = resp.json()
         return [x.get('key') for x in data.get('rows', [])]
@@ -170,7 +176,7 @@ class CouchDatabase(dict):
         _get_design_document_
 
         Returns a DesignDocument object.  If a remote design
-        document exists with the specified id then the 
+        document exists with the specified id then the
         returned DesignDocument is populated with the remote
         design document content.
 
@@ -182,8 +188,8 @@ class CouchDatabase(dict):
         ddoc = DesignDocument(self, ddoc_id)
         try:
             ddoc.fetch()
-        except HTTPError as e:
-            if e.response.status_code != 404:
+        except HTTPError as error:
+            if error.response.status_code != 404:
                 raise
 
         return ddoc
@@ -193,13 +199,13 @@ class CouchDatabase(dict):
         _get_view_result_
 
         Returns a Result object based on the design document
-        and view name.  If you intend to iterate through the 
-        result, do not use skip and/or limit in the kwargs as 
+        and view name.  If you intend to iterate through the
+        result, do not use skip and/or limit in the kwargs as
         that is handled in the Result.  If you would like to
         manage paging and iteration manually over the result
         then try the get_view_raw_result method instead.
 
-        For example to retrieve the default Result object 
+        For example to retrieve the default Result object
         from a view do:
 
         db.get_view_result('_design/ddoc_id_001', 'view_001')
@@ -211,7 +217,7 @@ class CouchDatabase(dict):
 
         For more detail on slicing and iteration using a Result
         object, refer to the Result Class docstring.
-        
+
         :param ddoc_id: Design document id
         :param view_name: Name of the view
         :param **kwargs: Parameters to index the query results by
@@ -231,7 +237,7 @@ class CouchDatabase(dict):
             startkey_docid  string
 
         :returns: The result content wrapped in a Result object that
-            allows for paging and pythonic slicing and iteration over 
+            allows for paging and pythonic slicing and iteration over
             the result data
 
         """
@@ -246,15 +252,15 @@ class CouchDatabase(dict):
         _get_view_raw_result_
 
         Returns the raw response JSON content for the view query
-        based on the design document, view name and parameters 
+        based on the design document, view name and parameters
         depicted as the kwargs.
 
-        For example to retrieve the full resulting set of raw data 
+        For example to retrieve the full resulting set of raw data
         from a view do:
 
         db.get_view_raw_result('_design/ddoc_id_001', 'view_001')
 
-        or to provide parameters the view query and return a 
+        or to provide parameters the view query and return a
         resulting set of raw data do something like:
 
         db.get_view_raw_result('_design/ddoc_id_001', 'view_001',
@@ -297,7 +303,7 @@ class CouchDatabase(dict):
         if self.exists():
             return self
 
-        resp = self._r_session.put(self.database_url)
+        resp = self.r_session.put(self.database_url)
         if resp.status_code == 201:
             return self
 
@@ -315,7 +321,7 @@ class CouchDatabase(dict):
         Delete this database
 
         """
-        resp = self._r_session.delete(self.database_url)
+        resp = self.r_session.delete(self.database_url)
         resp.raise_for_status()
 
     def all_docs(self, **kwargs):
@@ -353,7 +359,7 @@ class CouchDatabase(dict):
 
         """
         params = python_to_couch(kwargs)
-        resp = self._r_session.get(
+        resp = self.r_session.get(
             posixpath.join(
                 self.database_url,
                 '_all_docs'
@@ -405,7 +411,7 @@ class CouchDatabase(dict):
         @param boolean continuous: Stream results?
         """
         changes_feed = Feed(
-            self._r_session,
+            self.r_session,
             posixpath.join(self.database_url, '_changes'),
             since=since,
             continuous=continuous,
@@ -492,7 +498,7 @@ class CouchDatabase(dict):
         """
         url = posixpath.join(self.database_url, '_all_docs')
         data = {'keys': keys}
-        resp = self._r_session.post(
+        resp = self.r_session.post(
             url,
             data=json.dumps(data)
         )
@@ -515,7 +521,7 @@ class CouchDatabase(dict):
         url = posixpath.join(self.database_url, '_bulk_docs')
         data = {'docs': docs}
         headers = {'Content-Type': 'application/json'}
-        resp = self._r_session.post(
+        resp = self.r_session.post(
             url,
             data=json.dumps(data),
             headers=headers
@@ -537,7 +543,7 @@ class CouchDatabase(dict):
 
         """
         db_updates_feed = Feed(
-            self._r_session,
+            self.r_session,
             posixpath.join(self._database_host, '_db_updates'),
             since=since,
             continuous=continuous,
@@ -577,14 +583,14 @@ class CloudantDatabase(CouchDatabase):
         :returns: Security doc JSON data
 
         """
-        resp = self._r_session.get(self.security_url)
+        resp = self.r_session.get(self.security_url)
         resp.raise_for_status()
         return resp.json()
 
     @property
     def security_url(self):
         """construct the URL of the security document for this db"""
-        parts = ['_api', 'v2', 'db', self._database_name, '_security']
+        parts = ['_api', 'v2', 'db', self.database_name, '_security']
         url = posixpath.join(self._database_host, *parts)
         return url
 
@@ -617,7 +623,7 @@ class CloudantDatabase(CouchDatabase):
 
         data[username] = perms
         doc['cloudant'] = data
-        resp = self._r_session.put(
+        resp = self.r_session.put(
             self.security_url,
             data=json.dumps(doc),
             headers={'Content-Type': 'application/json'}
@@ -640,7 +646,7 @@ class CloudantDatabase(CouchDatabase):
         if username in data:
             del data[username]
         doc['cloudant'] = data
-        resp = self._r_session.put(
+        resp = self.r_session.put(
             self.security_url,
             data=json.dumps(doc),
             headers={'Content-Type': 'application/json'}
@@ -656,7 +662,7 @@ class CloudantDatabase(CouchDatabase):
 
         """
         url = posixpath.join(self.database_url, '_shards')
-        resp = self._r_session.get(url)
+        resp = self.r_session.get(url)
         resp.raise_for_status()
 
         return resp.json()
@@ -675,7 +681,7 @@ class CloudantDatabase(CouchDatabase):
         url = posixpath.join(self.database_url, '_missing_revs')
         data = {doc_id: list(revisions)}
 
-        resp = self._r_session.post(
+        resp = self.r_session.post(
             url,
             headers={'Content-Type': 'application/json'},
             data=json.dumps(data)
@@ -701,7 +707,7 @@ class CloudantDatabase(CouchDatabase):
         url = posixpath.join(self.database_url, '_revs_diff')
         data = {doc_id: list(revisions)}
 
-        resp = self._r_session.post(
+        resp = self.r_session.post(
             url,
             headers={'Content-Type': 'application/json'},
             data=json.dumps(data)
@@ -719,7 +725,7 @@ class CloudantDatabase(CouchDatabase):
 
         """
         url = posixpath.join(self.database_url, '_revs_limit')
-        resp = self._r_session.get(url)
+        resp = self.r_session.get(url)
         resp.raise_for_status()
 
         try:
@@ -744,7 +750,7 @@ class CloudantDatabase(CouchDatabase):
         """
         url = posixpath.join(self.database_url, '_revs_limit')
 
-        resp = self._r_session.put(url, data=limit)
+        resp = self.r_session.put(url, data=limit)
         resp.raise_for_status()
 
         return resp.json()
@@ -757,7 +763,7 @@ class CloudantDatabase(CouchDatabase):
 
         """
         url = posixpath.join(self.database_url, '_view_cleanup')
-        resp = self._r_session.post(url)
+        resp = self.r_session.post(url)
         resp.raise_for_status()
 
         return resp.json()

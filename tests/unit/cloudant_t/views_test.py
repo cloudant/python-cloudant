@@ -74,7 +74,7 @@ class ViewTests(unittest.TestCase):
 
         """
         db = mock.Mock()
-        db._database_name = 'unittest'
+        db.database_name = 'unittest'
         ddoc = DesignDocument(db, "_design/tests")
         ddoc._database_host = "https://bob.cloudant.com"
         view1 = View(ddoc, "view1", map_func=self.map_func)
@@ -86,7 +86,7 @@ class ViewTests(unittest.TestCase):
 
     def test_view_context(self):
         db = mock.Mock()
-        db._database_name = 'unittest'
+        db.database_name = 'unittest'
         ddoc = DesignDocument(db, "_design/tests")
         ddoc._database_host = "https://bob.cloudant.com"
         view1 = View(ddoc, "view1", map_func=self.map_func)

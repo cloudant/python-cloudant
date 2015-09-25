@@ -38,12 +38,12 @@ class DocumentTest(unittest.TestCase):
         self.mock_session.delete = mock.Mock()
 
         self.account = mock.Mock()
-        self.account._cloudant_url = "https://bob.cloudant.com"
-        self.account._r_session = self.mock_session
+        self.account.cloudant_url = "https://bob.cloudant.com"
+        self.account.r_session = self.mock_session
         self.database = mock.Mock()
-        self.database._r_session = self.mock_session
-        self.database._database_name = "unittest"
-        self.database._cloudant_account = self.account
+        self.database.r_session = self.mock_session
+        self.database.database_name = "unittest"
+        self.database.cloudant_account = self.account
 
     def test_document_crud(self):
         """test basic crud operations with mocked backend"""
