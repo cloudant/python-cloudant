@@ -263,10 +263,13 @@ class CloudantAccountTests(unittest.TestCase):
             self.mock_instance.auth,
             (self.username, self.password)
         )
+
         self.assertEqual(
-            self.mock_instance.headers,
-            {'X-Cloudant-User': self.username}
+            self.mock_instance.headers['X-Cloudant-User'], 
+            self.username
         )
+
+        self.assertIsNotNone(self.mock_instance.headers['User-Agent'])
 
         self.assertEqual('COOKIE', c.session_cookie())
 
