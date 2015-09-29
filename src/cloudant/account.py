@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # Copyright (c) 2015 IBM. All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
 # limitations under the License.
 """
 _account_
@@ -52,9 +52,10 @@ class CouchDB(dict):
         self._cloudant_user = cloudant_user
         self._cloudant_token = auth_token
         self._cloudant_session = None
-        self._cloudant_url = kwargs.get("database_url", "http://127.0.0.1:5984")
+        self.cloudant_url = kwargs.get("database_url", "http://127.0.0.1:5984")
         self._cloudant_user_header = None
-        self._encoder = kwargs.get('encoder') or json.JSONEncoder
+        self.encoder = kwargs.get('encoder') or json.JSONEncoder
+        self.r_session = None
 
     def connect(self):
         """
@@ -63,12 +64,12 @@ class CouchDB(dict):
         Start up an auth session for the account
 
         """
-        self._r_session = requests.Session()
-        self._r_session.auth = (self._cloudant_user, self._cloudant_token)
+        self.r_session = requests.Session()
+        self.r_session.auth = (self._cloudant_user, self._cloudant_token)
         if self._cloudant_user_header is not None:
-            self._r_session.headers.update(
+            self.r_session.headers.update(
                 {'X-Cloudant-User': self._cloudant_user_header}
-            )
+                )
         self.session_login(self._cloudant_user, self._cloudant_token)
         self._cloudant_session = self.session()
 
@@ -80,7 +81,7 @@ class CouchDB(dict):
 
         """
         self.session_logout()
-        del self._r_session
+        del self.r_session
 
     def session(self):
         """
@@ -92,8 +93,8 @@ class CouchDB(dict):
         :returns: dictionary of session info
 
         """
-        sess_url = posixpath.join(self._cloudant_url, '_session')
-        resp = self._r_session.get(sess_url)
+        sess_url = posixpath.join(self.cloudant_url, '_session')
+        resp = self.r_session.get(sess_url)
         resp.raise_for_status()
         sess_data = resp.json()
         return sess_data
@@ -105,7 +106,7 @@ class CouchDB(dict):
         :returns: the current session cookie
 
         """
-        return self._r_session.cookies.get('AuthSession')
+        return self.r_session.cookies.get('AuthSession')
 
     def session_login(self, user, passwd):
         """
@@ -115,12 +116,12 @@ class CouchDB(dict):
         to the _session endpoint
 
         """
-        sess_url = posixpath.join(self._cloudant_url, '_session')
-        resp = self._r_session.post(
+        sess_url = posixpath.join(self.cloudant_url, '_session')
+        resp = self.r_session.post(
             sess_url,
             data={
-                'name': self._cloudant_user,
-                'password': self._cloudant_token
+                'name': user,
+                'password': passwd
             },
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
@@ -134,8 +135,8 @@ class CouchDB(dict):
         the cloudant _session endpoint
 
         """
-        sess_url = posixpath.join(self._cloudant_url, '_session')
-        resp = self._r_session.delete(
+        sess_url = posixpath.join(self.cloudant_url, '_session')
+        resp = self.r_session.delete(
             sess_url
         )
         resp.raise_for_status()
@@ -165,8 +166,8 @@ class CouchDB(dict):
         :returns: List of DB name strings
 
         """
-        url = posixpath.join(self._cloudant_url, '_all_dbs')
-        resp = self._r_session.get(url)
+        url = posixpath.join(self.cloudant_url, '_all_dbs')
+        resp = self.r_session.get(url)
         resp.raise_for_status()
         return resp.json()
 
@@ -324,7 +325,7 @@ class Cloudant(CouchDB):
 
     def __init__(self, cloudant_user, auth_token, **kwargs):
         super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
-        self._cloudant_url = kwargs.get(
+        self.cloudant_url = kwargs.get(
             "cloudant_url"
             ) or "https://{0}.cloudant.com".format(self._cloudant_user)
         self._cloudant_user_header = kwargs.get(
@@ -350,7 +351,7 @@ class Cloudant(CouchDB):
                     ).format(endpoint)
                 )
             endpoint = posixpath.join(endpoint, str(month))
-        resp = self._r_session.get(endpoint)
+        resp = self.r_session.get(endpoint)
         resp.raise_for_status()
         return resp.json()
 
@@ -365,7 +366,7 @@ class Cloudant(CouchDB):
 
         :returns: JSON billing data structure
         """
-        endpoint = posixpath.join(self._cloudant_url, '_api', 'v2', 'bill')
+        endpoint = posixpath.join(self.cloudant_url, '_api', 'v2', 'bill')
         return self._usage_endpoint(endpoint, year, month)
 
     def volume_usage(self, year=None, month=None):
@@ -377,7 +378,7 @@ class Cloudant(CouchDB):
 
         """
         endpoint = posixpath.join(
-            self._cloudant_url, '_api', 'v2', 'usage', 'data_volume'
+            self.cloudant_url, '_api', 'v2', 'usage', 'data_volume'
         )
         return self._usage_endpoint(endpoint, year, month)
 
@@ -390,7 +391,7 @@ class Cloudant(CouchDB):
 
         """
         endpoint = posixpath.join(
-            self._cloudant_url, '_api', 'v2', 'usage', 'requests'
+            self.cloudant_url, '_api', 'v2', 'usage', 'requests'
         )
         return self._usage_endpoint(endpoint, year, month)
 
@@ -402,9 +403,9 @@ class Cloudant(CouchDB):
         cloudant_user/database_name
         """
         endpoint = posixpath.join(
-            self._cloudant_url, '_api', 'v2', 'user', 'shared_databases'
+            self.cloudant_url, '_api', 'v2', 'user', 'shared_databases'
         )
-        resp = self._r_session.get(endpoint)
+        resp = self.r_session.get(endpoint)
         resp.raise_for_status()
         data = resp.json()
         return data.get('shared_databases', [])
@@ -418,9 +419,9 @@ class Cloudant(CouchDB):
 
         """
         endpoint = posixpath.join(
-            self._cloudant_url, '_api', 'v2', 'api_keys'
+            self.cloudant_url, '_api', 'v2', 'api_keys'
         )
-        resp = self._r_session.post(endpoint)
+        resp = self.r_session.post(endpoint)
         resp.raise_for_status()
         return resp.json()
 
@@ -431,9 +432,9 @@ class Cloudant(CouchDB):
 
         """
         endpoint = posixpath.join(
-            self._cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
+            self.cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
         )
-        resp = self._r_session.get(endpoint)
+        resp = self.r_session.get(endpoint)
         resp.raise_for_status()
 
         return resp.json()
@@ -507,7 +508,8 @@ class Cloudant(CouchDB):
             updated_config['origins'] = ["*"]
         elif old_config.get('origins') != cors_config.get('origins'):
             new_origins = list(
-                set(old_config.get('origins')).union(set(cors_config.get('origins')))
+                set(old_config.get('origins')).union(
+                    set(cors_config.get('origins')))
             )
             updated_config['origins'] = new_origins
 
@@ -524,9 +526,9 @@ class Cloudant(CouchDB):
 
         """
         endpoint = posixpath.join(
-            self._cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
+            self.cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
         )
-        resp = self._r_session.put(
+        resp = self.r_session.put(
             endpoint,
             data=json.dumps(config),
             headers={'Content-Type': 'application/json'}

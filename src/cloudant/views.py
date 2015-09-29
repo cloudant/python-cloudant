@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # Copyright (c) 2015 IBM. All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
 # limitations under the License.
 """
 _views_
@@ -21,7 +21,6 @@ Utilities for handling design docs and the resulting views they create
 import contextlib
 import posixpath
 
-from .document import Document
 from .result import Result, python_to_couch
 
 
@@ -52,7 +51,7 @@ class View(dict):
     Dictionary based object representing a view, exposing the map, reduce
     functions as attributes and supporting query/data access via the view
 
-    Provides a sliceable and iterable default result collection that can 
+    Provides a sliceable and iterable default result collection that can
     be used to query the view data via the result attribute.
 
     Eg:
@@ -73,8 +72,8 @@ class View(dict):
     for doc in view.result:
         print doc
 
-    The default result collection provides basic functionality, 
-    which can be customised with other arguments to the view URL 
+    The default result collection provides basic functionality,
+    which can be customised with other arguments to the view URL
     using the custom_result context.
 
     For example:
@@ -98,7 +97,7 @@ class View(dict):
     def __init__(self, ddoc, view_name, map_func=None, reduce_func=None):
         super(View, self).__init__()
         self.design_doc = ddoc
-        self._r_session = self.design_doc._r_session
+        self._r_session = self.design_doc.r_session
         self.view_name = view_name
         if map_func is not None:
             self['map'] = _codify(map_func)
@@ -130,7 +129,7 @@ class View(dict):
     def url(self):
         """property that builds the view URL"""
         return posixpath.join(
-            self.design_doc._document_url,
+            self.design_doc.document_url,
             '_view',
             self.view_name
         )
@@ -164,7 +163,7 @@ class View(dict):
     def make_result(self, **options):
         """
         Wrap the call to get result data in a Result object.
-        
+
         """
         return Result(self, **options)
 

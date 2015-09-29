@@ -37,13 +37,13 @@ class CouchDBTest(unittest.TestCase):
         self.mock_session.delete = mock.Mock()
 
         self.account = mock.Mock()
-        self.account._cloudant_url = "https://bob.cloudant.com"
-        self.account._r_session = self.mock_session
+        self.account.cloudant_url = "https://bob.cloudant.com"
+        self.account.r_session = self.mock_session
 
         self.username = "bob"
         self.db_name = "testdb"
 
-        self.db_url = posixpath.join(self.account._cloudant_url, self.db_name)
+        self.db_url = posixpath.join(self.account.cloudant_url, self.db_name)
         self.c = CouchDatabase(self.account, self.db_name)
 
         self.db_info = {
@@ -238,8 +238,8 @@ class CloudantDBTest(unittest.TestCase):
         self.mock_session.delete = mock.Mock()
 
         self.account = mock.Mock()
-        self.account._cloudant_url = "https://bob.cloudant.com"
-        self.account._r_session = self.mock_session
+        self.account.cloudant_url = "https://bob.cloudant.com"
+        self.account.r_session = self.mock_session
 
         self.username = "bob"
         self.db_name = "testdb"
@@ -344,7 +344,7 @@ class CloudantDBTest(unittest.TestCase):
 
         expected_data = {doc_id: ['rev1', 'rev2', 'rev3']}
         expected_url = posixpath.join(
-            self.account._cloudant_url,
+            self.account.cloudant_url,
             self.db_name,
             '_missing_revs'
         )
@@ -374,7 +374,7 @@ class CloudantDBTest(unittest.TestCase):
 
         expected_data = {doc_id: ['rev1', 'rev2', 'rev3']}
         expected_url = posixpath.join(
-            self.account._cloudant_url,
+            self.account.cloudant_url,
             self.db_name,
             '_revs_diff'
         )
@@ -389,7 +389,7 @@ class CloudantDBTest(unittest.TestCase):
     def test_revs_limit(self):
         limit = 500
         expected_url = posixpath.join(
-            self.account._cloudant_url,
+            self.account.cloudant_url,
             self.db_name,
             '_revs_limit'
         )
@@ -437,7 +437,7 @@ class CloudantDBTest(unittest.TestCase):
 
     def test_view_cleanup(self):
         expected_url = posixpath.join(
-            self.account._cloudant_url,
+            self.account.cloudant_url,
             self.db_name,
             '_view_cleanup'
         )

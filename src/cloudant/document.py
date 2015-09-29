@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # Copyright (c) 2015 IBM. All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
 # limitations under the License.
 """
 _document_
@@ -44,15 +44,16 @@ class Document(dict):
 
     """
     def __init__(self, database, document_id=None):
-        self._cloudant_account = database._cloudant_account
+        super(Document, self).__init__()
+        self._cloudant_account = database.cloudant_account
         self._cloudant_database = database
-        self._database_host = self._cloudant_account._cloudant_url
-        self._database_name = database._database_name
-        self._r_session = database._r_session
+        self._database_host = self._cloudant_account.cloudant_url
+        self._database_name = database.database_name
+        self.r_session = database.r_session
         self._document_id = document_id
-        self._encoder = self._cloudant_account._encoder
+        self._encoder = self._cloudant_account.encoder
 
-    _document_url = property(
+    document_url = property(
         lambda x: posixpath.join(
             x._database_host,
             urllib.quote_plus(x._database_name),
@@ -64,7 +65,7 @@ class Document(dict):
         """
         :returns: True if the document exists in the database, otherwise False
         """
-        resp = self._r_session.get(self._document_url)
+        resp = self.r_session.get(self.document_url)
         return resp.status_code == 200
 
     def json(self):
@@ -87,7 +88,7 @@ class Document(dict):
             self['_id'] = self._document_id
         headers = {'Content-Type': 'application/json'}
 
-        resp = self._r_session.post(
+        resp = self.r_session.post(
             self._cloudant_database.database_url,
             headers=headers,
             data=self.json()
@@ -106,7 +107,7 @@ class Document(dict):
         Fetch the content of this document from the database and update
         self with whatever it finds
         """
-        resp = self._r_session.get(self._document_url)
+        resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
         self.update(resp.json())
 
@@ -124,8 +125,8 @@ class Document(dict):
         if not self.exists():
             self.create()
             return
-        put_resp = self._r_session.put(
-            self._document_url,
+        put_resp = self.r_session.put(
+            self.document_url,
             data=self.json(),
             headers=headers
         )
@@ -219,8 +220,8 @@ class Document(dict):
                 u".fetch first!"
             )
 
-        del_resp = self._r_session.delete(
-            self._document_url,
+        del_resp = self.r_session.delete(
+            self.document_url,
             params={"rev": self["_rev"]},
         )
         del_resp.raise_for_status()
@@ -232,26 +233,25 @@ class Document(dict):
         """
 
         # We don't want to raise an exception if the document is not found
-        # because upon __exit__ the save() call will create the document 
+        # because upon __exit__ the save() call will create the document
         # if necessary.
         try:
             self.fetch()
-        except HTTPError as e:
-            if e.response.status_code != 404:
+        except HTTPError as error:
+            if error.response.status_code != 404:
                 raise
-        
+
         return self
 
     def __exit__(self, *args):
         self.save()
 
     def get_attachment(
-        self,
-        attachment,
-        headers=None,
-        write_to=None,
-        attachment_type="json"
-    ):
+            self,
+            attachment,
+            headers=None,
+            write_to=None,
+            attachment_type="json"):
         """
         _get_attachment_
 
@@ -266,10 +266,10 @@ class Document(dict):
           'json' and 'binary' are currently the only expected values.
 
         """
-        attachment_url = posixpath.join(self._document_url, attachment)
+        attachment_url = posixpath.join(self.document_url, attachment)
 
         # need latest rev
-        doc_resp = self._r_session.get(self._document_url)
+        doc_resp = self.r_session.get(self.document_url)
         doc_resp.raise_for_status()
         doc_json = doc_resp.json()
         if headers is None:
@@ -277,7 +277,7 @@ class Document(dict):
         else:
             headers['If-Match'] = doc_json['_rev']
 
-        resp = self._r_session.get(
+        resp = self.r_session.get(
             attachment_url,
             headers=headers
         )
@@ -299,10 +299,10 @@ class Document(dict):
         :param dict headers: Extra headers to be sent with request
 
         """
-        attachment_url = posixpath.join(self._document_url, attachment)
+        attachment_url = posixpath.join(self.document_url, attachment)
 
         # need latest rev
-        doc_resp = self._r_session.get(self._document_url)
+        doc_resp = self.r_session.get(self.document_url)
         doc_resp.raise_for_status()
         doc_json = doc_resp.json()
         if headers is None:
@@ -310,7 +310,7 @@ class Document(dict):
         else:
             headers['If-Match'] = doc_json['_rev']
 
-        resp = self._r_session.delete(
+        resp = self.r_session.delete(
             attachment_url,
             headers=headers
         )
@@ -318,13 +318,7 @@ class Document(dict):
 
         return resp.json()
 
-    def put_attachment(
-        self,
-        attachment,
-        content_type,
-        data,
-        headers=None
-    ):
+    def put_attachment(self, attachment, content_type, data, headers=None):
         """
         _put_attachment_
         Add a new attachment, or update existing, to
@@ -336,10 +330,10 @@ class Document(dict):
         :param headers: headers to send with request
 
         """
-        attachment_url = posixpath.join(self._document_url, attachment)
+        attachment_url = posixpath.join(self.document_url, attachment)
 
         # need latest rev
-        doc_resp = self._r_session.get(self._document_url)
+        doc_resp = self.r_session.get(self.document_url)
         doc_resp.raise_for_status()
         doc_json = doc_resp.json()
         if headers is None:
@@ -351,7 +345,7 @@ class Document(dict):
             headers['If-Match'] = doc_json['_rev']
             headers['Content-Type'] = content_type
 
-        resp = self._r_session.put(
+        resp = self.r_session.put(
             attachment_url,
             data=data,
             headers=headers
