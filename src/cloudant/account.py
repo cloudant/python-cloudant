@@ -22,10 +22,16 @@ import base64
 import json
 import posixpath
 import requests
+import sys
 
 from .database import CloudantDatabase, CouchDatabase
 from .errors import CloudantException
 
+_USER_AGENT = 'python-cloudant/{0} (Python, Version {1}.{2}.{3})'.format(
+    sys.modules['cloudant'].__version__,
+    sys.version_info[0],
+    sys.version_info[1],
+    sys.version_info[2])
 
 class CouchDB(dict):
     """
@@ -67,9 +73,7 @@ class CouchDB(dict):
         self.r_session = requests.Session()
         self.r_session.auth = (self._cloudant_user, self._cloudant_token)
         if self._cloudant_user_header is not None:
-            self.r_session.headers.update(
-                {'X-Cloudant-User': self._cloudant_user_header}
-                )
+            self.r_session.headers.update(self._cloudant_user_header)
         self.session_login(self._cloudant_user, self._cloudant_token)
         self._cloudant_session = self.session()
 
@@ -328,9 +332,10 @@ class Cloudant(CouchDB):
         self.cloudant_url = kwargs.get(
             "cloudant_url"
             ) or "https://{0}.cloudant.com".format(self._cloudant_user)
-        self._cloudant_user_header = kwargs.get(
-            "x_cloudant_user"
-            ) or self._cloudant_user
+        cloudant_user = kwargs.get("x_cloudant_user") or self._cloudant_user
+        self._cloudant_user_header = {
+            'X-Cloudant-User': cloudant_user,
+            'User-Agent': _USER_AGENT}
 
     def _usage_endpoint(self, endpoint, year=None, month=None):
         """
