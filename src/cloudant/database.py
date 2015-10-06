@@ -463,7 +463,7 @@ class CouchDatabase(dict):
                     limit=self._fetch_limit + 1,  # Get one extra doc
                                                   # to use as
                                                   # next_startkey
-                    include_docs="true",
+                    include_docs=True,
                     startkey=json.dumps(next_startkey)
                 ).get('rows', [])
 
