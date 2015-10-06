@@ -44,8 +44,7 @@ class CouchDB(dict):
     Maintains a requests.Session for working with the
     account specified in the ctor
 
-    :param database_url: Host name for couchdb server, defaults
-      to http://127.0.0.1:5984
+    :param url: Host name for couchdb server
 
     :param encoder: Optional json Encoder object used to encode
         documents for storage. defaults to json.JSONEncoder
@@ -58,7 +57,7 @@ class CouchDB(dict):
         self._cloudant_user = cloudant_user
         self._cloudant_token = auth_token
         self._cloudant_session = None
-        self.cloudant_url = kwargs.get("database_url", "http://127.0.0.1:5984")
+        self.cloudant_url = kwargs.get('url')
         self._cloudant_user_header = None
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
         self.r_session = None
@@ -313,9 +312,11 @@ class Cloudant(CouchDB):
 
     Optional parameters can be passed to control behaviour:
 
-    :param cloudant_url: Fully qualified https:// url for the
-      cloudant service, if not provided defaults to
-      https://<username>.cloudant.com
+    :param url: Fully qualified https:// URL for the
+      Cloudant service.
+
+    :param account: The Cloudant account name.  Used to form the
+      Cloudant service URL if the url is not present.
 
     :param x_cloudant_user: Override the X-Cloudant-User setting
       used to auth. This is needed to auth on someones behalf,
@@ -330,8 +331,8 @@ class Cloudant(CouchDB):
     def __init__(self, cloudant_user, auth_token, **kwargs):
         super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
         self.cloudant_url = kwargs.get(
-            "cloudant_url"
-            ) or "https://{0}.cloudant.com".format(self._cloudant_user)
+            'url'
+            ) or "https://{0}.cloudant.com".format(kwargs.get('account'))
         cloudant_user = kwargs.get("x_cloudant_user") or self._cloudant_user
         self._cloudant_user_header = {
             'X-Cloudant-User': cloudant_user,

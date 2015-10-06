@@ -53,7 +53,7 @@ class ReplicatorTest(unittest.TestCase):
         self.dbs = []
 
     def tearDown(self):
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             replicator_db = ReplicatorDatabase(c)
 
             while self.replication_ids:
@@ -70,7 +70,7 @@ class ReplicatorTest(unittest.TestCase):
         Verify that we can init our database object.
 
         """
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             replicator = ReplicatorDatabase(c)
             replicator.all_docs()
 
@@ -89,7 +89,7 @@ class ReplicatorTest(unittest.TestCase):
 
         self.dbs = [dbsource, dbtarget]
 
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             dbs = c.create_database(dbsource)
             dbt = c.create_database(dbtarget)
 
@@ -158,7 +158,7 @@ class ReplicatorTest(unittest.TestCase):
 
         self.dbs = [dbsource, dbtarget]
 
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             dbs = c.create_database(dbsource)
             dbt = c.create_database(dbtarget)
 
@@ -205,7 +205,7 @@ class ReplicatorTest(unittest.TestCase):
 
         self.dbs = [dbsource, dbtarget]
 
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             dbs = c.create_database(dbsource)
             dbt = c.create_database(dbtarget)
 
@@ -254,7 +254,7 @@ class ReplicatorTest(unittest.TestCase):
 
         self.dbs = [dbsource, dbtarget]
 
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             dbs = c.create_database(dbsource)
             dbt = c.create_database(dbtarget)
 
@@ -308,7 +308,7 @@ class ReplicatorTest(unittest.TestCase):
 
         """
 
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             replicator = ReplicatorDatabase(c)
             repl_ids = []
             num_reps = 3

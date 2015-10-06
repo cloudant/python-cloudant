@@ -44,13 +44,14 @@ class CouchDBAccountTests(unittest.TestCase):
         self.mock_session.return_value = self.mock_instance
         self.username = "steve"
         self.password = "abc123"
+        self.url = 'http://127.0.0.1:5984'
 
     def tearDown(self):
         self.patcher.stop()
 
     def test_session_calls(self):
         """test session related methods"""
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
 
         self.assertTrue(self.mock_session.called)
@@ -105,7 +106,7 @@ class CouchDBAccountTests(unittest.TestCase):
         self.mock_instance.get.return_value = mock_get
 
         # instantiate and connect
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
         self.assertTrue(self.mock_session.called)
         # create db call
@@ -140,7 +141,7 @@ class CouchDBAccountTests(unittest.TestCase):
         self.assertRaises(CloudantException, c.delete_database, "unittest")
 
     def test_basic_auth_str(self):
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         auth_str = c.basic_auth_str()
         self.assertTrue(auth_str.startswith("Basic"))
         self.assertFalse(auth_str.endswith("Basic "))
@@ -152,13 +153,13 @@ class CouchDBAccountTests(unittest.TestCase):
         mock_resp.json = mock.Mock()
         mock_resp.json.return_value = ['db1', 'db2']
         self.mock_instance.get.return_value = mock_resp
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
         self.assertEqual(c.all_dbs(), mock_resp.json.return_value)
         self.assertTrue(mock_resp.raise_for_status.called)
 
     def test_keys(self):
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
         c.all_dbs = mock.Mock()
         c.all_dbs.return_value = ['db1', 'db2']
@@ -166,7 +167,7 @@ class CouchDBAccountTests(unittest.TestCase):
         self.assertEqual(c.keys(remote=True), c.all_dbs.return_value)
 
     def test_getitem(self):
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
         c['a'] = c._DATABASE_CLASS(c, 'a')
         c['b'] = c._DATABASE_CLASS(c, 'b')
@@ -180,7 +181,7 @@ class CouchDBAccountTests(unittest.TestCase):
             self.assertTrue(isinstance(c['c'], c._DATABASE_CLASS))
 
     def test_setitem(self):
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
         self.assertRaises(CloudantException, c.__setitem__, 'c', 'womp')
 
@@ -196,7 +197,7 @@ class CouchDBAccountTests(unittest.TestCase):
         self.assertTrue(c['c'] == value)
 
     def test_delitem(self):
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
         c.delete_database = mock.Mock()
 
@@ -211,7 +212,7 @@ class CouchDBAccountTests(unittest.TestCase):
         self.assertTrue(c.delete_database.called)
 
     def test_get(self):
-        c = CouchDB(self.username, self.password)
+        c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
 
         c['a'] = c._DATABASE_CLASS(c, 'a')
@@ -254,7 +255,7 @@ class CloudantAccountTests(unittest.TestCase):
 
     def test_session_calls(self):
         """test session related methods"""
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
 
         self.assertTrue(self.mock_session.called)
@@ -312,7 +313,7 @@ class CloudantAccountTests(unittest.TestCase):
         self.mock_instance.get.return_value = mock_get
 
         # instantiate and connect
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
         self.assertTrue(self.mock_session.called)
         # create db call
