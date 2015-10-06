@@ -39,7 +39,7 @@ class IterTest(unittest.TestCase):
 
     def tearDown(self):
         if self.last_db is not None:
-            with cloudant(self.user, self.password) as c:
+            with cloudant(self.user, self.password, account=self.user) as c:
                 c.delete_database(self.last_db)
 
     def test_database_with_two_docs(self):
@@ -54,7 +54,7 @@ class IterTest(unittest.TestCase):
         dbname = "cloudant-itertest-twodocs-{0}".format(unicode(uuid.uuid4()))
         self.last_db = dbname
 
-        with cloudant(self.user, self.password) as c:
+        with cloudant(self.user, self.password, account=self.user) as c:
             session = c.session()
 
             db = c.create_database(dbname)
@@ -83,7 +83,7 @@ class IterTest(unittest.TestCase):
         dbname = "cloudant-itertest-manydocs-{0}".format(unicode(uuid.uuid4()))
         self.last_db = dbname
 
-        with cloudant(self.user, self.password) as c:
+        with cloudant(self.user, self.password, account=self.user) as c:
             session = c.session()
 
             db = c.create_database(dbname)

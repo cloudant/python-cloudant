@@ -37,7 +37,7 @@ class E2ECouchTest(unittest.TestCase):
         End to end database and document crud tests
 
         """
-        with couchdb(self.user, self.passwd) as c:
+        with couchdb(self.user, self.passwd, url='http://127.0.0.1:5984') as c:
             session = c.session()
             self.assertEqual(session['userCtx']['name'], self.user)
 
@@ -98,7 +98,7 @@ class E2ECloudantTest(unittest.TestCase):
         End to end database and document crud tests
 
         """
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             session = c.session()
             self.assertEqual(session['userCtx']['name'], self.user)
 

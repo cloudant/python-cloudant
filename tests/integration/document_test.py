@@ -41,11 +41,11 @@ class DocumentTest(unittest.TestCase):
         )
 
     def tearDown(self):
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             c.delete_database(self.dbname)
 
     def test_delete(self):
-        with cloudant(self.user, self.passwd) as c:
+        with cloudant(self.user, self.passwd, account=self.user) as c:
             db = c.create_database(self.dbname)
 
             doc1 = db.create_document({"_id": "doc1", "testing": "document 1"})

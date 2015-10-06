@@ -68,7 +68,7 @@ class ChangesTest(unittest.TestCase):
         dbname = "cloudant-changes-test-{0}".format(unicode(uuid.uuid4()))
         self.last_db = dbname
 
-        with cloudant(self.user, self.password) as c:
+        with cloudant(self.user, self.password, account=self.user) as c:
             session = c.session()
 
             db = c.create_database(dbname)
@@ -106,7 +106,7 @@ class ChangesTest(unittest.TestCase):
             unicode(uuid.uuid4()))
         self.last_db = dbname
 
-        with cloudant(self.user, self.password) as c:
+        with cloudant(self.user, self.password, account=self.user) as c:
             session = c.session()
 
             db = c.create_database(dbname)
