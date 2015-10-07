@@ -255,7 +255,12 @@ class CloudantAccountTests(unittest.TestCase):
 
     def test_session_calls(self):
         """test session related methods"""
-        c = Cloudant(self.username, self.password, account=self.username)
+        c = Cloudant(
+            self.username,
+            self.password,
+            url='https://steve.cloudant.com',
+            x_cloudant_user=self.username
+            )
         c.connect()
 
         self.assertTrue(self.mock_session.called)
@@ -348,7 +353,7 @@ class CloudantAccountTests(unittest.TestCase):
         self.assertRaises(CloudantException, c.delete_database, "unittest")
 
     def test_basic_auth_str(self):
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         auth_str = c.basic_auth_str()
         self.assertTrue(auth_str.startswith("Basic"))
         self.assertFalse(auth_str.endswith("Basic "))
@@ -365,7 +370,7 @@ class CloudantAccountTests(unittest.TestCase):
         mock_get.return_value = mock_resp
         self.mock_instance.get = mock_get
 
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
 
         usage = c._usage_endpoint('endpoint', 2015, 12)
@@ -385,7 +390,7 @@ class CloudantAccountTests(unittest.TestCase):
             'cloudant.account.Cloudant._usage_endpoint'
         ) as mock_usage:
             mock_usage.return_value = {'usage': 'mock'}
-            c = Cloudant(self.username, self.password)
+            c = Cloudant(self.username, self.password, account=self.username)
             c.connect()
             bill = c.bill(2015, 12)
             self.assertEqual(bill, mock_usage.return_value)
@@ -395,7 +400,7 @@ class CloudantAccountTests(unittest.TestCase):
             'cloudant.account.Cloudant._usage_endpoint'
         ) as mock_usage:
             mock_usage.return_value = {'usage': 'mock'}
-            c = Cloudant(self.username, self.password)
+            c = Cloudant(self.username, self.password, account=self.username)
             c.connect()
             bill = c.volume_usage(2015, 12)
             self.assertEqual(bill, mock_usage.return_value)
@@ -405,7 +410,7 @@ class CloudantAccountTests(unittest.TestCase):
             'cloudant.account.Cloudant._usage_endpoint'
         ) as mock_usage:
             mock_usage.return_value = {'usage': 'mock'}
-            c = Cloudant(self.username, self.password)
+            c = Cloudant(self.username, self.password, account=self.username)
             c.connect()
             bill = c.requests_usage(2015, 12)
             self.assertEqual(bill, mock_usage.return_value)
@@ -418,7 +423,7 @@ class CloudantAccountTests(unittest.TestCase):
         self.mock_instance.get = mock.Mock()
         self.mock_instance.get.return_value = mock_resp
 
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
 
         shared = c.shared_databases()
@@ -433,7 +438,7 @@ class CloudantAccountTests(unittest.TestCase):
         self.mock_instance.post = mock.Mock()
         self.mock_instance.post.return_value = mock_resp
 
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
 
         api_key = c.generate_api_key()
@@ -449,7 +454,7 @@ class CloudantAccountTests(unittest.TestCase):
         self.mock_instance.get = mock.Mock()
         self.mock_instance.get.return_value = mock_resp
 
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
         cors = c.cors_configuration()
         self.assertEqual(cors, mock_resp.json.return_value)
@@ -485,7 +490,7 @@ class CloudantAccountTests(unittest.TestCase):
         mock_put.json.return_value = resp
         self.mock_instance.put.return_value = mock_put
 
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
         cors = c.update_cors_configuration(
             enable_cors=True,
@@ -525,7 +530,7 @@ class CloudantAccountTests(unittest.TestCase):
         mock_put.json.return_value = resp
         self.mock_instance.put.return_value = mock_put
 
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
         cors = c.update_cors_configuration(
             enable_cors=True,
@@ -553,7 +558,7 @@ class CloudantAccountTests(unittest.TestCase):
         mock_resp.json.return_value = resp
         self.mock_instance.get.return_value = mock_resp
 
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
         origins = c.cors_origins()
 
@@ -574,7 +579,7 @@ class CloudantAccountTests(unittest.TestCase):
         mock_put.json.return_value = resp
         self.mock_instance.put.return_value = mock_put
 
-        c = Cloudant(self.username, self.password)
+        c = Cloudant(self.username, self.password, account=self.username)
         c.connect()
         cors = c.disable_cors()
 
