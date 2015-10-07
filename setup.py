@@ -29,7 +29,7 @@ setup_args = {
     'include_package_data': True,
     'install_requires': requirements,
     'name': 'python-cloudant',
-    'version': '1.0.0-beta1',
+    'version': '0.1.0',
     'packages': find_packages('./src'),
     'provides': find_packages('./src'),
     'package_dir': {'': 'src'}
