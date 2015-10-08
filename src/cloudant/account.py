@@ -310,17 +310,27 @@ class Cloudant(CouchDB):
     Maintains a requests.Session for working with the
     account specified in the ctor
 
-    Optional parameters can be passed to control behaviour:
+    Parameters can be passed in to control behaviour:
 
-    :param url: Fully qualified https:// URL for the
-      Cloudant service.
+    :param cloudant_user: The Cloudant user name.
 
-    :param account: The Cloudant account name.  Used to form the
-      Cloudant service URL if the url is not present.
+    :param auth_token: The authentication token for the
+      cloudant_user.
+
+    :param account: The Cloudant account name.  If the
+      account parameter is present, it will be used to
+      construct the Cloudant service URL.
+
+    :param url: If the account is not present and the url
+      parameter is present then it will be used to set the
+      Cloudant service URL.  The url must be a fully qualified
+      https:// URL.
 
     :param x_cloudant_user: Override the X-Cloudant-User setting
       used to auth. This is needed to auth on someones behalf,
-      eg with an admin account
+      eg with an admin account.  This parameter must be accompanied
+      by the url parameter.  If the url parameter is omitted then
+      the x_cloudant_user parameter setting is ignored.
 
     :param encoder: Optional json Encoder object used to encode
         documents for storage. defaults to json.JSONEncoder
@@ -330,13 +340,20 @@ class Cloudant(CouchDB):
 
     def __init__(self, cloudant_user, auth_token, **kwargs):
         super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
-        self.cloudant_url = kwargs.get(
-            'url'
-            ) or "https://{0}.cloudant.com".format(kwargs.get('account'))
-        cloudant_user = kwargs.get("x_cloudant_user") or self._cloudant_user
-        self._cloudant_user_header = {
-            'X-Cloudant-User': cloudant_user,
-            'User-Agent': _USER_AGENT}
+
+        self._cloudant_user_header = {'User-Agent': _USER_AGENT}
+        account = kwargs.get('account')
+        url = kwargs.get('url')
+        x_cloudant_user = kwargs.get('x_cloudant_user')
+        if account is not None:
+            self.cloudant_url = 'https://{0}.cloudant.com'.format(account)
+        elif kwargs.get('url') is not None:
+            self.cloudant_url = url
+            if x_cloudant_user is not None:
+                self._cloudant_user_header['X-Cloudant-User'] = x_cloudant_user
+
+        if self.cloudant_url is None:
+            raise CloudantException('You must provide a url or an account.')
 
     def _usage_endpoint(self, endpoint, year=None, month=None):
         """
