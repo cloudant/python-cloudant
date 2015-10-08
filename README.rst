@@ -19,7 +19,35 @@ occuring frequently.
 Installation and Usage
 ======================
 
-Content coming soon...
+Released versions of this library are [hosted on PyPI](https://pypi.python.org/pypi/cloudant).
+
+However, there is a [previous library](https://pypi.python.org/pypi/cloudant/0.5.9) called `cloudant`
+on PyPI that never reached maturity. The last stable version will be 0.5.10. It will be replaced by this library starting with version 2.0.0.
+
+This 2.0.0 library is completely rewritten with no attempt at reproducing the 0.5.10 API. 
+Version 0.5.10 is now deprecated and will eventually be removed from PyPI. 
+However, since 2.0.0 is still in development (2.0.0a1) and we wish to give developers time to 
+upgrade, the version 0.5.10 will remain the latest stable version on PyPI until at least early
+2016. This means that if you
+
+```
+pip install cloudant
+```
+
+you will get version 0.5.10.
+
+In order to get 2.0.0a1 and greater, you can either choose a particular pre-release version or use
+the `--pre` switch to get the very latest version.
+
+```
+pip install cloudant==2.0.0a1
+```
+
+or
+
+```
+pip install --pre cloudant
+```
 
 ===============
 Getting started
