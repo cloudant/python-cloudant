@@ -15,7 +15,7 @@
 """
 _design_document_
 
-Class representing a Cloudant design document
+Class representing a design document
 
 """
 from .document import Document

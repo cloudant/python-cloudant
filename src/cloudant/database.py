@@ -15,7 +15,7 @@
 """
 _database_
 
-API class representing a cloudant database
+API class representing a database
 
 """
 import json
