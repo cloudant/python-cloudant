@@ -35,7 +35,6 @@ setup_args = {
     'url':'https://github.com/cloudant/python-cloudant',
     'packages': find_packages('./src'),
     'provides': find_packages('./src'),
-    'obsoletes':'cloudant<0.6.0'
     'package_dir': {'': 'src'},
     'classifiers' :[
           'Intended Audience :: Developers',
