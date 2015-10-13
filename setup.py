@@ -41,7 +41,7 @@ setup_args = {
           'Natural Language :: English',
           'License :: OSI Approved :: Apache Software License',
           'Topic :: Software Development :: Libraries',
-          'Development Status :: 3 - Alpha',
+          'Development Status :: 4 - Beta',
           'Programming Language :: Python',
           'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 2.7'
