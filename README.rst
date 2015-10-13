@@ -21,7 +21,7 @@ Installation and Usage
 
 Released versions of this library are `hosted on PyPI <https://pypi.python.org/pypi/cloudant>`_.
 However, there is an unsupported `previous library <https://pypi.python.org/pypi/cloudant/0.5.9>`_ 
-called ``cloudant`` on PyPI that never reached maturity. The last stable version will be 0.5.10. 
+on PyPI that never reached maturity. The last stable version will be 0.5.10. 
 It is now deprecated and will be replaced by this library starting with version 2.0.0.
 
 This 2.0.0 version is completely rewritten with no attempt at reproducing the API of 0.5.10. 
