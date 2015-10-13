@@ -19,17 +19,16 @@ occuring frequently.
 Installation and Usage
 ======================
 
-Released versions of this library are [hosted on PyPI](https://pypi.python.org/pypi/cloudant).
+Released versions of this library are `hosted on PyPI <https://pypi.python.org/pypi/cloudant>`_.
+However, there is an unsupported `previous library <https://pypi.python.org/pypi/cloudant/0.5.9>`_ 
+called ``cloudant`` on PyPI that never reached maturity. The last stable version will be 0.5.10. 
+It is now deprecated and will be replaced by this library starting with version 2.0.0.
 
-However, there is an unsupported [previous library](https://pypi.python.org/pypi/cloudant/0.5.9) 
-called `cloudant` on PyPI that never reached maturity. The last stable version will be 0.5.10. 
-It will be replaced by this library starting with version 2.0.0.
-
-This 2.0.0 library is completely rewritten with no attempt at reproducing the API of 0.5.10. 
-Version 0.5.10 is now deprecated and will eventually be removed from PyPI. 
+This 2.0.0 version is completely rewritten with no attempt at reproducing the API of 0.5.10. 
 However, since 2.0.0 is still in development (2.0.0a1) and we wish to give developers time to 
 upgrade, version 0.5.10 will remain the latest stable version on PyPI until at least early
 2016. 
+
 
 In order to install version 2.0.0a1 or greater, execute
 
