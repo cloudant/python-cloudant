@@ -33,15 +33,13 @@ upgrade, version 0.5.10 will remain the latest stable version on PyPI until at l
 
 In order to install version 2.0.0a1 or greater, execute
 
-```
-pip install --pre cloudant
-```
+.. code-block:: bash
+    pip install --pre cloudant
 
 In order to install the deprecated 0.5.10, execute
 
-```
-pip install cloudant
-```
+.. code-block:: bash
+    pip install cloudant
 
 ===============
 Getting started
