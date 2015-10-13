@@ -15,7 +15,7 @@
 """
 _setup.py_
 
-Python-Cloudant Client Library
+Cloudant / CouchDB Client Library
 
 """
 
@@ -25,14 +25,27 @@ requirements_file = open('requirements.txt')
 requirements = requirements_file.read().strip().split('\n')
 
 setup_args = {
-    'description': 'Python-Cloudant Client Library',
+    'description': 'Cloudant / CouchDB Client Library',
     'include_package_data': True,
     'install_requires': requirements,
-    'name': 'python-cloudant',
-    'version': '0.1.0',
+    'name': 'cloudant',
+    'version': '2.0.0a1',
+    'author':'IBM',
+    'author_email':'alfinkel@us.ibm.com',
+    'url':'https://github.com/cloudant/python-cloudant',
     'packages': find_packages('./src'),
     'provides': find_packages('./src'),
-    'package_dir': {'': 'src'}
+    'package_dir': {'': 'src'},
+    'classifiers' :[
+          'Intended Audience :: Developers',
+          'Natural Language :: English',
+          'License :: OSI Approved :: Apache Software License',
+          'Topic :: Software Development :: Libraries',
+          'Development Status :: 3 - Alpha',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 2.7'
+      ]
 }
 
 setup(**setup_args)

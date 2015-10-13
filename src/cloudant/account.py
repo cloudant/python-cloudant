@@ -15,7 +15,7 @@
 """
 _account_
 
-Top level cloudant API object that maps to a users account.
+Top level API object that maps to a users account.
 
 """
 import base64

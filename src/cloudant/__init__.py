@@ -15,10 +15,10 @@
 """
 _cloudant_
 
-Cloudant Python Client API
+Cloudant / CouchDB Python Client API
 
 """
-__version__ = "0.1.0"
+__version__ = '2.0.0a1'
 
 import contextlib
 
