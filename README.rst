@@ -1,6 +1,9 @@
 Cloudant Python Client
 ======================
 
+.. image:: https://travis-ci.org/cloudant/python-cloudant.svg?branch=master
+    :target: https://travis-ci.org/cloudant/python-cloudant
+
 This library is currently a preview (alpha version) of Cloudant's new official 
 Python library.  As such it currently does not have complete API coverage nor is the
 documentation 100% complete.  We are busily working towards bridging the API and 
