@@ -3,6 +3,9 @@ language: python
 python:
   - "2.7"
 
+services:
+  - couchdb
+
 install: "pip install -r requirements.txt && pip install -r test-requirements.txt"
 # command to run tests
 script: nosetests -w ./tests/unit
