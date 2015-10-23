@@ -84,7 +84,7 @@ class CouchDB(dict):
 
         """
         self.session_logout()
-        del self.r_session
+        self.r_session = None
 
     def session(self):
         """
@@ -211,7 +211,7 @@ class CouchDB(dict):
         db = self._DATABASE_CLASS(self, dbname)
         if not db.exists():
             raise CloudantException(
-                "Database {0} doesnt exist".format(dbname)
+                "Database {0} does not exist".format(dbname)
             )
         db.delete()
         if dbname in self.keys():
@@ -292,7 +292,7 @@ class CouchDB(dict):
 
         """
         if not isinstance(value, self._DATABASE_CLASS):
-            msg = "Cannot set key to non CloudantDatabase object"
+            msg = "Value must be set to a Database object"
             raise CloudantException(msg)
         if remote and not value.exists():
             value.create()

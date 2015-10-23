@@ -304,7 +304,7 @@ class CouchDatabase(dict):
             return self
 
         resp = self.r_session.put(self.database_url)
-        if resp.status_code == 201:
+        if resp.status_code == 201 or resp.status_code == 202:
             return self
 
         raise CloudantException(
