@@ -176,18 +176,6 @@ class CouchDBTest(unittest.TestCase):
         mock_resp.raise_for_status = mock.Mock(return_value=False)
         self.mock_session.post = mock.Mock(return_value=mock_resp)
 
-        self.c.bulk_docs(['a', 'b', 'c'])
-
-        self.mock_session.post.assert_called_once_with(
-            posixpath.join(self.db_url, '_all_docs'),
-            data=json.dumps({'keys': ['a', 'b', 'c']})
-        )
-
-    def test_bulk_insert(self):
-        mock_resp = mock.Mock()
-        mock_resp.raise_for_status = mock.Mock(return_value=False)
-        self.mock_session.post = mock.Mock(return_value=mock_resp)
-
         docs = [
             {
                 '_id': 'somedoc',
@@ -200,7 +188,7 @@ class CouchDBTest(unittest.TestCase):
             }
         ]
 
-        self.c.bulk_insert(docs)
+        self.c.bulk_docs(docs)
 
         self.mock_session.post.assert_called_once_with(
             posixpath.join(self.db_url, '_bulk_docs'),

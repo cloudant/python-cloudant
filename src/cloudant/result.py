@@ -34,6 +34,7 @@ ARG_TYPES = {
     "include_docs": bool,
     "inclusive_end": bool,
     "key": (int, basestring, Sequence),
+    "keys": list,
     "limit": (int, types.NoneType),
     "reduce": bool,
     "skip": (int, types.NoneType),

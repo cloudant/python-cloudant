@@ -205,14 +205,15 @@ class CouchDatabase(dict):
         manage paging and iteration manually over the result
         then try the get_view_raw_result method instead.
 
-        For example to retrieve the default Result object
-        from a view do:
+        For example to retrieve the default Result object based
+        on a design document view do:
 
         db.get_view_result('_design/ddoc_id_001', 'view_001')
 
-        or to index the Result object do something like:
+        But to retrieve a customized Result object based on the
+        same design document view do something like:
 
-        db.get_view_raw_result('_design/ddoc_id_001', 'view_001',
+        db.get_view_result('_design/ddoc_id_001', 'view_001',
             include_docs=True, reduce=False)
 
         For more detail on slicing and iteration using a Result
@@ -231,6 +232,7 @@ class CouchDatabase(dict):
             include_docs bool
             inclusive_end  bool
             key string
+            keys list
             reduce  boolean
             stale   enum(ok, update_after)
             startkey  string or array
@@ -256,11 +258,11 @@ class CouchDatabase(dict):
         depicted as the kwargs.
 
         For example to retrieve the full resulting set of raw data
-        from a view do:
+        from a design document view do:
 
         db.get_view_raw_result('_design/ddoc_id_001', 'view_001')
 
-        or to provide parameters the view query and return a
+        or to provide parameters to the view query and return a
         resulting set of raw data do something like:
 
         db.get_view_raw_result('_design/ddoc_id_001', 'view_001',
@@ -279,6 +281,7 @@ class CouchDatabase(dict):
             include_docs bool
             inclusive_end  bool
             key string
+            keys list
             limit   int
             reduce  boolean
             skip    int
@@ -347,6 +350,8 @@ class CouchDatabase(dict):
             boolean
         :param key: string. Return only documents that match the
             specified key
+        :param keys: list. Return only documents that match the
+            specified keys
         :param limit: int. Limit the number of the returned documents
             to the specified number
         :param skip: int. Skip this number of records before starting to
@@ -380,7 +385,7 @@ class CouchDatabase(dict):
 
         Example:
 
-        with view.custom_result(include_docs=True, reduce=False) as rslt:
+        with database.custom_result(include_docs=True, reduce=False) as rslt:
             data = rslt[100:200]
 
         """
@@ -457,14 +462,14 @@ class CouchDatabase(dict):
         if not remote:
             super(CouchDatabase, self).__iter__()
         else:
-            next_startkey = 0
+            next_startkey = '0'
             while next_startkey is not None:
                 docs = self.all_docs(
                     limit=self._fetch_limit + 1,  # Get one extra doc
                                                   # to use as
                                                   # next_startkey
                     include_docs=True,
-                    startkey=json.dumps(next_startkey)
+                    startkey=next_startkey
                 ).get('rows', [])
 
                 if len(docs) > self._fetch_limit:
@@ -476,44 +481,30 @@ class CouchDatabase(dict):
                     next_startkey = None
 
                 for doc in docs:
+                    # Wrap the doc dictionary as the appropriate
+                    # document object before yielding it.
+                    document = {}
+                    if doc['id'].startswith('_design/'):
+                        document = DesignDocument(self)
+                    else:
+                        document = Document(self)
+                    document.update(doc['doc'])
                     super(CouchDatabase, self).__setitem__(
                         doc['id'],
-                        doc['doc']
+                        document
                     )
-                    yield doc
+                    yield document
 
             raise StopIteration
 
-    def bulk_docs(self, keys):
+    def bulk_docs(self, docs):
         """
         _bulk_docs_
 
-        Retrieve documents for given list of keys via bulk doc API
-
-        POST    /db/_all_docs   Returns certain rows from the built-in view of
-        all documents
-
-        :param list keys: list of document _ids to retrieve
-
-        """
-        url = posixpath.join(self.database_url, '_all_docs')
-        data = {'keys': keys}
-        resp = self.r_session.post(
-            url,
-            data=json.dumps(data)
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    def bulk_insert(self, docs):
-        """
-        _bulk_insert_
-
-        POST multiple docs for insert, each doc must be a dict containing _id
-        and _rev if the included document is being updated
-
-        POST    /db/_bulk_docs  Insert multiple documents in to the database in
-        a single request
+        Using the _bulk_docs endpoint, POST multiple documents for
+        insert/update through a single request.  Each document must
+        be a dict containing _id and _rev if the included document
+        is being updated.
 
         :param list docs: List of documents to be created/updated
 
