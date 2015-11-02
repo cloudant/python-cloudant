@@ -17,26 +17,8 @@ _account_tests_
 
 account module - Unit tests for CouchDB and Cloudant account classes
 
-The CouchDB tests are set to execute by default.
-
-In order to run Cloudant tests the following environment variables
-must be set:
-
-- RUN_CLOUDANT_TESTS: Set this to anything to trigger Cloudant
-  tests to run.
-  example: export RUN_CLOUDANT_TESTS=1
-- CLOUDANT_ACCOUNT: Set this to the Cloudant account that you wish
-  to connect to.
-  example: export CLOUDANT_ACCOUNT=account
-- CLOUDANT_USER: Set this to the username to connect to the account
-  with.
-  example: export CLOUDANT_USER=user
-- CLOUDANT_PASSWORD: Set this to the password for the username
-  specified.
-  example: export CLOUDANT_PASSWORD=password
-- CLOUDANT_URL: Optionally set this to override the construction of
-  Cloudant URL.
-  example: export CLOUDANT_URL=https://account.cloudant.com
+See configuration options for environment variables in unit_t_db_base
+module docstring.
 
 """
 
@@ -48,76 +30,15 @@ import os
 import uuid
 from datetime import datetime
 
-from cloudant.account import CouchDB, Cloudant
+from cloudant.account import Cloudant
 from cloudant.errors import CloudantException
 
-class CouchDBAccountTests(unittest.TestCase):
+from unit_t_db_base import UnitTestDbBase
+
+class AccountTests(UnitTestDbBase):
     """
-    CouchDB Class unit tests
+    CouchDB/Cloudant Account unit tests
     """
-
-    @classmethod
-    def setUpClass(self):
-        """
-        Set up CouchDB instance to be used by all tests
-
-        If no user is specified then, assuming Admin Party and we
-          need to create a user to run the CouchDB tests.
-          
-        Note: Admin Party is currently unsupported.
-        """
-        if os.environ.get('COUCHDB_URL') is None:
-            os.environ['COUCHDB_URL'] = 'http://127.0.0.1:5984'
-
-        if os.environ.get('COUCHDB_USER') is None:
-            os.environ['COUCHDB_USER_CREATED'] = '1'
-            os.environ['COUCHDB_USER'] = 'unit-test-user-{0}'.format(
-                unicode(uuid.uuid4())
-                )
-            os.environ['COUCHDB_PASSWORD'] = 'unit-test-password'
-            resp = requests.put(
-                '{0}/_config/admins/{1}'.format(
-                    os.environ['COUCHDB_URL'],
-                    os.environ['COUCHDB_USER']
-                    ),
-                data='"{0}"'.format(os.environ['COUCHDB_PASSWORD'])
-                )
-            resp.raise_for_status()
-
-    @classmethod
-    def tearDownClass(self):
-        """
-        Clean up CouchDB instance once all tests are complete
-        """
-        if os.environ.get('COUCHDB_USER_CREATED') is not None:
-            resp = requests.delete(
-                '{0}://{1}:{2}@{3}/_config/admins/{4}'.format(
-                    os.environ['COUCHDB_URL'].split('://', 1)[0],
-                    os.environ['COUCHDB_USER'],
-                    os.environ['COUCHDB_PASSWORD'],
-                    os.environ['COUCHDB_URL'].split('://', 1)[1],
-                    os.environ['COUCHDB_USER']
-                    )
-                )
-            resp.raise_for_status()
-
-    def setUp(self):
-        """
-        Set up test attributes for CouchDB Account tests
-        """
-        self.user = os.environ['COUCHDB_USER']
-        self.pwd = os.environ['COUCHDB_PASSWORD']
-        self.url = os.environ['COUCHDB_URL']
-        self.client = CouchDB(self.user, self.pwd, url=self.url)
-
-    def tearDown(self):
-        """
-        Ensure the client is new for each test
-        """
-        del self.client
-
-    def dbname(self, database_name='account-unit-test-db'):
-        return '{0}-{1}'.format(database_name, unicode(uuid.uuid4()))
 
     def test_constructor_with_url(self):
         """
@@ -408,43 +329,12 @@ class CouchDBAccountTests(unittest.TestCase):
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant Account tests'
+    'Skipping Cloudant Account specific tests'
     )
-class CloudantAccountTests(CouchDBAccountTests):
-
-    @classmethod
-    def setUpClass(self):
-        """
-        For the Cloudant tests we expect an account to already be created.
-        So we override the CouchDBAccountTests setUpClass and do nothing.
-        """
-        pass
-
-    @classmethod
-    def tearDownClass(self):
-        """
-        For the Cloudant tests we expect an account to already be created.
-        So we override the CouchDBAccountTests tearDownClass and do nothing.
-        """
-        pass
-
-    def setUp(self):
-        """
-        Set up test attributes for Cloudant Account tests
-        """
-        self.account = os.environ.get('CLOUDANT_ACCOUNT')
-        self.user = os.environ.get('CLOUDANT_USER')
-        self.pwd = os.environ.get('CLOUDANT_PASSWORD')
-        self.url = os.environ.get(
-            'CLOUDANT_URL',
-            'https://{0}.cloudant.com'.format(self.account)
-            )
-        self.client = Cloudant(
-            self.user,
-            self.pwd,
-            url=self.url,
-            x_cloudant_user=self.account
-            )
+class CloudantAccountTests(UnitTestDbBase):
+    """
+    Cloudant specific Account unit tests
+    """
     
     def test_constructor_with_account(self):
         """
