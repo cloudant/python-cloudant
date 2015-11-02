@@ -53,7 +53,7 @@ class ChangesTest(unittest.TestCase):
 
     def tearDown(self):
         if self.last_db is not None:
-            with cloudant(self.user, self.password) as c:
+            with cloudant(self.user, self.password, account=self.user) as c:
                 c.delete_database(self.last_db)
 
     def test_changes(self):
