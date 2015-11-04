@@ -93,20 +93,20 @@ class UnitTestDbBase(unittest.TestCase):
         """
         If necessary, clean up CouchDB instance once all tests are complete.
         """
-        if os.environ.get('RUN_CLOUDANT_TESTS') is None:
-            if os.environ.get('DB_USER_CREATED') is not None:
-                resp = requests.delete(
-                    '{0}://{1}:{2}@{3}/_config/admins/{4}'.format(
-                        os.environ['DB_URL'].split('://', 1)[0],
-                        os.environ['DB_USER'],
-                        os.environ['DB_PASSWORD'],
-                        os.environ['DB_URL'].split('://', 1)[1],
-                        os.environ['DB_USER']
-                        )
+        if (os.environ.get('RUN_CLOUDANT_TESTS') is None and
+            os.environ.get('DB_USER_CREATED') is not None):
+            resp = requests.delete(
+                '{0}://{1}:{2}@{3}/_config/admins/{4}'.format(
+                    os.environ['DB_URL'].split('://', 1)[0],
+                    os.environ['DB_USER'],
+                    os.environ['DB_PASSWORD'],
+                    os.environ['DB_URL'].split('://', 1)[1],
+                    os.environ['DB_USER']
                     )
-                del os.environ['DB_USER_CREATED']
-                del os.environ['DB_USER']
-                resp.raise_for_status()
+                )
+            del os.environ['DB_USER_CREATED']
+            del os.environ['DB_USER']
+            resp.raise_for_status()
 
     def setUp(self):
         """
@@ -138,13 +138,30 @@ class UnitTestDbBase(unittest.TestCase):
         """
         del self.client
 
+    def db_set_up(self):
+        """
+        Set up test attributes for Database tests
+        """
+        self.client.connect()
+        self.test_dbname = self.dbname()
+        self.db = self.client._DATABASE_CLASS(self.client, self.test_dbname)
+        self.db.create()
+
+    def db_tear_down(self):
+        """
+        Reset test attributes for each test
+        """
+        self.db.delete()
+        self.client.disconnect()
+        del self.test_dbname
+        del self.db
+
     def dbname(self, database_name='unit-test-db'):
         return '{0}-{1}'.format(database_name, unicode(uuid.uuid4()))
 
     def populate_db_with_documents(self, doc_count=100):
-        docs = []
-        for i in range(doc_count):
-            docs.append(
-                {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
-                )
+        docs = [
+            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
+            for i in xrange(doc_count)
+        ]
         return self.db.bulk_docs(docs)
