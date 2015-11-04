@@ -26,6 +26,7 @@ import unittest
 import requests
 import posixpath
 import os
+import uuid
 
 from cloudant.database import CouchDatabase, CloudantDatabase
 from cloudant.result import Result
@@ -42,22 +43,16 @@ class DatabaseTests(UnitTestDbBase):
 
     def setUp(self):
         """
-        Set up test attributes for CouchDB Database tests
+        Set up test attributes
         """
         super(DatabaseTests, self).setUp()
-        self.client.connect()
-        self.test_dbname = self.dbname()
-        self.db = self.client._DATABASE_CLASS(self.client, self.test_dbname)
-        self.db.create()
+        self.db_set_up()
 
     def tearDown(self):
         """
-        Ensure the client is new for each test
+        Reset test attributes
         """
-        self.db.delete()
-        self.client.disconnect()
-        del self.test_dbname
-        del self.db
+        self.db_tear_down()
         super(DatabaseTests, self).tearDown()
 
     def test_constructor(self):
@@ -435,6 +430,9 @@ class DatabaseTests(UnitTestDbBase):
             i += 1
 
     def test_bulk_docs_update(self):
+        """
+        Test update of documents in bulk
+        """
         self.populate_db_with_documents(3)
         docs = []
         for doc in self.db:
@@ -456,18 +454,152 @@ class DatabaseTests(UnitTestDbBase):
             age += 1
         self.assertEqual(age, 3)
 
+    def test_missing_revisions(self):
+        """
+        Test retrieving missing revisions
+        """
+        doc = self.db.create_document(
+            {'_id': 'julia006', 'name': 'julia', 'age': 6}
+        )
+        # Test when the doc is not found
+        revs = ['1-1', '2-1', '3-1']
+        self.assertEqual(self.db.missing_revisions('no-such-doc', *revs), revs)
+        # Test all revs not found
+        self.assertEqual(self.db.missing_revisions('julia006', *revs), revs)
+        # Test when some revs not found
+        self.assertEqual(
+            self.db.missing_revisions('julia006', doc['_rev'], *revs), revs
+        )
+        # Test no missing revs
+        self.assertEqual(self.db.missing_revisions('julia006', doc['_rev']), [])
+
+    def test_revisions_diff(self):
+        """
+        Test retrieving differences in revisions
+        """
+        doc = self.db.create_document(
+            {'_id': 'julia006', 'name': 'julia', 'age': 6}
+        )
+        # Test when the doc is not found
+        revs = ['1-1', '2-1', '3-1']
+        self.assertEqual(
+            self.db.revisions_diff('no-such-doc', *revs),
+            {'no-such-doc': {'missing': revs}}
+        )
+        # Test differences
+        self.assertEqual(
+            self.db.revisions_diff('julia006', *revs), 
+            {'julia006': {'missing': revs, 'possible_ancestors': [doc['_rev']]}}
+        )
+        # Test no differences
+        self.assertEqual(self.db.revisions_diff('julia006', doc['_rev']), {})
+
+    def test_get_set_revision_limit(self):
+        """
+        Test setting and getting revision limits
+        """
+        limit = self.db.get_revision_limit()
+        self.assertIsInstance(limit, int)
+        self.assertEqual(self.db.set_revision_limit(1234), {'ok': True})
+        new_limit = self.db.get_revision_limit()
+        self.assertNotEqual(new_limit, limit)
+        self.assertEqual(new_limit, 1234)
+
+    def test_view_clean_up(self):
+        """
+        Test cleaning up old view files
+        """
+        self.assertEqual(self.db.view_cleanup(), {'ok': True})
+
+    def test_retrieve_changes(self):
+        """
+        Test the retrieval of changes to documents via feed
+        """
+        i = 0
+        doc = self.db.create_document(
+            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
+        )
+        for change in self.db.changes():
+            if change is not None:
+                self.assertEqual(change['id'], doc['_id'])
+                i += 1
+                doc = self.db.create_document(
+                    {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
+                )
+            if i == 10:
+                break
+        self.assertEqual(i, 10)
+
+    def test_retrieve_changes_with_docs(self):
+        """
+        Test the retrieval of changes to documents including the documents
+        themselves via feed
+        """
+        i = 0
+        doc = self.db.create_document(
+            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
+        )
+        for change in self.db.changes(include_docs=True):
+            if change is not None:
+                self.assertEqual(change['id'], doc['_id'])
+                self.assertEqual(change.get('doc'), doc)
+                i += 1
+                doc = self.db.create_document(
+                    {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
+                )
+            if i == 10:
+                break
+        self.assertEqual(i, 10)
+
 @unittest.skipUnless(
-     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-     'Skipping Cloudant specific Database tests'
-     )
+    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+    'Skipping Cloudant specific Database tests'
+)
 class CloudantDatabaseTests(UnitTestDbBase):
     """
     Cloudant specific Database unit tests
     """
 
-    # Add Cloudant specific tests
-    pass
+    def setUp(self):
+        """
+        Set up test attributes
+        """
+        super(CloudantDatabaseTests, self).setUp()
+        self.db_set_up()
 
+    def tearDown(self):
+        """
+        Reset test attributes
+        """
+        self.db_tear_down()
+        super(CloudantDatabaseTests, self).tearDown()
+
+    def test_get_security_document(self):
+        self.assertEqual(self.db.security_document(), {})
+        share = 'unit-test-share-user-{0}'.format(unicode(uuid.uuid4()))
+        self.db.share_database(share)
+        expected = {'cloudant': {share: ['_reader']}}
+        self.assertEqual(self.db.security_document(), expected)
+
+    def test_share_unshare_database(self):
+        share = 'unit-test-share-user-{0}'.format(unicode(uuid.uuid4()))
+        self.assertEqual(self.db.security_document(), {})
+        self.assertEqual(self.db.share_database(share), {'ok': True})
+        expected = {'cloudant': {share: ['_reader']}}
+        self.assertEqual(self.db.security_document(), expected)
+        self.assertEqual(
+            self.db.share_database(share, True, True, True),
+            {'ok': True}
+        )
+        expected = {'cloudant': {share: ['_reader', '_writer', '_admin']}}
+        self.assertEqual(self.db.security_document(), expected)
+        self.assertEqual(self.db.unshare_database(share), {'ok': True})
+        self.assertEqual(self.db.security_document(), {'cloudant':{}})
+
+    def test_retrieve_shards(self):
+        shards = self.db.shards()
+        self.assertTrue(all(x in shards.keys() for x in ['shards']))
+        self.assertIsInstance(shards['shards'], dict)
 
 if __name__ == '__main__':
     unittest.main()
