@@ -229,7 +229,7 @@ class DatabaseTests(UnitTestDbBase):
         """
         # Get an empty design document object that does not exist remotely
         local_ddoc = self.db.get_design_document('_design/ddoc01')
-        self.assertEqual(local_ddoc, {'views': {}})
+        self.assertEqual(local_ddoc, {'_id': '_design/ddoc01', 'views': {}})
 
         # Add the design document to the database
         map_func = 'function(doc) {\n emit(doc._id, 1); \n}'

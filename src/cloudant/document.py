@@ -22,6 +22,8 @@ import json
 import posixpath
 import urllib
 import requests
+import copy
+
 from requests.exceptions import HTTPError
 
 from .errors import CloudantException
@@ -51,20 +53,27 @@ class Document(dict):
         self._database_name = database.database_name
         self.r_session = database.r_session
         self._document_id = document_id
+        if self._document_id is not None:
+            self['_id'] = self._document_id
         self._encoder = self._cloudant_account.encoder
 
-    document_url = property(
-        lambda x: posixpath.join(
-            x._database_host,
-            urllib.quote_plus(x._database_name),
-            x._document_id
+    @property
+    def document_url(self):
+        """constructs and returns the document URL"""
+        if self._document_id is None:
+            return None
+        return posixpath.join(
+            self._database_host,
+            urllib.quote_plus(self._database_name),
+            self._document_id
         )
-    )
 
     def exists(self):
         """
         :returns: True if the document exists in the database, otherwise False
         """
+        if self._document_id is None:
+            return False
         resp = self.r_session.get(self.document_url)
         return resp.status_code == 200
 
@@ -86,12 +95,17 @@ class Document(dict):
         """
         if self._document_id is not None:
             self['_id'] = self._document_id
-        headers = {'Content-Type': 'application/json'}
 
+        # Ensure that an existing document will not be "updated"
+        new_doc = copy.deepcopy(self)
+        if new_doc.get('_rev') is not None:
+            new_doc.__delitem__('_rev')
+
+        headers = {'Content-Type': 'application/json'}
         resp = self.r_session.post(
             self._cloudant_database.database_url,
             headers=headers,
-            data=self.json()
+            data=new_doc.json()
         )
         resp.raise_for_status()
         data = resp.json()
@@ -104,11 +118,19 @@ class Document(dict):
         """
         _fetch_
 
-        Fetch the content of this document from the database and update
-        self with whatever it finds
+        Fetch the content of this document from the database and populate
+        self with whatever it finds.  A call to fetch will overwrite
+        any dictionary content currently in self and populate with content
+        found in the database for the document id.
         """
+        if self.document_url is None:
+            raise CloudantException(
+                'A document id is required to fetch document contents.  '
+                'Add an _id key and value to the document and re-try.'
+            )
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
+        self.clear()
         self.update(resp.json())
 
     def save(self):
@@ -138,23 +160,42 @@ class Document(dict):
     # Update Actions
     # These are handy functions to use with update_field below.
     @staticmethod
-    def field_append(doc, field, value):
-        """Append a value to a field in a doc."""
-        doc[field].append(value)
+    def list_field_append(doc, field, value):
+        """
+        Append a value to a list field in a doc.  If a field does not exists
+        it will be created first.
+        """
+        if doc.get(field) is None:
+            doc[field] = []
+        if not isinstance(doc[field], list):
+            raise CloudantException(
+                'The field {0} is not a list.'.format(field)
+            )
+        if value is not None:
+            doc[field].append(value)
 
     @staticmethod
-    def field_remove(doc, field, value):
-        """Remove a value from a field in a doc."""
+    def list_field_remove(doc, field, value):
+        """
+        Remove a value from a list field in a doc.
+        """
+        if not isinstance(doc[field], list):
+            raise CloudantException(
+                'The field {0} is not a list.'.format(field)
+            )
         doc[field].remove(value)
 
     @staticmethod
-    def field_replace(doc, field, value):
-        """Replace a field in a doc with a value."""
-        doc[field] = value
+    def field_set(doc, field, value):
+        """Set/replace a value for a field in a doc."""
+        if value is None:
+            doc.__delitem__(field)
+        else:
+            doc[field] = value
 
     def _update_field(self, action, field, value, max_tries, tries=0):
         """
-        Private update_field method. Wrapped by CloudantDocument.update.
+        Private update_field method. Wrapped by Document.update_field.
         Tracks a "tries" var to help limit recursion.
 
         """
@@ -188,9 +229,8 @@ class Document(dict):
         @param action callable: A routine that takes three arguments:
             A doc, a field, and a value. The routine should attempt to
             update a field in the doc with the given value, using
-            whatever logic is appropraite. See this class's
-            update_actions property for examples.
-        @param field str: the name of the field to update
+            whatever logic is appropriate.
+        @param field str: the name of the field to update.
         @param value: the value to update the field with.
         @param max_tries: in the case of a conflict, give up after this
             number of retries.
@@ -199,7 +239,7 @@ class Document(dict):
         "words" list in a Cloudant Document.
 
         doc.update_field(
-            action=doc.field_append,
+            action=doc.list_field_append,
             field="words",
             value="foo"
         )
@@ -225,6 +265,8 @@ class Document(dict):
             params={"rev": self["_rev"]},
         )
         del_resp.raise_for_status()
+        self.clear()
+        self.__setitem__('_id', self._document_id)
         return
 
     def __enter__(self):
@@ -246,6 +288,23 @@ class Document(dict):
     def __exit__(self, *args):
         self.save()
 
+    def __setitem__(self, key, value):
+        """
+        Set the _document_id when setting the '_id' field.
+        The _document_id is used to construct the document url.
+        """
+        if key == '_id':
+            self._document_id = value
+        super(Document, self).__setitem__(key, value)
+
+    def __delitem__(self, key):
+        """
+        Set the _document_id to None when deleting the '_id' field.
+        """
+        if key == '_id':
+            self._document_id = None
+        super(Document, self).__delitem__(key)
+
     def get_attachment(
             self,
             attachment,
@@ -260,22 +319,18 @@ class Document(dict):
         :param str attachment: the attachment file name
         :param dict headers: Extra headers to be sent with request
         :param str write_to: File handler to write the attachment to,
-          if None do not write. write_to file must be also be opened
-          for writing.
+          if None do not write. write_to file must be opened for writing.
         :param str attachment_type: Describes the data format of the attachment
           'json' and 'binary' are currently the only expected values.
 
         """
-        attachment_url = posixpath.join(self.document_url, attachment)
-
         # need latest rev
-        doc_resp = self.r_session.get(self.document_url)
-        doc_resp.raise_for_status()
-        doc_json = doc_resp.json()
+        self.fetch()
+        attachment_url = posixpath.join(self.document_url, attachment)
         if headers is None:
-            headers = {'If-Match': doc_json['_rev']}
+            headers = {'If-Match': self['_rev']}
         else:
-            headers['If-Match'] = doc_json['_rev']
+            headers['If-Match'] = self['_rev']
 
         resp = self.r_session.get(
             attachment_url,
@@ -293,36 +348,43 @@ class Document(dict):
         """
         _delete_attachment_
 
-        Delete an attachment from a document
+        Delete an attachment from a document and refresh the local document
+        object
 
         :param str attachment: the attachment file name
         :param dict headers: Extra headers to be sent with request
 
         """
-        attachment_url = posixpath.join(self.document_url, attachment)
-
         # need latest rev
-        doc_resp = self.r_session.get(self.document_url)
-        doc_resp.raise_for_status()
-        doc_json = doc_resp.json()
+        self.fetch()
+        attachment_url = posixpath.join(self.document_url, attachment)
         if headers is None:
-            headers = {'If-Match': doc_json['_rev']}
+            headers = {'If-Match': self['_rev']}
         else:
-            headers['If-Match'] = doc_json['_rev']
+            headers['If-Match'] = self['_rev']
 
         resp = self.r_session.delete(
             attachment_url,
             headers=headers
         )
         resp.raise_for_status()
+        super(Document, self).__setitem__('_rev', resp.json()['rev'])
+        # Execute logic only if attachment metadata exists locally
+        if self.get('_attachments'):
+            # Remove the attachment metadata for the specified attachment
+            if self['_attachments'].get(attachment):
+                self['_attachments'].__delitem__(attachment)
+            # Remove empty attachment metadata from the local dictionary
+            if not self['_attachments']:
+                super(Document, self).__delitem__('_attachments')
 
         return resp.json()
 
     def put_attachment(self, attachment, content_type, data, headers=None):
         """
         _put_attachment_
-        Add a new attachment, or update existing, to
-        specified document
+        Add a new attachment, or update an existing attachment, to
+        the specified document then refresh the local document object.
 
         :param attachment: name of attachment to be added/updated
         :param content_type: http 'Content-Type' of the attachment
@@ -330,19 +392,16 @@ class Document(dict):
         :param headers: headers to send with request
 
         """
-        attachment_url = posixpath.join(self.document_url, attachment)
-
         # need latest rev
-        doc_resp = self.r_session.get(self.document_url)
-        doc_resp.raise_for_status()
-        doc_json = doc_resp.json()
+        self.fetch()
+        attachment_url = posixpath.join(self.document_url, attachment)
         if headers is None:
             headers = {
-                'If-Match': doc_json['_rev'],
+                'If-Match': self['_rev'],
                 'Content-Type': content_type
             }
         else:
-            headers['If-Match'] = doc_json['_rev']
+            headers['If-Match'] = self['_rev']
             headers['Content-Type'] = content_type
 
         resp = self.r_session.put(
@@ -351,5 +410,5 @@ class Document(dict):
             headers=headers
         )
         resp.raise_for_status()
-
+        self.fetch()
         return resp.json()

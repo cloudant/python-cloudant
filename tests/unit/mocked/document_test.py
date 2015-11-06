@@ -22,6 +22,7 @@ document module unit tests
 import mock
 import requests
 import unittest
+import json
 
 from cloudant.errors import CloudantException
 from cloudant.document import Document
@@ -40,6 +41,7 @@ class DocumentTest(unittest.TestCase):
         self.account = mock.Mock()
         self.account.cloudant_url = "https://bob.cloudant.com"
         self.account.r_session = self.mock_session
+        self.account.encoder = json.JSONEncoder
         self.database = mock.Mock()
         self.database.r_session = self.mock_session
         self.database.database_name = "unittest"
@@ -79,6 +81,7 @@ class DocumentTest(unittest.TestCase):
         mock_resp.raise_for_status = mock.Mock()
         mock_resp.json = mock.Mock()
         mock_resp.json.return_value = {
+            '_id': 'DUCKUMENT', '_rev': 'DUCK2',
             'herp': 'HERP', 'derp': 'DERP'
         }
         self.mock_session.get.return_value = mock_resp
@@ -140,7 +143,6 @@ class DocumentTest(unittest.TestCase):
         )
         self.mock_session.delete.reset_mock()
         # test delete with no rev explodes as expected
-        del doc['_rev']
         self.assertRaises(CloudantException, doc.delete)
 
     def test_save_non_exists(self):
@@ -239,7 +241,7 @@ class DocumentTest(unittest.TestCase):
         self.assertEqual(doc["foo"], "baz")
 
         # And that we replace it with an updated value
-        doc.update_field(doc.field_replace, "foo", "bar")
+        doc.update_field(doc.field_set, "foo", "bar")
         self.assertEqual(doc["foo"], "bar")
 
         # And verify that we called mock_session.put
@@ -252,7 +254,7 @@ class DocumentTest(unittest.TestCase):
         self.assertRaises(
             requests.HTTPError,
             doc.update_field,
-            doc.field_replace,
+            doc.field_set,
             "foo",
             "bar"
         )
@@ -269,9 +271,9 @@ class DocumentTest(unittest.TestCase):
 
         c_doc = Document(self.database, "HOWARD")
 
-        c_doc.field_append(doc, "baz", 10)
-        c_doc.field_remove(doc, "baz", 3)
-        c_doc.field_replace(doc, "foo", "qux")
+        c_doc.list_field_append(doc, "baz", 10)
+        c_doc.list_field_remove(doc, "baz", 3)
+        c_doc.field_set(doc, "foo", "qux")
 
         self.assertTrue(10 in doc['baz'])
         self.assertFalse(3 in doc['baz'])
