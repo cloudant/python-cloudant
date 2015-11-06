@@ -196,24 +196,6 @@ class CouchDBTest(unittest.TestCase):
             headers={'Content-Type': 'application/json'}
         )
 
-    def test_db_updates(self):
-        updates_feed = """
-            {"dbname": "somedb3", "type": "created", "account": "bob", "seq": "3-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJzLlAIfa0tKQUQ2NTIkzIAgD_wSJc"}
-            {"dbname": "somedb2", "type": "updated", "account": "bob", "seq": "4-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJLLlAIfa0tKQUQ2NTIkzIAgAAASJd"}
-            {"dbname": "somedb1", "type": "deleted", "account": "bob", "seq": "9-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJnLlAIfa0tKQUQ2NTIkzIAgAA9iJi"}
-            {"dbname": "somedb2", "type": "created", "account": "bob", "seq": "11-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJ3LlAIfa0tKQUQ2NTIkzIAgABWCJk"}
-            {"dbname": "somedb1", "type": "updated", "account": "bob", "seq": "12-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJPLlAIfa0tKQUQ2NTIkzIAgABiSJl"}
-        """
-        with mock.patch('cloudant.database.Feed') as mock_feed:
-            feed = (x.strip() for x in updates_feed.split('\n'))
-            mock_feed.__iter__ = mock.MagicMock()
-            mock_feed.return_value = feed
-
-            updates = [u for u in self.c.db_updates()]
-
-            self.assertEqual(len(updates), 5)
-
-
 class CloudantDBTest(unittest.TestCase):
     """
     Tests for additional Cloudant database features
@@ -320,7 +302,7 @@ class CloudantDBTest(unittest.TestCase):
     def test_missing_revs(self):
         doc_id = 'somedocument'
         ret_val = {
-            "missed_revs": {doc_id: ['rev1']}
+            "missing_revs": {doc_id: ['rev1']}
         }
         mock_resp = mock.Mock()
         mock_resp.status_code = 201
@@ -342,7 +324,7 @@ class CloudantDBTest(unittest.TestCase):
             headers={'Content-Type': 'application/json'},
             data=json.dumps(expected_data)
         )
-        self.assertEqual(missed_revs, ret_val["missed_revs"][doc_id])
+        self.assertEqual(missed_revs, ret_val["missing_revs"][doc_id])
 
     def test_revs_diff(self):
         doc_id = 'somedocument'
@@ -394,7 +376,7 @@ class CloudantDBTest(unittest.TestCase):
         self.assertTrue(self.mock_session.put.called)
         self.mock_session.put.assert_called_once_with(
             expected_url,
-            data=limit
+            data=json.dumps(limit)
         )
         self.assertEqual(set_limit, '{"ok": true}')
 
@@ -439,7 +421,10 @@ class CloudantDBTest(unittest.TestCase):
         cleanup = self.cl.view_cleanup()
 
         self.assertTrue(self.mock_session.post.called)
-        self.mock_session.post.assert_called_once_with(expected_url)
+        self.mock_session.post.assert_called_once_with(
+            expected_url,
+            headers={'Content-Type': 'application/json'}
+        )
         self.assertEqual(cleanup, '{"ok": true}')
 
 if __name__ == '__main__':

@@ -104,9 +104,7 @@ class AccountTests(UnitTestDbBase):
         """
         Test getting a list of all of the databases in the account
         """
-        dbnames = []
-        for _ in range(3):
-            dbnames.append(self.dbname())
+        dbnames = [self.dbname() for _ in xrange(3)]
         try:
             self.client.connect()
             for dbname in dbnames:

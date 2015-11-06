@@ -25,6 +25,7 @@ import requests
 import sys
 
 from .database import CloudantDatabase, CouchDatabase
+from .changes import Feed
 from .errors import CloudantException
 
 _USER_AGENT = 'python-cloudant/{0} (Python, Version {1}.{2}.{3})'.format(
@@ -216,6 +217,28 @@ class CouchDB(dict):
         db.delete()
         if dbname in self.keys():
             super(CouchDB, self).__delitem__(dbname)
+
+    def db_updates(self, since=None, continuous=True):
+        """
+        _db_updates_
+
+        Implement streaming from _db_updates feed. Yields information about
+          databases that have been updated.
+
+        :param str since: Start from this sequence
+        :param boolean continuous: Stream results
+
+        """
+        db_updates_feed = Feed(
+            self.r_session,
+            posixpath.join(self.cloudant_url, '_db_updates'),
+            since=since,
+            continuous=continuous
+        )
+
+        for update in db_updates_feed:
+            if update:
+                yield update
 
     def keys(self, remote=False):
         """
