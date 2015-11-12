@@ -28,7 +28,7 @@ import unittest
 
 from cloudant import cloudant
 from cloudant.credentials import read_dot_cloudant
-from cloudant.replicator import ReplicatorDatabase
+from cloudant.replicator import Replicator
 
 def setup_logging():
     log = logging.getLogger()
@@ -54,10 +54,10 @@ class ReplicatorTest(unittest.TestCase):
 
     def tearDown(self):
         with cloudant(self.user, self.passwd, account=self.user) as c:
-            replicator_db = ReplicatorDatabase(c)
+            replicator = Replicator(c)
 
             while self.replication_ids:
-                replicator_db.stop_replication(self.replication_ids.pop())
+                replicator.stop_replication(self.replication_ids.pop())
 
             while self.dbs:
                 c.delete_database(self.dbs.pop())
@@ -71,7 +71,7 @@ class ReplicatorTest(unittest.TestCase):
 
         """
         with cloudant(self.user, self.passwd, account=self.user) as c:
-            replicator = ReplicatorDatabase(c)
+            replicator = Replicator(c)
             replicator.all_docs()
 
     def test_create_replication(self):
@@ -103,7 +103,7 @@ class ReplicatorTest(unittest.TestCase):
                 {"_id": "doc3", "testing": "document 1"}
             )
 
-            replicator = ReplicatorDatabase(c)
+            replicator = Replicator(c)
             repl_id = u"test_create_replication_{}".format(
                 unicode(uuid.uuid4()))
             self.replication_ids.append(repl_id)
@@ -112,7 +112,7 @@ class ReplicatorTest(unittest.TestCase):
                 source_db=dbs,
                 target_db=dbt,
                 repl_id=repl_id,
-                continuous=False,
+                continuous=False
             )
 
             try:
@@ -120,7 +120,7 @@ class ReplicatorTest(unittest.TestCase):
             except KeyError:
                 repl_doc = None
             if not repl_doc or not (repl_doc.get(
-                    '_replication_state', "none") in ('completed, error')):
+                    '_replication_state', "none") in ('completed', 'error')):
                 for change in replicator.changes():
                     if change.get('id') == repl_id:
                         try:
@@ -172,7 +172,7 @@ class ReplicatorTest(unittest.TestCase):
                 {"_id": "doc3", "testing": "document 1"}
             )
 
-            replicator = ReplicatorDatabase(c)
+            replicator = Replicator(c)
             repl_id = u"test_follow_replication_{}".format(
                 unicode(uuid.uuid4()))
             self.replication_ids.append(repl_id)
@@ -219,7 +219,7 @@ class ReplicatorTest(unittest.TestCase):
                 {"_id": "doc3", "testing": "document 1"}
             )
 
-            replicator = ReplicatorDatabase(c)
+            replicator = Replicator(c)
             repl_id = u"test_follow_replication_{}".format(
                 unicode(uuid.uuid4()))
             self.replication_ids.append(repl_id)
@@ -268,7 +268,7 @@ class ReplicatorTest(unittest.TestCase):
                 {"_id": "doc3", "testing": "document 1"}
             )
 
-            replicator = ReplicatorDatabase(c)
+            replicator = Replicator(c)
             repl_id = u"test_replication_state_{}".format(
                 unicode(uuid.uuid4()))
             self.replication_ids.append(repl_id)
@@ -309,7 +309,7 @@ class ReplicatorTest(unittest.TestCase):
         """
 
         with cloudant(self.user, self.passwd, account=self.user) as c:
-            replicator = ReplicatorDatabase(c)
+            replicator = Replicator(c)
             repl_ids = []
             num_reps = 3
 

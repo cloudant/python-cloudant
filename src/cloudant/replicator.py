@@ -15,28 +15,28 @@
 """
 _replicator_
 
-Implement a friendly wrapper around a Cloudant _replicator database.
+Replication API
 
 """
 
 import uuid
 
-from .database import CloudantDatabase
 from .errors import CloudantException
+from .document import Document
 
-class ReplicatorDatabase(CloudantDatabase):
+class Replicator(object):
     """
-    CloudantDatabase object with a fixed name and some additional
-    methods specific to a _replicator database.
-
+    Provides a replication API
     """
 
-    def __init__(self, cloudant, fetch_limit=100):
-        super(ReplicatorDatabase, self).__init__(
-            cloudant=cloudant,
-            database_name="_replicator",
-            fetch_limit=fetch_limit
-        )
+    def __init__(self, account):
+        try:
+            self.database = account['_replicator']
+        except Exception:
+            raise CloudantException(
+                'Unable to acquire _replicator database.  '
+                'Verify that the account client is valid and try again.'
+            )
 
     def create_replication(self, source_db=None, target_db=None,
                            repl_id=None, **kwargs):
@@ -98,33 +98,41 @@ class ReplicatorDatabase(CloudantDatabase):
             }
 
         if not data.get('user_ctx'):
-            data['user_ctx'] = self.creds['user_ctx']
+            data['user_ctx'] = self.database.creds['user_ctx']
 
-        return self.create_document(data, throw_on_exists=True)
+        return self.database.create_document(data, throw_on_exists=True)
 
     def list_replications(self):
         """
         _list_replications_
 
-        Returns a list of all replications.
+        Returns all replication documents.
 
         """
-        docs = self.all_docs(include_docs="true")['rows']
-        return [doc['doc'] for doc in docs]
+        docs = self.database.all_docs(include_docs=True)['rows']
+        documents = []
+        for doc in docs:
+            document = {}
+            if doc['id'].startswith('_design/'):
+                continue
+            document = Document(self.database, doc['id'])
+            document.update(doc['doc'])
+            documents.append(document)
+        return documents
 
     def replication_state(self, repl_id):
         """
         _replication_state_
 
-        Get the state of the current replication. Possible values are
-        "triggered", "completed", "error", and None (this last in the
-        case where the replication is not yet triggered in couch).
+        Get the state for the given replication. Possible values are
+        "triggered", "completed", "error", and None (this last one is the
+        case where the replication is not yet triggered in CouchDB).
 
         @param str replication_id: id of the replication to inspect.
 
         """
         try:
-            repl_doc = self[repl_id]
+            repl_doc = self.database[repl_id]
         except KeyError:
             raise CloudantException(
                 "Replication {} not found".format(repl_id)
@@ -149,7 +157,7 @@ class ReplicatorDatabase(CloudantDatabase):
 
             """
             try:
-                repl_doc = self[repl_id]
+                repl_doc = self.database[repl_id]
                 repl_doc.fetch()
                 state = repl_doc.get('_replication_state')
             except KeyError:
@@ -168,7 +176,7 @@ class ReplicatorDatabase(CloudantDatabase):
                 raise StopIteration
 
             # Now listen on changes feed for the state
-            for change in self.changes():
+            for change in self.database.changes():
                 if change.get('id') == repl_id:
                     repl_doc, state = update_state()
                     if repl_doc is not None:
@@ -184,7 +192,7 @@ class ReplicatorDatabase(CloudantDatabase):
         """
 
         try:
-            repl_doc = self[repl_id]
+            repl_doc = self.database[repl_id]
         except KeyError:
             raise CloudantException(
                 u"Could not find replication with id {}".format(repl_id))
