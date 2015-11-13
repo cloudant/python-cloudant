@@ -86,6 +86,7 @@ class CouchDB(dict):
         """
         self.session_logout()
         self.r_session = None
+        self.clear()
 
     def session(self):
         """
