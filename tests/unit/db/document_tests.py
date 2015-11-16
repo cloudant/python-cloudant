@@ -35,7 +35,7 @@ from unit_t_db_base import UnitTestDbBase
 
 class DocumentTests(UnitTestDbBase):
     """
-    CouchDatabase/CloudantDatabase unit tests
+    Document unit tests
     """
 
     def setUp(self):
