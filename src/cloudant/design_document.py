@@ -31,8 +31,10 @@ class DesignDocument(Document):
     the various views, shows, lists etc.
 
     """
-    def __init__(self, cloudant_database, document_id=None):
-        super(DesignDocument, self).__init__(cloudant_database, document_id)
+    def __init__(self, database, document_id=None):
+        if document_id and not document_id.startswith('_design/'):
+            document_id = '_design/{0}'.format(document_id)
+        super(DesignDocument, self).__init__(database, document_id)
         self.setdefault('views', {})
 
     @property
@@ -55,7 +57,7 @@ class DesignDocument(Document):
             msg = "View {0} already exists in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
         view = View(self, view_name, map_func, reduce_func)
-        self.views[view_name] = view
+        self.views.__setitem__(view_name, view)
 
     def update_view(self, view_name, map_func, reduce_func=None):
         """
@@ -75,7 +77,7 @@ class DesignDocument(Document):
         view.map = map_func
         if reduce_func is not None:
             view.reduce = reduce_func
-        self.views[view_name] = view
+        self.views.__setitem__(view_name, view)
 
     def delete_view(self, view_name):
         """
@@ -86,7 +88,7 @@ class DesignDocument(Document):
         :param view_name: Name of the view
         """
         if self.get_view(view_name) is not None:
-            del self.views[view_name]
+            self.views.__delitem__(view_name)
 
     def fetch(self):
         """
@@ -104,6 +106,21 @@ class DesignDocument(Document):
                 view_def.get('map'),
                 view_def.get('reduce')
             )
+
+    def __setitem__(self, key, value):
+        """
+        ___setitem___
+
+        Ensure that when setting the document id for a design document it is
+        always prefaced with '_design'.
+        """
+        if (
+                key == '_id' and
+                value is not None and
+                not value.startswith('_design/')
+            ):
+            value = '_design/{0}'.format(value)
+        super(DesignDocument, self).__setitem__(key, value)
 
     def iterviews(self):
         """
@@ -136,20 +153,6 @@ class DesignDocument(Document):
         """
         retrieve the view info data, returns dictionary
 
-        GET databasename/_design/test/_info
+        GET databasename/_design/{ddoc}/_info
         """
-        raise NotImplementedError("info not yet implemented")
-
-    def cleanup(self):
-        """
-
-        POST /some_database/_view_cleanup
-
-        """
-        raise NotImplementedError("cleanup not yet implemented")
-
-    def compact(self):
-        """
-        POST /some_database/_compact/designname
-        """
-        raise NotImplementedError("compact not yet implemented")
+        raise NotImplementedError("_info not yet implemented")
