@@ -17,6 +17,8 @@
 - [FIX] The Document local dictionary is now refreshed after an add/update/delete of an attachment.
 - [FIX] The Document ``fetch()`` method now refreshes the Document local dictionary content correctly.
 - [BREAKING] Replace the ReplicatorDatabase class with the Replicator class.  A Replicator object has a database attribute that represents the _replicator database.  This allows the Replicator to work for both a CloudantDatabase and a CouchDatabase.
+- [REMOVED] Removed "not implemented" methods from the DesignDocument.
+- [FIX] Add implicit "_design/" prefix for DesignDocument document ids.
 
 2.0.0a1 (2015-10-13)
 ====================
