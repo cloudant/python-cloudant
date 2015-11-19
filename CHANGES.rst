@@ -1,4 +1,4 @@
-2.0.0a2 (Unreleased)
+2.0.0a2 (2015-11-19)
 ====================
 
 - [NEW] Added unit tests targeting CouchDB and Cloudant databases.

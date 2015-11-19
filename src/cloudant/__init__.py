@@ -18,7 +18,7 @@ _cloudant_
 Cloudant / CouchDB Python Client API
 
 """
-__version__ = '2.0.0b1.dev'
+__version__ = '2.0.0a2'
 
 import contextlib
 

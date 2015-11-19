@@ -1,7 +1,7 @@
 Cloudant Python Client
 ======================
 
-.. image:: https://travis-ci.org/cloudant/python-cloudant.svg?branch=master
+.. image:: https://travis-ci.org/cloudant/python-cloudant.png
     :target: https://travis-ci.org/cloudant/python-cloudant
 
 This library is currently a preview (alpha version) of Cloudant's new official 
@@ -22,13 +22,13 @@ Installation and Usage
 Released versions of this library are `hosted on PyPI <https://pypi.python.org/pypi/cloudant>`_ 
 and can be installed with ``pip``. 
 
-The latest stable version on PyPI is 0.5.9, **but is now deprecated**. 
+The latest stable version on PyPI is 0.5.10, **but is now deprecated**. 
 
-The current development version, which you should now use, is 2.0.0a1. Version 2.x makes
-significant breaking changes -- no attempt was made to reproduce the API of 0.5.9.
+The current development version, which you should now use, is 2.0.0a2. Version 2.x makes
+significant breaking changes -- no attempt was made to reproduce the API of 0.5.10.
 
-Because 2.0.0 is still in development (2.0.0a1) and we wish to give developers time to 
-upgrade, version 0.5.9 will remain the latest stable version on PyPI until at least early
+Because 2.0.0 is still in development (2.0.0a2) and we wish to give developers time to 
+upgrade, version 0.5.10 will remain the latest stable version on PyPI until at least early
 2016.  
 
 In order to install version 2.0.0a1 or greater, execute
@@ -37,7 +37,7 @@ In order to install version 2.0.0a1 or greater, execute
 
     pip install --pre cloudant
 
-In order to install the deprecated 0.5.9, execute
+In order to install the deprecated 0.5.10, execute
 
 .. code-block:: bash
 
