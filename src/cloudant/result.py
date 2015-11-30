@@ -13,17 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_result_
-
-Support for accessing CouchDB and Cloudant result collections
-
+API module for interacting with result collections.
 """
 import json
 import types
 
 from collections import Sequence
 from .errors import CloudantArgumentError
-
 
 ARG_TYPES = {
     "descending": bool,
@@ -56,21 +52,27 @@ TYPE_CONVERTERS = {
     types.NoneType: lambda x: x
 }
 
-
 def python_to_couch(options):
     """
-    _python_to_couch_
+    Translates query options from python style options into CouchDB/Cloudant
+    query options.  For example ``{'include_docs': True}`` will
+    translate to ``{'include_docs': 'true'}``.  Primarily meant for use by
+    code that formulates a query to retrieve results data from the
+    remote database, such as the database API convenience method
+    :func:`~cloudant.database.CouchDatabase.all_docs` or the View
+    :func:`~cloudant.views.View.__call__` callable, both used to retrieve data.
 
-    Translator method to flip python style
-    options into couch query options, eg True => 'true'
+    :param dict options: Python style parameters to be translated.
+
+    :returns: Dictionary of translated CouchDB/Cloudant query parameters
     """
     translation = {}
     for key, val in options.iteritems():
         if key not in ARG_TYPES:
-            msg = "Invalid Argument {0}".format(key)
+            msg = 'Invalid argument {0}'.format(key)
             raise CloudantArgumentError(msg)
         if not isinstance(val, ARG_TYPES[key]):
-            msg = "Argument {0} not instance of expected type: {1}".format(
+            msg = 'Argument {0} not instance of expected type: {1}'.format(
                 key,
                 ARG_TYPES[key]
             )
@@ -79,8 +81,8 @@ def python_to_couch(options):
         if key == 'stale':
             if val not in ('ok', 'update_after'):
                 msg = (
-                    "Invalid value for stale option {0} "
-                    "must be ok or update_after"
+                    'Invalid value for stale option {0} '
+                    'must be ok or update_after'
                 ).format(val)
                 raise CloudantArgumentError(msg)
         try:
@@ -89,70 +91,69 @@ def python_to_couch(options):
             else:
                 translation[key] = arg_converter(val)
         except Exception as ex:
-            msg = "Error converting arg {0}: {1}".format(key, ex)
+            msg = 'Error converting argument {0}: {1}'.format(key, ex)
             raise CloudantArgumentError(msg)
 
     return translation
 
-
 def type_or_none(typerefs, value):
-    """helper to check that value is of the types passed or None"""
+    """
+    Provides a helper function to check that a value is of the types passed or 
+    None.
+    """
     return isinstance(value, typerefs) or value is None
-
 
 class Result(object):
     """
-    _Result_
+    Provides a sliceable and iterable interface to result collections.
+    A Result object is instantiated with a raw data callable reference
+    such as the database API convenience method
+    :func:`~cloudant.database.CouchDatabase.all_docs` or the View
+    :func:`~cloudant.views.View.__call__` callable, both used to retrieve data.
+    A Result object can also use optional extra arguments for result
+    customization and supports efficient, paged iteration over the result
+    collection to avoid large result data from adversely affecting memory.
 
-    Sliceable and iterable interface to CouchDB View like things, such
-    as the CloudantDatabase and View objects in this package.
+    In Python, slicing returns by value, whereas iteration will yield
+    elements of the sequence.  This means that slicing will perform better
+    for smaller data collections, whereas iteration will be more
+    efficient for larger data collections.
 
-    Instantiated with the raw data callable such as the
-    CloudantDatabase.all_docs or View.__call__ reference used to
-    retrieve data, the result can also store optional extra args for
-    customisation and supports efficient, paged iteration over
-    the view to avoid large views blowing up memory.
+    For example:
 
-    In python, slicing returns by value, wheras iteration will yield
-    elements of the sequence, which means that using slices is better
-    for smaller slices of data, wheras if you have large views
-    its better to iterate over them as it should be more efficient.
+    .. code-block:: python
 
-    Examples:
+        # Access by key:
+        result['key'] # get all records matching key
 
-    Access by key:
-    result['key'] # get all records matching key
+        # Slicing by startkey/endkey:
+        result[['2013','10']:['2013','11']] # results between compound keys
+        result['2013':'2014'] # results between string keys
+        result['2013':] # all results after key
+        result[:'2014'] # all results up to key
 
-    Slicing by startkey/endkey
+        # Slicing by value:
+        result[100:200] # results between the 100th result and the 200th result
+        result[:200]  # results up to the 200th result
+        result[100:]  # results after 100th result
 
-    result[["2013","10"]:["2013","11"]] # results between compound keys
-    result["2013":"2014"] # results between string keys
-    result["2013":] # all results after key
-    result[:"2014"] # all results up to key
+        # Iteration:
 
-    Slicing by value:
+        # Iterate over the entire result collection
+        result = Result(callable)
+        for i in result:
+            print i
 
-    result[100:200] # get records 100-200
-    result[:200]  # get records up to 200th
-    result[100:]  # get all records after 100th
+        # Iterate over the result collection between startkey and endkey
+        result = Result(callable, startkey='2013', endkey='2014')
+        for i in result:
+            print i
 
-    Iteration:
-
-    # iterate over all records
-    result = Result(callable)
-    for i in result:
-        print i
-
-    # iterate over records between startkey/endkey
-    result = Result(callable, startkey="2013", endkey="2014")
-    for i in result:
-        print i
-
-    # iterate over records including docs and in 1000 record batches
-    result = Result(callable, include_docs=True, page_size=1000)
-    for i in result:
-        print i
-
+        # Iterate over the entire result collection,
+        # including documents and in batches of a 1000.
+        result = Result(callable, include_docs=True, page_size=1000)
+        for i in result:
+            print i
     """
     def __init__(self, method_ref, **options):
         self.options = options
@@ -162,19 +163,20 @@ class Result(object):
 
     def __getitem__(self, key):
         """
-        implement key access and slicing.
+        Provides Result key access and slicing support.
 
-        key can be either a single value as a string or list which will be
-        passed as the key to the query for entries matching that key or
-        a slice object.
+        See :class:`~cloudant.result.Result` for key access and slicing
+        examples.
 
-        Slices with integers will be interpreted as skip:limit-skip
-        style pairs, eg with [100:200] meaning skip 100, get next 100
-        records so that you get the range between the supplied slice values
+        :param key:  Can be either a single value as a ``str`` or ``list``
+            which will be passed as the key to the query for entries matching
+            that key or slice.  Slices with integers will be interpreted as
+            ``skip:limit-skip`` style pairs.  For example ``[100:200]`` means
+            skip 100 records then get next 100 records so that you get the
+            range between the supplied slice values.  Slices with strings/lists
+            will be interpreted as startkey/endkey style keys.
 
-        Slices with strings/lists will be interpreted as startkey/endkey
-        style keys.
-
+        :returns: Rows data in JSON format
         """
         if isinstance(key, basestring):
             data = self._ref(key=key, **self.options)
@@ -221,29 +223,33 @@ class Result(object):
                 # both None case handled above
                 return data['rows']
         msg = (
-            "Failed to interpret the argument {0} passed to "
-            "Result.__getitem__ as a key value or as a slice"
+            'Failed to interpret the argument {0} passed to '
+            'Result.__getitem__ as a key value or as a slice'
         ).format(key)
         raise CloudantArgumentError(msg)
 
     def __iter__(self):
         """
-        Iteration Support for large views
+        Provides iteration support, primarily for large data collections.
+        The iterator uses the skip/limit parameters to consume data in chunks
+        controlled by the ``page_size`` setting and retrieves a batch of data
+        from the result collection and then yields each element.  Since the
+        iterator uses the skip/limit parameters to perform the iteration,
+        ``skip`` and ``limit`` cannot be included as part of the original result
+        customization options.
 
-        Uses skip/limit to consume a view in chunks controlled
-        by the page_size setting and retrieves a batch of records
-        from the view or result and then yields each element.
+        See :func:`~cloudant.views.View.make_result` for a list of valid
+        result customization options.
 
-        Since this uses skip/limit to perform the iteration, they
-        cannot be used as optional arguments to the result, but startkey
-        and endkey etc can be used to constrain the result of the iterator
+        See :class:`~cloudant.result.Result` for Result iteration examples.
 
+        :returns: Iterable rows data sequence
         """
         if 'skip' in self.options:
-            msg = "Cannot use skip for iteration"
+            msg = 'Cannot use skip for iteration'
             raise CloudantArgumentError(msg)
         if 'limit' in self.options:
-            msg = "Cannot use limit for iteration"
+            msg = 'Cannot use limit for iteration'
             raise CloudantArgumentError(msg)
 
         skip = 0
