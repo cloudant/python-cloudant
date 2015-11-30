@@ -13,24 +13,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_feeds_
-
-Iterator support for consuming changes-like feeds
-
+Module containing the Feed class which provides iterator support for consuming
+changes-like feeds.
 """
 
 import json
 
-
 class Feed(object):
     """
-    _Feed_
+    Provides an infinite iterator for consuming database feeds such as
+    ``_changes`` and ``_db_updates``, suitable for feeding a daemon.  A Feed
+    object is instantiated with a reference to a client's Session object and a
+    feed endpoint URL.  Instead of using this class directly, it is recommended
+    to use the client API :func:`~cloudant.account.CouchDB.db_updates`
+    convenience method for interacting with a client's ``_db_updates`` feed
+    and the database API :func:`~cloudant.database.CouchDatabase.changes`
+    convenience method for interacting with a database's ``_changes`` feed.
 
-    Acts as an infinite iterator for consuming database feeds such as
-    _changes, suitable for feeding a daemon.
-
-    :params:
-
+    :param Session session: Client session used by the Feed.
+    :param str url: URL used by the Feed.
+    :param bool include_docs: If set to True, documents will be returned as
+        part of the iteration.  Documents will be returned in JSON format and
+        not wrapped as a :class:`~cloudant.document.Document`.  Defaults to
+        False.
+    :param str since: Feed streaming starts from this sequence identifier.
+    :param bool continuous: Dictates the streaming of data.
+        Defaults to False.
     """
     def __init__(self, session, url, include_docs=False, **kwargs):
         self._session = session
@@ -46,12 +54,9 @@ class Feed(object):
 
     def start(self):
         """
-        _start_
-
-        Using the provided session, start streaming
-        the feed continuously,
-        if a last seq value is present, pass that along.
-
+        Starts streaming the feed using the provided session.  If a last
+        sequence identifier value was provided during instantiation then that
+        is used by the Feed as a starting point.
         """
         params = self._params
         if self._last_seq is not None:
@@ -62,24 +67,23 @@ class Feed(object):
 
     def __iter__(self):
         """
-        make this object an iterator
+        Makes this object an iterator.
         """
         return self
 
     def __next__(self):
-        """python3 compat"""
+        """
+        Provides Python3 compatibility.
+        """
         return self.next()
 
     def next(self):
         """
-        _next_
+        Handles the iteration by pulling the next line out of the stream,
+        attempting to convert the response to JSON, and managing empty lines.
+        If the end of feed is encountered, the iterator is restarted.
 
-        Iterate: pull next line out of the stream,
-        attempt to convert the response to JSON, handling
-        case of empty lines.
-        If end of feed is seen, restart iterator
-
-        Returns JSON data representing what was seen in the feed.
+        :returns: Data representing what was seen in the feed in JSON format
 
         """
         if self._end_of_iteration:
