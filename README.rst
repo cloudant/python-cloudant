@@ -1,8 +1,17 @@
 Cloudant Python Client
 ======================
 
-.. image:: https://travis-ci.org/cloudant/python-cloudant.png
+|build-status| |docs|
+
+.. |build-status| image:: https://travis-ci.org/cloudant/python-cloudant.png
+    :alt: build status
+    :scale: 100%
     :target: https://travis-ci.org/cloudant/python-cloudant
+
+.. |docs| image:: https://readthedocs.org/projects/pip/badge/
+    :alt: docs
+    :scale: 100%
+    :target: http://python-cloudant.readthedocs.org
 
 This library is currently a preview (alpha version) of Cloudant's new official 
 Python library.  As such it currently does not have complete API coverage nor is the
@@ -46,20 +55,20 @@ In order to install the deprecated 0.5.10, execute
 ===============
 Getting started
 ===============
-.. TODO - REPLACE LINK TO MASTER VERSION BEFORE PR MERGE
-See `Getting started (readthedocs.org) <http://python-cloudant.readthedocs.org/en/53377-docs-via-sphinx/getting_started.html>`_
+
+See `Getting started (readthedocs.org) <http://python-cloudant.readthedocs.org/en/latest/getting_started.html>`_
 
 =============
 API Reference
 =============
-.. TODO - REPLACE LINK TO MASTER VERSION BEFORE PR MERGE
-See `API reference docs (readthedocs.org) <http://python-cloudant.readthedocs.org/en/53377-docs-via-sphinx/cloudant.html>`_
+
+See `API reference docs (readthedocs.org) <http://python-cloudant.readthedocs.org/en/latest/cloudant.html>`_
 
 =====================
 Related Documentation
 =====================
-.. TODO - REPLACE LINK TO MASTER VERSION BEFORE PR MERGE
-* `Cloudant Python client library docs (readthedocs.org) <http://python-cloudant.readthedocs.org/en/53377-docs-via-sphinx/>`_
+
+* `Cloudant Python client library docs (readthedocs.org) <http://python-cloudant.readthedocs.org>`_
 * `Cloudant documentation <http://docs.cloudant.com/>`_
 * `Cloudant for developers <https://cloudant.com/for-developers/>`_
 

@@ -13,11 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_credentials_
-
-Utilities to support using a ~/.cloudant INI style configuration file
-to allow users to pass credentials in
-
+Module providing utilities to support using an INI style configuration file
+to allow users to pass credentials.
 """
 import os
 import ConfigParser
@@ -29,14 +26,19 @@ def read_dot_couch(
         username='user',
         password='password'):
     """
-    _read_dot_couch_
+    Provides a way to read an INI file containing a ``couchdb`` section
+    that contains authentication credentials for connecting to a
+    CouchDB instance.
 
-    If you have a INI file containing a CouchDB section
-    with a username and password in it, you can read it
-    to get the credentials with this function.
+    :param str filename: Path and name of INI file.  Defaults to ``~/.couch``.
+    :param str section: Name of the section in the INI file to find credentials.
+        Defaults to ``couchdb``.
+    :param str username: Name of the user entry in the INI file and section.
+        Defaults to ``user``.
+    :param str password: Name of the password entry in the INI file and section.
+        Defaults to ``password``.
 
-    :returns: tuple (user, password)
-
+    :returns: A tuple containing user and password
     """
     return _read_dot_file(filename, section, username, password)
 
@@ -47,23 +49,33 @@ def read_dot_cloudant(
         username='user',
         password='password'):
     """
-    _read_dot_cloudant_
+    Provides a way to read an INI file containing a ``cloudant`` section
+    that contains authentication credentials for connecting to a
+    Cloudant instance.
 
-    If you have an INI file containing a Cloudant section
-    with a username and password in it, you can read it
-    to get the credentials with this function.
+    :param str filename: Path and name of INI file.  Defaults to
+        ``~/.cloudant``.
+    :param str section: Name of the section in the INI file to find credentials.
+        Defaults to ``cloudant``.
+    :param str username: Name of the user entry in the INI file and section.
+        Defaults to ``user``.
+    :param str password: Name of the password entry in the INI file and section.
+        Defaults to ``password``.
 
-    :returns: tuple (user, password)
-
+    :returns: A tuple containing user and password
     """
     return _read_dot_file(filename, section, username, password)
 
 def _read_dot_file(filename, section, username, password):
     """
-    __read_dot_file_
-
     Handles the parsing of the configuration file for the username
     and password.
+
+    :param str filename: Path and name of INI file.
+    :param str section: Name of the section in the INI file to find credentials.
+    :param str username: Name of the user entry in the INI file and section.
+
+    :returns: A tuple containing user and password
     """
     config_file = os.path.expanduser(filename)
     config = ConfigParser.RawConfigParser()

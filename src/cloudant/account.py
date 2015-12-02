@@ -13,10 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_account_
-
-Top level API object that maps to a users account.
-
+Top level API module that maps to a Cloudant or CouchDB
+client connection instance.
 """
 import base64
 import json
@@ -36,26 +34,25 @@ _USER_AGENT = 'python-cloudant/{0} (Python, Version {1}.{2}.{3})'.format(
 
 class CouchDB(dict):
     """
-    _CouchDB_
-
-    Object that encapsulates a CouchDB database
-    server and user account, handling top level user API calls,
-    database creation, token generation et al.
+    Encapsulates a CouchDB client, handling top level user API calls having to
+    do with session and database management.
 
     Maintains a requests.Session for working with the
-    account specified in the ctor
+    instance specified in the constructor.
 
-    :param url: Host name for couchdb server
+    Parameters can be passed in to control behavior:
 
-    :param encoder: Optional json Encoder object used to encode
-        documents for storage. defaults to json.JSONEncoder
-
+    :param str user: Username used to connect to CouchDB.
+    :param str auth_token: Authentication token used to connect to CouchDB.
+    :param str url: URL for CouchDB server.
+    :param str encoder: Optional json Encoder object used to encode
+        documents for storage.  Defaults to json.JSONEncoder.
     """
     _DATABASE_CLASS = CouchDatabase
 
-    def __init__(self, cloudant_user, auth_token, **kwargs):
+    def __init__(self, user, auth_token, **kwargs):
         super(CouchDB, self).__init__()
-        self._cloudant_user = cloudant_user
+        self._cloudant_user = user
         self._cloudant_token = auth_token
         self._cloudant_session = None
         self.cloudant_url = kwargs.get('url')
@@ -65,10 +62,8 @@ class CouchDB(dict):
 
     def connect(self):
         """
-        _connect_
-
-        Start up an auth session for the account
-
+        Starts up an authentication session for the client using cookie
+        authentication.
         """
         self.r_session = requests.Session()
         self.r_session.auth = (self._cloudant_user, self._cloudant_token)
@@ -79,10 +74,7 @@ class CouchDB(dict):
 
     def disconnect(self):
         """
-        _disconnect_
-
-        End a session, logout and clean up
-
+        Ends a client authentication session, performs a logout and a clean up.
         """
         self.session_logout()
         self.r_session = None
@@ -90,13 +82,10 @@ class CouchDB(dict):
 
     def session(self):
         """
-        _session_
-
-        Retrieve information about the current login session
+        Retrieves information about the current login session
         to verify data related to sign in.
 
-        :returns: dictionary of session info
-
+        :returns: Dictionary of session info for the current session.
         """
         sess_url = posixpath.join(self.cloudant_url, '_session')
         resp = self.r_session.get(sess_url)
@@ -106,20 +95,19 @@ class CouchDB(dict):
 
     def session_cookie(self):
         """
-        _session_cookie_
+        Retrieves the current session cookie.
 
-        :returns: the current session cookie
-
+        :returns: Session cookie for the current session
         """
         return self.r_session.cookies.get('AuthSession')
 
     def session_login(self, user, passwd):
         """
-        _session_login_
+        Performs a session login by posting the auth information
+        to the _session endpoint.
 
-        Perform a session login by posting the auth information
-        to the _session endpoint
-
+        :param str user: Username used to connect.
+        :param str passwd: Passcode used to connect.
         """
         sess_url = posixpath.join(self.cloudant_url, '_session')
         resp = self.r_session.post(
@@ -134,11 +122,8 @@ class CouchDB(dict):
 
     def session_logout(self):
         """
-        _session_logout_
-
-        Log out/clear the current session by sending a delete request to
-        the cloudant _session endpoint
-
+        Performs a session logout and clears the current session by
+        sending a delete request to the cloudant _session endpoint.
         """
         sess_url = posixpath.join(self.cloudant_url, '_session')
         resp = self.r_session.delete(
@@ -148,14 +133,14 @@ class CouchDB(dict):
 
     def basic_auth_str(self):
         """
-        Compose a basic http auth string, suitable for use with the
+        Composes a basic http auth string, suitable for use with the
         _replicator database, and other places that need it.
 
-        TODO: I'm not a huge fan of doing basic auth -- need to
-        research and see if there's a better way to do this.
-
+        :returns: Basic http authentication string
         """
 
+        # TODO: I'm not a huge fan of doing basic auth -- need to
+        # research and see if there's a better way to do this.
         hash_ = base64.urlsafe_b64encode("{username}:{password}".format(
             username=self._cloudant_user,
             password=self._cloudant_token
@@ -164,12 +149,9 @@ class CouchDB(dict):
 
     def all_dbs(self):
         """
-        _all_dbs_
+        Retrieves a list of all database names for the current client.
 
-        Return a list of all DB names for this account
-
-        :returns: List of DB name strings
-
+        :returns: List of database names for the client
         """
         url = posixpath.join(self.cloudant_url, '_all_dbs')
         resp = self.r_session.get(url)
@@ -178,17 +160,17 @@ class CouchDB(dict):
 
     def create_database(self, dbname, **kwargs):
         """
-        _create_database_
+        Creates a new database on the remote server with the name provided
+        and adds the new database object to the client's locally cached
+        dictionary before returning it to the caller.  The method will
+        optionally throw a CloudantException if the database exists remotely.
 
-        Create a new database in this account with the name provided
-        Will optionally throw or not if the db exists
+        :param str dbname: Name used to create the database.
+        :param bool throw_on_exists: Boolean flag dictating whether or
+            not to throw a CloudantException when attempting to create a
+            database that already exists.
 
-        :param dbname: Name of db to create
-        :param throw_on_exists: wether or not to throw CloudantException
-           if attempting to create a db that already exists
-
-        :returns: newly created CloudantDatabase instance for the new db
-
+        :returns: The newly created database object
         """
         new_db = self._DATABASE_CLASS(self, dbname)
         if new_db.exists():
@@ -202,13 +184,10 @@ class CouchDB(dict):
 
     def delete_database(self, dbname):
         """
-        _delete_database_
+        Removes the named database remotely and locally. The method will throw a
+        CloudantException if the database does not exist.
 
-        Deletes the named database. Will throw a CloudantException
-        if the DB doesnt exist
-
-        :param dbname: Name of the db to delete
-
+        :param str dbname: Name of the database to delete.
         """
         db = self._DATABASE_CLASS(self, dbname)
         if not db.exists():
@@ -221,14 +200,14 @@ class CouchDB(dict):
 
     def db_updates(self, since=None, continuous=True):
         """
-        _db_updates_
+        Streams data from _db_updates feed. Yields information about
+        databases that have been updated.
 
-        Implement streaming from _db_updates feed. Yields information about
-          databases that have been updated.
+        :param str since: Update streaming starts from this sequence identifier.
+        :param bool continuous: Dictates the streaming of data.
+            Defaults to True.
 
-        :param str since: Start from this sequence
-        :param boolean continuous: Stream results
-
+        :returns: Iterable stream of database updates
         """
         db_updates_feed = Feed(
             self.r_session,
@@ -243,12 +222,15 @@ class CouchDB(dict):
 
     def keys(self, remote=False):
         """
-        _keys_
+        Returns the database names for this client. Default is
+        to return only the locally cached database names, specify
+        ``remote=True`` to make a remote request to include all databases.
 
-        Return the keys/db names for this account. Default is
-        to return only the locally cached databases, specify remote=True
-        to call out to the DB and include all databases.
+        :param bool remote: Dictates whether the list of locally cached
+            database names are returned or a remote request is made to include
+            an up to date list of databases from the server.  Defaults to False.
 
+        :returns: List of database names
         """
         if not remote:
             return super(CouchDB, self).keys()
@@ -256,13 +238,22 @@ class CouchDB(dict):
 
     def __getitem__(self, key):
         """
-        _getitem_
+        Overrides dictionary __getitem__ behavior to provide a database
+        instance for the specified key.
 
-        Override getitem behaviour to grab a new database instance for the
-        specified key. If the database instance does not exist locally, it is
-        added to the cache. If it does it is simply returned.
-        If the database does not exist, it will result in a KeyError
+        If the database instance does not exist locally, then a remote request
+        is made and the database is subsequently added to the local cache and
+        returned to the caller.
 
+        If the database instance already exists locally then it is returned and
+        a remote request is not performed.
+
+        A KeyError will result if the database does not exist locally or on the
+        server.
+
+        :param str key: Database name used to retrieve the database object.
+
+        :returns: Database object
         """
         if key in self.keys():
             return super(CouchDB, self).__getitem__(key)
@@ -275,12 +266,15 @@ class CouchDB(dict):
 
     def __delitem__(self, key, remote=False):
         """
-        _delitem_
+        Overrides dictionary __delitem__ behavior to make deleting the
+        database key a proxy for deleting the database.  If remote=True then
+        it will delete the database on the remote server, otherwise only
+        the local cached object will be removed.
 
-        Make deleting the database key a proxy for deleting a database.
-        If remote=True it will delete the database, otherwise just the local
-        cached object representing it
-
+        :param str key: Database name of the database to be deleted.
+        :param bool remote: Dictates whether the locally cached
+            database is deleted or a remote request is made to delete
+            the database from the server.  Defaults to False.
         """
         super(CouchDB, self).__delitem__(key)
         if remote:
@@ -288,13 +282,18 @@ class CouchDB(dict):
 
     def get(self, key, default=None, remote=False):
         """
-        _get_
+        Overrides dictionary get behavior to retrieve database objects with
+        support for returning a default.  If remote=True then a remote
+        request is made to retrieve the database from the remote server,
+        otherwise the client's locally cached database object is returned.
 
-        Implement the get function to retrieve database objects with support
-        for returning a default.
-        If remote is True, will call out to check the DB, otherwise uses local
-        cached database objects.
+        :param str key: Database name used to retrieve the database object.
+        :param str default: Default database name.  Defaults to None.
+        :param bool remote: Dictates whether the locally cached
+            database is returned or a remote request is made to retrieve
+            the database from the server.  Defaults to False.
 
+        :returns: Database object
         """
         if not remote:
             return super(CouchDB, self).get(key, default)
@@ -307,13 +306,22 @@ class CouchDB(dict):
 
     def __setitem__(self, key, value, remote=False):
         """
-        _setitem_
+        Override dictionary __setitem__ behavior to verify that only
+        database instances are added as keys.  If remote=True then also create
+        the database remotely if the database does not exist.
 
-        Override setitem behaviour to verify that only
-        CloudantDatabase instances are added as keys.
-        If remote is True, will also create the database
-        remotely if it doesnt exist
+        Note:  The only way to override the default for the ``remote`` argument
+        setting it to True is to call __setitem__ directly.  A much simpler
+        approach is to use
+        :func:`~cloudant.account.CouchDB.create_database` instead, if your
+        intention is to create a database remotely.
 
+        :param str key: Database name to be used as the key for the database in
+            the locally cached dictionary.
+        :param value: Database object to be used in the locally cached
+            dictionary.
+        :param bool remote: Dictates whether the method will attempt to
+            create the database remotely or not.  Defaults to False.
         """
         if not isinstance(value, self._DATABASE_CLASS):
             msg = "Value must be set to a Database object"
@@ -322,43 +330,30 @@ class CouchDB(dict):
             value.create()
         super(CouchDB, self).__setitem__(key, value)
 
-
 class Cloudant(CouchDB):
     """
-    _Cloudant_
-
-    Object that encapsulates a cloudant account,
-    handling top level user API calls, database
-    creation, token generation et al.
+    Encapsulates a Cloudant client, handling top level user API calls having to
+    do with session and database management.
 
     Maintains a requests.Session for working with the
-    account specified in the ctor
+    instance specified in the constructor.
 
-    Parameters can be passed in to control behaviour:
+    Parameters can be passed in to control behavior:
 
-    :param cloudant_user: The Cloudant user name.
-
-    :param auth_token: The authentication token for the
-      cloudant_user.
-
-    :param account: The Cloudant account name.  If the
-      account parameter is present, it will be used to
-      construct the Cloudant service URL.
-
-    :param url: If the account is not present and the url
-      parameter is present then it will be used to set the
-      Cloudant service URL.  The url must be a fully qualified
-      https:// URL.
-
-    :param x_cloudant_user: Override the X-Cloudant-User setting
-      used to auth. This is needed to auth on someones behalf,
-      eg with an admin account.  This parameter must be accompanied
-      by the url parameter.  If the url parameter is omitted then
-      the x_cloudant_user parameter setting is ignored.
-
-    :param encoder: Optional json Encoder object used to encode
-        documents for storage. defaults to json.JSONEncoder
-
+    :param str cloudant_user: Username used to connect to Cloudant.
+    :param str auth_token: Authentication token used to connect to Cloudant.
+    :param str account: The Cloudant account name.  If the account parameter
+        is present, it will be used to construct the Cloudant service URL.
+    :param str url: If the account is not present and the url parameter is
+        present then it will be used to set the Cloudant service URL.  The
+        url must be a fully qualified http/https URL.
+    :param str x_cloudant_user: Override the X-Cloudant-User setting used to
+        authenticate. This is needed to authenticate on one's behalf,
+        eg with an admin account.  This parameter must be accompanied
+        by the url parameter.  If the url parameter is omitted then
+        the x_cloudant_user parameter setting is ignored.
+    :param str encoder: Optional json Encoder object used to encode
+        documents for storage. Defaults to json.JSONEncoder.
     """
     _DATABASE_CLASS = CloudantDatabase
 
@@ -381,11 +376,12 @@ class Cloudant(CouchDB):
 
     def _usage_endpoint(self, endpoint, year=None, month=None):
         """
-        _usage_endpoint_
-
         Common helper for getting usage and billing reports with
-        optional year and month URL elements
+        optional year and month URL elements.
 
+        :param str endpoint: Cloudant usage endpoint.
+        :param int year: Year to query against.  Defaults to None.
+        :param int month: Month to query against.  Defaults to None.
         """
         if year is not None:
             endpoint = posixpath.join(endpoint, str(year))
@@ -404,25 +400,28 @@ class Cloudant(CouchDB):
 
     def bill(self, year=None, month=None):
         """
-        _bill_
+        Retrieves Cloudant billing data, optionally for a given year/month.
 
-        Get your cloudant billing data, optionally for a given year/month
+        :param int year: Year to query against, for example 2014.  Defaults to
+            None.
+        :param int month: Month to query against, for example a number from
+            1 to 12.  Defaults to None.
 
-        :param year: int, year, eg 2014
-        :param month: int, 1-12
-
-        :returns: JSON billing data structure
+        :returns: Billing data in JSON format
         """
         endpoint = posixpath.join(self.cloudant_url, '_api', 'v2', 'bill')
         return self._usage_endpoint(endpoint, year, month)
 
     def volume_usage(self, year=None, month=None):
         """
-        Volume usage for this account.
+        Retrieves Cloudant volume usage data, optionally for a given year/month.
 
-        :param year: int, year, eg 2014
-        :param month: int, 1-12
+        :param int year: Year to query against, for example 2014.  Defaults to
+            None.
+        :param int month: Month to query against, for example a number from
+            1 to 12.  Defaults to None.
 
+        :returns: Volume usage data in JSON format
         """
         endpoint = posixpath.join(
             self.cloudant_url, '_api', 'v2', 'usage', 'data_volume'
@@ -431,11 +430,15 @@ class Cloudant(CouchDB):
 
     def requests_usage(self, year=None, month=None):
         """
-        Requests usage for this account.
+        Retrieves Cloudant requests usage data, optionally for a given
+        year/month.
 
-        :param year: int, year, eg 2014
-        :param month: int, 1-12
+        :param int year: Year to query against, for example 2014.  Defaults to
+            None.
+        :param int month: Month to query against, for example a number from
+            1 to 12.  Defaults to None.
 
+        :returns: Requests usage data in JSON format
         """
         endpoint = posixpath.join(
             self.cloudant_url, '_api', 'v2', 'usage', 'requests'
@@ -444,10 +447,10 @@ class Cloudant(CouchDB):
 
     def shared_databases(self):
         """
-        _shared_databases_
+        Retrieves a list containing the names of databases shared
+        with this account.
 
-        Get a list of databases shared with this account in the format
-        cloudant_user/database_name
+        :returns: List of database names
         """
         endpoint = posixpath.join(
             self.cloudant_url, '_api', 'v2', 'user', 'shared_databases'
@@ -459,11 +462,9 @@ class Cloudant(CouchDB):
 
     def generate_api_key(self):
         """
-        _generate_api_key_
+        Creates and returns a new API Key/pass pair.
 
-        Create a new API Key/pass pair for accessing this
-        account.
-
+        :returns: API key/pass pair in JSON format
         """
         endpoint = posixpath.join(
             self.cloudant_url, '_api', 'v2', 'api_keys'
@@ -474,9 +475,9 @@ class Cloudant(CouchDB):
 
     def cors_configuration(self):
         """
+        Retrieves the current CORS configuration.
 
-        GET /_api/v2/user/config/cors   Returns the current CORS configuration
-
+        :returns: CORS data in JSON format
         """
         endpoint = posixpath.join(
             self.cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
@@ -488,10 +489,9 @@ class Cloudant(CouchDB):
 
     def disable_cors(self):
         """
-        _disable_cors_
+        Switches CORS off.
 
-        Switch CORS off for this account
-
+        :returns: CORS status in JSON format
         """
         return self.update_cors_configuration(
             enable_cors=False,
@@ -502,10 +502,9 @@ class Cloudant(CouchDB):
 
     def cors_origins(self):
         """
-        _cors_origins_
+        Retrieves a list of CORS origins.
 
-        Retrieve a list of CORS origins
-
+        :returns: List of CORS origins
         """
         cors = self.cors_configuration()
 
@@ -518,18 +517,18 @@ class Cloudant(CouchDB):
             origins=None,
             overwrite_origins=False):
         """
-        _update_cors_configuration_
+        Merges existing CORS configuration with updated values.
 
-        Merge existing CORS config with updated values and write to
-          the API endpoint
+        :param bool enable_cors: Enables/disables CORS.  Defaults to True.
+        :param bool allow_credentials: Allows authentication credentials.
+            Defaults to True.
+        :param list origins: List of allowed CORS origin(s).  Special cases are
+            a list containing a single "*" which will allow any origin and
+            an empty list which will not allow any origin.  Defaults to None.
+        :param bool overwrite_origins: Dictates whether the origins list is
+            overwritten of appended to.  Defaults to False.
 
-        :param boolean enable_cors: Enable/disables cors
-        :param boolean allow_credentials: Allows authentication creds
-        :param list origins: Allowed CORS origin(s)
-            ["*"]: any origin
-            []: disabled/no origin(s)
-        :param boolean overwrite_origins: Default concatinate new 'origins'
-            list to old one, else replace 'origins' with new list
+        :returns: CORS configuration update status in JSON format
         """
         if origins is None:
             origins = []
@@ -564,13 +563,13 @@ class Cloudant(CouchDB):
 
     def _write_cors_configuration(self, config):
         """
-        _write_cors_configuration_
-
         Overwrites the entire CORS config with the values updated in
-          update_cors_configuration
+        update_cors_configuration.
 
-        :param dict config: Dictionary containing the updated CORS config
+        :param dict config: Dictionary containing the updated CORS
+            configuration.
 
+        :returns: CORS configuration update status in JSON format
         """
         endpoint = posixpath.join(
             self.cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
