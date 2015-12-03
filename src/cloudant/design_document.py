@@ -13,23 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_design_document_
-
-Class representing a design document
-
+API module/class for interacting with a design document in a database.
 """
 from .document import Document
 from .views import View
 from .errors import CloudantArgumentError
 
-
 class DesignDocument(Document):
     """
-    _DesignDocument_
+    Encapsulates a specialized version of a
+    :class:`~cloudant.document.Document`.  A DesignDocument object is
+    instantiated with a reference to a database and
+    provides an API to view management, list and show
+    functions, search indexes, etc.  When instantiating a DesignDocument or
+    when setting the document id (``_id``) field, the value must start with
+    ``_design/``.  If it does not, then ``_design/`` will be prepended to
+    the provided document id value.
 
-    Specialisation of a document to be a design doc containing
-    the various views, shows, lists etc.
+    Note:  Currently only the view management API exists.  Remaining design
+    document functionality will be added later.
 
+    :param database: A database instance used by the DesignDocument.  Can be
+        either a ``CouchDatabase`` or ``CloudantDatabase` instance.
+    :param str document_id: Optional document id.  If provided and does not
+        start with ``_design/``, it will be prepended with ``_design/``.
     """
     def __init__(self, database, document_id=None):
         if document_id and not document_id.startswith('_design/'):
@@ -39,19 +46,24 @@ class DesignDocument(Document):
 
     @property
     def views(self):
-        """accessor property for views dictionary"""
+        """
+        Provides an accessor property to the View dictionary in the locally
+        cached DesignDocument.
+
+        :returns: Dictionary containing view names and View objects as key/value
+        """
         return self.get('views')
 
     def add_view(self, view_name, map_func, reduce_func=None):
         """
-        _add_view_
+        Appends a View to the locally cached DesignDocument View dictionary,
+        given a map function and optional reduce function.
 
-        Add a new view to this design document, given a map function
-        and optional reduce function.
-
-        :param view_name: Name of the view
-        :param map_func: str or Code object containing js map function
-        :param reduce_func: str or Code object containing js reduce function
+        :param str view_name: Name used to identify the View.
+        :param str map_func: Javascript map function.  Can also be a
+            :class:`~cloudant.views.Code` object.
+        :param str reduce_func: Optional Javascript reduce function.
+            Can also be a :class:`~cloudant.views.Code` object.
         """
         if self.get_view(view_name) is not None:
             msg = "View {0} already exists in this design doc".format(view_name)
@@ -61,14 +73,14 @@ class DesignDocument(Document):
 
     def update_view(self, view_name, map_func, reduce_func=None):
         """
-        _update_view_
+        Modifies an existing View in the locally cached DesignDocument View
+        dictionary, given a map function and optional reduce function.
 
-        Modify an existing view on this design document, given a map function
-        and optional reduce function.
-
-        :param view_name: Name of the view
-        :param map_func: str or Code object containing js map function
-        :param reduce_func: str or Code object containing js reduce function
+        :param str view_name: Name used to identify the View.
+        :param str map_func: Javascript map function.  Can also be a
+            :class:`~cloudant.views.Code` object.
+        :param str reduce_func: Optional Javascript reduce function.
+            Can also be a :class:`~cloudant.views.Code` object.
         """
         view = self.get_view(view_name)
         if view is None:
@@ -81,22 +93,19 @@ class DesignDocument(Document):
 
     def delete_view(self, view_name):
         """
-        _delete_view_
+        Removes a View from the locally cached DesignDocument View dictionary.
 
-        Remove a view from this design document.
-
-        :param view_name: Name of the view
+        :param str view_name: Name used to identify the View.
         """
         if self.get_view(view_name) is not None:
             self.views.__delitem__(view_name)
 
     def fetch(self):
         """
-        _fetch_
+        Retrieves the remote Document content and populates the locally cached
+        DesignDocument View dictionary.
 
-        Grab the remote document and populate the View structure.
-        Other structures to follow...
-
+        Note:  Other structures to follow...
         """
         super(DesignDocument, self).fetch()
         for view_name, view_def in self.get('views', {}).iteritems():
@@ -109,9 +118,7 @@ class DesignDocument(Document):
 
     def __setitem__(self, key, value):
         """
-        ___setitem___
-
-        Ensure that when setting the document id for a design document it is
+        Ensures that when setting the document id for a DesignDocument it is
         always prefaced with '_design'.
         """
         if (
@@ -124,34 +131,44 @@ class DesignDocument(Document):
 
     def iterviews(self):
         """
-        _iterviews_
+        Provides a way to iterate over the locally cached DesignDocument View
+        dictionary.
 
-        Iterate over the view name, view instance
+        For example:
 
+        .. code-block:: python
+
+            for view_name, view in ddoc.iterviews():
+                # Perform view processing
+
+        :returns: Iterable containing view name and associated View object
         """
         for view_name, view in self.views.iteritems():
             yield view_name, view
 
     def list_views(self):
         """
-        _views_
+        Retrieves a list of available View objects in the locally cached
+        DesignDocument.
 
-        return a list of available views on this design doc
+        :returns: List of view names
         """
         return self.views.keys()
 
     def get_view(self, view_name):
         """
-        _get_view_
+        Retrieves a specific View from the locally cached DesignDocument by
+        name.
 
-        Get a specific view by name.
+        :param str view_name: Name used to identify the View.
 
+        :returns: View object for the specified view_name
         """
         return self.views.get(view_name)
 
     def info(self):
         """
-        retrieve the view info data, returns dictionary
+        Retrieves the design document view information data, returns dictionary
 
         GET databasename/_design/{ddoc}/_info
         """

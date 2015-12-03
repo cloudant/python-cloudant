@@ -13,10 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_replicator_
-
-Replication API
-
+API module/class for handling database replications
 """
 
 import uuid
@@ -26,12 +23,18 @@ from .document import Document
 
 class Replicator(object):
     """
-    Provides a replication API
+    Provides a database replication API.  A Replicator object is instantiated
+    with a reference to a client/session.  It retrieves the ``_replicator``
+    database for the specified client and uses that database object to manage
+    replications.
+
+    :param client: Client instance used by the database.  Can either be a
+        ``CouchDB`` or ``Cloudant`` client instance.
     """
 
-    def __init__(self, account):
+    def __init__(self, client):
         try:
-            self.database = account['_replicator']
+            self.database = client['_replicator']
         except Exception:
             raise CloudantException(
                 'Unable to acquire _replicator database.  '
@@ -41,29 +44,28 @@ class Replicator(object):
     def create_replication(self, source_db=None, target_db=None,
                            repl_id=None, **kwargs):
         """
-        _create_replication_
+        Creates a new replication task.
 
-        Create a new replication.
+        :param source_db: Database object to replicate from.  Can be either a
+            ``CouchDatabase`` or ``CloudantDatabase`` instance.
+        :param target_db: Database object to replicate to.  Can be either a
+            ``CouchDatabase`` or ``CloudantDatabase`` instance.
+        :param str repl_id: Optional replication id.  Generated internally if
+            not explicitly set.
+        :param source: Optional ``str`` or ``dict`` representing the source
+            database, along with authentication info, if any.  Composed
+            internally if not explicitly set.
+        :param target: Optional ``str`` or ``dict`` representing the
+            target database, possibly including authentication info.  Composed
+            internally if not explicitly set.
+        :param dict user_ctx: Optional user to act as.  Composed internally
+            if not explicitly set.
+        :param bool create_target: Specifies whether or not to
+            create the target, if it does not already exist.
+        :param bool continuous: If set to True then the replication will be
+            continuous.
 
-        @param Database source_db: Database object to replicate from
-        @param Database target_db: Database object to replicate to
-        @param str repl_id: replication_id (I'll create one if you
-            don't specify.)
-
-        Optional overrides (I'll compose these for you, unless you
-            explicitly specify them):
-        @param str/dict source: string or dict representing the source
-            database, along with authentication info, if any.
-        @param str/dict target: string or dict representing the
-            target database, possibly including authentication info.
-        @param dict user_ctx: User to act as.
-
-        Additional params you might specify (I won't pass these along
-            unless specified):
-        @param boolean: create_target: specifies whether or not to
-            create the target, if it doesn't already exist.
-        @param boolean continuous: set to True for a continuous replication.
-
+        :returns: Replication document as a Document instance
         """
 
         data = dict(
@@ -104,10 +106,9 @@ class Replicator(object):
 
     def list_replications(self):
         """
-        _list_replications_
+        Retrieves all replication documents from the replication database.
 
-        Returns all replication documents.
-
+        :returns: List containing replication Document objects
         """
         docs = self.database.all_docs(include_docs=True)['rows']
         documents = []
@@ -122,14 +123,14 @@ class Replicator(object):
 
     def replication_state(self, repl_id):
         """
-        _replication_state_
+        Retrieves the state for the given replication. Possible values are
+        ``triggered``, ``completed``, ``error``, and ``None`` (meaning not yet
+        triggered).
 
-        Get the state for the given replication. Possible values are
-        "triggered", "completed", "error", and None (this last one is the
-        case where the replication is not yet triggered in CouchDB).
+        :param str repl_id: Replication id used to identify the replication to
+            inspect.
 
-        @param str replication_id: id of the replication to inspect.
-
+        :returns: Replication state as a ``str``
         """
         try:
             repl_doc = self.database[repl_id]
@@ -142,19 +143,24 @@ class Replicator(object):
 
     def follow_replication(self, repl_id):
         """
-        _follow_replication_
+        Blocks and streams status of a given replication.
 
-        Block and stream status of a given replication.
+        For example:
 
-        @param str repl_id: id of the replication to follow
+        .. code-block:: python
 
+            for doc in replicator.follow_replication(repl_doc_id):
+                # Process replication information as it comes in
+
+        :param str repl_id: Replication id used to identify the replication to
+            inspect.
+
+        :returns: Iterable stream of copies of the replication Document
+            and replication state as a ``str`` for the specified replication id
         """
         def update_state():
             """
-            _update_state_
-
-            Fetch and return the replication state
-
+            Retrieves the replication state.
             """
             try:
                 repl_doc = self.database[repl_id]
@@ -185,10 +191,15 @@ class Replicator(object):
                         raise StopIteration
 
     def stop_replication(self, repl_id):
-        """ Stop a given replication.
+        """
+        Stops a replication based on the provided replication id by deleting
+        the replication document from the replication database.  The
+        replication can only be stopped if it has not yet completed.  If it has
+        already completed then the replication document is still deleted from
+        replication database.
 
-        @param str repl_id: doc id of the replication to stop.
-
+        :param str repl_id: Replication id used to identify the replication to
+            stop.
         """
 
         try:

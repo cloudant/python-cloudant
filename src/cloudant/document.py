@@ -13,37 +13,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_document_
-
-API class for interacting with a document in a database
-
+API module/class for interacting with a document in a database.
 """
 import json
 import posixpath
 import urllib
 import requests
-import copy
 
 from requests.exceptions import HTTPError
 
 from .errors import CloudantException
 
-
 class Document(dict):
     """
-    _Document_
+    Encapsulates a JSON document.  A Document object is instantiated with a
+    reference to a database and used to manipulate document content
+    in a CouchDB or Cloudant database instance.
 
-    JSON document object, used to manipulate the documents
-    in a couch or cloudant database. In addition to basic CRUD
-    style operations this provides a context to edit the document:
+    In addition to basic CRUD style operations, a Document object also provides
+    a convenient context manager.  This context manager removes having to
+    explicitly :func:`~cloudant.document.Document.fetch` the document from the
+    remote database before commencing work on it as well as explicitly having
+    to :func:`~cloudant.document.Document.save` the document once work is
+    complete.
 
-    with document:
-        document['x'] = 'y'
+    For example:
 
-    :param database: CouchDatabase or CloudantDatabase instance
-      that the document belongs to
-    :param document_id: optional document ID
+    .. code-block:: python
 
+        # Upon entry into the document context, fetches the document from the
+        # remote database, if it exists. Upon exit from the context, saves the
+        # document to the remote database with changes made within the context.
+        with Document(database, 'julia006') as document:
+            # The document is fetched from the remote database
+            # Changes are made locally
+            document['name'] = 'Julia'
+            document['age'] = 6
+            # The document is saved to the remote database
+
+    :param database: A database instance used by the DesignDocument.  Can be
+        either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
+    :param str document_id: Optional document id used to identify the document.
     """
     def __init__(self, database, document_id=None):
         super(Document, self).__init__()
@@ -59,7 +69,11 @@ class Document(dict):
 
     @property
     def document_url(self):
-        """constructs and returns the document URL"""
+        """
+        Constructs and returns the document URL.
+
+        :returns: Document URL
+        """
         if self._document_id is None:
             return None
         return posixpath.join(
@@ -70,7 +84,10 @@ class Document(dict):
 
     def exists(self):
         """
-        :returns: True if the document exists in the database, otherwise False
+        Retrieves whether the document exists in the remote database or not.
+
+        :returns: True if the document exists in the remote database,
+            otherwise False
         """
         if self._document_id is None:
             return False
@@ -79,33 +96,33 @@ class Document(dict):
 
     def json(self):
         """
-        :returns: JSON string containing the document data, encoded
-            with the encoder specified in the owning account
+        Retrieves the JSON string representation of the current locally cached
+        document object, encoded by the encoder specified in the associated
+        client object.
+
+        :returns: Encoded JSON string containing the document data
         """
         return json.dumps(dict(self), cls=self._encoder)
 
     def create(self):
         """
-        _create_
-
-        Create this document on the database server,
-        update the _id and _rev fields with those of the newly
-        created document
-
+        Creates the current document in the remote database and if successful,
+        updates the locally cached Document object with the ``_id``
+        and ``_rev`` returned as part of the successful response.
         """
         if self._document_id is not None:
             self['_id'] = self._document_id
 
         # Ensure that an existing document will not be "updated"
-        new_doc = copy.deepcopy(self)
-        if new_doc.get('_rev') is not None:
-            new_doc.__delitem__('_rev')
+        doc = dict(self)
+        if doc.get('_rev') is not None:
+            doc.__delitem__('_rev')
 
         headers = {'Content-Type': 'application/json'}
         resp = self.r_session.post(
             self._cloudant_database.database_url,
             headers=headers,
-            data=new_doc.json()
+            data=json.dumps(doc, cls=self._encoder)
         )
         resp.raise_for_status()
         data = resp.json()
@@ -116,12 +133,10 @@ class Document(dict):
 
     def fetch(self):
         """
-        _fetch_
-
-        Fetch the content of this document from the database and populate
-        self with whatever it finds.  A call to fetch will overwrite
-        any dictionary content currently in self and populate with content
-        found in the database for the document id.
+        Retrieves the content of the current document from the remote database
+        and populates the locally cached Document object with that content.
+        A call to fetch will overwrite any dictionary content currently in
+        the locally cached Document object.
         """
         if self.document_url is None:
             raise CloudantException(
@@ -135,12 +150,12 @@ class Document(dict):
 
     def save(self):
         """
-        _save_
-
-        Save changes made to this objects data structures back to the
-        database document, essentially an update CRUD call but we
-        dont want to conflict with dict.update
-
+        Saves changes made to the locally cached Document object's data
+        structures to the remote database.  If the document does not exist
+        remotely then it is created in the remote database.  If the object
+        does exist remotely then the document is updated remotely.  In either
+        case the locally cached Document object is also updated accordingly
+        based on the successful response of the operation.
         """
         headers = {}
         headers.setdefault('Content-Type', 'application/json')
@@ -162,8 +177,13 @@ class Document(dict):
     @staticmethod
     def list_field_append(doc, field, value):
         """
-        Append a value to a list field in a doc.  If a field does not exists
-        it will be created first.
+        Appends a value to a list field in a locally cached Document object.
+        If a field does not exist it will be created first.
+
+        :param Document doc: Locally cached Document object that can be a
+            Document, DesignDocument or dict.
+        :param str field: Name of the field list to append to.
+        :param value: Value to append to the field list.
         """
         if doc.get(field) is None:
             doc[field] = []
@@ -177,7 +197,12 @@ class Document(dict):
     @staticmethod
     def list_field_remove(doc, field, value):
         """
-        Remove a value from a list field in a doc.
+        Removes a value from a list field in a locally cached Document object.
+
+        :param Document doc: Locally cached Document object that can be a
+            Document, DesignDocument or dict.
+        :param str field: Name of the field list to remove from.
+        :param value: Value to remove from the field list.
         """
         if not isinstance(doc[field], list):
             raise CloudantException(
@@ -187,7 +212,15 @@ class Document(dict):
 
     @staticmethod
     def field_set(doc, field, value):
-        """Set/replace a value for a field in a doc."""
+        """
+        Sets or replaces a value for a field in a locally cached Document
+        object.  To remove the field set the ``value`` to None.
+
+        :param Document doc: Locally cached Document object that can be a
+            Document, DesignDocument or dict.
+        :param str field: Name of the field to set.
+        :param value: Value to set the field to.
+        """
         if value is None:
             doc.__delitem__(field)
         else:
@@ -197,7 +230,6 @@ class Document(dict):
         """
         Private update_field method. Wrapped by Document.update_field.
         Tracks a "tries" var to help limit recursion.
-
         """
         # Refresh our view of the document.
         self.fetch()
@@ -216,43 +248,48 @@ class Document(dict):
 
     def update_field(self, action, field, value, max_tries=10):
         """
-        _update_field_
+        Updates a field in the remote document. If a conflict exists,
+        the document is re-fetched from the remote database and the update
+        is retried.  This is performed up to ``max_tries`` number of times.
 
-        Update a field in the document. If a conflict exists, re-fetch
-        the document, and retry the update.
-
-        Use this when you want to update a single field in a document,
+        Use this method when you want to update a single field in a document,
         and don't want to risk clobbering other people's changes to
         the document in other fields, but also don't want the caller
         to implement logic to deal with conflicts.
 
-        @param action callable: A routine that takes three arguments:
-            A doc, a field, and a value. The routine should attempt to
-            update a field in the doc with the given value, using
-            whatever logic is appropriate.
-        @param field str: the name of the field to update.
-        @param value: the value to update the field with.
-        @param max_tries: in the case of a conflict, give up after this
-            number of retries.
+        For example:
 
-        For example, the following will append the string "foo" to the
-        "words" list in a Cloudant Document.
+        .. code-block:: python
 
-        doc.update_field(
-            action=doc.list_field_append,
-            field="words",
-            value="foo"
-        )
+            # Append the string 'foo' to the 'words' list of Document doc.
+            doc.update_field(
+                action=doc.list_field_append,
+                field='words',
+                value='foo'
+            )
 
+        :param callable action: A routine that takes a Document object,
+            a field name, and a value. The routine should attempt to
+            update a field in the locally cached Document object with the
+            given value, using whatever logic is appropriate.
+            Valid actions are
+            :func:`~cloudant.document.Document.list_field_append`,
+            :func:`~cloudant.document.Document.list_field_remove`,
+            :func:`~cloudant.document.Document.field_set`
+        :param str field: Name of the field to update
+        :param value: Value to update the field with
+        :param int max_tries: In the case of a conflict, the number of retries
+            to attempt
         """
         self._update_field(action, field, value, max_tries)
 
     def delete(self):
         """
-        _delete_
-
-        Delete the document on the remote db.
-
+        Removes the document from the remote database and clears the content of
+        the locally cached Document object with the exception of the ``_id``
+        field.  In order to successfully remove a document from the remote
+        database, a ``_rev`` value must exist in the locally cached Document
+        object.
         """
         if not self.get("_rev"):
             raise CloudantException(
@@ -271,7 +308,8 @@ class Document(dict):
 
     def __enter__(self):
         """
-        support context like editing of document fields
+        Supports context like editing of document fields.  Handles context
+        entry logic.  Executes a Document.fetch() upon entry.
         """
 
         # We don't want to raise an exception if the document is not found
@@ -286,11 +324,15 @@ class Document(dict):
         return self
 
     def __exit__(self, *args):
+        """
+        Support context like editing of document fields.  Handles context exit
+        logic.  Executes a Document.save() upon exit.
+        """
         self.save()
 
     def __setitem__(self, key, value):
         """
-        Set the _document_id when setting the '_id' field.
+        Sets the _document_id when setting the '_id' field.
         The _document_id is used to construct the document url.
         """
         if key == '_id':
@@ -299,7 +341,7 @@ class Document(dict):
 
     def __delitem__(self, key):
         """
-        Set the _document_id to None when deleting the '_id' field.
+        Sets the _document_id to None when deleting the '_id' field.
         """
         if key == '_id':
             self._document_id = None
@@ -312,17 +354,19 @@ class Document(dict):
             write_to=None,
             attachment_type="json"):
         """
-        _get_attachment_
+        Retrieves a document's attachment and optionally writes it to a file.
 
-        Retrieve a document's attachment
+        :param str attachment: Attachment file name used to identify the
+            attachment.
+        :param dict headers: Optional, additional headers to be sent
+            with request.
+        :param str write_to: Optional file handler to write the attachment to.
+            The write_to file must be opened for writing prior to including it
+            as an argument for this method.
+        :param str attachment_type: Data format of the attachment.  Valid
+            values are ``'json'`` and ``'binary'``.
 
-        :param str attachment: the attachment file name
-        :param dict headers: Extra headers to be sent with request
-        :param str write_to: File handler to write the attachment to,
-          if None do not write. write_to file must be opened for writing.
-        :param str attachment_type: Describes the data format of the attachment
-          'json' and 'binary' are currently the only expected values.
-
+        :returns: The attachment content
         """
         # need latest rev
         self.fetch()
@@ -346,14 +390,15 @@ class Document(dict):
 
     def delete_attachment(self, attachment, headers=None):
         """
-        _delete_attachment_
+        Removes an attachment from a remote document and refreshes the locally
+        cached document object.
 
-        Delete an attachment from a document and refresh the local document
-        object
+        :param str attachment: Attachment file name used to identify the
+            attachment.
+        :param dict headers: Optional, additional headers to be sent
+            with request.
 
-        :param str attachment: the attachment file name
-        :param dict headers: Extra headers to be sent with request
-
+        :returns: Attachment deletion status in JSON format
         """
         # need latest rev
         self.fetch()
@@ -382,15 +427,19 @@ class Document(dict):
 
     def put_attachment(self, attachment, content_type, data, headers=None):
         """
-        _put_attachment_
-        Add a new attachment, or update an existing attachment, to
-        the specified document then refresh the local document object.
+        Adds a new attachment, or updates an existing attachment, to
+        the remote document and refreshes the locally cached
+        Document object accordingly.
 
-        :param attachment: name of attachment to be added/updated
-        :param content_type: http 'Content-Type' of the attachment
-        :param data: attachment data
-        :param headers: headers to send with request
+        :param attachment: Attachment file name used to identify the
+            attachment.
+        :param content_type: The http ``Content-Type`` of the attachment used
+            as an additional header.
+        :param data: Attachment data defining the attachment content.
+        :param headers: Optional, additional headers to be sent
+            with request.
 
+        :returns: Attachment addition/update status in JSON format
         """
         # need latest rev
         self.fetch()
