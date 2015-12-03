@@ -1,6 +1,7 @@
-2.0.0b1 (Unreleased)
+2.0.0a3 (2015-12-03)
 ====================
 
+- [NEW] Added API documentation hosted on readthedocs.org.
 
 2.0.0a2 (2015-11-19)
 ====================
