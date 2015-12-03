@@ -33,10 +33,10 @@ and can be installed with ``pip``.
 
 The latest stable version on PyPI is 0.5.10, **but is now deprecated**. 
 
-The current development version, which you should now use, is 2.0.0a2. Version 2.x makes
+The current development version, which you should now use, is 2.0.0a4. Version 2.x makes
 significant breaking changes -- no attempt was made to reproduce the API of 0.5.10.
 
-Because 2.0.0 is still in development (2.0.0a2) and we wish to give developers time to 
+Because 2.0.0 is still in development (2.0.0a4) and we wish to give developers time to 
 upgrade, version 0.5.10 will remain the latest stable version on PyPI until at least early
 2016.  
 

@@ -1,3 +1,8 @@
+2.0.0a4 (2015-12-03)
+====================
+
+- [FIX] Fixed incorrect readme reference to current library being Alpha 2.
+
 2.0.0a3 (2015-12-03)
 ====================
 
