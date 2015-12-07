@@ -215,7 +215,8 @@ class Query(dict):
             results you require. Only valid for queries using indexes of type
             *text*.
         :param list fields: A list of fields to be returned by the query.
-        :param int page_size: Sets the page size for result iteration.
+        :param int page_size: Sets the page size for result iteration.  Default
+            is 100.
         :param int r: Read quorum needed for the result.  Each document is read
             from at least 'r' number of replicas before it is returned in the
             results.
@@ -256,7 +257,8 @@ class Query(dict):
             results you require. Only valid for queries using indexes of type
             *text*.
         :param list fields: A list of fields to be returned by the query.
-        :param int page_size: Sets the page size for result iteration.
+        :param int page_size: Sets the page size for result iteration.  Default
+            is 100.
         :param int r: Read quorum needed for the result.  Each document is read
             from at least 'r' number of replicas before it is returned in the
             results.

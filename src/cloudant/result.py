@@ -155,12 +155,16 @@ class Result(object):
         result = Result(callable, include_docs=True, page_size=1000)
         for i in result:
             print i
+
+        :param method_ref: A reference to the method or callable that returns
+            the JSON content result to be wrapped.
+        :param options: See :func:`~cloudant.views.View.make_result` for a
+            list of valid result customization options.
     """
     def __init__(self, method_ref, **options):
         self.options = options
         self._ref = method_ref
         self._page_size = options.pop('page_size', 100)
-        self._valid_args = ARG_TYPES.keys()
 
     def __getitem__(self, key):
         """
@@ -182,11 +186,11 @@ class Result(object):
         """
         if isinstance(key, basestring):
             data = self._ref(key=key, **self.options)
-            return data['rows']
+            return self._parse_data(data)
 
         if isinstance(key, list):
             data = self._ref(key=key, **self.options)
-            return data['rows']
+            return self._parse_data(data)
 
         if isinstance(key, slice):
             # slice is startkey and endkey if str or array
@@ -206,7 +210,7 @@ class Result(object):
                     data = self._ref(endkey=key.stop, **self.options)
                 if key.start is None and key.stop is None:
                     data = self._ref(**self.options)
-                return data['rows']
+                return self._parse_data(data)
             # slice is skip:skip+limit if ints
             int_or_none_start = type_or_none(int, key.start)
             int_or_none_stop = type_or_none(int, key.stop)
@@ -222,11 +226,11 @@ class Result(object):
                     data = self._ref(skip=key.start, **self.options)
                 if key.start is None and key.stop is not None:
                     data = self._ref(limit=key.stop, **self.options)
-                # both None case handled above
-                return data['rows']
+                # both None case handled already
+                return self._parse_data(data)
         msg = (
-            'Failed to interpret the argument {0} passed to '
-            'Result.__getitem__ as a key value or as a slice'
+            'Failed to interpret the argument {0} '
+            'as a valid key value or as a valid slice.'
         ).format(key)
         raise CloudantArgumentError(msg)
 
@@ -253,6 +257,9 @@ class Result(object):
         if 'limit' in self.options:
             msg = 'Cannot use limit for iteration'
             raise CloudantArgumentError(msg)
+        if self._page_size <= 0:
+            msg = 'Invalid page_size: {0}'.format(self._page_size)
+            raise CloudantArgumentError(msg)
 
         skip = 0
         while True:
@@ -261,7 +268,7 @@ class Result(object):
                 skip=skip,
                 **self.options
             )
-            result = response.get('rows', [])
+            result = self._parse_data(response)
             skip = skip + self._page_size
             if len(result) > 0:
                 for row in result:
@@ -270,9 +277,16 @@ class Result(object):
             else:
                 break
 
-class QueryResult(object):
+    def _parse_data(self, data):
+        """
+        Used to extract the rows content from the JSON result content
+        """
+        return data.get('rows', [])
+
+class QueryResult(Result):
     """
-    Provides a sliceable and iterable interface to query result collections.
+    Provides a sliceable and iterable interface to query result collections
+    by extending the :class:`~cloudant.result.Result` class.
     A QueryResult object is instantiated with the Query
     :func:`~cloudant.query.Query.__call__` callable, which is used to retrieve
     data.  A QueryResult object can also use optional extra arguments for result
@@ -311,11 +325,14 @@ class QueryResult(object):
         query_result = QueryResult(query, use_index='my_index', page_size=1000)
         for doc in query_result:
             print doc
+
+        :param query: A reference to the query callable that returns
+            the JSON content result to be wrapped.
+        :param options: See :func:`~cloudant.query.Query.make_result` for a
+            list of valid query result customization options.
     """
     def __init__(self, query, **options):
-        self.options = options
-        self._query = query
-        self._page_size = options.pop('page_size', 100)
+        super(QueryResult, self).__init__(query, **options)
 
     def __getitem__(self, key):
         """
@@ -333,10 +350,10 @@ class QueryResult(object):
 
         :returns: Rows data in JSON format
         """
-        if 'skip' in self.options or 'skip' in self._query.keys():
+        if 'skip' in self.options or 'skip' in self._ref.keys():
             msg = 'Cannot use skip parameter with QueryResult slicing.'
             raise CloudantArgumentError(msg)
-        if 'limit' in self.options or 'limit' in self._query.keys():
+        if 'limit' in self.options or 'limit' in self._ref.keys():
             msg = 'Cannot use limit parameter with QueryResult slicing.'
             raise CloudantArgumentError(msg)
         if (
@@ -344,63 +361,20 @@ class QueryResult(object):
             type_or_none(int, key.start) and
             type_or_none(int, key.stop)
             ):
-            if key.start is not None and key.stop is not None:
-                limit = key.stop - key.start
-                data = self._query(limit=limit, skip=key.start, **self.options)
-                return data['docs']
-            if key.start is not None and key.stop is None:
-                data = self._query(skip=key.start, **self.options)
-                return data['docs']
-            if key.start is None and key.stop is not None:
-                data = self._query(limit=key.stop, **self.options)
-                return data['docs']
             if key.start is None and key.stop is None:
                 return [doc for doc in self.__iter__()]
-        msg = (
-            'Failed to interpret the argument {0} as an element slice.  '
-            'Only slicing by integer values is supported with '
-            'QueryResult.__getitem__.'
-        ).format(key)
-        raise CloudantArgumentError(msg)
+            return super(QueryResult, self).__getitem__(key)
+        else :
+            msg = (
+                'Failed to interpret the argument {0} as an element slice.  '
+                'Only slicing by integer values is supported with '
+                'QueryResult.__getitem__.'
+            ).format(key)
+            raise CloudantArgumentError(msg)
 
-    def __iter__(self):
+    def _parse_data(self, data):
         """
-        Provides iteration support, primarily for large data collections.
-        The iterator uses the skip/limit parameters to consume data in chunks
-        controlled by the ``page_size`` setting and retrieves a batch of data
-        from the query result collection and then yields each element.  Since
-        the iterator uses the skip/limit parameters to perform the iteration,
-        ``skip`` and ``limit`` cannot be included as part of the original query
-        result customization options.
-
-        See :func:`~cloudant.query.Query.make_result` for a list of valid
-        query result customization options.
-
-        See :class:`~cloudant.result.QueryResult` for iteration examples.
-
-        :returns: Iterable data sequence
+        Overrides Result._parse_data to extract the docs content from the
+        query result JSON response content
         """
-        if 'skip' in self.options or 'skip' in self._query.keys():
-            msg = 'Cannot use skip parameter with QueryResult iteration.'
-            raise CloudantArgumentError(msg)
-        if 'limit' in self.options or 'limit' in self._query.keys():
-            msg = 'Cannot use limit parameter with QueryResult iteration.'
-            raise CloudantArgumentError(msg)
-        if self._page_size <= 0:
-            msg = 'Invalid page_size: {0}'.format(self._page_size)
-            raise CloudantArgumentError(msg)
-        skip = 0
-        while True:
-            response = self._query(
-                limit=self._page_size,
-                skip=skip,
-                **self.options
-            )
-            result = response.get('docs', [])
-            skip = skip + self._page_size
-            if len(result) > 0:
-                for row in result:
-                    yield row
-                del result
-            else:
-                break
+        return data.get('docs', [])
