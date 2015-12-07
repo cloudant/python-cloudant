@@ -22,21 +22,21 @@ from collections import Sequence
 from .errors import CloudantArgumentError
 
 ARG_TYPES = {
-    "descending": bool,
-    "endkey": (basestring, Sequence),
-    "endkey_docid": basestring,
-    "group": bool,
-    "group_level": basestring,
-    "include_docs": bool,
-    "inclusive_end": bool,
-    "key": (int, basestring, Sequence),
-    "keys": list,
-    "limit": (int, types.NoneType),
-    "reduce": bool,
-    "skip": (int, types.NoneType),
-    "stale": basestring,
-    "startkey": (basestring, Sequence),
-    "startkey_docid": basestring,
+    'descending': bool,
+    'endkey': (basestring, Sequence),
+    'endkey_docid': basestring,
+    'group': bool,
+    'group_level': basestring,
+    'include_docs': bool,
+    'inclusive_end': bool,
+    'key': (int, basestring, Sequence),
+    'keys': list,
+    'limit': (int, types.NoneType),
+    'reduce': bool,
+    'skip': (int, types.NoneType),
+    'stale': basestring,
+    'startkey': (basestring, Sequence),
+    'startkey_docid': basestring,
 }
 
 # pylint: disable=unnecessary-lambda
@@ -128,14 +128,15 @@ class Result(object):
 
         # Slicing by startkey/endkey:
         result[['2013','10']:['2013','11']] # results between compound keys
-        result['2013':'2014'] # results between string keys
-        result['2013':] # all results after key
-        result[:'2014'] # all results up to key
+        result['2013':'2014']               # results between string keys
+        result['2013':]                     # all results after key
+        result[:'2014']                     # all results up to key
 
         # Slicing by value:
-        result[100:200] # results between the 100th result and the 200th result
-        result[:200]  # results up to the 200th result
-        result[100:]  # results after 100th result
+        result[100:200] # results between the 100th and the 200th result
+        result[:200]    # results up to the 200th result
+        result[100:]    # results after 100th result
+        result[:]       # all results
 
         # Iteration:
 
@@ -158,7 +159,7 @@ class Result(object):
     def __init__(self, method_ref, **options):
         self.options = options
         self._ref = method_ref
-        self._page_size = options.pop("page_size", 100)
+        self._page_size = options.pop('page_size', 100)
         self._valid_args = ARG_TYPES.keys()
 
     def __getitem__(self, key):
@@ -172,9 +173,10 @@ class Result(object):
             which will be passed as the key to the query for entries matching
             that key or slice.  Slices with integers will be interpreted as
             ``skip:limit-skip`` style pairs.  For example ``[100:200]`` means
-            skip 100 records then get next 100 records so that you get the
-            range between the supplied slice values.  Slices with strings/lists
-            will be interpreted as startkey/endkey style keys.
+            skip the first 100 records then get up to and including the 200th
+            record so that you get the range between the supplied slice values.
+            Slices with strings/lists will be interpreted as startkey/endkey
+            style keys.
 
         :returns: Rows data in JSON format
         """
@@ -243,7 +245,7 @@ class Result(object):
 
         See :class:`~cloudant.result.Result` for Result iteration examples.
 
-        :returns: Iterable rows data sequence
+        :returns: Iterable data sequence
         """
         if 'skip' in self.options:
             msg = 'Cannot use skip for iteration'
@@ -260,6 +262,141 @@ class Result(object):
                 **self.options
             )
             result = response.get('rows', [])
+            skip = skip + self._page_size
+            if len(result) > 0:
+                for row in result:
+                    yield row
+                del result
+            else:
+                break
+
+class QueryResult(object):
+    """
+    Provides a sliceable and iterable interface to query result collections.
+    A QueryResult object is instantiated with the Query
+    :func:`~cloudant.query.Query.__call__` callable, which is used to retrieve
+    data.  A QueryResult object can also use optional extra arguments for result
+    customization and supports efficient, paged iteration over the result
+    collection to avoid large result data from adversely affecting memory.
+
+    In Python, slicing returns by value, whereas iteration will yield
+    elements of the sequence.  This means that slicing will perform better
+    for smaller data collections, whereas iteration will be more
+    efficient for larger data collections.
+
+    For example:
+
+    .. code-block:: python
+
+        # Slicing by value:
+        query_result[100:200] # results between the 100th and the 200th result
+        query_result[:200]    # results up to the 200th result
+        query_result[100:]    # results after 100th result
+        query_result[:]       # all results
+
+        # Iteration:
+
+        # Iterate over the entire result collection
+        query_result = QueryResult(query)
+        for doc in query_result:
+            print doc
+
+        # Iterate over the result collection, with an overriding query sort
+        query_result = QueryResult(query, sort=[{'name': 'desc'}])
+        for doc in query_result:
+            print doc
+
+        # Iterate over the entire result collection,
+        # explicitly setting the index and in batches of a 1000.
+        query_result = QueryResult(query, use_index='my_index', page_size=1000)
+        for doc in query_result:
+            print doc
+    """
+    def __init__(self, query, **options):
+        self.options = options
+        self._query = query
+        self._page_size = options.pop('page_size', 100)
+
+    def __getitem__(self, key):
+        """
+        Provides query result slicing by element support.  Key access and
+        slicing by non-integer key value are not available for query results.
+
+        See :class:`~cloudant.result.QueryResult` for slicing examples.
+
+        :param key:  Must be a range defined by two integers.  Slices
+            will be interpreted as ``skip:limit-skip`` style pairs.
+            For example ``[100:200]`` means skip 100 records
+            then get up to and including the 200th record so that you get the
+            range between the supplied slice values.  Whereas ``[:100]`` means
+            get up to and including the 100th record.
+
+        :returns: Rows data in JSON format
+        """
+        if 'skip' in self.options or 'skip' in self._query.keys():
+            msg = 'Cannot use skip parameter with QueryResult slicing.'
+            raise CloudantArgumentError(msg)
+        if 'limit' in self.options or 'limit' in self._query.keys():
+            msg = 'Cannot use limit parameter with QueryResult slicing.'
+            raise CloudantArgumentError(msg)
+        if (
+            isinstance(key, slice) and
+            type_or_none(int, key.start) and
+            type_or_none(int, key.stop)
+            ):
+            if key.start is not None and key.stop is not None:
+                limit = key.stop - key.start
+                data = self._query(limit=limit, skip=key.start, **self.options)
+                return data['docs']
+            if key.start is not None and key.stop is None:
+                data = self._query(skip=key.start, **self.options)
+                return data['docs']
+            if key.start is None and key.stop is not None:
+                data = self._query(limit=key.stop, **self.options)
+                return data['docs']
+            if key.start is None and key.stop is None:
+                return [doc for doc in self.__iter__()]
+        msg = (
+            'Failed to interpret the argument {0} as an element slice.  '
+            'Only slicing by integer values is supported with '
+            'QueryResult.__getitem__.'
+        ).format(key)
+        raise CloudantArgumentError(msg)
+
+    def __iter__(self):
+        """
+        Provides iteration support, primarily for large data collections.
+        The iterator uses the skip/limit parameters to consume data in chunks
+        controlled by the ``page_size`` setting and retrieves a batch of data
+        from the query result collection and then yields each element.  Since
+        the iterator uses the skip/limit parameters to perform the iteration,
+        ``skip`` and ``limit`` cannot be included as part of the original query
+        result customization options.
+
+        See :func:`~cloudant.query.Query.make_result` for a list of valid
+        query result customization options.
+
+        See :class:`~cloudant.result.QueryResult` for iteration examples.
+
+        :returns: Iterable data sequence
+        """
+        if 'skip' in self.options or 'skip' in self._query.keys():
+            msg = 'Cannot use skip parameter with QueryResult iteration.'
+            raise CloudantArgumentError(msg)
+        if 'limit' in self.options or 'limit' in self._query.keys():
+            msg = 'Cannot use limit parameter with QueryResult iteration.'
+            raise CloudantArgumentError(msg)
+        if self._page_size <= 0:
+            msg = 'Invalid page_size: {0}'.format(self._page_size)
+            raise CloudantArgumentError(msg)
+        skip = 0
+        while True:
+            response = self._query(
+                limit=self._page_size,
+                skip=skip,
+                **self.options
+            )
+            result = response.get('docs', [])
             skip = skip + self._page_size
             if len(result) > 0:
                 for row in result:
