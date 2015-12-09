@@ -51,7 +51,7 @@ class Document(dict):
             document['age'] = 6
             # The document is saved to the remote database
 
-    :param database: A database instance used by the DesignDocument.  Can be
+    :param database: A database instance used by the Document.  Can be
         either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
     :param str document_id: Optional document id used to identify the document.
     """

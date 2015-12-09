@@ -155,8 +155,6 @@ Update a document
 
 .. code-block:: python
 
-    from cloudant.document import Document
-
     # First retrieve the document
     my_document = my_database['julia30']
 
@@ -280,11 +278,10 @@ End point access
 ****************
 
 This library is currently a preview of Cloudant's new Python library. As such 
-it's currently not got complete API coverage. While we work towards this, API 
-which isn't covered can still benefit from the client's authentication and 
-session usage by directly accessing the underlying Requests_ session object. 
-This can be used to access things like Cloudant Search and Cloudant Query while 
-we finish off the API in the library.
+it's API coverage is still incomplete. While we work towards complete
+coverage, API that isn't covered can still benefit from the client's
+authentication and session usage by directly accessing the underlying Requests_
+session object.
 
 Access the session object using the ``r_session`` attribute on your client 
 object. From there, use the session to make requests as the user the client is 

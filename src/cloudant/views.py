@@ -263,6 +263,7 @@ class View(dict):
         :param bool inclusive_end: Include rows with the specified endkey.
         :param str key: Return only documents that match the specified key.
         :param list keys: Return only documents that match the specified keys.
+        :param int page_size: Sets the page size for result iteration.
         :param bool reduce: True to use the reduce function, false otherwise.
         :param str stale: Allow the results from a stale view to be used. This
             makes the request return immediately, even if the view has not been
@@ -308,6 +309,7 @@ class View(dict):
         :param bool inclusive_end: Include rows with the specified endkey.
         :param str key: Return only documents that match the specified key.
         :param list keys: Return only documents that match the specified keys.
+        :param int page_size: Sets the page size for result iteration.
         :param bool reduce: True to use the reduce function, false otherwise.
         :param str stale: Allow the results from a stale view to be used. This
             makes the request return immediately, even if the view has not been

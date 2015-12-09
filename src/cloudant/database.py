@@ -24,6 +24,7 @@ from requests.exceptions import HTTPError
 from .document import Document
 from .design_document import DesignDocument
 from .views import View
+from .query import Query
 from .errors import CloudantException
 from .result import python_to_couch, Result
 from .changes import Feed
@@ -231,6 +232,7 @@ class CouchDatabase(dict):
         :param bool inclusive_end: Include rows with the specified endkey.
         :param str key: Return only documents that match the specified key.
         :param list keys: Return only documents that match the specified keys.
+        :param int page_size: Sets the page size for result iteration.
         :param bool reduce: True to use the reduce function, false otherwise.
         :param str stale: Allow the results from a stale view to be used. This
             makes the request return immediately, even if the view has not been
@@ -396,6 +398,7 @@ class CouchDatabase(dict):
         :param bool inclusive_end: Include rows with the specified endkey.
         :param str key: Return only documents that match the specified key.
         :param list keys: Return only documents that match the specified keys.
+        :param int page_size: Sets the page size for result iteration.
         :param startkey: Return records starting with the specified key.  Can be
             either a ``str`` or ``list``
         :param str startkey_docid: Return records starting with the specified
@@ -788,3 +791,79 @@ class CloudantDatabase(CouchDatabase):
         resp.raise_for_status()
 
         return resp.json()
+
+    def get_query_result(self, selector, fields=[], raw_result=False, **kwargs):
+        """
+        Retrieves the query result from the specified database based on the 
+        query parameters provided.  By default the result is returned as a
+        :class:`~cloudant.result.QueryResult` which uses the ``skip`` and
+        ``limit`` query parameters internally to handle slicing and iteration
+        through the query result collection.  Therefore ``skip`` and ``limit``
+        cannot be used as arguments to get the query result when
+        ``raw_result=False``.  However, by setting ``raw_result=True``, the
+        result will be returned as the raw JSON response content for the query
+        requested.  Using this setting requires the developer to manage their
+        own slicing and iteration.  Therefore ``skip`` and ``limit`` are valid
+        arguments in this instance.
+
+        For example:
+
+        .. code-block:: python
+
+            # Retrieve documents where the name field is 'foo'
+            selector = {'name': {'$eq': 'foo'}}
+            docs = db.get_query_result(selector)
+            for doc in docs:
+                print doc
+
+            # Retrieve documents sorted by the age field in ascending order
+            docs = db.get_query_result(selector, sort=['name'])
+            for doc in docs:
+                print doc
+
+            # Retrieve JSON response content, limiting response to 100 documents
+            resp = db.get_query_result(selector, raw_result=True, limit=100)
+            for doc in resp['docs']:
+                print doc
+
+        For more detail on slicing and iteration, refer to the
+        :class:`~cloudant.result.QueryResult` documentation.
+
+        :param str selector: Dictionary object describing criteria used to
+            select documents.
+        :param list fields: A list of fields to be returned by the query.
+        :param bool raw_result: Dictates whether the query result is returned
+            wrapped in a QueryResult or if the response JSON is returned.
+            Defaults to False.
+        :param str bookmark: A string that enables you to specify which page of
+            results you require. Only valid for queries using indexes of type
+            *text*.
+        :param int limit: Maximum number of results returned.  Only valid if
+            used with ``raw_result=True``.
+        :param int page_size: Sets the page size for result iteration.  Default
+            is 100.  Only valid with ``raw_result=False``.
+        :param int r: Read quorum needed for the result.  Each document is read
+            from at least 'r' number of replicas before it is returned in the
+            results.
+        :param int skip: Skip the first 'n' results, where 'n' is the value
+            specified.  Only valid if used with ``raw_result=True``.
+        :param list sort: A list of fields to sort by.  Optionally the list can
+            contain elements that are single member dictionary structures that
+            specify sort direction.  For example
+            ``sort=['name', {'age': 'desc'}]`` means to sort the query results
+            by the "name" field in ascending order and the "age" field in
+            descending order.
+        :param str use_index: Identifies a specific index for the query to run
+            against, rather than using the Cloudant Query algorithm which finds
+            what it believes to be the best index.
+
+        :returns: The result content either wrapped in a QueryResult or
+            as the raw response JSON content
+        """
+        query = Query(self, selector=selector, fields=fields)
+        if raw_result:
+            return query(**kwargs)
+        if kwargs:
+            return query.make_result(**kwargs)
+        else:
+            return query.result
