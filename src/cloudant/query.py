@@ -178,13 +178,13 @@ class Query(dict):
                 raise CloudantArgumentError(msg)
         if data.get('selector', None) is None or data.get('selector') == {}:
             msg = (
-                'No selector in the query.  '
+                'No selector in the query or the selector was empty.  '
                 'Add a selector to define the query and retry.'
             )
             raise CloudantArgumentError(msg)
         if data.get('fields', None) is None or data.get('fields') == []:
             msg = (
-                'No fields list in the query.  '
+                'No fields list in the query or the fields list was empty.  '
                 'Add a list of fields for the query and retry.'
             )
             raise CloudantArgumentError(msg)

@@ -29,7 +29,7 @@ import os
 import uuid
 
 from cloudant.database import CouchDatabase, CloudantDatabase
-from cloudant.result import Result
+from cloudant.result import Result, QueryResult
 from cloudant.errors import CloudantException
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
@@ -600,6 +600,65 @@ class CloudantDatabaseTests(UnitTestDbBase):
         shards = self.db.shards()
         self.assertTrue(all(x in shards.keys() for x in ['shards']))
         self.assertIsInstance(shards['shards'], dict)
+
+    def test_get_raw_query_result(self):
+        """
+        Test that retrieving the raw JSON response for a query works as expected
+        """
+        self.populate_db_with_documents(100)
+        result = self.db.get_query_result(
+            {'$and': [
+                {'_id': {'$gte': 'julia001'}},
+                {'_id': {'$lt': 'julia005'}}
+            ]},
+            ['_id', '_rev'],
+            True
+        )
+        self.assertNotIsInstance(result, QueryResult)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(
+            [doc['_id'] for doc in result['docs']],
+            ['julia001', 'julia002', 'julia003', 'julia004']
+        )
+
+    def test_get_query_result_with_kwargs(self):
+        """
+        Test that retrieving the QueryResult for a query works as expected when
+        additional options are added via kwargs
+        """
+        self.populate_db_with_documents(100)
+        result = self.db.get_query_result(
+            {'$and': [
+                {'_id': {'$gte': 'julia001'}},
+                {'_id': {'$lt': 'julia005'}}
+            ]},
+            ['_id', '_rev'],
+            sort=[{'_id': 'desc'}]
+        )
+        self.assertIsInstance(result, QueryResult)
+        self.assertEqual(
+            [doc['_id'] for doc in result],
+            ['julia004', 'julia003', 'julia002', 'julia001']
+        )
+
+    def test_get_query_result_without_kwargs(self):
+        """
+        Test that retrieving the QueryResult for a query works as expected when
+        executing a query
+        """
+        self.populate_db_with_documents(100)
+        result = self.db.get_query_result(
+            {'$and': [
+                {'_id': {'$gte': 'julia001'}},
+                {'_id': {'$lt': 'julia005'}}
+            ]},
+            ['_id', '_rev']
+        )
+        self.assertIsInstance(result, QueryResult)
+        self.assertEqual(
+            [doc['_id'] for doc in result],
+            ['julia001', 'julia002', 'julia003', 'julia004']
+        )
 
 if __name__ == '__main__':
     unittest.main()
