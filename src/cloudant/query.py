@@ -22,7 +22,7 @@ import types
 import contextlib
 
 from .result import QueryResult
-from .errors import CloudantException, CloudantArgumentError
+from .errors import CloudantArgumentError
 
 ARG_TYPES = {
     'selector': dict,
@@ -76,8 +76,8 @@ class Query(dict):
             for doc in rslt:
                 print doc
 
-    :param database: A database instance used by the Query.  Can be
-        either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
+    :param CloudantDatabase database: A Cloudant database instance used by the
+        Query.
     :param str bookmark: A string that enables you to specify which page of
         results you require. Only valid for queries using indexes of type
         *text*.
