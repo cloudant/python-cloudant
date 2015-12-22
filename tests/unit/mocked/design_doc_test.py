@@ -75,7 +75,7 @@ class DesignDocTests(unittest.TestCase):
         ddoc = DesignDocument(mock_database, '_design/unittest')
         ddoc.add_view('view1', "MAP", "REDUCE")
         
-        ddoc.update_view('view1', "UPDATED_MAP")
+        ddoc.update_view('view1', "UPDATED_MAP", "REDUCE")
         self.assertTrue('view1' in ddoc['views'])
         self.assertEqual(ddoc['views']['view1'].map, 'UPDATED_MAP')
         self.assertEqual(ddoc['views']['view1'].reduce, 'REDUCE')

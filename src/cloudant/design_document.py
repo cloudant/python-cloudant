@@ -16,8 +16,10 @@
 API module/class for interacting with a design document in a database.
 """
 from .document import Document
-from .views import View
-from .errors import CloudantArgumentError
+from .views import View, QueryIndexView
+from .errors import CloudantArgumentError, CloudantException
+
+QUERY_LANGUAGE = 'query'
 
 class DesignDocument(Document):
     """
@@ -34,7 +36,7 @@ class DesignDocument(Document):
     document functionality will be added later.
 
     :param database: A database instance used by the DesignDocument.  Can be
-        either a ``CouchDatabase`` or ``CloudantDatabase` instance.
+        either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
     :param str document_id: Optional document id.  If provided and does not
         start with ``_design/``, it will be prepended with ``_design/``.
     """
@@ -54,10 +56,13 @@ class DesignDocument(Document):
         """
         return self.get('views')
 
-    def add_view(self, view_name, map_func, reduce_func=None):
+    def add_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
-        Appends a View to the locally cached DesignDocument View dictionary,
-        given a map function and optional reduce function.
+        Appends a MapReduce view to the locally cached DesignDocument View
+        dictionary.  To create a query index use
+        :func:`~cloudant.database.CloudantDatabase.create_index` instead.  A
+        CloudantException is raised if an attempt to add a QueryIndexView
+        (query index) using this method is made.
 
         :param str view_name: Name used to identify the View.
         :param str map_func: Javascript map function.  Can also be a
@@ -68,13 +73,22 @@ class DesignDocument(Document):
         if self.get_view(view_name) is not None:
             msg = "View {0} already exists in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
-        view = View(self, view_name, map_func, reduce_func)
+        if self.get('language', None) == QUERY_LANGUAGE:
+            msg = ('Cannot add a MapReduce view to a '
+                   'design document for query indexes.')
+            raise CloudantException(msg)
+
+        view = View(self, view_name, map_func, reduce_func, **kwargs)
         self.views.__setitem__(view_name, view)
 
-    def update_view(self, view_name, map_func, reduce_func=None):
+    def update_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
-        Modifies an existing View in the locally cached DesignDocument View
-        dictionary, given a map function and optional reduce function.
+        Modifies/overwrites an existing MapReduce view definition in the
+        locally cached DesignDocument View dictionary.  To update a query index
+        use :func:`~cloudant.database.CloudantDatabase.delete_index` followed by
+        :func:`~cloudant.database.CloudantDatabase.create_index` instead.  A
+        CloudantException is raised if an attempt to update a QueryIndexView
+        (query index) using this method is made.
 
         :param str view_name: Name used to identify the View.
         :param str map_func: Javascript map function.  Can also be a
@@ -86,35 +100,83 @@ class DesignDocument(Document):
         if view is None:
             msg = "View {0} does not exist in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
-        view.map = map_func
-        if reduce_func is not None:
-            view.reduce = reduce_func
+        if isinstance(view, QueryIndexView):
+            msg = 'Cannot update a query index view using this method.'
+            raise CloudantException(msg)
+
+        view = View(self, view_name, map_func, reduce_func, **kwargs)
         self.views.__setitem__(view_name, view)
 
     def delete_view(self, view_name):
         """
-        Removes a View from the locally cached DesignDocument View dictionary.
+        Removes an existing MapReduce view definition from the locally cached
+        DesignDocument View dictionary.  To delete a query index use
+        :func:`~cloudant.database.CloudantDatabase.delete_index` instead.  A
+        CloudantException is raised if an attempt to delete a QueryIndexView
+        (query index) using this method is made.
 
         :param str view_name: Name used to identify the View.
         """
-        if self.get_view(view_name) is not None:
-            self.views.__delitem__(view_name)
+        view = self.get_view(view_name)
+        if view is None:
+            return
+        if isinstance(view, QueryIndexView):
+            msg = 'Cannot delete a query index view using this method.'
+            raise CloudantException(msg)
+
+        self.views.__delitem__(view_name)
 
     def fetch(self):
         """
-        Retrieves the remote Document content and populates the locally cached
-        DesignDocument View dictionary.
-
-        Note:  Other structures to follow...
+        Retrieves the remote design document content and populates the locally
+        cached DesignDocument dictionary.  View content is stored either as
+        View or QueryIndexView objects which are extensions of the ``dict``
+        type.  All other design document data are stored directly as
+        ``dict`` types.
         """
         super(DesignDocument, self).fetch()
         for view_name, view_def in self.get('views', {}).iteritems():
-            self['views'][view_name] = View(
-                self,
-                view_name,
-                view_def.get('map'),
-                view_def.get('reduce')
-            )
+            if self.get('language', None) != QUERY_LANGUAGE:
+                self['views'][view_name] = View(
+                    self,
+                    view_name,
+                    view_def.pop('map', None),
+                    view_def.pop('reduce', None),
+                    **view_def
+                )
+            else:
+                self['views'][view_name] = QueryIndexView(
+                    self,
+                    view_name,
+                    view_def.pop('map', None),
+                    view_def.pop('reduce', None),
+                    **view_def
+                )
+
+    def save(self):
+        """
+        Saves changes made to the locally cached DesignDocument object's data
+        structures to the remote database.  If the design document does not
+        exist remotely then it is created in the remote database.  If the object
+        does exist remotely then the design document is updated remotely.  In
+        either case the locally cached DesignDocument object is also updated
+        accordingly based on the successful response of the operation.
+        """
+        if self.views:
+            if self.get('language', None) != QUERY_LANGUAGE:
+                for view_name, view in self.iterviews():
+                    if isinstance(view, QueryIndexView):
+                        msg = 'View {0} must be of type View.'.format(view_name)
+                        raise CloudantException(msg)
+            else:
+                for view_name, view in self.iterviews():
+                    if not isinstance(view, QueryIndexView):
+                        msg = (
+                            'View {0} must be of type QueryIndexView.'
+                        ).format(view_name)
+                        raise CloudantException(msg)
+                
+        super(DesignDocument, self).save()
 
     def __setitem__(self, key, value):
         """
@@ -125,7 +187,7 @@ class DesignDocument(Document):
                 key == '_id' and
                 value is not None and
                 not value.startswith('_design/')
-            ):
+        ):
             value = '_design/{0}'.format(value)
         super(DesignDocument, self).__setitem__(key, value)
 
