@@ -26,7 +26,7 @@ ARG_TYPES = {
     'endkey': (basestring, Sequence),
     'endkey_docid': basestring,
     'group': bool,
-    'group_level': basestring,
+    'group_level': (int, types.NoneType),
     'include_docs': bool,
     'inclusive_end': bool,
     'key': (int, basestring, Sequence),
@@ -71,7 +71,16 @@ def python_to_couch(options):
         if key not in ARG_TYPES:
             msg = 'Invalid argument {0}'.format(key)
             raise CloudantArgumentError(msg)
-        if not isinstance(val, ARG_TYPES[key]):
+        # pylint: disable=unidiomatic-typecheck
+        # Validate argument values and ensure that a boolean is not passed in
+        # if an integer is expected
+        if (
+                not isinstance(val, ARG_TYPES[key]) or
+                (
+                    cmp(ARG_TYPES[key], (int, types.NoneType)) == 0 and
+                    type(val) is bool
+                )
+        ):
             msg = 'Argument {0} not instance of expected type: {1}'.format(
                 key,
                 ARG_TYPES[key]
