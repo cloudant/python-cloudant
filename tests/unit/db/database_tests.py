@@ -30,9 +30,10 @@ import uuid
 
 from cloudant.database import CouchDatabase, CloudantDatabase
 from cloudant.result import Result, QueryResult
-from cloudant.errors import CloudantException
+from cloudant.errors import CloudantException, CloudantArgumentError
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
+from cloudant.indexes import Index, SearchIndex, SpecialIndex
 
 from unit_t_db_base import UnitTestDbBase
 
@@ -122,20 +123,17 @@ class DatabaseTests(UnitTestDbBase):
 
     def test_retrieve_db_metadata(self):
         """
-        Test retrieving the database metadata information
+        Test retrieving the database metadata information.  The metadata values
+        may differ slightly each time it is retrieved such as is the case with
+        the update sequence, however, the metadata keys should always remain the
+        same.  Therefore comparing keys is a valid test of this functionality.
         """
         resp = self.db.r_session.get(
             posixpath.join(self.client.cloudant_url, self.test_dbname)
             )
         expected = resp.json()
         actual = self.db.metadata()
-        # The update_seq will likely be different each time you get the
-        # metadata from Cloudant.  Just check that it exists and then 
-        # compare the remainder of the actual and expected metadata.
-        self.assertIsNotNone(actual.get('update_seq'))
-        del expected['update_seq']
-        del actual['update_seq']
-        self.assertEqual(actual, expected)
+        self.assertEqual(actual.keys(), expected.keys())
 
     def test_retrieve_document_count(self):
         """
@@ -659,6 +657,222 @@ class CloudantDatabaseTests(UnitTestDbBase):
             [doc['_id'] for doc in result],
             ['julia001', 'julia002', 'julia003', 'julia004']
         )
+
+    def test_create_json_index(self):
+        """
+        Ensure that a JSON index is created as expected.
+        """
+        index = self.db.create_index(fields=['name', 'age'])
+        self.assertIsInstance(index, Index)
+        ddoc = self.db[index.design_document_id]
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+        self.assertEqual(ddoc,
+                {'_id': index.design_document_id,
+                 '_rev': ddoc['_rev'],
+                 'language': 'query',
+                 'views': {index.name: {'map': {'fields': {'name': 'asc', 
+                                                           'age': 'asc'}},
+                                        'reduce': '_count',
+                                        'options': {'def': {'fields': ['name',
+                                                                       'age']},
+                                                    'w': 2}}}}
+            )
+
+    def test_create_text_index(self):
+        """
+        Ensure that a text index is created as expected.
+        """
+        index = self.db.create_index(
+            index_type='text',
+            fields=[{'name': 'name', 'type':'string'},
+                    {'name': 'age', 'type':'number'}]
+        )
+        self.assertIsInstance(index, SearchIndex)
+        ddoc = self.db[index.design_document_id]
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+        self.assertEqual(ddoc,
+                {'_id': index.design_document_id,
+                 '_rev': ddoc['_rev'],
+                 'language': 'query',
+                 'indexes': {index.name: {'index': {'index_array_lengths': True,
+                                'fields': [{'name': 'name', 'type': 'string'},
+                                           {'name': 'age', 'type': 'number'}],
+                                'default_field': {},
+                                'default_analyzer': 'keyword',
+                                'selector': {}},
+                      'analyzer': {'name': 'perfield',
+                                   'default': 'keyword',
+                                   'fields': {'$default': 'standard'}}}}}
+            )
+
+    def test_create_all_fields_text_index(self):
+        """
+        Ensure that a text index is created for all fields as expected.
+        """
+        index = self.db.create_index(index_type='text')
+        self.assertIsInstance(index, SearchIndex)
+        ddoc = self.db[index.design_document_id]
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+        self.assertEqual(ddoc,
+                {'_id': index.design_document_id,
+                 '_rev': ddoc['_rev'],
+                 'language': 'query',
+                 'indexes': {index.name: {'index': {'index_array_lengths': True,
+                                'fields': 'all_fields',
+                                'default_field': {},
+                                'default_analyzer': 'keyword',
+                                'selector': {}},
+                      'analyzer': {'name': 'perfield',
+                                   'default': 'keyword',
+                                   'fields': {'$default': 'standard'}}}}}
+            )
+
+    def test_create_multiple_indexes_one_ddoc(self):
+        """
+        Tests that multiple indexes of different types can be stored in one
+        design document.
+        """
+        json_index = self.db.create_index(
+            'ddoc001',
+            'json-index-001',
+            fields=['name', 'age']
+        )
+        self.assertIsInstance(json_index, Index)
+        search_index = self.db.create_index(
+            'ddoc001',
+            'text-index-001',
+            'text',
+            fields=[{'name': 'name', 'type':'string'},
+                    {'name': 'age', 'type':'number'}]
+        )
+        self.assertIsInstance(search_index, SearchIndex)
+        ddoc = self.db['_design/ddoc001']
+        self.assertTrue(ddoc['_rev'].startswith('2-'))
+        self.assertEqual(ddoc,
+                {'_id': '_design/ddoc001',
+                 '_rev': ddoc['_rev'],
+                 'language': 'query',
+                 'views': {'json-index-001': {
+                                'map': {'fields': {'name': 'asc', 
+                                                   'age': 'asc'}},
+                                        'reduce': '_count',
+                                        'options': {'def': {'fields': ['name',
+                                                                       'age']},
+                                                    'w': 2}}},
+                 'indexes': {'text-index-001': {
+                                'index': {'index_array_lengths': True,
+                                'fields': [{'name': 'name', 'type': 'string'},
+                                           {'name': 'age', 'type': 'number'}],
+                                'default_field': {},
+                                'default_analyzer': 'keyword',
+                                'selector': {}},
+                      'analyzer': {'name': 'perfield',
+                                   'default': 'keyword',
+                                   'fields': {'$default': 'standard'}}}}}
+            )
+    
+    def test_create_index_failure(self):
+        """
+        Tests that a type of something other than 'json' or 'text' will cause
+        failure.
+        """
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.create_index(
+                None,
+                '_all_docs',
+                'special',
+                fields=[{'_id': 'asc'}]
+            )
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Invalid index type: special.  '
+            'Index type must be either \"json\" or \"text\"'
+        )
+
+    def test_delete_json_index(self):
+        """
+        Ensure that a JSON index is deleted as expected.
+        """
+        index = self.db.create_index(
+            'ddoc001',
+            'index001',
+            fields=['name', 'age'])
+        self.assertIsInstance(index, Index)
+        ddoc = self.db['_design/ddoc001']
+        self.assertTrue(ddoc.exists())
+        self.db.delete_index('ddoc001', 'json', 'index001')
+        self.assertFalse(ddoc.exists())
+
+    def test_delete_text_index(self):
+        """
+        Ensure that a text index is deleted as expected.
+        """
+        index = self.db.create_index('ddoc001', 'index001', 'text')
+        self.assertIsInstance(index, SearchIndex)
+        ddoc = self.db['_design/ddoc001']
+        self.assertTrue(ddoc.exists())
+        self.db.delete_index('ddoc001', 'text', 'index001')
+        self.assertFalse(ddoc.exists())
+
+    def test_delete_index_failure(self):
+        """
+        Tests that a type of something other than 'json' or 'text' will cause
+        failure.
+        """
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.delete_index(None, 'special', '_all_docs')
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Invalid index type: special.  '
+            'Index type must be either \"json\" or \"text\"'
+        )
+
+    def test_get_all_indexes_raw(self):
+        """
+        Tests getting all indexes from the _index endpoint in JSON format.
+        """
+        self.db.create_index('ddoc001', 'json-idx-001', fields=['name', 'age'])
+        self.db.create_index('ddoc001', 'text-idx-001', 'text')
+        self.assertEqual(
+            self.db.get_all_indexes(raw_result=True),
+            {'indexes': [
+                {'ddoc': None,
+                 'name': '_all_docs',
+                 'type': 'special',
+                 'def': {'fields': [{'_id': 'asc'}]}},
+                {'ddoc': '_design/ddoc001',
+                 'name': 'json-idx-001',
+                 'type': 'json',
+                 'def': {'fields': [{'name': 'asc'}, {'age': 'asc'}]}},
+                {'ddoc': '_design/ddoc001',
+                 'name': 'text-idx-001',
+                 'type': 'text',
+                 'def': {'index_array_lengths': True,
+                         'fields': [],
+                         'default_field': {},
+                         'default_analyzer': 'keyword',
+                         'selector': {}}}
+            ]}
+        )
+
+    def test_get_all_indexes(self):
+        """
+        Tests getting all indexes from the _index endpoint wrapped as Index.
+        """
+        self.db.create_index('ddoc001', 'json-idx-001', fields=['name', 'age'])
+        self.db.create_index('ddoc001', 'text-idx-001', 'text')
+        indexes = self.db.get_all_indexes()
+        self.assertIsInstance(indexes[0], SpecialIndex)
+        self.assertIsNone(indexes[0].design_document_id)
+        self.assertEqual(indexes[0].name, '_all_docs')
+        self.assertIsInstance(indexes[1], Index)
+        self.assertEqual(indexes[1].design_document_id, '_design/ddoc001')
+        self.assertEqual(indexes[1].name, 'json-idx-001')
+        self.assertIsInstance(indexes[2], SearchIndex)
+        self.assertEqual(indexes[2].design_document_id, '_design/ddoc001')
+        self.assertEqual(indexes[2].name, 'text-idx-001')
 
 if __name__ == '__main__':
     unittest.main()
