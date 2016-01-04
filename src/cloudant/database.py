@@ -24,8 +24,10 @@ from requests.exceptions import HTTPError
 from .document import Document
 from .design_document import DesignDocument
 from .views import View
+from .indexes import Index, SearchIndex, SpecialIndex
+from .index_constants import *
 from .query import Query
-from .errors import CloudantException
+from .errors import CloudantException, CloudantArgumentError
 from .result import python_to_couch, Result
 from .changes import Feed
 
@@ -336,7 +338,7 @@ class CouchDatabase(dict):
 
     def delete(self):
         """
-        Delete the current database from the remote instance.
+        Deletes the current database from the remote instance.
         """
         resp = self.r_session.delete(self.database_url)
         resp.raise_for_status()
@@ -792,9 +794,135 @@ class CloudantDatabase(CouchDatabase):
 
         return resp.json()
 
+    def get_all_indexes(self, raw_result=False):
+        """
+        Retrieves indexes from the remote database.
+
+        :param bool raw_result: If set to True then the raw JSON content for
+            the request is returned.  Default is to return a list containing
+            :class:`~cloudant.indexes.Index`,
+            :class:`~cloudant.indexes.SearchIndex`, and
+            :class:`~cloudant.indexes.SpecialIndex` wrapped objects.
+
+        :returns: The indexes in the database
+        """
+
+        url = posixpath.join(self.database_url, '_index')
+        resp = self.r_session.get(url)
+        resp.raise_for_status()
+
+        if raw_result:
+            return resp.json()
+
+        indexes = []
+        for data in resp.json().get('indexes', []):
+            if data.get('type') == JSON_INDEX_TYPE:
+                indexes.append(Index(
+                    self,
+                    data.get('ddoc'),
+                    data.get('name'),
+                    **data.get('def', {})
+                ))
+            elif data.get('type') == TEXT_INDEX_TYPE:
+                indexes.append(SearchIndex(
+                    self,
+                    data.get('ddoc'),
+                    data.get('name'),
+                    **data.get('def', {})
+                ))
+            elif data.get('type') == SPECIAL_INDEX_TYPE:
+                indexes.append(SpecialIndex(
+                    self,
+                    data.get('ddoc'),
+                    data.get('name'),
+                    **data.get('def', {})
+                ))
+            else:
+                raise CloudantException('Unexpected index content: {0} found.')
+        return indexes
+
+    def create_index(
+            self,
+            design_document_id=None,
+            index_name=None,
+            index_type='json',
+            **kwargs
+    ):
+        """
+        Creates either a JSON or a text index in the remote database.
+
+        :param str index_type: The type of the index to create.  Can
+            be either 'text' or 'json'.  Defaults to 'json'.
+        :param str design_document_id: Optional identifier of the design
+            document in which the index will be created. If omitted the default
+            is that each index will be created in its own design document.
+            Indexes can be grouped into design documents for efficiency.
+            However, a change to one index in a design document will invalidate
+            all other indexes in the same document.
+        :param str index_name: Optional name of the index. If omitted, a name
+            will be generated automatically.
+        :param list fields: A list of fields that should be indexed.  For JSON
+            indexes, the fields parameter is mandatory and should follow the
+            'sort syntax'.  For example ``fields=['name', {'age': 'desc'}]``
+            will create an index on the 'name' field in ascending order and the
+            'age' field in descending order.  For text indexes, the fields
+            parameter is optional.  If it is included then each field element
+            in the fields list must be a single element dictionary where the
+            key is the field name and the value is the field type.  For example
+            ``fields=[{'name': 'string'}, {'age': 'number'}]``.  Valid field
+            types are ``'string'``, ``'number'``, and ``'boolean'``.
+        :param dict default_field: Optional parameter that specifies how the
+            ``$text`` operator can be used with the index.  Only valid when
+            creating a text index.
+        :param dict selector: Optional parameter that can be used to limit the
+            index to a specific set of documents that match a query. It uses
+            the same syntax used for selectors in queries.  Only valid when
+            creating a text index.
+
+        :returns: An Index object representing the index created in the
+            remote database
+        """
+        index = None
+        if index_type == JSON_INDEX_TYPE:
+            index = Index(self, design_document_id, index_name, **kwargs)
+        elif index_type == TEXT_INDEX_TYPE:
+            index = SearchIndex(self, design_document_id, index_name, **kwargs)
+        else:
+            msg = (
+                'Invalid index type: {0}.  '
+                'Index type must be either \"json\" or \"text\"'
+            ).format(index_type)
+            raise CloudantArgumentError(msg)
+        index.create()
+        return index
+
+    def delete_index(self, design_document_id, index_type, index_name):
+        """
+        Deletes the index identified by the design document id, index type and
+        index name from the remote database.
+
+        :param str design_document_id: The design document id that the index
+            exists in.
+        :param str index_type: The type of the index to be deleted.  Must
+            be either 'text' or 'json'.
+        :param str index_name: The index name of the index to be deleted.
+        """
+        index = None
+        if index_type == JSON_INDEX_TYPE:
+            index = Index(self, design_document_id, index_name)
+        elif index_type == TEXT_INDEX_TYPE:
+            index = SearchIndex(self, design_document_id, index_name)
+        else:
+            msg = (
+                'Invalid index type: {0}.  '
+                'Index type must be either \"json\" or \"text\"'
+            ).format(index_type)
+            raise CloudantArgumentError(msg)
+        index.delete()
+
     def get_query_result(self, selector, fields=[], raw_result=False, **kwargs):
         """
-        Retrieves the query result from the specified database based on the 
+        Retrieves the query result from the specified database based on the
         query parameters provided.  By default the result is returned as a
         :class:`~cloudant.result.QueryResult` which uses the ``skip`` and
         ``limit`` query parameters internally to handle slicing and iteration

@@ -98,7 +98,7 @@ def python_to_couch(options):
 
 def type_or_none(typerefs, value):
     """
-    Provides a helper function to check that a value is of the types passed or 
+    Provides a helper function to check that a value is of the types passed or
     None.
     """
     return isinstance(value, typerefs) or value is None
@@ -357,14 +357,14 @@ class QueryResult(Result):
             msg = 'Cannot use limit parameter with QueryResult slicing.'
             raise CloudantArgumentError(msg)
         if (
-            isinstance(key, slice) and
-            type_or_none(int, key.start) and
-            type_or_none(int, key.stop)
-            ):
+                isinstance(key, slice) and
+                type_or_none(int, key.start) and
+                type_or_none(int, key.stop)
+        ):
             if key.start is None and key.stop is None:
                 return [doc for doc in self.__iter__()]
             return super(QueryResult, self).__getitem__(key)
-        else :
+        else:
             msg = (
                 'Failed to interpret the argument {0} as an element slice.  '
                 'Only slicing by integer values is supported with '

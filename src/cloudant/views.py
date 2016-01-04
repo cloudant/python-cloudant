@@ -19,6 +19,7 @@ import contextlib
 import posixpath
 
 from .result import Result, python_to_couch
+from .errors import CloudantArgumentError, CloudantException
 
 class Code(str):
     """
@@ -101,7 +102,14 @@ class View(dict):
     :param str reduce_func: Optional Javascript reduce function.  Can also be a
         :class:`~cloudant.views.Code` object.
     """
-    def __init__(self, ddoc, view_name, map_func=None, reduce_func=None):
+    def __init__(
+            self,
+            ddoc,
+            view_name,
+            map_func=None,
+            reduce_func=None,
+            **kwargs
+    ):
         super(View, self).__init__()
         self.design_doc = ddoc
         self._r_session = self.design_doc.r_session
@@ -110,6 +118,7 @@ class View(dict):
             self['map'] = _codify(map_func)
         if reduce_func is not None:
             self['reduce'] = _codify(reduce_func)
+        self.update(kwargs)
         self.result = Result(self)
 
     @property
@@ -158,7 +167,7 @@ class View(dict):
         :param str js_func: Javascript function.  Can also be a
             :class:`~cloudant.views.Code` object.
 
-        :returns: Codified map function
+        :returns: Codified reduce function
         """
         return self.get('reduce')
 
@@ -325,3 +334,96 @@ class View(dict):
         rslt = self.make_result(**options)
         yield rslt
         del rslt
+
+class QueryIndexView(View):
+    """
+    A view that defines a JSON index in a design document.
+
+    If you wish to manage a view that represents a query index it is strongly
+    recommended that :func:`~cloudant.database.CloudantDatabase.create_index`
+    and :func:`~cloudant.database.CloudantDatabase.delete_index` are used.
+    """
+    def __init__(self, ddoc, view_name, map_fields, reduce_func, **kwargs):
+        if not isinstance(map_fields, dict):
+            raise CloudantArgumentError('The map property must be a dictionary')
+        if not isinstance(reduce_func, basestring):
+            raise CloudantArgumentError('The reduce property must be a string.')
+        super(QueryIndexView, self).__init__(
+            ddoc,
+            view_name,
+            map_fields,
+            reduce_func,
+            **kwargs
+        )
+        self['map'] = map_fields
+        self['reduce'] = reduce_func
+        self.result = None
+
+    @property
+    def map(self):
+        """
+        Provides a map property accessor and setter.
+
+        :param dict map_func: A dictionary of fields defining the index.
+
+        :returns: Fields defining the index
+        """
+        return self.get('map')
+
+    @map.setter
+    def map(self, map_func):
+        """
+        Provides a map property setter.
+        """
+        if isinstance(map_func, dict):
+            self['map'] = map_func
+        else:
+            raise CloudantArgumentError('The map property must be a dictionary')
+
+    @property
+    def reduce(self):
+        """
+        Provides a reduce property accessor and setter.
+
+        :param str reduce_func: A string representation of the reduce function
+            used in part to define the index.
+
+        :returns: Reduce function as a string
+        """
+        return self.get('reduce')
+
+    @reduce.setter
+    def reduce(self, reduce_func):
+        """
+        Provides a reduce property setter.
+        """
+        if isinstance(reduce_func, basestring):
+            self['reduce'] = reduce_func
+        else:
+            raise CloudantArgumentError('The reduce property must be a string')
+
+    def __call__(self, **kwargs):
+        """
+        QueryIndexView objects are not callable.  If you wish to execute a query
+        using a query index, use
+        :func:`~cloudant.database.CloudantDatabase.get_query_result` instead.
+        """
+        raise CloudantException(
+            'A QueryIndexView is not callable.  If you wish to execute a query '
+            'use the database \'get_query_result\' convenience method.'
+        )
+
+    def make_result(self, **options):
+        """
+        This method overrides the View base class
+        :func:`~cloudant.views.View.make_result` method with the sole purpose of
+        disabling it.  Since QueryIndexView objects are not callable, there is
+        no reason to wrap their output in a Result.  If you wish to execute a
+        query using a query index, use
+        :func:`~cloudant.database.CloudantDatabase.get_query_result` instead.
+        """
+        raise CloudantException(
+            'Cannot make a result using a QueryIndexView.  If you wish to '
+            'execute a query use the database \'get_query_result\' convenience '
+            'method.'
+        )
