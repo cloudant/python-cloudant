@@ -19,8 +19,8 @@ client connection instance.
 import base64
 import json
 import posixpath
-import requests
 import sys
+import requests
 
 from .database import CloudantDatabase, CouchDatabase
 from .changes import Feed
@@ -138,9 +138,6 @@ class CouchDB(dict):
 
         :returns: Basic http authentication string
         """
-
-        # TODO: I'm not a huge fan of doing basic auth -- need to
-        # research and see if there's a better way to do this.
         hash_ = base64.urlsafe_b64encode("{username}:{password}".format(
             username=self._cloudant_user,
             password=self._cloudant_token
