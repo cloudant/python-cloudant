@@ -15,7 +15,7 @@
 """
 _views_tests_
 
-views module - Unit tests for the Views class
+views module - Unit tests for the View/QueryIndexView classes
 
 See configuration options for environment variables in unit_t_db_base
 module docstring.
@@ -23,13 +23,16 @@ module docstring.
 """
 
 import unittest
+import mock
 import posixpath
 import requests
+import os
 
 from cloudant.design_document import DesignDocument
-from cloudant.views import View
+from cloudant.views import View, QueryIndexView
 from cloudant.views import Code
 from cloudant.result import Result
+from cloudant.errors import CloudantArgumentError, CloudantException
 
 from unit_t_db_base import UnitTestDbBase
 
@@ -47,16 +50,16 @@ class CodeTests(unittest.TestCase):
         self.assertIsInstance(code, Code)
         self.assertEqual(code, 'this is code.')
 
-class ViewsTests(UnitTestDbBase):
+class ViewTests(UnitTestDbBase):
     """
-    Views unit tests
+    View class unit tests
     """
 
     def setUp(self):
         """
         Set up test attributes
         """
-        super(ViewsTests, self).setUp()
+        super(ViewTests, self).setUp()
         self.db_set_up()
 
     def tearDown(self):
@@ -64,7 +67,7 @@ class ViewsTests(UnitTestDbBase):
         Reset test attributes
         """
         self.db_tear_down()
-        super(ViewsTests, self).tearDown()
+        super(ViewTests, self).tearDown()
 
     def test_constructor(self):
         """
@@ -75,7 +78,8 @@ class ViewsTests(UnitTestDbBase):
             ddoc,
             'view001',
             'function (doc) {\n  emit(doc._id, 1);\n}',
-            '_count'
+            '_count',
+            dbcopy='{0}-copy'.format(self.db.database_name)
         )
         self.assertEqual(view.design_doc, ddoc)
         self.assertEqual(view.view_name, 'view001')
@@ -86,6 +90,15 @@ class ViewsTests(UnitTestDbBase):
         )
         self.assertIsInstance(view['reduce'], Code)
         self.assertEqual(view['reduce'], '_count')
+        self.assertEqual(
+            view['dbcopy'],
+            '{0}-copy'.format(self.db.database_name)
+        )
+        self.assertEqual(view, {
+            'map': 'function (doc) {\n  emit(doc._id, 1);\n}',
+            'reduce': '_count',
+            'dbcopy': '{0}-copy'.format(self.db.database_name)
+        })
 
     def test_map_setter(self):
         """
@@ -203,9 +216,15 @@ class ViewsTests(UnitTestDbBase):
         except requests.HTTPError, err:
             self.assertEqual(err.response.status_code, 404)
 
+    @unittest.skipUnless(
+    os.environ.get('RUN_CLOUDANT_TESTS') is None,
+    'Only execute as part of CouchDB tests')
     def test_view_callable_with_invalid_javascript(self):
         """
-        Test error condition when Javascript errors exist
+        Test error condition when Javascript errors exist.  This test is only
+        valid for CouchDB because the map function Javascript is validated on
+        the Cloudant server when attempting to save a design document so invalid
+        Javascript is not possible there.
         """
         self.populate_db_with_documents()
         ddoc = DesignDocument(self.db, 'ddoc001')
@@ -264,6 +283,145 @@ class ViewsTests(UnitTestDbBase):
                 self.assertEqual(row['doc']['age'], i)
                 i += 1
             self.assertEqual(i, 100)
+
+class QueryIndexViewTests(unittest.TestCase):
+    """
+    QueryIndexView class unit tests.  These tests use a mocked DesignDocument
+    since a QueryIndexView object is not callable so an actual connection
+    is not necessary.
+    """
+
+    def setUp(self):
+        """
+        Set up test attributes
+        """
+        self.ddoc = mock.Mock()
+        self.ddoc.r_session = 'mocked-session'
+        self.ddoc.document_url = 'http://mock.example.com/my_db/_design/ddoc001'
+
+        self.view = QueryIndexView(
+            self.ddoc,
+            'view001',
+            {'fields': {'name': 'asc', 'age': 'asc'}},
+            '_count',
+            options = {'def': {'fields': ['name', 'age']}, 'w': 2}
+        )
+
+    def test_constructor(self):
+        """
+        Test constructing a QueryIndexView
+        """
+        self.assertIsInstance(self.view, QueryIndexView)
+        self.assertEqual(self.view.design_doc, self.ddoc)
+        self.assertEqual(self.view.view_name, 'view001')
+        self.assertIsNone(self.view.result)
+        self.assertEqual(self.view, {
+            'map': {'fields': {'name': 'asc', 'age': 'asc'}},
+            'reduce': '_count',
+            'options': {'def': {'fields': ['name', 'age']}, 'w': 2}
+        })
+
+    def test_map_getter(self):
+        """
+        Test that the map getter works
+        """
+        self.assertEqual(
+            self.view.map,
+            {'fields': {'name': 'asc', 'age': 'asc'}}
+        )
+        self.assertEqual(self.view.map, self.view['map'])
+
+    def test_map_setter(self):
+        """
+        Test that the map setter works
+        """
+        self.view.map = {'fields': {'name': 'desc', 'age': 'desc'}}
+        self.assertEqual(
+            self.view.map,
+            {'fields': {'name': 'desc', 'age': 'desc'}}
+        )
+        self.assertEqual(self.view.map, self.view['map'])
+
+    def test_map_setter_failure(self):
+        """
+        Test that the map setter fails if a dict is not supplied
+        """
+        try:
+            self.view.map = 'function (doc) {\n  emit(doc._id, 1);\n}'
+            self.fail('Above statement should raise an Exception')
+        except CloudantArgumentError, err:
+            self.assertEqual(
+                str(err),
+                'The map property must be a dictionary'
+            )
+
+    def test_reduce_getter(self):
+        """
+        Test that the reduce getter works
+        """
+        self.assertEqual(self.view.reduce, '_count')
+        self.assertEqual(self.view.reduce, self.view['reduce'])
+
+    def test_reduce_setter(self):
+        """
+        Test that the reduce setter works
+        """
+        self.view.reduce = '_sum'
+        self.assertEqual(self.view.reduce, '_sum')
+        self.assertEqual(self.view.reduce, self.view['reduce'])
+
+    def test_reduce_setter_failure(self):
+        """
+        Test that the reduce setter fails if a string is not supplied
+        """
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.view.reduce = {'_count'}
+        err = cm.exception
+        self.assertEqual(str(err), 'The reduce property must be a string')
+
+    def test_callable_disabled(self):
+        """
+        Test that the callable for QueryIndexView does not execute.
+        """
+        with self.assertRaises(CloudantException) as cm:
+            self.view()
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'A QueryIndexView is not callable.  '
+            'If you wish to execute a query '
+            'use the database \'get_query_result\' convenience method.'
+        )
+
+    def test_make_result_disabled(self):
+        """
+        Test that the make_result method for QueryIndexView does not execute.
+        """
+        with self.assertRaises(CloudantException) as cm:
+            self.view.make_result()
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Cannot make a result using a QueryIndexView.  If you wish to '
+            'execute a query use the database \'get_query_result\' '
+            'convenience method.'
+        )
+
+    def test_custom_result_disabled(self):
+        """
+        Test that the custom_result context manager for QueryIndexView does not
+        execute.
+        """
+        with self.assertRaises(CloudantException) as cm:
+            with self.view.custom_result() as result:
+                pass
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Cannot make a result using a QueryIndexView.  If you wish to '
+            'execute a query use the database \'get_query_result\' '
+            'convenience method.'
+        )
 
 if __name__ == '__main__':
     unittest.main()

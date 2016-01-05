@@ -24,9 +24,10 @@ module docstring.
 
 import unittest
 
+from cloudant.document import Document 
 from cloudant.design_document import DesignDocument
-from cloudant.views import View
-from cloudant.errors import CloudantArgumentError
+from cloudant.views import View, QueryIndexView
+from cloudant.errors import CloudantArgumentError, CloudantException
 
 from unit_t_db_base import UnitTestDbBase
 
@@ -114,6 +115,21 @@ class DesignDocumentTests(UnitTestDbBase):
                 'View view001 already exists in this design doc'
             )
 
+    def test_adding_query_index_view(self):
+        """
+        Test that adding a query index view fails as expected.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc['language'] = 'query'
+        with self.assertRaises(CloudantException) as cm:
+            ddoc.add_view('view001', {'foo': 'bar'})
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Cannot add a MapReduce view to a '
+            'design document for query indexes.'
+        )
+
     def test_update_a_view(self):
         """
         Test that updating a view updates the contents of the correct
@@ -151,6 +167,37 @@ class DesignDocumentTests(UnitTestDbBase):
                 'View view001 does not exist in this design doc'
             )
 
+    def test_update_query_index_view(self):
+        """
+        Test that updating a query index view fails as expected.
+        """
+        # This is not the preferred way of dealing with query index
+        # views but it works best for this test.
+        data = {
+            '_id': '_design/ddoc001',
+            'language': 'query',
+            'views': {
+                'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
+                            'reduce': '_count',
+                            'options': {'def': {'fields': ['name', 'age']},
+                                        'w': 2}
+                            }
+                    }
+        }
+        self.db.create_document(data)
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.fetch()
+        with self.assertRaises(CloudantException) as cm:
+            ddoc.update_view(
+                'view001',
+                'function (doc) {\n  emit(doc._id, 1);\n}'
+            )
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Cannot update a query index view using this method.'
+        )
+
     def test_delete_a_view(self):
         """
         Test deleting a view from the DesignDocument dictionary.
@@ -164,35 +211,253 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.delete_view('view001')
         self.assertEqual(ddoc.get('views'), {})
 
-    def test_fetch(self):
+    def test_delete_a_query_index_view(self):
+        """
+        Test deleting a query index view fails as expected.
+        """
+        # This is not the preferred way of dealing with query index
+        # views but it works best for this test.
+        data = {
+            '_id': '_design/ddoc001',
+            'language': 'query',
+            'views': {
+                'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
+                            'reduce': '_count',
+                            'options': {'def': {'fields': ['name', 'age']},
+                                        'w': 2}
+                            }
+                    }
+        }
+        self.db.create_document(data)
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.fetch()
+        with self.assertRaises(CloudantException) as cm:
+            ddoc.delete_view('view001')
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Cannot delete a query index view using this method.'
+        )
+
+    def test_fetch_map_reduce(self):
         """
         Ensure that the document fetch from the database returns the
-        DesignDocument format as expected.
+        DesignDocument format as expected when retrieving a design document
+        containing MapReduce views.
         """
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         view_map = 'function (doc) {\n  emit(doc._id, 1);\n}'
         view_reduce = '_count'
-        ddoc.add_view('view001', view_map)
-        ddoc.add_view('view002', view_map, view_reduce)
+        db_copy = '{0}-copy'.format(self.db.database_name)
+        ddoc.add_view('view001', view_map, view_reduce)
+        ddoc.add_view('view002', view_map, view_reduce, dbcopy=db_copy)
         ddoc.add_view('view003', view_map)
         ddoc.save()
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         self.assertNotEqual(ddoc_remote, ddoc)
         ddoc_remote.fetch()
         self.assertEqual(ddoc_remote, ddoc)
-        self.assertEqual(len(ddoc_remote['views']), 3)
-        reduce_count = 0
-        for x in xrange(1, 4):
-            name = 'view{0:03d}'.format(x)
-            view = ddoc_remote['views'][name]
-            self.assertIsInstance(view, View)
-            self.assertEqual(view.map, view_map)
-            if name == 'view002':
-                reduce_count += 1
-                self.assertEqual(view.reduce, view_reduce)
-            else:
-                self.assertIsNone(view.reduce)
-        self.assertEqual(reduce_count, 1)
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote, {
+            '_id': '_design/ddoc001',
+            '_rev': ddoc['_rev'],
+            'views': {
+                'view001': {'map': view_map, 'reduce': view_reduce},
+                'view002': {'map': view_map, 'reduce': view_reduce, 'dbcopy': db_copy},
+                'view003': {'map': view_map}
+            }
+        })
+        self.assertIsInstance(ddoc_remote['views']['view001'], View)
+        self.assertIsInstance(ddoc_remote['views']['view002'], View)
+        self.assertIsInstance(ddoc_remote['views']['view003'], View)
+
+    def test_fetch_query_views(self):
+        """
+        Ensure that the document fetch from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing query index views.
+        """
+        # This is not the preferred way of dealing with query index
+        # views but it works best for this test.
+        data = {
+            '_id': '_design/ddoc001',
+            'language': 'query',
+            'views': {
+                'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
+                            'reduce': '_count',
+                            'options': {'def': {'fields': ['name', 'age']},
+                                        'w': 2}
+                            }
+                    }
+        }
+        doc = self.db.create_document(data)
+        self.assertIsInstance(doc, Document)
+        data['_rev'] = doc['_rev']
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.fetch()
+        self.assertIsInstance(ddoc, DesignDocument)
+        self.assertEqual(ddoc, data)
+        self.assertIsInstance(ddoc['views']['view001'], QueryIndexView)
+
+    def test_fetch_text_indexes(self):
+        """
+        Ensure that the document fetch from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing query index views.
+        """
+        # This is not the preferred way of dealing with query index
+        # views but it works best for this test.
+        data = {
+            '_id': '_design/ddoc001',
+            'language': 'query',
+            'indexes': {'index001': 
+                     {'index': {'index_array_lengths': True,
+                                'fields': [{'name': 'name', 'type': 'string'},
+                                           {'name': 'age', 'type': 'number'}],
+                                'default_field': {'enabled': True,
+                                                  'analyzer': 'german'},
+                                'default_analyzer': 'keyword',
+                                'selector': {}},
+                      'analyzer': {'name': 'perfield',
+                                   'default': 'keyword',
+                                   'fields': {'$default': 'german'}}}}}
+        doc = self.db.create_document(data)
+        self.assertIsInstance(doc, Document)
+        data['_rev'] = doc['_rev']
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.fetch()
+        self.assertIsInstance(ddoc, DesignDocument)
+        self.assertEqual(ddoc, data)
+        self.assertIsInstance(ddoc['indexes']['index001'], dict)
+
+    def test_fetch_text_indexes_and_query_views(self):
+        """
+        Ensure that the document fetch from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing query index views and text index definitions.
+        """
+        # This is not the preferred way of dealing with query index
+        # views but it works best for this test.
+        data = {
+            '_id': '_design/ddoc001',
+            'language': 'query',
+            'views': {
+                'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
+                            'reduce': '_count',
+                            'options': {'def': {'fields': ['name', 'age']},
+                                        'w': 2}
+                            }
+                    },
+            'indexes': {'index001': {
+                'index': {'index_array_lengths': True,
+                          'fields': [{'name': 'name', 'type': 'string'},
+                                     {'name': 'age', 'type': 'number'}],
+                          'default_field': {'enabled': True,
+                                            'analyzer': 'german'},
+                          'default_analyzer': 'keyword',
+                          'selector': {}},
+                'analyzer': {'name': 'perfield',
+                             'default': 'keyword',
+                             'fields': {'$default': 'german'}}}}}
+        doc = self.db.create_document(data)
+        self.assertIsInstance(doc, Document)
+        data['_rev'] = doc['_rev']
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.fetch()
+        self.assertIsInstance(ddoc, DesignDocument)
+        self.assertEqual(ddoc, data)
+        self.assertIsInstance(ddoc['indexes']['index001'], dict)
+        self.assertIsInstance(ddoc['views']['view001'], QueryIndexView)
+
+    def test_mr_view_save_fails_when_lang_is_query(self):
+        """
+        Tests that save fails when language is query but views are map reduce
+        views.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        view_map = 'function (doc) {\n  emit(doc._id, 1);\n}'
+        view_reduce = '_count'
+        db_copy = '{0}-copy'.format(self.db.database_name)
+        ddoc.add_view('view001', view_map, view_reduce, dbcopy=db_copy)
+        ddoc['language'] = 'query'
+        with self.assertRaises(CloudantException) as cm:
+            ddoc.save()
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'View view001 must be of type QueryIndexView.'
+        )
+
+    def test_mr_view_save_succeeds(self):
+        """
+        Tests that save succeeds when no language is specified and views are map
+        reduce views.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        view_map = 'function (doc) {\n  emit(doc._id, 1);\n}'
+        view_reduce = '_count'
+        db_copy = '{0}-copy'.format(self.db.database_name)
+        ddoc.add_view('view001', view_map, view_reduce, dbcopy=db_copy)
+        ddoc.save()
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+
+    def test_cq_view_save_fails_when_lang_is_not_query(self):
+        """
+        Tests that save fails when language is not query but views are query
+        index views.
+        """
+        # This is not the preferred way of dealing with query index
+        # views but it works best for this test.
+        data = {
+            '_id': '_design/ddoc001',
+            'language': 'query',
+            'views': {
+                'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
+                            'reduce': '_count',
+                            'options': {'def': {'fields': ['name', 'age']},
+                                        'w': 2}
+                            }
+                    }
+        }
+        self.db.create_document(data)
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.fetch()
+        with self.assertRaises(CloudantException) as cm:
+            ddoc['language'] = 'not-query'
+            ddoc.save()
+        err = cm.exception
+        self.assertEqual(str(err), 'View view001 must be of type View.')
+
+        with self.assertRaises(CloudantException) as cm:
+            del ddoc['language']
+            ddoc.save()
+        err = cm.exception
+        self.assertEqual(str(err), 'View view001 must be of type View.')
+
+    def test_cq_view_save_succeeds(self):
+        """
+        Tests that save succeeds when language is query and views are query
+        index views.
+        """
+        # This is not the preferred way of dealing with query index
+        # views but it works best for this test.
+        data = {
+            '_id': '_design/ddoc001',
+            'language': 'query',
+            'views': {
+                'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
+                            'reduce': '_count',
+                            'options': {'def': {'fields': ['name', 'age']},
+                                        'w': 2}
+                            }
+                    }
+        }
+        self.db.create_document(data)
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.fetch()
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+        ddoc.save()
+        self.assertTrue(ddoc['_rev'].startswith('2-'))
 
     def test_setting_id(self):
         """
