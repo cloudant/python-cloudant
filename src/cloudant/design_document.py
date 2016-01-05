@@ -175,7 +175,7 @@ class DesignDocument(Document):
                             'View {0} must be of type QueryIndexView.'
                         ).format(view_name)
                         raise CloudantException(msg)
-                
+
         super(DesignDocument, self).save()
 
     def __setitem__(self, key, value):
