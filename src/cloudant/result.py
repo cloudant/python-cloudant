@@ -277,6 +277,7 @@ class Result(object):
             else:
                 break
 
+    # pylint: disable=no-self-use
     def _parse_data(self, data):
         """
         Used to extract the rows content from the JSON result content

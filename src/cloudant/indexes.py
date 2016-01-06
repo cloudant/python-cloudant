@@ -19,7 +19,10 @@ API module for managing/viewing query indexes.
 import posixpath
 import json
 
-from .index_constants import *
+from .index_constants import JSON_INDEX_TYPE
+from .index_constants import TEXT_INDEX_TYPE
+from .index_constants import SPECIAL_INDEX_TYPE
+from .index_constants import TEXT_INDEX_ARGS
 from .errors import CloudantArgumentError, CloudantException
 
 class Index(object):

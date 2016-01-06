@@ -63,9 +63,10 @@ confidence=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 
+# Disable "redefined-variable-type" refactor warning messages
 # Disable "too-many-..." and "too-few-..." refactor warning messages
 # Disable "locally-disabled" message
-disable=R0901,R0902,R0903,R0904,R0913,R014,R0915,locally-disabled
+disable=R0204,R0901,R0902,R0903,R0904,R0913,R0914,R0915,locally-disabled
 
 
 [REPORTS]

@@ -25,7 +25,9 @@ from .document import Document
 from .design_document import DesignDocument
 from .views import View
 from .indexes import Index, SearchIndex, SpecialIndex
-from .index_constants import *
+from .index_constants import JSON_INDEX_TYPE
+from .index_constants import TEXT_INDEX_TYPE
+from .index_constants import SPECIAL_INDEX_TYPE
 from .query import Query
 from .errors import CloudantException, CloudantArgumentError
 from .result import python_to_couch, Result
@@ -920,7 +922,7 @@ class CloudantDatabase(CouchDatabase):
             raise CloudantArgumentError(msg)
         index.delete()
 
-    def get_query_result(self, selector, fields=[], raw_result=False, **kwargs):
+    def get_query_result(self, selector, fields=None, raw_result=False, **kwargs):
         """
         Retrieves the query result from the specified database based on the
         query parameters provided.  By default the result is returned as a

@@ -25,10 +25,7 @@ from pylint import epylint
 class LintTests(unittest.TestCase):
     """
     Evaluate lint test output.
-
     """
-    
-    @unittest.skip("Temporarily skip!! - TODO: fix test to work with new pylint release.")
     def test_pylint_cloudant(self):
         """
         Apply Pylint to Python-Cloudant Client Library
@@ -40,9 +37,7 @@ class LintTests(unittest.TestCase):
         pkg = 'cloudant'
         disable = 'RP0001,RP0002,RP0003,RP0101,RP0401,RP0402,RP0701,RP0801'
         options = '{0} -d \"{1}\"'.format(pkg, disable)
-        (out, err) = epylint.py_run(options, return_std=True, script='pylint')
-        err_report = [ e_line.strip() for e_line in err ]
-        self.assertEqual(err_report, [])
+        (out, _) = epylint.py_run(options, return_std=True, script='pylint')
 
         passed = False
         for line in out:
