@@ -2,6 +2,7 @@
 ====================
 
 - [NEW] Added support for Cloudant Query execution.
+- [NEW] Added support for Cloudant Query index management.
 
 2.0.0a4 (2015-12-03)
 ====================

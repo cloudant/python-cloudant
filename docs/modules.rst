@@ -9,6 +9,8 @@ Modules
    document
    design_document
    views
+   query
+   indexes
    result
    replicator
    changes
