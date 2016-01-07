@@ -79,6 +79,55 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertIsNone(ddoc.get('_id'))
         self.assertEqual(ddoc.get('views'), {})
 
+    def test_create_design_document_with_docid_encoded_url(self):
+        """
+        Test creating a design document providing an id that has an encoded url
+        """
+        ddoc = DesignDocument(self.db, '_design/http://example.com')
+        self.assertFalse(ddoc.exists())
+        self.assertIsNone(ddoc.get('_rev'))
+        ddoc.create()
+        self.assertTrue(ddoc.exists())
+        self.assertTrue(ddoc.get('_rev').startswith('1-'))
+
+    def test_fetch_existing_design_document_with_docid_encoded_url(self):
+        """
+        Test fetching design document content from an existing document where
+        the document id requires an encoded url
+        """
+        ddoc = DesignDocument(self.db, '_design/http://example.com')
+        ddoc.create()
+        new_ddoc = DesignDocument(self.db, '_design/http://example.com')
+        new_ddoc.fetch()
+        self.assertEqual(new_ddoc, ddoc)
+
+    def test_update_design_document_with_encoded_url(self):
+        """
+        Test that updating a design document where the document id requires that
+        the document url be encoded is successful.
+        """
+        # First create the design document
+        ddoc = DesignDocument(self.db, '_design/http://example.com')
+        ddoc.save()
+        # Now test that the design document gets updated
+        ddoc.save()
+        self.assertTrue(ddoc['_rev'].startswith('2-'))
+        remote_ddoc = DesignDocument(self.db, '_design/http://example.com')
+        remote_ddoc.fetch()
+        self.assertEqual(remote_ddoc, ddoc)
+
+    def test_delete_design_document_success_with_encoded_url(self):
+        """
+        Test that we can remove a design document from the remote
+        database successfully when the document id requires an encoded url.
+        """
+        ddoc = DesignDocument(self.db, '_design/http://example.com')
+        ddoc.create()
+        self.assertTrue(ddoc.exists())
+        ddoc.delete()
+        self.assertFalse(ddoc.exists())
+        self.assertEqual(ddoc, {'_id': '_design/http://example.com'})
+
     def test_add_a_view(self):
         """
         Test that adding a view adds a View object to
