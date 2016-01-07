@@ -60,8 +60,51 @@ class DocumentTests(UnitTestDbBase):
         self.assertIsInstance(doc, Document)
         self.assertEqual(doc.r_session, self.db.r_session)
         self.assertEqual(doc.get('_id'), 'julia006')
+
+    def test_document_url(self):
+        """
+        Test that the document url is populated correctly
+        """
+        doc = Document(self.db, 'julia006')
         self.assertEqual(
             doc.document_url, posixpath.join(self.db.database_url, 'julia006')
+        )
+
+    def test_document_url_encodes_correctly(self):
+        """
+        Test that the document url is populated and encoded correctly
+        """
+        doc = Document(self.db, 'http://example.com')
+        self.assertEqual(
+            doc.document_url, posixpath.join(
+                self.db.database_url,
+                'http%3A%2F%2Fexample.com'
+            )
+        )
+
+    def test_design_document_url(self):
+        """
+        Test that the document url is populated correctly when a design document
+        id is provided.
+        """
+        doc = Document(self.db, '_design/ddoc001')
+        self.assertEqual(
+            doc.document_url, posixpath.join(
+                self.db.database_url,
+                '_design/ddoc001'
+            )
+        )
+
+    def test_design_document_url_encodes_correctly(self):
+        """
+        Test that the document url is populated and encoded correctly
+        """
+        doc = Document(self.db, '_design/http://example.com')
+        self.assertEqual(
+            doc.document_url, posixpath.join(
+                self.db.database_url,
+                '_design/http%3A%2F%2Fexample.com'
+            )
         )
 
     def test_constructor_without_docid(self):
@@ -102,6 +145,19 @@ class DocumentTests(UnitTestDbBase):
         Test creating a document providing an id
         """
         doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        self.assertFalse(doc.exists())
+        self.assertIsNone(doc.get('_rev'))
+        doc.create()
+        self.assertTrue(doc.exists())
+        self.assertTrue(doc.get('_rev').startswith('1-'))
+
+    def test_create_document_with_docid_encoded_url(self):
+        """
+        Test creating a document providing an id that has an encoded url
+        """
+        doc = Document(self.db, 'http://example.com')
         doc['name'] = 'julia'
         doc['age'] = 6
         self.assertFalse(doc.exists())
@@ -175,6 +231,19 @@ class DocumentTests(UnitTestDbBase):
         new_doc.fetch()
         self.assertEqual(new_doc, doc)
 
+    def test_fetch_existing_document_with_docid_encoded_url(self):
+        """
+        Test fetching document content from an existing document where the
+        document id requires an encoded url
+        """
+        doc = Document(self.db, 'http://example.com')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.create()
+        new_doc = Document(self.db, 'http://example.com')
+        new_doc.fetch()
+        self.assertEqual(new_doc, doc)
+
     def test_create_document_using_save(self):
         """
         Test that save functionality works.  If a document does
@@ -206,6 +275,25 @@ class DocumentTests(UnitTestDbBase):
         doc.save()
         self.assertTrue(doc['_rev'].startswith('2-'))
         remote_doc = Document(self.db, 'julia006')
+        remote_doc.fetch()
+        self.assertEqual(remote_doc, doc)
+        self.assertEqual(remote_doc['name'], 'jules')
+
+    def test_update_document_with_encoded_url(self):
+        """
+        Test that updating a document where the document id requires that the
+        document url be encoded is successful.
+        """
+        # First create the document
+        doc = Document(self.db, 'http://example.com')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.save()
+        # Now test that the document gets updated
+        doc['name'] = 'jules'
+        doc.save()
+        self.assertTrue(doc['_rev'].startswith('2-'))
+        remote_doc = Document(self.db, 'http://example.com')
         remote_doc.fetch()
         self.assertEqual(remote_doc, doc)
         self.assertEqual(remote_doc['name'], 'jules')
@@ -327,6 +415,21 @@ class DocumentTests(UnitTestDbBase):
         doc.delete()
         self.assertFalse(doc.exists())
         self.assertEqual(doc, {'_id': 'julia006'})
+
+    def test_delete_document_success_with_encoded_url(self):
+        """
+        Test that we can remove a document from the remote
+        database successfully when the document id requires an encoded url.
+        """
+        doc = Document(self.db, 'http://example.com')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc['pets'] = ['cat', 'dog']
+        doc.create()
+        self.assertTrue(doc.exists())
+        doc.delete()
+        self.assertFalse(doc.exists())
+        self.assertEqual(doc, {'_id': 'http://example.com'})
 
     def test_document_context_manager(self):
         """
