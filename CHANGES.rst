@@ -3,6 +3,8 @@
 
 - [NEW] Added support for Cloudant Query execution.
 - [NEW] Added support for Cloudant Query index management.
+- [FIX] DesignDocument content is no longer limited to just views.
+- [FIX] Document url encoding is now enforced.
 
 2.0.0a4 (2015-12-03)
 ====================
