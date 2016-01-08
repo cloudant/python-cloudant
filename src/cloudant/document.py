@@ -76,10 +76,21 @@ class Document(dict):
         """
         if self._document_id is None:
             return None
+
+        # handle design document url
+        if self._document_id.startswith('_design/'):
+            return posixpath.join(
+                self._database_host,
+                urllib.quote_plus(self._database_name),
+                '_design',
+                urllib.quote(self._document_id[8:], safe='')
+            )
+
+        # handle document url
         return posixpath.join(
             self._database_host,
             urllib.quote_plus(self._database_name),
-            self._document_id
+            urllib.quote(self._document_id, safe='')
         )
 
     def exists(self):
