@@ -539,14 +539,11 @@ class CouchDatabase(dict):
                     # document object before yielding it.
                     document = {}
                     if doc['id'].startswith('_design/'):
-                        document = DesignDocument(self)
+                        document = DesignDocument(self, doc['id'])
                     else:
-                        document = Document(self)
+                        document = Document(self, doc['id'])
                     document.update(doc['doc'])
-                    super(CouchDatabase, self).__setitem__(
-                        doc['id'],
-                        document
-                    )
+                    super(CouchDatabase, self).__setitem__(doc['id'], document)
                     yield document
 
             raise StopIteration

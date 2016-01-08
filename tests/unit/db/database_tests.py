@@ -414,6 +414,44 @@ class DatabaseTests(UnitTestDbBase):
             self.assertEqual(doc['name'], 'julia')
             self.assertEqual(doc['age'], int(id[len(id) - 3 : len(id)]))
 
+    def test_document_iteration_returns_valid_documents(self):
+        """
+        This test will check that the __iter__ method returns documents that are
+        valid Document or DesignDocument objects and that they can be managed
+        remotely.  In this test we will delete the documents as part of the test
+        to ensure that remote management is working as expected and confirming
+        that the documents are valid.
+        """
+        self.populate_db_with_documents(3)
+        with DesignDocument(self.db, '_design/ddoc001') as ddoc:
+            ddoc.add_view('view001', 'function (doc) {\n  emit(doc._id, 1);\n}')
+        docs = []
+        ddocs = []
+        for doc in self.db:
+            # A valid document must have a document_url
+            self.assertEqual(
+                doc.document_url,
+                posixpath.join(self.db.database_url, doc['_id'])
+            )
+            if isinstance(doc, DesignDocument):
+                self.assertEqual(doc['_id'], '_design/ddoc001')
+                ddocs.append(doc)
+            elif isinstance(doc, Document):
+                self.assertTrue(
+                    doc['_id'] in ['julia000', 'julia001', 'julia002']
+                )
+                docs.append(doc)
+            doc.delete()
+
+        # Confirm successful deletions
+        for doc in self.db:
+            self.fail('All documents should have been deleted!!!')
+
+        # Confirm that the correct number of Document (3) and DesignDocument (1)
+        # objects were returned
+        self.assertEqual(len(docs), 3)
+        self.assertEqual(len(ddocs), 1)
+
     def test_bulk_docs_creation(self):
         docs = [
             {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
