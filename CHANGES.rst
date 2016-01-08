@@ -5,6 +5,7 @@
 - [NEW] Added support for Cloudant Query index management.
 - [FIX] DesignDocument content is no longer limited to just views.
 - [FIX] Document url encoding is now enforced.
+- [FIX] Database iterator now yields Document/DesignDocument objects with valid document urls.
 
 2.0.0a4 (2015-12-03)
 ====================
