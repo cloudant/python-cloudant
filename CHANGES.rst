@@ -1,4 +1,4 @@
-2.0.0b1 (Unreleased)
+2.0.0b1 (2016-01-11)
 ====================
 
 - [NEW] Added support for Cloudant Query execution.

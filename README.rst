@@ -13,7 +13,7 @@ Cloudant Python Client
     :scale: 100%
     :target: http://python-cloudant.readthedocs.org
 
-This library is currently a preview (alpha version) of Cloudant's new official 
+This library is currently a preview (beta version) of Cloudant's new official 
 Python library.  As such it currently does not have complete API coverage nor is the
 documentation 100% complete.  We are busily working towards bridging the API and 
 documentation gaps, so please check back often as additions/changes will be 
@@ -33,10 +33,10 @@ and can be installed with ``pip``.
 
 The latest stable version on PyPI is 0.5.10, **but is now deprecated**. 
 
-The current development version, which you should now use, is 2.0.0a4. Version 2.x makes
+The current development version, which you should now use, is 2.0.0b1. Version 2.x makes
 significant breaking changes -- no attempt was made to reproduce the API of 0.5.10.
 
-Because 2.0.0 is still in development (2.0.0a4) and we wish to give developers time to 
+Because 2.0.0 is still in development (2.0.0b1) and we wish to give developers time to 
 upgrade, version 0.5.10 will remain the latest stable version on PyPI until at least early
 2016.  
 
