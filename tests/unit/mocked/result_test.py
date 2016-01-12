@@ -39,7 +39,7 @@ class PythonToCouchTests(unittest.TestCase):
             "endkey": ['string'],
             "endkey_docid": 'string',
             "group": True,
-            "group_level": "string",
+            "group_level": 12,
             "include_docs": True,
             "inclusive_end": True,
             "key": 12,
