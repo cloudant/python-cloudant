@@ -696,6 +696,57 @@ class CloudantDatabaseTests(UnitTestDbBase):
             ['julia001', 'julia002', 'julia003', 'julia004']
         )
 
+    def test_get_query_result_without_fields(self):
+        """
+        Assert that the QueryResult docs include all the expected fields when
+        no fields parameter is provided.
+        """
+        self.populate_db_with_documents(100)
+        expected_fields = ['_id', '_rev', 'age', 'name']
+        # Sort the list of expected fields so we can assert list equality later
+        expected_fields.sort()
+        result = self.db.get_query_result(
+            {'$and': [
+                {'_id': {'$gte': 'julia001'}},
+                {'_id': {'$lt': 'julia005'}}
+            ]}
+        )
+        self.assertIsInstance(result, QueryResult)
+        for doc in result:
+            doc_fields = doc.keys()
+            doc_fields.sort()
+            self.assertEqual(doc_fields, expected_fields)
+        self.assertEqual(
+            [doc['_id'] for doc in result],
+            ['julia001', 'julia002', 'julia003', 'julia004']
+        )
+
+    def test_get_query_result_with_empty_fields_list(self):
+        """
+        Assert that the QueryResult docs include all the expected fields when
+        an empty fields list is provided.
+        """
+        self.populate_db_with_documents(100)
+        expected_fields = ['_id', '_rev', 'age', 'name']
+        # Sort the list of expected fields so we can assert list equality later
+        expected_fields.sort()
+        result = self.db.get_query_result(
+            {'$and': [
+                {'_id': {'$gte': 'julia001'}},
+                {'_id': {'$lt': 'julia005'}}
+            ]},
+            fields=[]
+        )
+        self.assertIsInstance(result, QueryResult)
+        for doc in result:
+            doc_fields = doc.keys()
+            doc_fields.sort()
+            self.assertEqual(doc_fields, expected_fields)
+        self.assertEqual(
+            [doc['_id'] for doc in result],
+            ['julia001', 'julia002', 'julia003', 'julia004']
+        )
+
     def test_create_json_index(self):
         """
         Ensure that a JSON index is created as expected.
