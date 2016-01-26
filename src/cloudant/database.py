@@ -919,7 +919,8 @@ class CloudantDatabase(CouchDatabase):
             raise CloudantArgumentError(msg)
         index.delete()
 
-    def get_query_result(self, selector, fields=None, raw_result=False, **kwargs):
+    def get_query_result(self, selector, fields=None, raw_result=False,
+                         **kwargs):
         """
         Retrieves the query result from the specified database based on the
         query parameters provided.  By default the result is returned as a
@@ -987,7 +988,10 @@ class CloudantDatabase(CouchDatabase):
         :returns: The result content either wrapped in a QueryResult or
             as the raw response JSON content
         """
-        query = Query(self, selector=selector, fields=fields)
+        if fields:
+            query = Query(self, selector=selector, fields=fields)
+        else:
+            query = Query(self, selector=selector)
         if raw_result:
             return query(**kwargs)
         if kwargs:

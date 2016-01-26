@@ -149,36 +149,6 @@ class QueryTests(UnitTestDbBase):
                 'Add a selector to define the query and retry.'
             )
 
-    def test_callable_without_fields(self):
-        """
-        Test Query __call__ without providing a fields list
-        """
-        query = Query(self.db)
-        try:
-            query(selector={'_id': {'$gt': 0}})
-            self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
-            self.assertEqual(
-                str(err),
-                'No fields list in the query or the fields list was empty.  '
-                'Add a list of fields for the query and retry.'
-            )
-
-    def test_callable_with_empty_field_list(self):
-        """
-        Test Query __call__ without providing a fields list
-        """
-        query = Query(self.db)
-        try:
-            query(selector={'_id': {'$gt': 0}}, fields=[])
-            self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
-            self.assertEqual(
-                str(err),
-                'No fields list in the query or the fields list was empty.  '
-                'Add a list of fields for the query and retry.'
-            )
-
     def test_callable_executes_query(self):
         """
         Test Query __call__ executes a query

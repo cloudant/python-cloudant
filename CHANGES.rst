@@ -1,6 +1,6 @@
 2.0.0b2.dev (Unreleased)
 ========================
-
+- [FIX] Remove the fields parameter from required Query parameters
 
 2.0.0b1 (2016-01-11)
 ====================
