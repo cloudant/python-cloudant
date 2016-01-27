@@ -21,7 +21,7 @@ import requests
 from requests.exceptions import HTTPError
 
 # pylint: disable=wrong-import-order
-from ._py2to3 import PY2
+from ._2to3 import PY2, str_
 if PY2:
     # pylint: disable=wrong-import-order,no-name-in-module
     from urllib import quote, quote_plus
@@ -405,7 +405,7 @@ class Document(dict):
 
         if attachment_type == 'json':
             return resp.json()
-        return resp.content
+        return str_(resp.content)
 
     def delete_attachment(self, attachment, headers=None):
         """

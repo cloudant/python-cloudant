@@ -29,7 +29,7 @@ from cloudant import cloudant
 from cloudant.credentials import read_dot_cloudant
 from cloudant.replicator import Replicator
 
-from .. import _unicode
+from .. import unicode_
 
 
 def setup_logging():
@@ -84,10 +84,10 @@ class ReplicatorTest(unittest.TestCase):
         one get transferred to t'other.
 
         """
-        dbsource = _unicode("test_create_replication_source_{}".format(
-            _unicode(uuid.uuid4())))
-        dbtarget = _unicode("test_create_replication_target_{}".format(
-            _unicode(uuid.uuid4())))
+        dbsource = unicode_("test_create_replication_source_{}".format(
+            unicode_(uuid.uuid4())))
+        dbtarget = unicode_("test_create_replication_target_{}".format(
+            unicode_(uuid.uuid4())))
 
         self.dbs = [dbsource, dbtarget]
 
@@ -106,8 +106,8 @@ class ReplicatorTest(unittest.TestCase):
             )
 
             replicator = Replicator(c)
-            repl_id = _unicode("test_create_replication_{}".format(
-                _unicode(uuid.uuid4())))
+            repl_id = unicode_("test_create_replication_{}".format(
+                unicode_(uuid.uuid4())))
             self.replication_ids.append(repl_id)
 
             ret = replicator.create_replication(
@@ -136,7 +136,7 @@ class ReplicatorTest(unittest.TestCase):
                             break
                         else:
                             LOG.debug(
-                                _unicode("Waiting for replication to complete "
+                                unicode_("Waiting for replication to complete "
                                          "(repl_doc: {})".format(repl_doc))
                             )
 
@@ -153,10 +153,10 @@ class ReplicatorTest(unittest.TestCase):
         Test to make sure that we can follow a replication.
 
         """
-        dbsource = _unicode("test_follow_replication_source_{}".format(
-            _unicode(uuid.uuid4())))
-        dbtarget = _unicode("test_follow_replication_target_{}".format(
-            _unicode(uuid.uuid4())))
+        dbsource = unicode_("test_follow_replication_source_{}".format(
+            unicode_(uuid.uuid4())))
+        dbtarget = unicode_("test_follow_replication_target_{}".format(
+            unicode_(uuid.uuid4())))
 
         self.dbs = [dbsource, dbtarget]
 
@@ -175,8 +175,8 @@ class ReplicatorTest(unittest.TestCase):
             )
 
             replicator = Replicator(c)
-            repl_id = _unicode("test_follow_replication_{}".format(
-                _unicode(uuid.uuid4())))
+            repl_id = unicode_("test_follow_replication_{}".format(
+                unicode_(uuid.uuid4())))
             self.replication_ids.append(repl_id)
 
             ret = replicator.create_replication(
@@ -200,10 +200,10 @@ class ReplicatorTest(unittest.TestCase):
         a bad replication.
 
         """
-        dbsource = _unicode("test_follow_replication_source_error_{}".format(
-            _unicode(uuid.uuid4())))
-        dbtarget = _unicode("test_follow_replication_target_error_{}".format(
-            _unicode(uuid.uuid4())))
+        dbsource = unicode_("test_follow_replication_source_error_{}".format(
+            unicode_(uuid.uuid4())))
+        dbtarget = unicode_("test_follow_replication_target_error_{}".format(
+            unicode_(uuid.uuid4())))
 
         self.dbs = [dbsource, dbtarget]
 
@@ -222,8 +222,8 @@ class ReplicatorTest(unittest.TestCase):
             )
 
             replicator = Replicator(c)
-            repl_id = _unicode("test_follow_replication_{}".format(
-                _unicode(uuid.uuid4())))
+            repl_id = unicode_("test_follow_replication_{}".format(
+                unicode_(uuid.uuid4())))
             self.replication_ids.append(repl_id)
 
             ret = replicator.create_replication(
@@ -249,10 +249,10 @@ class ReplicatorTest(unittest.TestCase):
         Verify that we can get the replication state.
 
         """
-        dbsource = _unicode("test_replication_state_source_{}".format(
-            _unicode(uuid.uuid4())))
-        dbtarget = _unicode("test_replication_state_target_{}".format(
-            _unicode(uuid.uuid4())))
+        dbsource = unicode_("test_replication_state_source_{}".format(
+            unicode_(uuid.uuid4())))
+        dbtarget = unicode_("test_replication_state_target_{}".format(
+            unicode_(uuid.uuid4())))
 
         self.dbs = [dbsource, dbtarget]
 
@@ -271,8 +271,8 @@ class ReplicatorTest(unittest.TestCase):
             )
 
             replicator = Replicator(c)
-            repl_id = _unicode("test_replication_state_{}".format(
-                _unicode(uuid.uuid4())))
+            repl_id = unicode_("test_replication_state_{}".format(
+                unicode_(uuid.uuid4())))
             self.replication_ids.append(repl_id)
 
             ret = replicator.create_replication(
@@ -316,9 +316,9 @@ class ReplicatorTest(unittest.TestCase):
             num_reps = 3
 
             for i in range(0, num_reps):
-                tag = "{0}_{1}".format(i, _unicode(uuid.uuid4()))
-                dbsource = _unicode("test_list_repl_src_{}".format(tag))
-                dbtarget = _unicode("test_list_repl_tgt_{}".format(tag))
+                tag = "{0}_{1}".format(i, unicode_(uuid.uuid4()))
+                dbsource = unicode_("test_list_repl_src_{}".format(tag))
+                dbtarget = unicode_("test_list_repl_tgt_{}".format(tag))
 
                 self.dbs.append(dbsource)
                 self.dbs.append(dbtarget)
@@ -330,7 +330,7 @@ class ReplicatorTest(unittest.TestCase):
                     {"_id": "doc1", "testing": "document 1"}
                 )
 
-                repl_id = _unicode("test_create_replication_{}".format(tag))
+                repl_id = unicode_("test_create_replication_{}".format(tag))
                 self.replication_ids.append(repl_id)
                 repl_ids.append(repl_id)
 

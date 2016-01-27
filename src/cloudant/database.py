@@ -22,7 +22,7 @@ import posixpath
 from requests.exceptions import HTTPError
 
 # pylint: disable=wrong-import-order
-from ._py2to3 import PY2
+from ._2to3 import PY2
 if PY2:
     # pylint: disable=wrong-import-order,no-name-in-module
     from urllib import quote_plus

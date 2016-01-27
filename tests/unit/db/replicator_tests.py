@@ -33,7 +33,7 @@ from cloudant.document import Document
 from cloudant.errors import CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
-from ... import _unicode
+from ... import unicode_
 
 
 class ReplicatorTests(UnitTestDbBase):
@@ -64,7 +64,7 @@ class ReplicatorTests(UnitTestDbBase):
         del self.test_target_dbname
         del self.target_db
         while self.replication_ids:
-                self.replicator.stop_replication(self.replication_ids.pop())
+            self.replicator.stop_replication(self.replication_ids.pop())
         del self.replicator
         self.db_tear_down()
         super(ReplicatorTests, self).tearDown()
@@ -106,7 +106,7 @@ class ReplicatorTests(UnitTestDbBase):
         replication is successful.
         """
         self.populate_db_with_documents(3)
-        repl_id = 'test-repl-{}'.format(_unicode(uuid.uuid4()))
+        repl_id = 'test-repl-{}'.format(unicode_(uuid.uuid4()))
 
         repl_doc = self.replicator.create_replication(
             self.db,
@@ -115,7 +115,7 @@ class ReplicatorTests(UnitTestDbBase):
         )
         self.replication_ids.append(repl_id)
         # Test that the replication document was created
-        expected_keys = ['_id', '_rev', 'source', 'target', 'user_ctx']
+        expected_keys = ('_id', '_rev', 'source', 'target', 'user_ctx')
         self.assertTrue(all(x in list(repl_doc.keys()) for x in expected_keys))
         self.assertEqual(repl_doc['_id'], repl_id)
         self.assertTrue(repl_doc['_rev'].startswith('1-'))
@@ -123,14 +123,13 @@ class ReplicatorTests(UnitTestDbBase):
         # check that the replication occurred.
         repl_doc = Document(self.replicator.database, repl_id)
         repl_doc.fetch()
-        if not (repl_doc.get('_replication_state')
-            in ('completed', 'error')):
+        if repl_doc.get('_replication_state') not in ('completed', 'error'):
             for change in self.replicator.database.changes():
                 if change.get('id') == repl_id:
                     repl_doc = Document(self.replicator.database, repl_id)
                     repl_doc.fetch()
-                    if (repl_doc.get('_replication_state')
-                        in ('completed', 'error')):
+                    if (repl_doc.get('_replication_state') in
+                            ('completed', 'error')):
                         break
         self.assertEqual(repl_doc['_replication_state'], 'completed')
         self.assertEqual(self.db.all_docs(), self.target_db.all_docs())
@@ -178,7 +177,7 @@ class ReplicatorTests(UnitTestDbBase):
         """
         self.populate_db_with_documents(3)
         repl_ids = ['test-repl-{}'.format(
-            _unicode(uuid.uuid4())
+            unicode_(uuid.uuid4())
         ) for _ in range(3)]
         repl_docs = [self.replicator.create_replication(
             self.db,
@@ -196,7 +195,7 @@ class ReplicatorTests(UnitTestDbBase):
         Test that the replication state can be retrieved for a replication
         """
         self.populate_db_with_documents(3)
-        repl_id = "test-repl-{}".format(_unicode(uuid.uuid4()))
+        repl_id = "test-repl-{}".format(unicode_(uuid.uuid4()))
         repl_doc = self.replicator.create_replication(
             self.db,
             self.target_db,
@@ -220,7 +219,7 @@ class ReplicatorTests(UnitTestDbBase):
         Test that replication_state(...) raises an exception as expected
         when an invalid replication id is provided.
         """
-        repl_id = 'fake-repl-id-{}'.format(_unicode(uuid.uuid4()))
+        repl_id = 'fake-repl-id-{}'.format(unicode_(uuid.uuid4()))
         repl_state = None
         try:
             self.replicator.replication_state(repl_id)
@@ -237,7 +236,7 @@ class ReplicatorTests(UnitTestDbBase):
         Test that a replication can be stopped.
         """
         self.populate_db_with_documents(3)
-        repl_id = "test-repl-{}".format(_unicode(uuid.uuid4()))
+        repl_id = "test-repl-{}".format(unicode_(uuid.uuid4()))
         repl_doc = self.replicator.create_replication(
             self.db,
             self.target_db,
@@ -257,7 +256,7 @@ class ReplicatorTests(UnitTestDbBase):
         Test that stop_replication(...) raises an exception as expected
         when an invalid replication id is provided.
         """
-        repl_id = 'fake-repl-id-{}'.format(_unicode(uuid.uuid4()))
+        repl_id = 'fake-repl-id-{}'.format(unicode_(uuid.uuid4()))
         try:
             self.replicator.stop_replication(repl_id)
             self.fail('Above statement should raise a CloudantException')
@@ -273,21 +272,22 @@ class ReplicatorTests(UnitTestDbBase):
         replication documents while the replication is executing.
         """
         self.populate_db_with_documents(3)
-        repl_id = "test-repl-{}".format(_unicode(uuid.uuid4()))
+        repl_id = "test-repl-{}".format(unicode_(uuid.uuid4()))
         repl_doc = self.replicator.create_replication(
             self.db,
             self.target_db,
             repl_id
         )
         self.replication_ids.append(repl_id)
-        valid_states = ['completed', 'error', 'triggered', None]
+        valid_states = ('completed', 'error', 'triggered', None)
         repl_states = []
         for doc in self.replicator.follow_replication(repl_id):
-            self.assertTrue(doc.get('_replication_state') in valid_states)
+            self.assertIn(doc.get('_replication_state'), valid_states)
             repl_states.append(doc.get('_replication_state'))
         self.assertTrue(len(repl_states) > 0)
+        print(repl_states)
         self.assertEqual(repl_states[-1], 'completed')
-        self.assertTrue('error' not in repl_states)
+        self.assertNotIn('error', repl_states)
 
 if __name__ == '__main__':
     unittest.main()

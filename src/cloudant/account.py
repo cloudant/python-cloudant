@@ -22,7 +22,7 @@ import posixpath
 import sys
 import requests
 
-from ._py2to3 import bytes_
+from ._2to3 import bytes_, str_
 from .database import CloudantDatabase, CouchDatabase
 from .changes import Feed
 from .errors import CloudantException
@@ -143,7 +143,7 @@ class CouchDB(dict):
             username=self._cloudant_user,
             password=self._cloudant_token
         )))
-        return "Basic {0}".format(hash_)
+        return "Basic {0}".format(str_(hash_))
 
     def all_dbs(self):
         """

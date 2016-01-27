@@ -20,7 +20,7 @@ import posixpath
 import json
 import contextlib
 
-from ._py2to3 import NONETYPE, STRTYPE, iteritems_
+from ._2to3 import NONETYPE, STRTYPE, iteritems_
 from .result import QueryResult
 from .errors import CloudantArgumentError
 

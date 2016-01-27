@@ -19,7 +19,7 @@ API module for managing/viewing query indexes.
 import posixpath
 import json
 
-from ._py2to3 import STRTYPE, iteritems_
+from ._2to3 import STRTYPE, iteritems_
 from .index_constants import JSON_INDEX_TYPE
 from .index_constants import TEXT_INDEX_TYPE
 from .index_constants import SPECIAL_INDEX_TYPE

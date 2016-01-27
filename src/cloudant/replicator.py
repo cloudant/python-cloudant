@@ -18,7 +18,7 @@ API module/class for handling database replications
 
 import uuid
 
-from ._py2to3 import unicode_
+from ._2to3 import unicode_
 from .errors import CloudantException
 from .document import Document
 
@@ -163,14 +163,11 @@ class Replicator(object):
             Retrieves the replication state.
             """
             try:
-                repl_doc = self.database[repl_id]
-                repl_doc.fetch()
-                state = repl_doc.get('_replication_state')
+                arepl_doc = self.database[repl_id]
+                arepl_doc.fetch()
+                return arepl_doc, arepl_doc.get('_replication_state')
             except KeyError:
-                repl_doc = None
-                state = None
-
-            return repl_doc, state
+                return None, None
 
         while True:
             # Make sure we fetch the state up front, just in case it moves

@@ -19,7 +19,7 @@ changes-like feeds.
 
 import json
 
-from ._py2to3 import next_
+from ._2to3 import next_, str_
 
 class Feed(object):
     """
@@ -96,7 +96,7 @@ class Feed(object):
         if len(line.strip()) == 0:
             return {}
         try:
-            data = json.loads(line)
+            data = json.loads(str_(line))
         except ValueError:
             data = {"error": "Bad JSON line", "line": line}
 

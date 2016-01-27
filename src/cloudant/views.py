@@ -18,7 +18,7 @@ API module for interacting with a view in a design document.
 import contextlib
 import posixpath
 
-from ._py2to3 import STRTYPE
+from ._2to3 import STRTYPE
 from .result import Result, python_to_couch
 from .errors import CloudantArgumentError, CloudantException
 

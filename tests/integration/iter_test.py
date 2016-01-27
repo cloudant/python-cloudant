@@ -25,7 +25,7 @@ import uuid
 from cloudant import cloudant
 from cloudant.credentials import read_dot_cloudant
 
-from .. import _unicode
+from .. import unicode_
 
 
 class IterTest(unittest.TestCase):
@@ -53,7 +53,7 @@ class IterTest(unittest.TestCase):
         chunk.
 
         """
-        dbname = "cloudant-itertest-twodocs-{0}".format(_unicode(uuid.uuid4()))
+        dbname = "cloudant-itertest-twodocs-{0}".format(unicode_(uuid.uuid4()))
         self.last_db = dbname
 
         with cloudant(self.user, self.password, account=self.user) as c:
@@ -82,7 +82,7 @@ class IterTest(unittest.TestCase):
         Test to make sure that we can iterator through stuff
 
         """
-        dbname = "cloudant-itertest-manydocs-{0}".format(_unicode(uuid.uuid4()))
+        dbname = "cloudant-itertest-manydocs-{0}".format(unicode_(uuid.uuid4()))
         self.last_db = dbname
 
         with cloudant(self.user, self.password, account=self.user) as c:

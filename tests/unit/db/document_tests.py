@@ -518,7 +518,7 @@ class DocumentTests(UnitTestDbBase):
             expected.fetch()
             # Test retrieving an attachment
             self.assertEqual(
-                doc.get_attachment('attachment.txt',attachment_type='text'),
+                doc.get_attachment('attachment.txt', attachment_type='text'),
                 attachment.getvalue()
             )
             # Test update an attachment
@@ -549,7 +549,7 @@ class DocumentTests(UnitTestDbBase):
             self.assertTrue(updated_size > orig_size)
             self.assertEqual(updated_size, len(attachment.getvalue()))
             self.assertEqual(
-                doc.get_attachment('attachment.txt',attachment_type='text'),
+                doc.get_attachment('attachment.txt', attachment_type='text'),
                 attachment.getvalue()
             )
             # Confirm that the local document dictionary matches 
