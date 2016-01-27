@@ -18,11 +18,13 @@ to allow users to pass credentials.
 """
 import os
 
-# pylint: disable=wrong-import-position
-from . import _PY2
-if _PY2:
+# pylint: disable=wrong-import-order
+from ._py2to3 import PY2
+if PY2:
+    # pylint: disable=wrong-import-order
     from ConfigParser import RawConfigParser
 else:
+    # pylint: disable=wrong-import-order, import-error
     from configparser import RawConfigParser
 
 

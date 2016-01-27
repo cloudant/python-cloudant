@@ -21,17 +21,23 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
+from __future__ import absolute_import
 
 import unittest
 import posixpath
 import json
 import requests
-import StringIO
+
+from ... import PY2
+if PY2:
+    from StringIO import StringIO
+else:
+    from io import StringIO
 
 from cloudant.document import Document
 from cloudant.errors import CloudantException
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
 
 class DocumentTests(UnitTestDbBase):
     """
@@ -190,7 +196,7 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.create()
             self.fail('Above statement should raise an Exception')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 409)
 
     def test_fetch_document_without_docid(self):
@@ -201,7 +207,7 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.fetch()
             self.fail('Above statement should raise an Exception')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err),
                 'A document id is required to fetch document contents.  '
@@ -216,7 +222,7 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.fetch()
             self.fail('Above statement should raise an Exception')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 404)
 
     def test_fetch_existing_document_with_docid(self):
@@ -321,7 +327,7 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.list_field_append(doc, 'name', 'isabel')
             self.fail('Above statement should raise an Exception')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(str(err), 'The field name is not a list.')
         self.assertEqual(doc, {'name': 'julia'})
 
@@ -347,7 +353,7 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.list_field_remove(doc, 'name', 'julia')
             self.fail('Above statement should raise an Exception')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(str(err), 'The field name is not a list.')
         self.assertEqual(doc, {'name': 'julia'})
 
@@ -394,7 +400,7 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.delete()
             self.fail('Above statement should raise an Exception')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err), 
                 'Attempting to delete a doc with no _rev. '
@@ -441,7 +447,7 @@ class DocumentTests(UnitTestDbBase):
         self.assertTrue(new_doc.exists())
         del new_doc
         with Document(self.db, 'julia006') as doc:
-            self.assertTrue(all(x in doc.keys() for x in ['_id', '_rev']))
+            self.assertTrue(all(x in list(doc.keys()) for x in ['_id', '_rev']))
             self.assertTrue(doc['_rev'].startswith('1-'))
             doc['name'] = 'julia'
             doc['age'] = 6
@@ -476,7 +482,7 @@ class DocumentTests(UnitTestDbBase):
         doc = self.db.create_document(
             {'_id': 'julia006', 'name': 'julia', 'age': 6}
         )
-        attachment = StringIO.StringIO()
+        attachment = StringIO()
         try:
             attachment.write('This is line one of the attachment.\n')
             attachment.write('This is line two of the attachment.\n')
@@ -491,7 +497,7 @@ class DocumentTests(UnitTestDbBase):
             self.assertTrue(resp['rev'].startswith('2-'))
             self.assertEqual(doc['_rev'], resp['rev'])
             self.assertTrue(
-                all(x in doc.keys() for x in [
+                all(x in list(doc.keys()) for x in [
                     '_id',
                     '_rev',
                     'name',
@@ -500,7 +506,7 @@ class DocumentTests(UnitTestDbBase):
                 ])
             )
             self.assertTrue(
-                all(x in doc['_attachments'].keys() for x in [
+                all(x in list(doc['_attachments'].keys()) for x in [
                     'attachment.txt'
                 ])
             )
@@ -526,7 +532,7 @@ class DocumentTests(UnitTestDbBase):
             self.assertTrue(resp['rev'].startswith('3-'))
             self.assertEqual(doc['_rev'], resp['rev'])
             self.assertTrue(
-                all(x in doc.keys() for x in [
+                all(x in list(doc.keys()) for x in [
                     '_id',
                     '_rev',
                     'name',
@@ -535,7 +541,7 @@ class DocumentTests(UnitTestDbBase):
                 ])
             )
             self.assertTrue(
-                all(x in doc['_attachments'].keys() for x in [
+                all(x in list(doc['_attachments'].keys()) for x in [
                     'attachment.txt'
                 ])
             )
@@ -565,7 +571,7 @@ class DocumentTests(UnitTestDbBase):
             self.assertTrue(resp['rev'].startswith('5-'))
             self.assertEqual(doc['_rev'], resp['rev'])
             self.assertTrue(
-                all(x in doc.keys() for x in [
+                all(x in list(doc.keys()) for x in [
                     '_id',
                     '_rev',
                     'name',
@@ -585,7 +591,7 @@ class DocumentTests(UnitTestDbBase):
             self.assertTrue(resp['rev'].startswith('6-'))
             self.assertEqual(doc['_rev'], resp['rev'])
             self.assertTrue(
-                all(x in doc.keys() for x in [
+                all(x in list(doc.keys()) for x in [
                     '_id',
                     '_rev',
                     'name',

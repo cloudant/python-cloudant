@@ -21,6 +21,7 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
+from __future__ import absolute_import
 
 import unittest
 
@@ -29,7 +30,7 @@ from cloudant.design_document import DesignDocument
 from cloudant.views import View, QueryIndexView
 from cloudant.errors import CloudantArgumentError, CloudantException
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
 
 class DesignDocumentTests(UnitTestDbBase):
     """
@@ -139,7 +140,7 @@ class DesignDocumentTests(UnitTestDbBase):
             'view001',
             'function (doc) {\n  emit(doc._id, 1);\n}'
         )
-        self.assertEqual(ddoc.get('views').keys(), ['view001'])
+        self.assertListEqual(list(ddoc.get('views').keys()), ['view001'])
         self.assertIsInstance(ddoc.get('views')['view001'], View)
         self.assertEqual(
             ddoc.get('views')['view001'],
@@ -158,7 +159,7 @@ class DesignDocumentTests(UnitTestDbBase):
         try:
             ddoc.add_view('view001', 'function (doc) {\n  emit(doc._id, 2);\n}')
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'View view001 already exists in this design doc'
@@ -210,7 +211,7 @@ class DesignDocumentTests(UnitTestDbBase):
                 'function (doc) {\n  emit(doc._id, 1);\n}'
             )
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'View view001 does not exist in this design doc'
@@ -583,7 +584,7 @@ class DesignDocumentTests(UnitTestDbBase):
         try:
             ddoc.info()
             self.fail('Above statement should raise an Exception')
-        except NotImplementedError, err:
+        except NotImplementedError as err:
             self.assertEqual(str(err), '_info not yet implemented')
 
 if __name__ == '__main__':

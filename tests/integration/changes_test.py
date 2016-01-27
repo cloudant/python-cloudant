@@ -27,6 +27,9 @@ import uuid
 from cloudant import cloudant
 from cloudant.credentials import read_dot_cloudant
 
+from .. import _unicode
+
+
 def setup_logging():
     log = logging.getLogger()
     log.setLevel(logging.DEBUG)
@@ -65,7 +68,7 @@ class ChangesTest(unittest.TestCase):
         creating new docs while reading from the _changes feed.
 
         """
-        dbname = "cloudant-changes-test-{0}".format(unicode(uuid.uuid4()))
+        dbname = "cloudant-changes-test-{0}".format(_unicode(uuid.uuid4()))
         self.last_db = dbname
 
         with cloudant(self.user, self.password, account=self.user) as c:
@@ -84,7 +87,7 @@ class ChangesTest(unittest.TestCase):
             doc = make_doc(n)
 
             for change in db.changes():
-                LOG.debug(unicode(change))
+                LOG.debug(_unicode(change))
                 if change is not None:
                     self.assertEqual(change['id'], doc['_id'])
                     n += 1
@@ -103,7 +106,7 @@ class ChangesTest(unittest.TestCase):
 
         """
         dbname = "cloudant-changes-test-with-docs{0}".format(
-            unicode(uuid.uuid4()))
+            _unicode(uuid.uuid4()))
         self.last_db = dbname
 
         with cloudant(self.user, self.password, account=self.user) as c:
@@ -122,7 +125,7 @@ class ChangesTest(unittest.TestCase):
             doc = make_doc(n)
 
             for change in db.changes(include_docs=True):
-                LOG.debug(unicode(change))
+                LOG.debug(_unicode(change))
                 if change is not None:
                     self.assertEqual(change['id'], doc['_id'])
                     self.assertEqual(

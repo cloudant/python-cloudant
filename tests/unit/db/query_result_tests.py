@@ -19,17 +19,17 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
+from __future__ import absolute_import
 
 import unittest
 import os
-import posixpath
 import requests
 
 from cloudant.query import Query
 from cloudant.result import QueryResult
 from cloudant.errors import CloudantArgumentError
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
@@ -90,7 +90,7 @@ class QueryResultTests(UnitTestDbBase):
         try:
             docs = result[:]
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'Cannot use skip parameter with QueryResult slicing.'
@@ -110,7 +110,7 @@ class QueryResultTests(UnitTestDbBase):
         try:
             docs = result[:]
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'Cannot use limit parameter with QueryResult slicing.'
@@ -208,7 +208,7 @@ class QueryResultTests(UnitTestDbBase):
         try:
             docs = result[10:5]
             self.fail('Above statement should raise an Exception')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 400)
 
     def test_key_access_is_not_supported(self):
@@ -224,7 +224,7 @@ class QueryResultTests(UnitTestDbBase):
         try:
             docs = result['julia006']
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'Failed to interpret the argument julia006 as an element slice.'
@@ -246,7 +246,7 @@ class QueryResultTests(UnitTestDbBase):
         try:
             docs = result['julia006': 'julia010']
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'Failed to interpret the argument '
@@ -269,7 +269,7 @@ class QueryResultTests(UnitTestDbBase):
         try:
             for doc in result:
                 self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'Cannot use skip for iteration'
@@ -289,7 +289,7 @@ class QueryResultTests(UnitTestDbBase):
         try:
             for doc in result:
                 self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'Cannot use limit for iteration'
@@ -309,7 +309,7 @@ class QueryResultTests(UnitTestDbBase):
         try:
             for doc in result:
                 self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(str(err), 'Invalid page_size: 0')
 
     def test_iteration_result_eq_page_size(self):

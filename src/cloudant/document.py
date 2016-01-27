@@ -20,13 +20,17 @@ import posixpath
 import requests
 from requests.exceptions import HTTPError
 
-from . import _PY2
-if _PY2:
+# pylint: disable=wrong-import-order
+from ._py2to3 import PY2
+if PY2:
+    # pylint: disable=wrong-import-order,no-name-in-module
     from urllib import quote, quote_plus
 else:
+    # pylint: disable=wrong-import-order,no-name-in-module,import-error
     from urllib.parse import quote, quote_plus
 
 from .errors import CloudantException
+
 
 class Document(dict):
     """

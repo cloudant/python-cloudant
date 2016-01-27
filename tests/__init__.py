@@ -18,3 +18,12 @@ _tests_
 Test coverage for package
 
 """
+import sys
+
+PY2 = sys.version_info[0] < 3
+
+def _unicode(s):
+    return unicode(s) if PY2 else s
+
+def _iteritems(d):
+    return d.iteritems() if PY2 else d.items()

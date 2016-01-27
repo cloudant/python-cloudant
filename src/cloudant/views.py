@@ -18,7 +18,7 @@ API module for interacting with a view in a design document.
 import contextlib
 import posixpath
 
-from . import _STRTYPE
+from ._py2to3 import STRTYPE
 from .result import Result, python_to_couch
 from .errors import CloudantArgumentError, CloudantException
 
@@ -28,8 +28,8 @@ class Code(str):
     Javascript blob content.  Used internally by the View object when
     codifying map and reduce Javascript content.
     """
-    def __init__(self, code):
-        super(Code, self).__init__(code)
+    def __new__(cls, code):
+        return str.__new__(cls, code)
 
 def _codify(code_or_str):
     """
@@ -347,7 +347,7 @@ class QueryIndexView(View):
     def __init__(self, ddoc, view_name, map_fields, reduce_func, **kwargs):
         if not isinstance(map_fields, dict):
             raise CloudantArgumentError('The map property must be a dictionary')
-        if not isinstance(reduce_func, _STRTYPE):
+        if not isinstance(reduce_func, STRTYPE):
             raise CloudantArgumentError('The reduce property must be a string.')
         super(QueryIndexView, self).__init__(
             ddoc,
@@ -398,7 +398,7 @@ class QueryIndexView(View):
         """
         Provides a reduce property setter.
         """
-        if isinstance(reduce_func, _STRTYPE):
+        if isinstance(reduce_func, STRTYPE):
             self['reduce'] = reduce_func
         else:
             raise CloudantArgumentError('The reduce property must be a string')

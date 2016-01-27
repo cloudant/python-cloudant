@@ -25,6 +25,9 @@ import uuid
 from cloudant import cloudant
 from cloudant.credentials import read_dot_cloudant
 
+from .. import _unicode
+
+
 class IterTest(unittest.TestCase):
     """
     Verify that our database iterator works, and does the caching that
@@ -32,7 +35,6 @@ class IterTest(unittest.TestCase):
 
     """
 
-    @classmethod
     def setUp(self):
         self.user, self.password = read_dot_cloudant(filename="~/.clou")
         self.last_db = None
@@ -51,7 +53,7 @@ class IterTest(unittest.TestCase):
         chunk.
 
         """
-        dbname = "cloudant-itertest-twodocs-{0}".format(unicode(uuid.uuid4()))
+        dbname = "cloudant-itertest-twodocs-{0}".format(_unicode(uuid.uuid4()))
         self.last_db = dbname
 
         with cloudant(self.user, self.password, account=self.user) as c:
@@ -80,7 +82,7 @@ class IterTest(unittest.TestCase):
         Test to make sure that we can iterator through stuff
 
         """
-        dbname = "cloudant-itertest-manydocs-{0}".format(unicode(uuid.uuid4()))
+        dbname = "cloudant-itertest-manydocs-{0}".format(_unicode(uuid.uuid4()))
         self.last_db = dbname
 
         with cloudant(self.user, self.password, account=self.user) as c:
@@ -98,10 +100,10 @@ class IterTest(unittest.TestCase):
             for doc in db:
                 docs.append(doc)
 
-            self.assertTrue(len(docs) == 300)
+            self.assertEqual(len(docs), 300)
 
             unique_ids = set([doc['id'] for doc in docs])
-            self.assertTrue(len(unique_ids) == 300)
+            self.assertEqual(len(unique_ids), 300)
 
 if __name__ == '__main__':
     unittest.main()

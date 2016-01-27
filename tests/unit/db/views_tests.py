@@ -21,6 +21,7 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
+from __future__ import absolute_import
 
 import unittest
 import mock
@@ -34,7 +35,8 @@ from cloudant.views import Code
 from cloudant.result import Result
 from cloudant.errors import CloudantArgumentError, CloudantException
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
+
 
 class CodeTests(unittest.TestCase):
     """
@@ -49,6 +51,7 @@ class CodeTests(unittest.TestCase):
         code = Code('this is code.')
         self.assertIsInstance(code, Code)
         self.assertEqual(code, 'this is code.')
+
 
 class ViewTests(UnitTestDbBase):
     """
@@ -211,14 +214,14 @@ class ViewTests(UnitTestDbBase):
         )
         self.assertIsInstance(view, View)
         try:
-            for row in view.result:
+            for _ in view.result:
                 self.fail('Above statement should raise an Exception')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 404)
 
     @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is None,
-    'Only execute as part of CouchDB tests')
+            'Only execute as part of CouchDB tests')
     def test_view_callable_with_invalid_javascript(self):
         """
         Test error condition when Javascript errors exist.  This test is only
@@ -241,9 +244,9 @@ class ViewTests(UnitTestDbBase):
         view = ddoc.get_view('view001')
         self.assertEqual(view.map, 'This is not valid Javascript')
         try:
-            for row in view.result:
+            for _ in view.result:
                 self.fail('Above statement should raise an Exception')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 500)
 
     def test_make_result(self):
@@ -284,6 +287,7 @@ class ViewTests(UnitTestDbBase):
                 i += 1
             self.assertEqual(i, 100)
 
+
 class QueryIndexViewTests(unittest.TestCase):
     """
     QueryIndexView class unit tests.  These tests use a mocked DesignDocument
@@ -304,7 +308,7 @@ class QueryIndexViewTests(unittest.TestCase):
             'view001',
             {'fields': {'name': 'asc', 'age': 'asc'}},
             '_count',
-            options = {'def': {'fields': ['name', 'age']}, 'w': 2}
+            options={'def': {'fields': ['name', 'age']}, 'w': 2}
         )
 
     def test_constructor(self):
@@ -349,7 +353,7 @@ class QueryIndexViewTests(unittest.TestCase):
         try:
             self.view.map = 'function (doc) {\n  emit(doc._id, 1);\n}'
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'The map property must be a dictionary'

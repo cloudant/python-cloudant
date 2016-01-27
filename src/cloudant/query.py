@@ -20,19 +20,19 @@ import posixpath
 import json
 import contextlib
 
-from . import _NONETYPE, _STRTYPE, _iteritems
+from ._py2to3 import NONETYPE, STRTYPE, iteritems_
 from .result import QueryResult
 from .errors import CloudantArgumentError
 
 ARG_TYPES = {
     'selector': dict,
-    'limit': (int, _NONETYPE),
-    'skip': (int, _NONETYPE),
+    'limit': (int, NONETYPE),
+    'skip': (int, NONETYPE),
     'sort': list,
     'fields': list,
-    'r': (int, _NONETYPE),
-    'bookmark': _STRTYPE,
-    'use_index': _STRTYPE
+    'r': (int, NONETYPE),
+    'bookmark': STRTYPE,
+    'use_index': STRTYPE
 }
 
 class Query(dict):
@@ -167,7 +167,7 @@ class Query(dict):
         data.update(kwargs)
 
         # Validate query arguments and values
-        for key, val in _iteritems(data):
+        for key, val in iteritems_(data):
             if key not in list(ARG_TYPES.keys()):
                 msg = 'Invalid argument: {0}'.format(key)
                 raise CloudantArgumentError(msg)
