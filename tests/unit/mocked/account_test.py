@@ -182,7 +182,7 @@ class CouchDBAccountTests(unittest.TestCase):
         c.connect()
         c.all_dbs = mock.Mock()
         c.all_dbs.return_value = ['db1', 'db2']
-        self.assertEqual(c.keys(), [])
+        self.assertListEqual(list(c.keys()), [])
         self.assertEqual(c.keys(remote=True), c.all_dbs.return_value)
 
     def test_getitem(self):

@@ -18,12 +18,16 @@ API module that maps to a Cloudant or CouchDB database instance.
 import json
 import contextlib
 import posixpath
+
 from requests.exceptions import HTTPError
 
-from . import _PY2
-if _PY2:
+# pylint: disable=wrong-import-order
+from ._py2to3 import PY2
+if PY2:
+    # pylint: disable=wrong-import-order,no-name-in-module
     from urllib import quote_plus
 else:
+    # pylint: disable=wrong-import-order,no-name-in-module,import-error
     from urllib.parse import quote_plus
 
 from .document import Document
@@ -451,6 +455,7 @@ class CouchDatabase(dict):
         :param str since: Change streaming starts from this sequence identifier.
         :param bool continuous: Dictates the streaming of data.
             Defaults to True.
+        :param bool include_docs:
 
         :returns: Iterable stream of changes
         """
@@ -542,7 +547,6 @@ class CouchDatabase(dict):
                 for doc in docs:
                     # Wrap the doc dictionary as the appropriate
                     # document object before yielding it.
-                    document = {}
                     if doc['id'].startswith('_design/'):
                         document = DesignDocument(self, doc['id'])
                     else:
@@ -568,11 +572,7 @@ class CouchDatabase(dict):
         url = posixpath.join(self.database_url, '_bulk_docs')
         data = {'docs': docs}
         headers = {'Content-Type': 'application/json'}
-        resp = self.r_session.post(
-            url,
-            data=json.dumps(data),
-            headers=headers
-        )
+        resp = self.r_session.post(url, data=json.dumps(data), headers=headers)
         resp.raise_for_status()
         return resp.json()
 
@@ -591,11 +591,8 @@ class CouchDatabase(dict):
         url = posixpath.join(self.database_url, '_missing_revs')
         data = {doc_id: list(revisions)}
 
-        resp = self.r_session.post(
-            url,
-            headers={'Content-Type': 'application/json'},
-            data=json.dumps(data)
-        )
+        resp = self.r_session.post(url, headers={'Content-Type': 'application/json'},
+                                   data=json.dumps(data))
         resp.raise_for_status()
 
         resp_json = resp.json()
@@ -620,11 +617,8 @@ class CouchDatabase(dict):
         url = posixpath.join(self.database_url, '_revs_diff')
         data = {doc_id: list(revisions)}
 
-        resp = self.r_session.post(
-            url,
-            headers={'Content-Type': 'application/json'},
-            data=json.dumps(data)
-        )
+        resp = self.r_session.post(url, headers={'Content-Type': 'application/json'},
+                                   data=json.dumps(data))
         resp.raise_for_status()
 
         return resp.json()
@@ -675,10 +669,7 @@ class CouchDatabase(dict):
         :returns: View cleanup status in JSON format
         """
         url = posixpath.join(self.database_url, '_view_cleanup')
-        resp = self.r_session.post(
-            url,
-            headers={'Content-Type': 'application/json'}
-        )
+        resp = self.r_session.post(url, headers={'Content-Type': 'application/json'})
         resp.raise_for_status()
 
         return resp.json()
@@ -699,7 +690,7 @@ class CloudantDatabase(CouchDatabase):
         super(CloudantDatabase, self).__init__(
             client,
             database_name,
-            fetch_limit=100
+            fetch_limit=fetch_limit
         )
 
     def security_document(self):
@@ -886,7 +877,6 @@ class CloudantDatabase(CouchDatabase):
         :returns: An Index object representing the index created in the
             remote database
         """
-        index = None
         if index_type == JSON_INDEX_TYPE:
             index = Index(self, design_document_id, index_name, **kwargs)
         elif index_type == TEXT_INDEX_TYPE:
@@ -911,7 +901,6 @@ class CloudantDatabase(CouchDatabase):
             be either 'text' or 'json'.
         :param str index_name: The index name of the index to be deleted.
         """
-        index = None
         if index_type == JSON_INDEX_TYPE:
             index = Index(self, design_document_id, index_name)
         elif index_type == TEXT_INDEX_TYPE:

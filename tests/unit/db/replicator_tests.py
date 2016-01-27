@@ -21,6 +21,7 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
+from __future__ import absolute_import
 
 import unittest
 import uuid
@@ -31,7 +32,9 @@ from cloudant.replicator import Replicator
 from cloudant.document import Document
 from cloudant.errors import CloudantException
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
+from ... import _unicode
+
 
 class ReplicatorTests(UnitTestDbBase):
     """
@@ -87,7 +90,7 @@ class ReplicatorTests(UnitTestDbBase):
             self.client.disconnect()
             repl = Replicator(self.client)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err),
                 'Unable to acquire _replicator database.  '
@@ -103,7 +106,7 @@ class ReplicatorTests(UnitTestDbBase):
         replication is successful.
         """
         self.populate_db_with_documents(3)
-        repl_id = 'test-repl-{}'.format(unicode(uuid.uuid4()))
+        repl_id = 'test-repl-{}'.format(_unicode(uuid.uuid4()))
 
         repl_doc = self.replicator.create_replication(
             self.db,
@@ -113,7 +116,7 @@ class ReplicatorTests(UnitTestDbBase):
         self.replication_ids.append(repl_id)
         # Test that the replication document was created
         expected_keys = ['_id', '_rev', 'source', 'target', 'user_ctx']
-        self.assertTrue(all(x in repl_doc.keys() for x in expected_keys))
+        self.assertTrue(all(x in list(repl_doc.keys()) for x in expected_keys))
         self.assertEqual(repl_doc['_id'], repl_id)
         self.assertTrue(repl_doc['_rev'].startswith('1-'))
         # Now that we know that the replication document was created,
@@ -147,7 +150,7 @@ class ReplicatorTests(UnitTestDbBase):
         try:
             repl_doc = self.replicator.create_replication()
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err),
                 'You must specify either a source_db Database '
@@ -162,7 +165,7 @@ class ReplicatorTests(UnitTestDbBase):
         try:
             repl_doc = self.replicator.create_replication(self.db)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err),
                 'You must specify either a target_db Database '
@@ -175,8 +178,8 @@ class ReplicatorTests(UnitTestDbBase):
         """
         self.populate_db_with_documents(3)
         repl_ids = ['test-repl-{}'.format(
-            unicode(uuid.uuid4())
-        ) for _ in xrange(3)]
+            _unicode(uuid.uuid4())
+        ) for _ in range(3)]
         repl_docs = [self.replicator.create_replication(
             self.db,
             self.target_db,
@@ -193,7 +196,7 @@ class ReplicatorTests(UnitTestDbBase):
         Test that the replication state can be retrieved for a replication
         """
         self.populate_db_with_documents(3)
-        repl_id = "test-repl-{}".format(unicode(uuid.uuid4()))
+        repl_id = "test-repl-{}".format(_unicode(uuid.uuid4()))
         repl_doc = self.replicator.create_replication(
             self.db,
             self.target_db,
@@ -203,7 +206,7 @@ class ReplicatorTests(UnitTestDbBase):
         repl_state = None
         valid_states = ['completed', 'error', 'triggered', None]
         finished = False
-        for _ in xrange(300):
+        for _ in range(300):
             repl_state = self.replicator.replication_state(repl_id)
             self.assertTrue(repl_state in valid_states)
             if repl_state in ('error', 'completed'):
@@ -217,12 +220,12 @@ class ReplicatorTests(UnitTestDbBase):
         Test that replication_state(...) raises an exception as expected
         when an invalid replication id is provided.
         """
-        repl_id = 'fake-repl-id-{}'.format(unicode(uuid.uuid4()))
+        repl_id = 'fake-repl-id-{}'.format(_unicode(uuid.uuid4()))
         repl_state = None
         try:
             self.replicator.replication_state(repl_id)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err),
                 'Replication {} not found'.format(repl_id)
@@ -234,7 +237,7 @@ class ReplicatorTests(UnitTestDbBase):
         Test that a replication can be stopped.
         """
         self.populate_db_with_documents(3)
-        repl_id = "test-repl-{}".format(unicode(uuid.uuid4()))
+        repl_id = "test-repl-{}".format(_unicode(uuid.uuid4()))
         repl_doc = self.replicator.create_replication(
             self.db,
             self.target_db,
@@ -246,7 +249,7 @@ class ReplicatorTests(UnitTestDbBase):
             # and the replication document has been removed from the db.
             repl_doc.fetch()
             self.fail('Above statement should raise a CloudantException')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 404)
 
     def test_stop_replication_using_invalid_id(self):
@@ -254,11 +257,11 @@ class ReplicatorTests(UnitTestDbBase):
         Test that stop_replication(...) raises an exception as expected
         when an invalid replication id is provided.
         """
-        repl_id = 'fake-repl-id-{}'.format(unicode(uuid.uuid4()))
+        repl_id = 'fake-repl-id-{}'.format(_unicode(uuid.uuid4()))
         try:
             self.replicator.stop_replication(repl_id)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err),
                 'Could not find replication with id {}'.format(repl_id)
@@ -270,7 +273,7 @@ class ReplicatorTests(UnitTestDbBase):
         replication documents while the replication is executing.
         """
         self.populate_db_with_documents(3)
-        repl_id = "test-repl-{}".format(unicode(uuid.uuid4()))
+        repl_id = "test-repl-{}".format(_unicode(uuid.uuid4()))
         repl_doc = self.replicator.create_replication(
             self.db,
             self.target_db,

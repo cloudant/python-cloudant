@@ -36,25 +36,25 @@ class DesignDocTests(unittest.TestCase):
         mock_database = mock.Mock()
         ddoc = DesignDocument(mock_database, '_design/unittest')
         ddoc['views'] = {
-            'view1' : {'map': "MAP", 'reduce': 'REDUCE'}
+            'view1': {'map': "MAP", 'reduce': 'REDUCE'}
         }
         ddoc.fetch()
 
         self.assertTrue(mock_fetch.called)
-        views = [ x for x in ddoc.iterviews() ]
+        views = [x for x in ddoc.iterviews()]
         self.assertEqual(len(views), 1)
         view = views[0]
-        self.assertTrue('view1' in view)
+        self.assertIn('view1', view)
         funcs = view[1]
         self.assertEqual(funcs['map'], 'MAP')
         self.assertEqual(funcs['reduce'], 'REDUCE')
-        self.assertTrue('view1' in ddoc.views)
+        self.assertIn('view1', ddoc.views)
 
     def test_new_ddoc_add_view(self):
         mock_database = mock.Mock()
         ddoc = DesignDocument(mock_database, '_design/unittest')
         ddoc.add_view('view1', "MAP")
-        self.assertTrue('view1' in ddoc['views'])
+        self.assertIn('view1', ddoc['views'])
         self.assertEqual(ddoc['views']['view1'].map, 'MAP')
         self.assertEqual(ddoc['views']['view1'].reduce, None)
 
@@ -65,8 +65,8 @@ class DesignDocTests(unittest.TestCase):
            'view1': {'map': "MAP", 'reduce': 'REDUCE'}
         }
         ddoc.add_view('view2', "MAP2")
-        self.assertTrue('view1' in ddoc['views'])
-        self.assertTrue('view2' in ddoc['views'])
+        self.assertIn('view1', ddoc['views'])
+        self.assertIn('view2', ddoc['views'])
         self.assertEqual(ddoc['views']['view2'].map, 'MAP2')
         self.assertEqual(ddoc['views']['view2'].reduce, None)
 
@@ -85,12 +85,12 @@ class DesignDocTests(unittest.TestCase):
         ddoc = DesignDocument(mock_database, '_design/unittest')
         ddoc.add_view('view1', "MAP", "REDUCE")
         ddoc.add_view('view2', "MAP", "REDUCE")
-        self.assertTrue('view1' in ddoc['views'])
-        self.assertTrue('view2' in ddoc['views'])
+        self.assertIn('view1', ddoc['views'])
+        self.assertIn('view2', ddoc['views'])
         
         ddoc.delete_view('view2')
-        self.assertTrue('view1' in ddoc['views'])
-        self.assertTrue('view2' not in ddoc['views'])
+        self.assertIn('view1', ddoc['views'])
+        self.assertNotIn('view2', ddoc['views'])
         self.assertEqual(ddoc['views']['view1'].map, 'MAP')
         self.assertEqual(ddoc['views']['view1'].reduce, 'REDUCE')
 
@@ -101,7 +101,7 @@ class DesignDocTests(unittest.TestCase):
             'view1': {'map': "MAP", 'reduce': 'REDUCE'},
             'view2': {'map': "MAP", 'reduce': 'REDUCE'},
         }
-        self.assertEqual(ddoc.list_views(), ['view1', 'view2'])
+        self.assertListEqual(sorted(ddoc.list_views()), ['view1', 'view2'])
 
 
 if __name__ == '__main__':

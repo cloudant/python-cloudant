@@ -47,6 +47,7 @@ DB_URL: Optionally set this to override the construction of the database URL.
   example: export CLOUDANT_URL=https://account.cloudant.com
 
 """
+from __future__ import absolute_import
 
 import unittest
 import requests
@@ -55,13 +56,16 @@ import uuid
 
 from cloudant.account import CouchDB, Cloudant
 
+from ... import _unicode
+
+
 class UnitTestDbBase(unittest.TestCase):
     """
     The base class for all unit tests targeting a database
     """
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """
         If targeting CouchDB, Set up a CouchDB instance otherwise do nothing.
           
@@ -76,7 +80,7 @@ class UnitTestDbBase(unittest.TestCase):
             if os.environ.get('DB_USER') is None:
                 os.environ['DB_USER_CREATED'] = '1'
                 os.environ['DB_USER'] = 'unit-test-user-{0}'.format(
-                    unicode(uuid.uuid4())
+                    _unicode(uuid.uuid4())
                     )
                 os.environ['DB_PASSWORD'] = 'unit-test-password'
                 resp = requests.put(
@@ -89,7 +93,7 @@ class UnitTestDbBase(unittest.TestCase):
                 resp.raise_for_status()
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         """
         If necessary, clean up CouchDB instance once all tests are complete.
         """
@@ -113,24 +117,22 @@ class UnitTestDbBase(unittest.TestCase):
         Set up test attributes for unit tests targeting a database
         """
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
-        	self.user = os.environ['DB_USER']
-        	self.pwd = os.environ['DB_PASSWORD']
-        	self.url = os.environ['DB_URL']
-        	self.client = CouchDB(self.user, self.pwd, url=self.url)
+            self.user = os.environ['DB_USER']
+            self.pwd = os.environ['DB_PASSWORD']
+            self.url = os.environ['DB_URL']
+            self.client = CouchDB(self.user, self.pwd, url=self.url)
         else:
-        	self.account = os.environ.get('CLOUDANT_ACCOUNT')
-        	self.user = os.environ.get('DB_USER')
-        	self.pwd = os.environ.get('DB_PASSWORD')
-        	self.url = os.environ.get(
-        		'DB_URL',
-        		'https://{0}.cloudant.com'.format(self.account)
-        		)
-        	self.client = Cloudant(
-        		self.user,
-        		self.pwd,
-        		url=self.url,
-        		x_cloudant_user=self.account
-        		)
+            self.account = os.environ.get('CLOUDANT_ACCOUNT')
+            self.user = os.environ.get('DB_USER')
+            self.pwd = os.environ.get('DB_PASSWORD')
+            self.url = os.environ.get(
+                    'DB_URL',
+                    'https://{0}.cloudant.com'.format(self.account))
+            self.client = Cloudant(
+                    self.user,
+                    self.pwd,
+                    url=self.url,
+                    x_cloudant_user=self.account)
 
     def tearDown(self):
         """
@@ -157,11 +159,11 @@ class UnitTestDbBase(unittest.TestCase):
         del self.db
 
     def dbname(self, database_name='unit-test-db'):
-        return '{0}-{1}'.format(database_name, unicode(uuid.uuid4()))
+        return '{0}-{1}'.format(database_name, _unicode(uuid.uuid4()))
 
     def populate_db_with_documents(self, doc_count=100):
         docs = [
             {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
-            for i in xrange(doc_count)
+            for i in range(doc_count)
         ]
         return self.db.bulk_docs(docs)

@@ -21,6 +21,7 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
+from __future__ import absolute_import
 
 import unittest
 import requests
@@ -28,14 +29,15 @@ import posixpath
 import os
 import uuid
 
-from cloudant.database import CouchDatabase, CloudantDatabase
 from cloudant.result import Result, QueryResult
 from cloudant.errors import CloudantException, CloudantArgumentError
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
 from cloudant.indexes import Index, SearchIndex, SpecialIndex
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
+from ... import _unicode
+
 
 class DatabaseTests(UnitTestDbBase):
     """
@@ -104,7 +106,7 @@ class DatabaseTests(UnitTestDbBase):
             # No issue should arise if attempting to create existing database
             db_2 = db.create()
             self.assertEqual(db, db_2)
-        except Exception, err:
+        except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
         finally:
             db.delete()
@@ -118,7 +120,7 @@ class DatabaseTests(UnitTestDbBase):
             fake_db = self.client._DATABASE_CLASS(self.client, 'no-such-db')
             fake_db.delete()
             self.fail('Above statement should raise an Exception')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 404)
 
     def test_retrieve_db_metadata(self):
@@ -133,7 +135,7 @@ class DatabaseTests(UnitTestDbBase):
             )
         expected = resp.json()
         actual = self.db.metadata()
-        self.assertEqual(actual.keys(), expected.keys())
+        self.assertListEqual(list(actual.keys()), list(expected.keys()))
 
     def test_retrieve_document_count(self):
         """
@@ -156,7 +158,7 @@ class DatabaseTests(UnitTestDbBase):
         try:
             self.db.create_document(data, throw_on_exists=True)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err),
                 'Error - Document with id julia06 already exists.'
@@ -303,7 +305,7 @@ class DatabaseTests(UnitTestDbBase):
         """
         Test retrieving the document keys from the database
         """
-        self.assertEqual(self.db.keys(), [])
+        self.assertEqual(list(self.db.keys()), [])
         self.populate_db_with_documents(3)
         self.assertEqual(
             self.db.keys(remote=True),
@@ -315,7 +317,7 @@ class DatabaseTests(UnitTestDbBase):
         Test __getitem__ when retrieving a non-existing document
         """
         try:
-            doc = self.db['no_such_doc']
+            _ = self.db['no_such_doc']
             self.fail('Above statement should raise a KeyError')
         except KeyError:
             pass
@@ -371,7 +373,7 @@ class DatabaseTests(UnitTestDbBase):
         self.assertEqual(len(docs), 3)
         # Check that the local database object has been populated
         # with the appropriate documents
-        expected_keys = ['julia{0:03d}'.format(i) for i in xrange(3)]
+        expected_keys = ['julia{0:03d}'.format(i) for i in range(3)]
         self.assertTrue(all(x in self.db.keys()for x in expected_keys))
         for id in self.db.keys():
             doc = self.db.get(id)
@@ -404,7 +406,7 @@ class DatabaseTests(UnitTestDbBase):
         self.assertEqual(len(docs), 103)
         # Check that the local database object has been populated
         # with the appropriate documents
-        expected_keys = ['julia{0:03d}'.format(i) for i in xrange(103)]
+        expected_keys = ['julia{0:03d}'.format(i) for i in range(103)]
         self.assertTrue(all(x in self.db.keys()for x in expected_keys))
         for id in self.db.keys():
             doc = self.db.get(id)
@@ -412,7 +414,7 @@ class DatabaseTests(UnitTestDbBase):
             self.assertEqual(doc['_id'], id)
             self.assertTrue(doc['_rev'].startswith('1-'))
             self.assertEqual(doc['name'], 'julia')
-            self.assertEqual(doc['age'], int(id[len(id) - 3 : len(id)]))
+            self.assertEqual(doc['age'], int(id[len(id) - 3: len(id)]))
 
     def test_document_iteration_returns_valid_documents(self):
         """
@@ -444,7 +446,7 @@ class DatabaseTests(UnitTestDbBase):
             doc.delete()
 
         # Confirm successful deletions
-        for doc in self.db:
+        for _ in self.db:
             self.fail('All documents should have been deleted!!!')
 
         # Confirm that the correct number of Document (3) and DesignDocument (1)
@@ -455,7 +457,7 @@ class DatabaseTests(UnitTestDbBase):
     def test_bulk_docs_creation(self):
         docs = [
             {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
-            for i in xrange(3)
+            for i in range(3)
         ]
         results = self.db.bulk_docs(docs)
         self.assertEqual(len(results), 3)
@@ -612,13 +614,13 @@ class CloudantDatabaseTests(UnitTestDbBase):
 
     def test_get_security_document(self):
         self.assertEqual(self.db.security_document(), {})
-        share = 'unit-test-share-user-{0}'.format(unicode(uuid.uuid4()))
+        share = 'unit-test-share-user-{0}'.format(_unicode(uuid.uuid4()))
         self.db.share_database(share)
         expected = {'cloudant': {share: ['_reader']}}
         self.assertEqual(self.db.security_document(), expected)
 
     def test_share_unshare_database(self):
-        share = 'unit-test-share-user-{0}'.format(unicode(uuid.uuid4()))
+        share = 'unit-test-share-user-{0}'.format(_unicode(uuid.uuid4()))
         self.assertEqual(self.db.security_document(), {})
         self.assertEqual(self.db.share_database(share), {'ok': True})
         expected = {'cloudant': {share: ['_reader']}}
@@ -713,7 +715,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         )
         self.assertIsInstance(result, QueryResult)
         for doc in result:
-            doc_fields = doc.keys()
+            doc_fields = list(doc.keys())
             doc_fields.sort()
             self.assertEqual(doc_fields, expected_fields)
         self.assertEqual(
@@ -739,7 +741,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         )
         self.assertIsInstance(result, QueryResult)
         for doc in result:
-            doc_fields = doc.keys()
+            doc_fields = list(doc.keys())
             doc_fields.sort()
             self.assertEqual(doc_fields, expected_fields)
         self.assertEqual(

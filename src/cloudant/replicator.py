@@ -18,7 +18,7 @@ API module/class for handling database replications
 
 import uuid
 
-from . import _unicode
+from ._py2to3 import unicode_
 from .errors import CloudantException
 from .document import Document
 
@@ -70,7 +70,7 @@ class Replicator(object):
         """
 
         data = dict(
-            _id=repl_id if repl_id else _unicode(uuid.uuid4()),
+            _id=repl_id if repl_id else unicode_(uuid.uuid4()),
             **kwargs
         )
 

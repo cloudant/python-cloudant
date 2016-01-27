@@ -22,6 +22,7 @@ import posixpath
 import sys
 import requests
 
+from ._py2to3 import bytes_
 from .database import CloudantDatabase, CouchDatabase
 from .changes import Feed
 from .errors import CloudantException
@@ -138,10 +139,10 @@ class CouchDB(dict):
 
         :returns: Basic http authentication string
         """
-        hash_ = base64.urlsafe_b64encode("{username}:{password}".format(
+        hash_ = base64.urlsafe_b64encode(bytes_("{username}:{password}".format(
             username=self._cloudant_user,
             password=self._cloudant_token
-        ))
+        )))
         return "Basic {0}".format(hash_)
 
     def all_dbs(self):

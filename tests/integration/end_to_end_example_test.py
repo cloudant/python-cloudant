@@ -44,7 +44,7 @@ class E2ECouchTest(unittest.TestCase):
             db = c.create_database(self.dbname)
 
             try:
-                self.assertTrue(self.dbname in c)
+                self.assertIn(self.dbname, c)
                 self.assertTrue(db.exists())
 
                 # creating docs
@@ -53,21 +53,21 @@ class E2ECouchTest(unittest.TestCase):
                     "testing": "document2"})
                 doc3 = db.create_document({"testing": "document3"})
 
-                self.assertTrue('_id' in doc1)
-                self.assertTrue('_rev' in doc1)
-                self.assertTrue('_id' in doc2)
-                self.assertTrue('_rev' in doc2)
-                self.assertTrue('_id' in doc3)
-                self.assertTrue('_rev' in doc3)
+                self.assertIn('_id', doc1)
+                self.assertIn('_rev', doc1)
+                self.assertIn('_id', doc2)
+                self.assertIn('_rev', doc2)
+                self.assertIn('_id', doc3)
+                self.assertIn('_rev', doc3)
 
                 # verifying access via dict api
-                self.assertTrue(doc1['_id'] in db)
-                self.assertTrue(doc2['_id'] in db)
-                self.assertTrue(doc3['_id'] in db)
+                self.assertIn(doc1['_id'], db)
+                self.assertIn(doc2['_id'], db)
+                self.assertIn(doc3['_id'], db)
 
-                self.assertTrue(db[doc1['_id']] == doc1)
-                self.assertTrue(db[doc2['_id']] == doc2)
-                self.assertTrue(db[doc3['_id']] == doc3)
+                self.assertEqual(db[doc1['_id']], doc1)
+                self.assertEqual(db[doc2['_id']], doc2)
+                self.assertEqual(db[doc3['_id']], doc3)
                 # test working context for updating docs
                 with doc2 as working_doc:
                     working_doc['field1'] = [1, 2, 3]
@@ -106,7 +106,7 @@ class E2ECloudantTest(unittest.TestCase):
 
             try:
 
-                self.assertTrue(self.dbname in c)
+                self.assertIn(self.dbname, c)
                 self.assertTrue(db.exists())
 
                 # creating docs
@@ -115,21 +115,21 @@ class E2ECloudantTest(unittest.TestCase):
                     "testing": "document2"})
                 doc3 = db.create_document({"testing": "document3"})
 
-                self.assertTrue('_id' in doc1)
-                self.assertTrue('_rev' in doc1)
-                self.assertTrue('_id' in doc2)
-                self.assertTrue('_rev' in doc2)
-                self.assertTrue('_id' in doc3)
-                self.assertTrue('_rev' in doc3)
+                self.assertIn('_id', doc1)
+                self.assertIn('_rev', doc1)
+                self.assertIn('_id', doc2)
+                self.assertIn('_rev', doc2)
+                self.assertIn('_id', doc3)
+                self.assertIn('_rev', doc3)
 
                 # verifying access via dict api
-                self.assertTrue(doc1['_id'] in db)
-                self.assertTrue(doc2['_id'] in db)
-                self.assertTrue(doc3['_id'] in db)
+                self.assertIn(doc1['_id'], db)
+                self.assertIn(doc2['_id'], db)
+                self.assertIn(doc3['_id'], db)
 
-                self.assertTrue(db[doc1['_id']] == doc1)
-                self.assertTrue(db[doc2['_id']] == doc2)
-                self.assertTrue(db[doc3['_id']] == doc3)
+                self.assertEqual(db[doc1['_id']], doc1)
+                self.assertEqual(db[doc2['_id']], doc2)
+                self.assertEqual(db[doc3['_id']], doc3)
 
                 # test working context for updating docs
                 with doc2 as working_doc:

@@ -18,6 +18,7 @@ _document_test_
 document module unit tests
 
 """
+from __future__ import absolute_import
 
 import mock
 import requests
@@ -26,6 +27,8 @@ import json
 
 from cloudant.errors import CloudantException
 from cloudant.document import Document
+
+from ... import _iteritems
 
 
 class DocumentTest(unittest.TestCase):
@@ -200,7 +203,7 @@ class DocumentTest(unittest.TestCase):
         self.assertTrue(mock_encode.encode.called)
         payload = mock_encode.encode.call_args[0][0]
 
-        for k, v in payload.iteritems():
+        for k, v in _iteritems(payload):
             self.assertTrue(k in doc)
             self.assertEqual(doc[k], v)
 
