@@ -56,7 +56,7 @@ import uuid
 
 from cloudant.account import CouchDB, Cloudant
 
-from ... import _unicode
+from ... import unicode_
 
 
 class UnitTestDbBase(unittest.TestCase):
@@ -80,7 +80,7 @@ class UnitTestDbBase(unittest.TestCase):
             if os.environ.get('DB_USER') is None:
                 os.environ['DB_USER_CREATED'] = '1'
                 os.environ['DB_USER'] = 'unit-test-user-{0}'.format(
-                    _unicode(uuid.uuid4())
+                    unicode_(uuid.uuid4())
                     )
                 os.environ['DB_PASSWORD'] = 'unit-test-password'
                 resp = requests.put(
@@ -159,7 +159,7 @@ class UnitTestDbBase(unittest.TestCase):
         del self.db
 
     def dbname(self, database_name='unit-test-db'):
-        return '{0}-{1}'.format(database_name, _unicode(uuid.uuid4()))
+        return '{0}-{1}'.format(database_name, unicode_(uuid.uuid4()))
 
     def populate_db_with_documents(self, doc_count=100):
         docs = [

@@ -18,7 +18,7 @@ API module for interacting with result collections.
 import json
 from collections import Sequence
 
-from ._py2to3 import STRTYPE, UNITYPE, NONETYPE, iteritems_
+from ._2to3 import STRTYPE, UNITYPE, NONETYPE, iteritems_
 from .errors import CloudantArgumentError
 
 ARG_TYPES = {

@@ -17,6 +17,7 @@ python 2 to 3 compatibility methods
 import sys
 
 PY2 = sys.version_info[0] < 3
+ENCODING = 'utf-8'
 NONETYPE = type(None)
 
 # pylint: disable=undefined-variable
@@ -54,7 +55,17 @@ def bytes_(astr):
     :param str astr:
     :return:
     """
-    return astr.encode('utf-8') if hasattr(astr, 'encode') else astr
+    return astr.encode(ENCODING) if hasattr(astr, 'encode') else astr
+
+
+def str_(astr):
+    """
+    py2 to py3 helper
+
+    :param bytes astr:
+    :return:
+    """
+    return astr.decode(ENCODING) if hasattr(astr, 'decode') else astr
 
 
 def next_(itr):

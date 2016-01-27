@@ -15,7 +15,7 @@
 """
 API module/class for interacting with a design document in a database.
 """
-from ._py2to3 import iteritems_
+from ._2to3 import iteritems_
 from .document import Document
 from .views import View, QueryIndexView
 from .errors import CloudantArgumentError, CloudantException

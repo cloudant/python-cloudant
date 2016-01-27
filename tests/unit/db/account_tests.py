@@ -34,6 +34,8 @@ from cloudant.account import Cloudant
 from cloudant.errors import CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
+from ... import bytes_, str_
+
 
 class AccountTests(UnitTestDbBase):
     """
@@ -91,7 +93,7 @@ class AccountTests(UnitTestDbBase):
         try:
             self.client.connect()
             expected = 'Basic {0}'.format(
-                base64.urlsafe_b64encode("{0}:{1}".format(self.user, self.pwd))
+                str_(base64.urlsafe_b64encode(bytes_("{0}:{1}".format(self.user, self.pwd))))
                 )
             self.assertEqual(
                 self.client.basic_auth_str(),

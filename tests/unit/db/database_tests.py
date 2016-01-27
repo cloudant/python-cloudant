@@ -36,7 +36,7 @@ from cloudant.design_document import DesignDocument
 from cloudant.indexes import Index, SearchIndex, SpecialIndex
 
 from .unit_t_db_base import UnitTestDbBase
-from ... import _unicode
+from ... import unicode_
 
 
 class DatabaseTests(UnitTestDbBase):
@@ -614,13 +614,13 @@ class CloudantDatabaseTests(UnitTestDbBase):
 
     def test_get_security_document(self):
         self.assertEqual(self.db.security_document(), {})
-        share = 'unit-test-share-user-{0}'.format(_unicode(uuid.uuid4()))
+        share = 'unit-test-share-user-{0}'.format(unicode_(uuid.uuid4()))
         self.db.share_database(share)
         expected = {'cloudant': {share: ['_reader']}}
         self.assertEqual(self.db.security_document(), expected)
 
     def test_share_unshare_database(self):
-        share = 'unit-test-share-user-{0}'.format(_unicode(uuid.uuid4()))
+        share = 'unit-test-share-user-{0}'.format(unicode_(uuid.uuid4()))
         self.assertEqual(self.db.security_document(), {})
         self.assertEqual(self.db.share_database(share), {'ok': True})
         expected = {'cloudant': {share: ['_reader']}}
