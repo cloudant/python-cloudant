@@ -19,6 +19,7 @@ API module for managing/viewing query indexes.
 import posixpath
 import json
 
+from . import _STRTYPE, _iteritems
 from .index_constants import JSON_INDEX_TYPE
 from .index_constants import TEXT_INDEX_TYPE
 from .index_constants import SPECIAL_INDEX_TYPE
@@ -121,7 +122,7 @@ class Index(object):
         """
         payload = {'type': self._type}
         if self._ddoc_id and self._ddoc_id != '':
-            if isinstance(self._ddoc_id, basestring):
+            if isinstance(self._ddoc_id, _STRTYPE):
                 if self._ddoc_id.startswith('_design/'):
                     payload['ddoc'] = self._ddoc_id[8:]
                 else:
@@ -132,7 +133,7 @@ class Index(object):
                 ).format(self._ddoc_id)
                 raise CloudantArgumentError(msg)
         if self._name and self._name != '':
-            if isinstance(self._name, basestring):
+            if isinstance(self._name, _STRTYPE):
                 payload['name'] = self._name
             else:
                 msg = 'The index name: {0} is not a string.'.format(self._name)
@@ -155,7 +156,7 @@ class Index(object):
         """
         Checks that the only definition provided is a "fields" definition.
         """
-        if self._def.keys() != ['fields']:
+        if list(self._def.keys()) != ['fields']:
             msg = (
                 '{0} provided as argument(s).  A JSON index requires that '
                 'only a \'fields\' argument is provided.'
@@ -213,8 +214,8 @@ class SearchIndex(Index):
         text index.
         """
         if self._def != {}:
-            for key, val in self._def.iteritems():
-                if key not in TEXT_INDEX_ARGS.keys():
+            for key, val in _iteritems(self._def):
+                if key not in list(TEXT_INDEX_ARGS.keys()):
                     msg = 'Invalid argument: {0}'.format(key)
                     raise CloudantArgumentError(msg)
                 if not isinstance(val, TEXT_INDEX_ARGS[key]):

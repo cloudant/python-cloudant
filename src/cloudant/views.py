@@ -18,6 +18,7 @@ API module for interacting with a view in a design document.
 import contextlib
 import posixpath
 
+from . import _STRTYPE
 from .result import Result, python_to_couch
 from .errors import CloudantArgumentError, CloudantException
 
@@ -346,7 +347,7 @@ class QueryIndexView(View):
     def __init__(self, ddoc, view_name, map_fields, reduce_func, **kwargs):
         if not isinstance(map_fields, dict):
             raise CloudantArgumentError('The map property must be a dictionary')
-        if not isinstance(reduce_func, basestring):
+        if not isinstance(reduce_func, _STRTYPE):
             raise CloudantArgumentError('The reduce property must be a string.')
         super(QueryIndexView, self).__init__(
             ddoc,
@@ -397,7 +398,7 @@ class QueryIndexView(View):
         """
         Provides a reduce property setter.
         """
-        if isinstance(reduce_func, basestring):
+        if isinstance(reduce_func, _STRTYPE):
             self['reduce'] = reduce_func
         else:
             raise CloudantArgumentError('The reduce property must be a string')
