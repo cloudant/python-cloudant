@@ -18,6 +18,21 @@ Cloudant / CouchDB Python client library API package
 __version__ = '2.0.0b2.dev'
 
 # pylint: disable=wrong-import-position
+import sys
+
+# define these before importing sub-modules
+_PY2 = sys.version_info[0] < 3
+_STRTYPE = basestring if _PY2 else str
+_UNITYPE = unicode if _PY2 else str
+_NONETYPE = type(None)
+
+def _iteritems(d):
+    return d.iteritems() if _PY2 else d.items()
+
+def _unicode(s):
+    return unicode(s) if _PY2 else s
+
+# pylint: disable=wrong-import-position
 import contextlib
 # pylint: disable=wrong-import-position
 from .account import Cloudant, CouchDB

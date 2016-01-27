@@ -18,8 +18,13 @@ API module that maps to a Cloudant or CouchDB database instance.
 import json
 import contextlib
 import posixpath
-import urllib
 from requests.exceptions import HTTPError
+
+from . import _PY2
+if _PY2:
+    from urllib import quote_plus
+else:
+    from urllib.parse import quote_plus
 
 from .document import Document
 from .design_document import DesignDocument
@@ -63,7 +68,7 @@ class CouchDatabase(dict):
         """
         return posixpath.join(
             self._database_host,
-            urllib.quote_plus(self.database_name)
+            quote_plus(self.database_name)
         )
 
     @property
@@ -332,7 +337,7 @@ class CouchDatabase(dict):
             return self
 
         raise CloudantException(
-            u"Unable to create database {0}: Reason: {1}".format(
+            "Unable to create database {0}: Reason: {1}".format(
                 self.database_url, resp.text
             ),
             code=resp.status_code
@@ -434,7 +439,7 @@ class CouchDatabase(dict):
         :returns: List of document ids
         """
         if not remote:
-            return super(CouchDatabase, self).keys()
+            return list(super(CouchDatabase, self).keys())
         docs = self.all_docs()
         return [row['id'] for row in docs.get('rows', [])]
 
@@ -482,7 +487,7 @@ class CouchDatabase(dict):
         :returns: A Document or DesignDocument object depending on the
             specified document id (key)
         """
-        if key in self.keys():
+        if key in list(self.keys()):
             return super(CouchDatabase, self).__getitem__(key)
         if key.startswith('_design/'):
             doc = DesignDocument(self, key)

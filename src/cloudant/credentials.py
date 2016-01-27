@@ -17,7 +17,13 @@ Module providing utilities to support using an INI style configuration file
 to allow users to pass credentials.
 """
 import os
-import ConfigParser
+
+# pylint: disable=wrong-import-position
+from . import _PY2
+if _PY2:
+    from ConfigParser import RawConfigParser
+else:
+    from configparser import RawConfigParser
 
 
 def read_dot_couch(
@@ -66,6 +72,7 @@ def read_dot_cloudant(
     """
     return _read_dot_file(filename, section, username, password)
 
+
 def _read_dot_file(filename, section, username, password):
     """
     Handles the parsing of the configuration file for the username
@@ -78,7 +85,7 @@ def _read_dot_file(filename, section, username, password):
     :returns: A tuple containing user and password
     """
     config_file = os.path.expanduser(filename)
-    config = ConfigParser.RawConfigParser()
+    config = RawConfigParser()
     config.read(config_file)
     username_value = config.get(section, username)
     password_value = config.get(section, password)
