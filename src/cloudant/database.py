@@ -27,8 +27,7 @@ if PY2:
     # pylint: disable=wrong-import-order,no-name-in-module
     from urllib import quote_plus
 else:
-    # pylint: disable=wrong-import-order,no-name-in-module,import-error
-    from urllib.parse import quote_plus
+    from urllib.parse import quote_plus  # pylint: disable=import-error,no-name-in-module
 
 from .document import Document
 from .design_document import DesignDocument

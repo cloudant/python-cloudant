@@ -24,8 +24,7 @@ if PY2:
     # pylint: disable=wrong-import-order
     from ConfigParser import RawConfigParser
 else:
-    # pylint: disable=wrong-import-order, import-error
-    from configparser import RawConfigParser
+    from configparser import RawConfigParser  # pylint: disable=import-error
 
 
 def read_dot_couch(
