@@ -12,67 +12,72 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-python 2 to 3 compatibility methods
+Python 2 to 3 compatibility methods
+
+The philosophy employed here is to treat py2 as the special case vs. py3 as
+future Python releases presumably will retain new semamtics in py3.
 """
 import sys
 
 PY2 = sys.version_info[0] < 3
 ENCODING = 'utf-8'
 NONETYPE = type(None)
+STRTYPE = basestring if PY2 else str  # pylint: disable=undefined-variable
+UNITYPE = unicode if PY2 else str  # pylint: disable=undefined-variable
 
-# pylint: disable=undefined-variable
-STRTYPE = basestring if PY2 else str
+if PY2:
+    def iteritems_(adict):
+        """
+        iterate dict key, value tuples in a py2 and 3 compatible way
 
-# pylint: disable=undefined-variable
-UNITYPE = unicode if PY2 else str
+        :param dict adict:
+        :return: iterator of (key, value) tuples
+        """
+        return adict.iteritems()
 
+    def next_(itr):
+        """
+        return next item from an iterable is a py2 and 3 compatible way
 
-def iteritems_(adict):
-    """
-    py2 to py3 helper
+        :param Iterable itr:
+        :return: the next item in itr
+        """
+        return itr.next()
+else:
+    def iteritems_(adict):
+        """
+        iterate dict key, value tuples in a py2 and 3 compatible way
 
-    :param dict adict:
-    :return:
-    """
-    return adict.iteritems() if PY2 else adict.items()
+        :param dict adict:
+        :return: iterator of (key, value) tuples
+        """
+        return adict.items()
 
+    def next_(itr):
+        """
+        return the next item in an iterable in a py2 and 3 compatible way
 
-def unicode_(astr):
-    """
-    py2 to py3 helper
-
-    :param str astr:
-    :return:
-    """
-    # pylint: disable=undefined-variable
-    return unicode(astr) if PY2 else astr
+        :param Iterable itr:
+        :return: the next item in itr
+        """
+        return next(itr)
 
 
 def bytes_(astr):
     """
-    py2 to py3 helper
+    return a bytes representation of astr in a py2 and 3 compatible way
 
     :param str astr:
-    :return:
+    :return: bytes object
     """
     return astr.encode(ENCODING) if hasattr(astr, 'encode') else astr
 
 
-def str_(astr):
+def unicode_(astr):
     """
-    py2 to py3 helper
+    return a unicode string representation of astr in a py2 and 3 compatible way
 
     :param bytes astr:
-    :return:
+    :return: unicode string
     """
     return astr.decode(ENCODING) if hasattr(astr, 'decode') else astr
-
-
-def next_(itr):
-    """
-    py2 to py3 helper
-
-    :param itr:
-    :return:
-    """
-    return itr.next() if PY2 else next(itr)

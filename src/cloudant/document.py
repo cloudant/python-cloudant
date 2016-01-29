@@ -21,10 +21,9 @@ import requests
 from requests.exceptions import HTTPError
 
 # pylint: disable=wrong-import-order
-from ._2to3 import PY2, str_
+from ._2to3 import PY2, unicode_
 if PY2:
-    # pylint: disable=wrong-import-order,no-name-in-module
-    from urllib import quote, quote_plus
+    from urllib import quote, quote_plus  # pylint: disable=no-name-in-module
 else:
     from urllib.parse import quote, quote_plus  # pylint: disable=import-error,no-name-in-module
 
@@ -404,7 +403,7 @@ class Document(dict):
 
         if attachment_type == 'json':
             return resp.json()
-        return str_(resp.content)
+        return unicode_(resp.content)
 
     def delete_attachment(self, attachment, headers=None):
         """
