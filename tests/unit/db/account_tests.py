@@ -21,7 +21,6 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
-from __future__ import absolute_import
 
 import unittest
 import requests
@@ -185,7 +184,7 @@ class AccountTests(UnitTestDbBase):
         """
         try:
             self.client.connect()
-            self.client['no_such_db']
+            db = self.client['no_such_db']
             self.fail('Above statement should raise a KeyError')
         except KeyError:
             pass
@@ -234,14 +233,14 @@ class AccountTests(UnitTestDbBase):
         dbname = self.dbname()
         try:
             self.client.connect()
-            _ = self.client.create_database(dbname)
+            db = self.client.create_database(dbname)
             self.assertIsNotNone(self.client.get(dbname))
             self.client.__delitem__(dbname, remote=True)
             # Removed from local cache
             self.assertIsNone(self.client.get(dbname))
             # Database removed remotely as well
             try:
-                _ = self.client[dbname]
+                db = self.client[dbname]
                 self.fail('Above statement should raise a KeyError')
             except KeyError:
                 pass

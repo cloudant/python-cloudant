@@ -21,7 +21,6 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
-from __future__ import absolute_import
 
 import unittest
 import mock
@@ -37,7 +36,6 @@ from cloudant.errors import CloudantArgumentError, CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
 
-
 class CodeTests(unittest.TestCase):
     """
     Code class unit test
@@ -51,7 +49,6 @@ class CodeTests(unittest.TestCase):
         code = Code('this is code.')
         self.assertIsInstance(code, Code)
         self.assertEqual(code, 'this is code.')
-
 
 class ViewTests(UnitTestDbBase):
     """
@@ -214,7 +211,7 @@ class ViewTests(UnitTestDbBase):
         )
         self.assertIsInstance(view, View)
         try:
-            for _ in view.result:
+            for row in view.result:
                 self.fail('Above statement should raise an Exception')
         except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 404)
@@ -244,7 +241,7 @@ class ViewTests(UnitTestDbBase):
         view = ddoc.get_view('view001')
         self.assertEqual(view.map, 'This is not valid Javascript')
         try:
-            for _ in view.result:
+            for row in view.result:
                 self.fail('Above statement should raise an Exception')
         except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 500)
@@ -287,7 +284,6 @@ class ViewTests(UnitTestDbBase):
                 i += 1
             self.assertEqual(i, 100)
 
-
 class QueryIndexViewTests(unittest.TestCase):
     """
     QueryIndexView class unit tests.  These tests use a mocked DesignDocument
@@ -308,7 +304,7 @@ class QueryIndexViewTests(unittest.TestCase):
             'view001',
             {'fields': {'name': 'asc', 'age': 'asc'}},
             '_count',
-            options={'def': {'fields': ['name', 'age']}, 'w': 2}
+            options = {'def': {'fields': ['name', 'age']}, 'w': 2}
         )
 
     def test_constructor(self):

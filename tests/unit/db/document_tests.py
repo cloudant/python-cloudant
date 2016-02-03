@@ -21,22 +21,16 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
-from __future__ import absolute_import
 
 import unittest
 import posixpath
 import json
 import requests
 
-from ... import PY2
-if PY2:
-    from StringIO import StringIO
-else:
-    from io import StringIO
-
 from cloudant.document import Document
 from cloudant.errors import CloudantException
 
+from ... import StringIO
 from .unit_t_db_base import UnitTestDbBase
 
 class DocumentTests(UnitTestDbBase):

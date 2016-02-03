@@ -21,14 +21,7 @@ import posixpath
 
 from requests.exceptions import HTTPError
 
-# pylint: disable=wrong-import-order
-from ._2to3 import PY2
-if PY2:
-    # pylint: disable=wrong-import-order,no-name-in-module
-    from urllib import quote_plus
-else:
-    from urllib.parse import quote_plus  # pylint: disable=import-error,no-name-in-module
-
+from ._2to3 import url_quote_plus
 from .document import Document
 from .design_document import DesignDocument
 from .views import View
@@ -71,7 +64,7 @@ class CouchDatabase(dict):
         """
         return posixpath.join(
             self._database_host,
-            quote_plus(self.database_name)
+            url_quote_plus(self.database_name)
         )
 
     @property
@@ -571,7 +564,11 @@ class CouchDatabase(dict):
         url = posixpath.join(self.database_url, '_bulk_docs')
         data = {'docs': docs}
         headers = {'Content-Type': 'application/json'}
-        resp = self.r_session.post(url, data=json.dumps(data), headers=headers)
+        resp = self.r_session.post(
+            url,
+            data=json.dumps(data),
+            headers=headers
+        )
         resp.raise_for_status()
         return resp.json()
 
@@ -590,8 +587,11 @@ class CouchDatabase(dict):
         url = posixpath.join(self.database_url, '_missing_revs')
         data = {doc_id: list(revisions)}
 
-        resp = self.r_session.post(url, headers={'Content-Type': 'application/json'},
-                                   data=json.dumps(data))
+        resp = self.r_session.post(
+            url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(data)
+        )
         resp.raise_for_status()
 
         resp_json = resp.json()
@@ -616,8 +616,11 @@ class CouchDatabase(dict):
         url = posixpath.join(self.database_url, '_revs_diff')
         data = {doc_id: list(revisions)}
 
-        resp = self.r_session.post(url, headers={'Content-Type': 'application/json'},
-                                   data=json.dumps(data))
+        resp = self.r_session.post(
+            url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(data)
+        )
         resp.raise_for_status()
 
         return resp.json()
@@ -668,7 +671,10 @@ class CouchDatabase(dict):
         :returns: View cleanup status in JSON format
         """
         url = posixpath.join(self.database_url, '_view_cleanup')
-        resp = self.r_session.post(url, headers={'Content-Type': 'application/json'})
+        resp = self.r_session.post(
+            url,
+            headers={'Content-Type': 'application/json'}
+        )
         resp.raise_for_status()
 
         return resp.json()

@@ -34,3 +34,7 @@ def bytes_(astr):
 def str_(astr):
     return astr.decode('utf-8') if hasattr(astr, 'decode') else astr
 
+if PY2:
+    from StringIO import StringIO
+else:
+    from io import StringIO

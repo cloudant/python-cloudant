@@ -27,7 +27,6 @@ from cloudant.credentials import read_dot_cloudant
 
 from .. import unicode_
 
-
 class IterTest(unittest.TestCase):
     """
     Verify that our database iterator works, and does the caching that

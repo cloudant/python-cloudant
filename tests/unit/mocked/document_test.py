@@ -18,7 +18,6 @@ _document_test_
 document module unit tests
 
 """
-from __future__ import absolute_import
 
 import mock
 import requests
@@ -29,7 +28,6 @@ from cloudant.errors import CloudantException
 from cloudant.document import Document
 
 from ... import iteritems_
-
 
 class DocumentTest(unittest.TestCase):
 

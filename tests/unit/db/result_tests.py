@@ -15,8 +15,6 @@
 """
 result module - Unit tests for Result class
 """
-from __future__ import absolute_import
-
 import unittest
 
 from cloudant.design_document import DesignDocument

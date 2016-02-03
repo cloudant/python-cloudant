@@ -21,7 +21,6 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
-from __future__ import absolute_import
 
 import unittest
 import uuid
@@ -34,7 +33,6 @@ from cloudant.errors import CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import unicode_
-
 
 class ReplicatorTests(UnitTestDbBase):
     """
@@ -128,8 +126,8 @@ class ReplicatorTests(UnitTestDbBase):
                 if change.get('id') == repl_id:
                     repl_doc = Document(self.replicator.database, repl_id)
                     repl_doc.fetch()
-                    if (repl_doc.get('_replication_state') in
-                            ('completed', 'error')):
+                    if (repl_doc.get('_replication_state')
+                        in ('completed', 'error')):
                         break
         self.assertEqual(repl_doc['_replication_state'], 'completed')
         self.assertEqual(self.db.all_docs(), self.target_db.all_docs())
@@ -285,7 +283,6 @@ class ReplicatorTests(UnitTestDbBase):
             self.assertIn(doc.get('_replication_state'), valid_states)
             repl_states.append(doc.get('_replication_state'))
         self.assertTrue(len(repl_states) > 0)
-        print(repl_states)
         self.assertEqual(repl_states[-1], 'completed')
         self.assertNotIn('error', repl_states)
 

@@ -35,6 +35,7 @@ from cloudant.design_document import DesignDocument
 from cloudant.document import Document
 from cloudant.errors import CloudantArgumentError, CloudantException
 
+from ... import PY2
 from .unit_t_db_base import UnitTestDbBase
 
 @unittest.skipUnless(
@@ -486,7 +487,7 @@ class SearchIndexTests(UnitTestDbBase):
         self.assertEqual(
             str(err),
             'Argument fields is not an instance of expected type: '
-            '<type \'list\'>'
+            '<{} \'list\'>'.format('type' if PY2 else 'class')
         )
 
     def test_create_a_search_index_invalid_default_field_value(self):
@@ -501,7 +502,7 @@ class SearchIndexTests(UnitTestDbBase):
         self.assertEqual(
             str(err),
             'Argument default_field is not an instance of expected type: '
-            '<type \'dict\'>'
+            '<{} \'dict\'>'.format('type' if PY2 else 'class')
         )
 
     def test_create_a_search_index_invalid_selector_value(self):
@@ -516,7 +517,7 @@ class SearchIndexTests(UnitTestDbBase):
         self.assertEqual(
             str(err),
             'Argument selector is not an instance of expected type: '
-            '<type \'dict\'>'
+            '<{} \'dict\'>'.format('type' if PY2 else 'class')
         )
 
     def test_search_index_via_query(self):

@@ -29,7 +29,6 @@ from cloudant.credentials import read_dot_cloudant
 
 from .. import unicode_
 
-
 def setup_logging():
     log = logging.getLogger()
     log.setLevel(logging.DEBUG)
