@@ -19,7 +19,6 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
-from __future__ import absolute_import
 
 import unittest
 import os

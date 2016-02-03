@@ -40,14 +40,13 @@ DB_USER: Set this to the username to connect with.
 
 DB_PASSWORD: Set this to the password for the user specified.
 
-  example: export CLOUDANT_PASSWORD=password
+  example: export DB_PASSWORD=password
 
 DB_URL: Optionally set this to override the construction of the database URL.
 
-  example: export CLOUDANT_URL=https://account.cloudant.com
+  example: export DB_URL=https://account.cloudant.com
 
 """
-from __future__ import absolute_import
 
 import unittest
 import requests
@@ -57,7 +56,6 @@ import uuid
 from cloudant.account import CouchDB, Cloudant
 
 from ... import unicode_
-
 
 class UnitTestDbBase(unittest.TestCase):
     """
@@ -126,13 +124,13 @@ class UnitTestDbBase(unittest.TestCase):
             self.user = os.environ.get('DB_USER')
             self.pwd = os.environ.get('DB_PASSWORD')
             self.url = os.environ.get(
-                    'DB_URL',
-                    'https://{0}.cloudant.com'.format(self.account))
+                'DB_URL',
+                'https://{0}.cloudant.com'.format(self.account))
             self.client = Cloudant(
-                    self.user,
-                    self.pwd,
-                    url=self.url,
-                    x_cloudant_user=self.account)
+                self.user,
+                self.pwd,
+                url=self.url,
+                x_cloudant_user=self.account)
 
     def tearDown(self):
         """

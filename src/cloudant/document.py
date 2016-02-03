@@ -20,13 +20,7 @@ import posixpath
 import requests
 from requests.exceptions import HTTPError
 
-# pylint: disable=wrong-import-order
-from ._2to3 import PY2, unicode_
-if PY2:
-    from urllib import quote, quote_plus  # pylint: disable=no-name-in-module
-else:
-    from urllib.parse import quote, quote_plus  # pylint: disable=import-error,no-name-in-module
-
+from ._2to3 import unicode_, url_quote, url_quote_plus
 from .errors import CloudantException
 
 
@@ -87,16 +81,16 @@ class Document(dict):
         if self._document_id.startswith('_design/'):
             return posixpath.join(
                 self._database_host,
-                quote_plus(self._database_name),
+                url_quote_plus(self._database_name),
                 '_design',
-                quote(self._document_id[8:], safe='')
+                url_quote(self._document_id[8:], safe='')
             )
 
         # handle document url
         return posixpath.join(
             self._database_host,
-            quote_plus(self._database_name),
-            quote(self._document_id, safe='')
+            url_quote_plus(self._database_name),
+            url_quote(self._document_id, safe='')
         )
 
     def exists(self):

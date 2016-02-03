@@ -21,7 +21,6 @@ import json
 
 from ._2to3 import next_, unicode_
 
-
 class Feed(object):
     """
     Provides an infinite iterator for consuming database feeds such as

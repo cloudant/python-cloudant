@@ -31,7 +31,6 @@ from cloudant.replicator import Replicator
 
 from .. import unicode_
 
-
 def setup_logging():
     log = logging.getLogger()
     log.setLevel(logging.DEBUG)

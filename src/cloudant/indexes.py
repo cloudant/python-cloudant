@@ -213,7 +213,7 @@ class SearchIndex(Index):
         Checks that the definition provided contains only valid arguments for a
         text index.
         """
-        if self._def != {}:
+        if self._def != dict():
             for key, val in iteritems_(self._def):
                 if key not in list(TEXT_INDEX_ARGS.keys()):
                     msg = 'Invalid argument: {0}'.format(key)

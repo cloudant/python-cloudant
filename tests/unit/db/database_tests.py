@@ -21,7 +21,6 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
-from __future__ import absolute_import
 
 import unittest
 import requests
@@ -37,7 +36,6 @@ from cloudant.indexes import Index, SearchIndex, SpecialIndex
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import unicode_
-
 
 class DatabaseTests(UnitTestDbBase):
     """
@@ -317,7 +315,7 @@ class DatabaseTests(UnitTestDbBase):
         Test __getitem__ when retrieving a non-existing document
         """
         try:
-            _ = self.db['no_such_doc']
+            doc = self.db['no_such_doc']
             self.fail('Above statement should raise a KeyError')
         except KeyError:
             pass
@@ -446,7 +444,7 @@ class DatabaseTests(UnitTestDbBase):
             doc.delete()
 
         # Confirm successful deletions
-        for _ in self.db:
+        for doc in self.db:
             self.fail('All documents should have been deleted!!!')
 
         # Confirm that the correct number of Document (3) and DesignDocument (1)
@@ -613,26 +611,26 @@ class CloudantDatabaseTests(UnitTestDbBase):
         super(CloudantDatabaseTests, self).tearDown()
 
     def test_get_security_document(self):
-        self.assertEqual(self.db.security_document(), {})
+        self.assertDictEqual(self.db.security_document(), dict())
         share = 'unit-test-share-user-{0}'.format(unicode_(uuid.uuid4()))
         self.db.share_database(share)
         expected = {'cloudant': {share: ['_reader']}}
-        self.assertEqual(self.db.security_document(), expected)
+        self.assertDictEqual(self.db.security_document(), expected)
 
     def test_share_unshare_database(self):
         share = 'unit-test-share-user-{0}'.format(unicode_(uuid.uuid4()))
-        self.assertEqual(self.db.security_document(), {})
-        self.assertEqual(self.db.share_database(share), {'ok': True})
+        self.assertDictEqual(self.db.security_document(), dict())
+        self.assertDictEqual(self.db.share_database(share), {'ok': True})
         expected = {'cloudant': {share: ['_reader']}}
-        self.assertEqual(self.db.security_document(), expected)
-        self.assertEqual(
+        self.assertDictEqual(self.db.security_document(), expected)
+        self.assertDictEqual(
             self.db.share_database(share, True, True, True),
             {'ok': True}
         )
         expected = {'cloudant': {share: ['_reader', '_writer', '_admin']}}
-        self.assertEqual(self.db.security_document(), expected)
-        self.assertEqual(self.db.unshare_database(share), {'ok': True})
-        self.assertEqual(self.db.security_document(), {'cloudant':{}})
+        self.assertDictEqual(self.db.security_document(), expected)
+        self.assertDictEqual(self.db.unshare_database(share), {'ok': True})
+        self.assertDictEqual(self.db.security_document(), {'cloudant': dict()})
 
     def test_retrieve_shards(self):
         shards = self.db.shards()
