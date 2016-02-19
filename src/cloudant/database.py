@@ -720,11 +720,11 @@ class CloudantDatabase(CouchDatabase):
         url = posixpath.join(self._database_host, *parts)
         return url
 
-    def share_database(self, username, reader=True, writer=False, admin=False):
+    def share_database(self, username, reader=True, writer=False, admin=False, replicator=False):
         """
         Shares the current remote database with the username provided.
         You can grant varying degrees of access rights,
-        default is to share read-only, but writing or admin
+	default is to share read-only, but writing, admin, or replicator
         permissions can be added by setting the appropriate flags
         If the user already has this database shared with them it
         will modify/overwrite the existing permissions.
@@ -745,6 +745,8 @@ class CloudantDatabase(CouchDatabase):
             perms.append('_writer')
         if admin:
             perms.append('_admin')
+	if replicator:
+	    perms.append('_replicator')
 
         data[username] = perms
         doc['cloudant'] = data
