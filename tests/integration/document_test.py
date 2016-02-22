@@ -19,14 +19,14 @@ document module integration tests
 
 """
 
-import posixpath
 import requests
-import time
 import unittest
 import uuid
 
 from cloudant import cloudant
 from cloudant.credentials import read_dot_cloudant
+
+from .. import unicode_
 
 class DocumentTest(unittest.TestCase):
     """
@@ -36,9 +36,9 @@ class DocumentTest(unittest.TestCase):
 
     def setUp(self):
         self.user, self.passwd = read_dot_cloudant(filename="~/.clou")
-        self.dbname = u"cloudant-document-tests-{0}".format(
-            unicode(uuid.uuid4())
-        )
+        self.dbname = unicode_("cloudant-document-tests-{0}".format(
+            unicode_(uuid.uuid4())
+        ))
 
     def tearDown(self):
         with cloudant(self.user, self.passwd, account=self.user) as c:

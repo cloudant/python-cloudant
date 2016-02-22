@@ -18,3 +18,23 @@ _tests_
 Test coverage for package
 
 """
+import sys
+
+PY2 = sys.version_info[0] < 3
+
+def unicode_(s):
+    return unicode(s) if PY2 else s
+
+def iteritems_(d):
+    return d.iteritems() if PY2 else d.items()
+
+def bytes_(astr):
+    return astr.encode('utf-8') if hasattr(astr, 'encode') else astr
+
+def str_(astr):
+    return astr.decode('utf-8') if hasattr(astr, 'decode') else astr
+
+if PY2:
+    from StringIO import StringIO
+else:
+    from io import StringIO

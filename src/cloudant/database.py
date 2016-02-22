@@ -18,9 +18,10 @@ API module that maps to a Cloudant or CouchDB database instance.
 import json
 import contextlib
 import posixpath
-import urllib
+
 from requests.exceptions import HTTPError
 
+from ._2to3 import url_quote_plus
 from .document import Document
 from .design_document import DesignDocument
 from .views import View
@@ -63,7 +64,7 @@ class CouchDatabase(dict):
         """
         return posixpath.join(
             self._database_host,
-            urllib.quote_plus(self.database_name)
+            url_quote_plus(self.database_name)
         )
 
     @property
@@ -332,7 +333,7 @@ class CouchDatabase(dict):
             return self
 
         raise CloudantException(
-            u"Unable to create database {0}: Reason: {1}".format(
+            "Unable to create database {0}: Reason: {1}".format(
                 self.database_url, resp.text
             ),
             code=resp.status_code
@@ -434,7 +435,7 @@ class CouchDatabase(dict):
         :returns: List of document ids
         """
         if not remote:
-            return super(CouchDatabase, self).keys()
+            return list(super(CouchDatabase, self).keys())
         docs = self.all_docs()
         return [row['id'] for row in docs.get('rows', [])]
 
@@ -446,6 +447,7 @@ class CouchDatabase(dict):
         :param str since: Change streaming starts from this sequence identifier.
         :param bool continuous: Dictates the streaming of data.
             Defaults to True.
+        :param bool include_docs:
 
         :returns: Iterable stream of changes
         """
@@ -482,7 +484,7 @@ class CouchDatabase(dict):
         :returns: A Document or DesignDocument object depending on the
             specified document id (key)
         """
-        if key in self.keys():
+        if key in list(self.keys()):
             return super(CouchDatabase, self).__getitem__(key)
         if key.startswith('_design/'):
             doc = DesignDocument(self, key)
@@ -537,7 +539,6 @@ class CouchDatabase(dict):
                 for doc in docs:
                     # Wrap the doc dictionary as the appropriate
                     # document object before yielding it.
-                    document = {}
                     if doc['id'].startswith('_design/'):
                         document = DesignDocument(self, doc['id'])
                     else:
@@ -694,7 +695,7 @@ class CloudantDatabase(CouchDatabase):
         super(CloudantDatabase, self).__init__(
             client,
             database_name,
-            fetch_limit=100
+            fetch_limit=fetch_limit
         )
 
     def security_document(self):
@@ -881,7 +882,6 @@ class CloudantDatabase(CouchDatabase):
         :returns: An Index object representing the index created in the
             remote database
         """
-        index = None
         if index_type == JSON_INDEX_TYPE:
             index = Index(self, design_document_id, index_name, **kwargs)
         elif index_type == TEXT_INDEX_TYPE:
@@ -906,7 +906,6 @@ class CloudantDatabase(CouchDatabase):
             be either 'text' or 'json'.
         :param str index_name: The index name of the index to be deleted.
         """
-        index = None
         if index_type == JSON_INDEX_TYPE:
             index = Index(self, design_document_id, index_name)
         elif index_type == TEXT_INDEX_TYPE:

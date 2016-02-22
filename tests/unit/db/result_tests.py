@@ -20,7 +20,8 @@ import unittest
 from cloudant.design_document import DesignDocument
 from cloudant.errors import CloudantArgumentError
 from cloudant.result import python_to_couch, Result
-from tests.unit.db.unit_t_db_base import UnitTestDbBase
+
+from .unit_t_db_base import UnitTestDbBase
 
 class PythonToCouchTests(unittest.TestCase):
     """
@@ -85,7 +86,7 @@ class ResultTests(UnitTestDbBase):
             page_size=1000
         )
         self.assertIsInstance(result, Result)
-        self.assertEquals(result.options, {'startkey': '1', 'endkey': '9'})
+        self.assertDictEqual(result.options, {'startkey': '1', 'endkey': '9'})
 
     def test_group_level(self):
         """
@@ -94,7 +95,7 @@ class ResultTests(UnitTestDbBase):
         self.populate_db_with_documents(10)
         result_set = Result(self.ddoc.get_view('view001'), group_level=1)
         self.assertIsInstance(result_set, Result)
-        self.assertEquals(result_set.options, {'group_level': 1})
+        self.assertDictEqual(result_set.options, {'group_level': 1})
         # Test Result iteration
         i = 0
         for result in result_set:

@@ -17,12 +17,12 @@ API module/class for interacting with a document in a database.
 """
 import json
 import posixpath
-import urllib
 import requests
-
 from requests.exceptions import HTTPError
 
+from ._2to3 import unicode_, url_quote, url_quote_plus
 from .errors import CloudantException
+
 
 class Document(dict):
     """
@@ -81,16 +81,16 @@ class Document(dict):
         if self._document_id.startswith('_design/'):
             return posixpath.join(
                 self._database_host,
-                urllib.quote_plus(self._database_name),
+                url_quote_plus(self._database_name),
                 '_design',
-                urllib.quote(self._document_id[8:], safe='')
+                url_quote(self._document_id[8:], safe='')
             )
 
         # handle document url
         return posixpath.join(
             self._database_host,
-            urllib.quote_plus(self._database_name),
-            urllib.quote(self._document_id, safe='')
+            url_quote_plus(self._database_name),
+            url_quote(self._document_id, safe='')
         )
 
     def exists(self):
@@ -304,8 +304,8 @@ class Document(dict):
         """
         if not self.get("_rev"):
             raise CloudantException(
-                u"Attempting to delete a doc with no _rev. Try running "
-                u".fetch first!"
+                "Attempting to delete a doc with no _rev. Try running "
+                ".fetch first!"
             )
 
         del_resp = self.r_session.delete(
@@ -371,7 +371,7 @@ class Document(dict):
             attachment.
         :param dict headers: Optional, additional headers to be sent
             with request.
-        :param str write_to: Optional file handler to write the attachment to.
+        :param file write_to: Optional file handler to write the attachment to.
             The write_to file must be opened for writing prior to including it
             as an argument for this method.
         :param str attachment_type: Data format of the attachment.  Valid
@@ -397,7 +397,7 @@ class Document(dict):
 
         if attachment_type == 'json':
             return resp.json()
-        return resp.content
+        return unicode_(resp.content)
 
     def delete_attachment(self, attachment, headers=None):
         """

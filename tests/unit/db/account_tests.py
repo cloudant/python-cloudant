@@ -27,13 +27,14 @@ import requests
 import json
 import base64
 import os
-import uuid
 from datetime import datetime
 
 from cloudant.account import Cloudant
 from cloudant.errors import CloudantException
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
+from ... import bytes_, str_
+
 
 class AccountTests(UnitTestDbBase):
     """
@@ -91,7 +92,7 @@ class AccountTests(UnitTestDbBase):
         try:
             self.client.connect()
             expected = 'Basic {0}'.format(
-                base64.urlsafe_b64encode("{0}:{1}".format(self.user, self.pwd))
+                str_(base64.urlsafe_b64encode(bytes_("{0}:{1}".format(self.user, self.pwd))))
                 )
             self.assertEqual(
                 self.client.basic_auth_str(),
@@ -104,7 +105,7 @@ class AccountTests(UnitTestDbBase):
         """
         Test getting a list of all of the databases in the account
         """
-        dbnames = [self.dbname() for _ in xrange(3)]
+        dbnames = [self.dbname() for _ in range(3)]
         try:
             self.client.connect()
             for dbname in dbnames:
@@ -141,7 +142,7 @@ class AccountTests(UnitTestDbBase):
             self.client.create_database(dbname)
             self.client.create_database(dbname, throw_on_exists=True)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(
                 str(err),
                 'Database {0} already exists'.format(dbname)
@@ -158,7 +159,7 @@ class AccountTests(UnitTestDbBase):
             self.client.connect()
             self.client.delete_database('no_such_db')
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(str(err), 'Database no_such_db does not exist')
         finally:
             self.client.disconnect()
@@ -169,7 +170,7 @@ class AccountTests(UnitTestDbBase):
         """
         try:
             self.client.connect()
-            self.assertEqual(self.client.keys(), [])
+            self.assertEqual(list(self.client.keys()), [])
             self.assertEqual(
                 self.client.keys(remote=True),
                 self.client.all_dbs()
@@ -292,7 +293,7 @@ class AccountTests(UnitTestDbBase):
             self.client.connect()
             self.client['not-a-db'] = 'This is not a database object'
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException, err:
+        except CloudantException as err:
             self.assertEqual(str(err), 'Value must be set to a Database object')
         finally:
             self.client.disconnect()
