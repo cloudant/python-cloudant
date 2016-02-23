@@ -9,4 +9,7 @@ This library can be used with the following databases
 
 Note that some features are Cloudant specific.
 
-The library is developed using `Python™ 2.7.10 <https://www.python.org/downloads/release/python-2710/>`_ and should be 2.x compatible.  It is currently not 3.x compatible.  We have plans to add that in the future.
+This library has been tested with the following versions of Python
+
+*  `Python™ 2.7 <https://www.python.org/downloads/release/python-2711/>`_
+*  `Python™ 3.5 <https://www.python.org/downloads/release/python-351/>`_
