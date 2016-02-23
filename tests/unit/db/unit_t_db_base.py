@@ -77,10 +77,10 @@ class UnitTestDbBase(unittest.TestCase):
 
             if os.environ.get('DB_USER') is None:
                 os.environ['DB_USER_CREATED'] = '1'
-                os.environ['DB_USER'] = 'unit-test-user-{0}'.format(
+                os.environ['DB_USER'] = 'user-{0}'.format(
                     unicode_(uuid.uuid4())
                     )
-                os.environ['DB_PASSWORD'] = 'unit-test-password'
+                os.environ['DB_PASSWORD'] = 'password'
                 resp = requests.put(
                     '{0}/_config/admins/{1}'.format(
                         os.environ['DB_URL'],
@@ -156,7 +156,7 @@ class UnitTestDbBase(unittest.TestCase):
         del self.test_dbname
         del self.db
 
-    def dbname(self, database_name='unit-test-db'):
+    def dbname(self, database_name='db'):
         return '{0}-{1}'.format(database_name, unicode_(uuid.uuid4()))
 
     def populate_db_with_documents(self, doc_count=100):
