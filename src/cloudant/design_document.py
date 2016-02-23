@@ -15,6 +15,7 @@
 """
 API module/class for interacting with a design document in a database.
 """
+from ._2to3 import iteritems_
 from .document import Document
 from .views import View, QueryIndexView
 from .errors import CloudantArgumentError, CloudantException
@@ -44,7 +45,7 @@ class DesignDocument(Document):
         if document_id and not document_id.startswith('_design/'):
             document_id = '_design/{0}'.format(document_id)
         super(DesignDocument, self).__init__(database, document_id)
-        self.setdefault('views', {})
+        self.setdefault('views', dict())
 
     @property
     def views(self):
@@ -135,7 +136,7 @@ class DesignDocument(Document):
         ``dict`` types.
         """
         super(DesignDocument, self).fetch()
-        for view_name, view_def in self.get('views', {}).iteritems():
+        for view_name, view_def in iteritems_(self.get('views', dict())):
             if self.get('language', None) != QUERY_LANGUAGE:
                 self['views'][view_name] = View(
                     self,
@@ -205,7 +206,7 @@ class DesignDocument(Document):
 
         :returns: Iterable containing view name and associated View object
         """
-        for view_name, view in self.views.iteritems():
+        for view_name, view in iteritems_(self.views):
             yield view_name, view
 
     def list_views(self):
@@ -215,7 +216,7 @@ class DesignDocument(Document):
 
         :returns: List of view names
         """
-        return self.views.keys()
+        return list(self.views.keys())
 
     def get_view(self, view_name):
         """

@@ -18,6 +18,7 @@ API module/class for handling database replications
 
 import uuid
 
+from ._2to3 import unicode_
 from .errors import CloudantException
 from .document import Document
 
@@ -69,15 +70,15 @@ class Replicator(object):
         """
 
         data = dict(
-            _id=repl_id if repl_id else unicode(uuid.uuid4()),
+            _id=repl_id if repl_id else unicode_(uuid.uuid4()),
             **kwargs
         )
 
         if not data.get('source'):
             if source_db is None:
                 raise CloudantException(
-                    u"You must specify either a source_db Database "
-                    u"object or a manually composed 'source' string/dict."
+                    "You must specify either a source_db Database "
+                    "object or a manually composed 'source' string/dict."
                 )
             data['source'] = {
                 "url": source_db.database_url,
@@ -89,8 +90,8 @@ class Replicator(object):
         if not data.get('target'):
             if target_db is None:
                 raise CloudantException(
-                    u"You must specify either a target_db Database "
-                    u"object or a manually composed 'target' string/dict."
+                    "You must specify either a target_db Database "
+                    "object or a manually composed 'target' string/dict."
                 )
             data['target'] = {
                 "url": target_db.database_url,
@@ -113,7 +114,6 @@ class Replicator(object):
         docs = self.database.all_docs(include_docs=True)['rows']
         documents = []
         for doc in docs:
-            document = {}
             if doc['id'].startswith('_design/'):
                 continue
             document = Document(self.database, doc['id'])
@@ -163,14 +163,11 @@ class Replicator(object):
             Retrieves the replication state.
             """
             try:
-                repl_doc = self.database[repl_id]
-                repl_doc.fetch()
-                state = repl_doc.get('_replication_state')
+                arepl_doc = self.database[repl_id]
+                arepl_doc.fetch()
+                return arepl_doc, arepl_doc.get('_replication_state')
             except KeyError:
-                repl_doc = None
-                state = None
-
-            return repl_doc, state
+                return None, None
 
         while True:
             # Make sure we fetch the state up front, just in case it moves
@@ -206,7 +203,7 @@ class Replicator(object):
             repl_doc = self.database[repl_id]
         except KeyError:
             raise CloudantException(
-                u"Could not find replication with id {}".format(repl_id))
+                "Could not find replication with id {}".format(repl_id))
 
         repl_doc.fetch()
         repl_doc.delete()

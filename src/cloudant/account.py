@@ -22,6 +22,7 @@ import posixpath
 import sys
 import requests
 
+from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .changes import Feed
 from .errors import CloudantException
@@ -138,11 +139,11 @@ class CouchDB(dict):
 
         :returns: Basic http authentication string
         """
-        hash_ = base64.urlsafe_b64encode("{username}:{password}".format(
+        hash_ = base64.urlsafe_b64encode(bytes_("{username}:{password}".format(
             username=self._cloudant_user,
             password=self._cloudant_token
-        ))
-        return "Basic {0}".format(hash_)
+        )))
+        return "Basic {0}".format(unicode_(hash_))
 
     def all_dbs(self):
         """
@@ -192,7 +193,7 @@ class CouchDB(dict):
                 "Database {0} does not exist".format(dbname)
             )
         db.delete()
-        if dbname in self.keys():
+        if dbname in list(self.keys()):
             super(CouchDB, self).__delitem__(dbname)
 
     def db_updates(self, since=None, continuous=True):
@@ -230,7 +231,7 @@ class CouchDB(dict):
         :returns: List of database names
         """
         if not remote:
-            return super(CouchDB, self).keys()
+            return list(super(CouchDB, self).keys())
         return self.all_dbs()
 
     def __getitem__(self, key):
@@ -252,7 +253,7 @@ class CouchDB(dict):
 
         :returns: Database object
         """
-        if key in self.keys():
+        if key in list(self.keys()):
             return super(CouchDB, self).__getitem__(key)
         db = self._DATABASE_CLASS(self, key)
         if db.exists():

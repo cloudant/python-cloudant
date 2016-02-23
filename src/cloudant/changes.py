@@ -19,6 +19,8 @@ changes-like feeds.
 
 import json
 
+from ._2to3 import next_, unicode_
+
 class Feed(object):
     """
     Provides an infinite iterator for consuming database feeds such as
@@ -90,11 +92,11 @@ class Feed(object):
             raise StopIteration
         if not self._resp:
             self.start()
-        line = self._line_iter.next()
+        line = next_(self._line_iter)
         if len(line.strip()) == 0:
-            return {}
+            return dict()
         try:
-            data = json.loads(line)
+            data = json.loads(unicode_(line))
         except ValueError:
             data = {"error": "Bad JSON line", "line": line}
 
@@ -103,7 +105,7 @@ class Feed(object):
                 # forever mode => restart
                 self._last_seq = data['last_seq']
                 self.start()
-                return {}
+                return dict()
             else:
                 # not forever mode => break
                 return data

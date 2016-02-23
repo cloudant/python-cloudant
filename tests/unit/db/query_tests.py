@@ -28,7 +28,7 @@ from cloudant.query import Query
 from cloudant.result import QueryResult
 from cloudant.errors import CloudantArgumentError
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
@@ -89,7 +89,7 @@ class QueryTests(UnitTestDbBase):
         try:
             query(foo={'bar': 'baz'})
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(str(err), 'Invalid argument: foo')
 
     def test_callable_with_invalid_value_types(self):
@@ -112,10 +112,10 @@ class QueryTests(UnitTestDbBase):
             try:
                 query(**argument)
                 self.fail('Above statement should raise an Exception')
-            except CloudantArgumentError, err:
+            except CloudantArgumentError as err:
                 self.assertTrue(str(err).startswith(
                     'Argument {0} is not an instance of expected type:'.format(
-                        argument.keys()[0]
+                        list(argument.keys())[0]
                     )
                 ))
 
@@ -127,7 +127,7 @@ class QueryTests(UnitTestDbBase):
         try:
             query(fields=['_id', '_rev'])
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'No selector in the query or the selector was empty.  '
@@ -142,7 +142,7 @@ class QueryTests(UnitTestDbBase):
         try:
             query(selector={}, fields=['_id', '_rev'])
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'No selector in the query or the selector was empty.  '

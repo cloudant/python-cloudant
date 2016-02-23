@@ -34,7 +34,7 @@ from cloudant.views import Code
 from cloudant.result import Result
 from cloudant.errors import CloudantArgumentError, CloudantException
 
-from unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
 
 class CodeTests(unittest.TestCase):
     """
@@ -213,12 +213,12 @@ class ViewTests(UnitTestDbBase):
         try:
             for row in view.result:
                 self.fail('Above statement should raise an Exception')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 404)
 
     @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is None,
-    'Only execute as part of CouchDB tests')
+            'Only execute as part of CouchDB tests')
     def test_view_callable_with_invalid_javascript(self):
         """
         Test error condition when Javascript errors exist.  This test is only
@@ -243,7 +243,7 @@ class ViewTests(UnitTestDbBase):
         try:
             for row in view.result:
                 self.fail('Above statement should raise an Exception')
-        except requests.HTTPError, err:
+        except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 500)
 
     def test_make_result(self):
@@ -349,7 +349,7 @@ class QueryIndexViewTests(unittest.TestCase):
         try:
             self.view.map = 'function (doc) {\n  emit(doc._id, 1);\n}'
             self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError, err:
+        except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
                 'The map property must be a dictionary'

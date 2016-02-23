@@ -30,13 +30,13 @@ setup_args = {
     'install_requires': requirements,
     'name': 'cloudant',
     'version': '2.0.0b2.dev',
-    'author':'IBM',
-    'author_email':'alfinkel@us.ibm.com',
-    'url':'https://github.com/cloudant/python-cloudant',
+    'author': 'IBM',
+    'author_email': 'alfinkel@us.ibm.com',
+    'url': 'https://github.com/cloudant/python-cloudant',
     'packages': find_packages('./src'),
     'provides': find_packages('./src'),
     'package_dir': {'': 'src'},
-    'classifiers' :[
+    'classifiers': [
           'Intended Audience :: Developers',
           'Natural Language :: English',
           'License :: OSI Approved :: Apache Software License',

@@ -18,21 +18,21 @@ API module for composing and executing Cloudant queries.
 
 import posixpath
 import json
-import types
 import contextlib
 
+from ._2to3 import NONETYPE, STRTYPE, iteritems_
 from .result import QueryResult
 from .errors import CloudantArgumentError
 
 ARG_TYPES = {
     'selector': dict,
-    'limit': (int, types.NoneType),
-    'skip': (int, types.NoneType),
+    'limit': (int, NONETYPE),
+    'skip': (int, NONETYPE),
     'sort': list,
     'fields': list,
-    'r': (int, types.NoneType),
-    'bookmark': basestring,
-    'use_index': basestring
+    'r': (int, NONETYPE),
+    'bookmark': STRTYPE,
+    'use_index': STRTYPE
 }
 
 class Query(dict):
@@ -167,8 +167,8 @@ class Query(dict):
         data.update(kwargs)
 
         # Validate query arguments and values
-        for key, val in data.iteritems():
-            if key not in ARG_TYPES.keys():
+        for key, val in iteritems_(data):
+            if key not in list(ARG_TYPES.keys()):
                 msg = 'Invalid argument: {0}'.format(key)
                 raise CloudantArgumentError(msg)
             if not isinstance(val, ARG_TYPES[key]):

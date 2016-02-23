@@ -16,40 +16,40 @@
 API module for interacting with result collections.
 """
 import json
-import types
-
 from collections import Sequence
+
+from ._2to3 import STRTYPE, UNITYPE, NONETYPE, iteritems_
 from .errors import CloudantArgumentError
 
 ARG_TYPES = {
     'descending': bool,
-    'endkey': (basestring, Sequence),
-    'endkey_docid': basestring,
+    'endkey': (STRTYPE, Sequence),
+    'endkey_docid': STRTYPE,
     'group': bool,
-    'group_level': (int, types.NoneType),
+    'group_level': (int, NONETYPE),
     'include_docs': bool,
     'inclusive_end': bool,
-    'key': (int, basestring, Sequence),
+    'key': (int, STRTYPE, Sequence),
     'keys': list,
-    'limit': (int, types.NoneType),
+    'limit': (int, NONETYPE),
     'reduce': bool,
-    'skip': (int, types.NoneType),
-    'stale': basestring,
-    'startkey': (basestring, Sequence),
-    'startkey_docid': basestring,
+    'skip': (int, NONETYPE),
+    'stale': STRTYPE,
+    'startkey': (STRTYPE, Sequence),
+    'startkey_docid': STRTYPE,
 }
 
 # pylint: disable=unnecessary-lambda
 TYPE_CONVERTERS = {
-    basestring: lambda x: json.dumps(x),
+    STRTYPE: lambda x: json.dumps(x),
     str: lambda x: json.dumps(x),
-    unicode: lambda x: json.dumps(x),
+    UNITYPE: lambda x: json.dumps(x),
     Sequence: lambda x: json.dumps(list(x)),
     list: lambda x: json.dumps(x),
     tuple: lambda x: json.dumps(list(x)),
     int: lambda x: x,
     bool: lambda x: 'true' if x else 'false',
-    types.NoneType: lambda x: x
+    NONETYPE: lambda x: x
 }
 
 def python_to_couch(options):
@@ -66,8 +66,8 @@ def python_to_couch(options):
 
     :returns: Dictionary of translated CouchDB/Cloudant query parameters
     """
-    translation = {}
-    for key, val in options.iteritems():
+    translation = dict()
+    for key, val in iteritems_(options):
         if key not in ARG_TYPES:
             msg = 'Invalid argument {0}'.format(key)
             raise CloudantArgumentError(msg)
@@ -77,7 +77,7 @@ def python_to_couch(options):
         if (
                 not isinstance(val, ARG_TYPES[key]) or
                 (
-                    cmp(ARG_TYPES[key], (int, types.NoneType)) == 0 and
+                    ARG_TYPES[key] == (int, NONETYPE) and
                     type(val) is bool
                 )
         ):
@@ -193,7 +193,7 @@ class Result(object):
 
         :returns: Rows data in JSON format
         """
-        if isinstance(key, basestring):
+        if isinstance(key, STRTYPE):
             data = self._ref(key=key, **self.options)
             return self._parse_data(data)
 
@@ -203,8 +203,8 @@ class Result(object):
 
         if isinstance(key, slice):
             # slice is startkey and endkey if str or array
-            str_or_none_start = type_or_none((basestring, list), key.start)
-            str_or_none_stop = type_or_none((basestring, list), key.stop)
+            str_or_none_start = type_or_none((STRTYPE, list), key.start)
+            str_or_none_stop = type_or_none((STRTYPE, list), key.stop)
             if str_or_none_start and str_or_none_stop:
                 # startkey/endkey
                 if key.start is not None and key.stop is not None:
@@ -278,7 +278,7 @@ class Result(object):
                 **self.options
             )
             result = self._parse_data(response)
-            skip = skip + self._page_size
+            skip += self._page_size
             if len(result) > 0:
                 for row in result:
                     yield row
@@ -360,10 +360,11 @@ class QueryResult(Result):
 
         :returns: Rows data in JSON format
         """
-        if 'skip' in self.options or 'skip' in self._ref.keys():
+        refkeys = set(self._ref.keys())
+        if 'skip' in self.options or 'skip' in refkeys:
             msg = 'Cannot use skip parameter with QueryResult slicing.'
             raise CloudantArgumentError(msg)
-        if 'limit' in self.options or 'limit' in self._ref.keys():
+        if 'limit' in self.options or 'limit' in refkeys:
             msg = 'Cannot use limit parameter with QueryResult slicing.'
             raise CloudantArgumentError(msg)
         if (
