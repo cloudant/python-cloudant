@@ -1,4 +1,4 @@
-2.0.0b2.dev (Unreleased)
+2.0.0b2 (2016-02-24)
 ========================
 - [FIX] Remove the fields parameter from required Query parameters.
 - [NEW] Add Python 3 support.

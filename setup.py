@@ -29,7 +29,7 @@ setup_args = {
     'include_package_data': True,
     'install_requires': requirements,
     'name': 'cloudant',
-    'version': '2.0.0b2.dev',
+    'version': '2.0.0b2',
     'author': 'IBM',
     'author_email': 'alfinkel@us.ibm.com',
     'url': 'https://github.com/cloudant/python-cloudant',
@@ -44,7 +44,9 @@ setup_args = {
           'Development Status :: 4 - Beta',
           'Programming Language :: Python',
           'Programming Language :: Python :: 2',
-          'Programming Language :: Python :: 2.7'
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.5'
       ]
 }
 
