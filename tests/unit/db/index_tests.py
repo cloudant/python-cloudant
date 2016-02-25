@@ -418,6 +418,7 @@ class SearchIndexTests(UnitTestDbBase):
                 {'_id': '_design/ddoc001',
                  '_rev': ddoc['_rev'],
                  'language': 'query',
+                 'views': {},
                  'indexes': {'index001': 
                      {'index': {'index_array_lengths': True,
                                 'fields': 'all_fields',
@@ -452,6 +453,7 @@ class SearchIndexTests(UnitTestDbBase):
                 {'_id': '_design/ddoc001',
                  '_rev': ddoc['_rev'],
                  'language': 'query',
+                 'views': {},
                  'indexes': {'index001': 
                      {'index': {'index_array_lengths': True,
                                 'fields': [{'name': 'name', 'type': 'string'},
