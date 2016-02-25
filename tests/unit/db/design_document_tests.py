@@ -320,6 +320,22 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertIsInstance(ddoc_remote['views']['view002'], View)
         self.assertIsInstance(ddoc_remote['views']['view003'], View)
 
+    def test_fetch_no_views(self):
+        """
+        Ensure that the document fetched from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing no views.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        ddoc_remote.fetch()
+        self.assertEqual(set(ddoc_remote.keys()), {'_id', '_rev', 'views'})
+        self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
+        self.assertEqual(ddoc_remote.views, {})
+
     def test_fetch_query_views(self):
         """
         Ensure that the document fetch from the database returns the
@@ -372,10 +388,11 @@ class DesignDocumentTests(UnitTestDbBase):
                                    'fields': {'$default': 'german'}}}}}
         doc = self.db.create_document(data)
         self.assertIsInstance(doc, Document)
-        data['_rev'] = doc['_rev']
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         ddoc.fetch()
         self.assertIsInstance(ddoc, DesignDocument)
+        data['_rev'] = doc['_rev']
+        data['views'] = dict()
         self.assertEqual(ddoc, data)
         self.assertIsInstance(ddoc['indexes']['index001'], dict)
 
@@ -507,6 +524,29 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         ddoc.save()
         self.assertTrue(ddoc['_rev'].startswith('2-'))
+
+    def test_save_with_no_views(self):
+        """
+        Tests the functionality when saving a design document without a view.
+        The locally cached DesignDocument should contain an empty views dict
+        while the design document saved remotely should not include the empty
+        views sub-document.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.save()
+        # Ensure that locally cached DesignDocument contains an
+        # empty views dict.
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'views'})
+        self.assertEqual(ddoc['_id'], '_design/ddoc001')
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+        self.assertEqual(ddoc.views, {})
+        # Ensure that remotely saved design document does not
+        # include a views sub-document.
+        resp = self.client.r_session.get(ddoc.document_url)
+        raw_ddoc = resp.json()
+        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
+        self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
+        self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
 
     def test_setting_id(self):
         """

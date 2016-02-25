@@ -1,6 +1,6 @@
 2.0.0 (Unreleased)
 ==================
-
+- [FIX] Fixed the handling of empty views in the DesignDocument.
 
 2.0.0b2 (2016-02-24)
 ====================

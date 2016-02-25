@@ -136,23 +136,27 @@ class DesignDocument(Document):
         ``dict`` types.
         """
         super(DesignDocument, self).fetch()
-        for view_name, view_def in iteritems_(self.get('views', dict())):
-            if self.get('language', None) != QUERY_LANGUAGE:
-                self['views'][view_name] = View(
-                    self,
-                    view_name,
-                    view_def.pop('map', None),
-                    view_def.pop('reduce', None),
-                    **view_def
-                )
-            else:
-                self['views'][view_name] = QueryIndexView(
-                    self,
-                    view_name,
-                    view_def.pop('map', None),
-                    view_def.pop('reduce', None),
-                    **view_def
-                )
+        if not self.views:
+            # Ensure views dict exists in locally cached DesignDocument.
+            self.setdefault('views', dict())
+        else:
+            for view_name, view_def in iteritems_(self.get('views', dict())):
+                if self.get('language', None) != QUERY_LANGUAGE:
+                    self['views'][view_name] = View(
+                        self,
+                        view_name,
+                        view_def.pop('map', None),
+                        view_def.pop('reduce', None),
+                        **view_def
+                    )
+                else:
+                    self['views'][view_name] = QueryIndexView(
+                        self,
+                        view_name,
+                        view_def.pop('map', None),
+                        view_def.pop('reduce', None),
+                        **view_def
+                    )
 
     def save(self):
         """
@@ -176,8 +180,15 @@ class DesignDocument(Document):
                             'View {0} must be of type QueryIndexView.'
                         ).format(view_name)
                         raise CloudantException(msg)
+        else:
+            # Ensure empty views dict is not saved remotely.
+            self.__delitem__('views')
 
         super(DesignDocument, self).save()
+
+        if not self.views:
+            # Ensure views dict exists in locally cached DesignDocument.
+            self.setdefault('views', dict())
 
     def __setitem__(self, key, value):
         """
