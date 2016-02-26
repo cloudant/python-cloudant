@@ -721,31 +721,45 @@ class CloudantDatabase(CouchDatabase):
         url = posixpath.join(self._database_host, *parts)
         return url
 
-    def share_database(self, username, reader=True, writer=False, admin=False):
+    def share_database(self, username, roles=None):
         """
         Shares the current remote database with the username provided.
         You can grant varying degrees of access rights,
-        default is to share read-only, but writing or admin
-        permissions can be added by setting the appropriate flags
-        If the user already has this database shared with them it
-        will modify/overwrite the existing permissions.
+        default is to share read-only, but additional
+        roles can be added by providing the specific roles as a
+        ``list`` argument.  If the user already has this database shared with
+        them then it will modify/overwrite the existing permissions.
 
         :param str username: Cloudant user to share the database with.
-        :param bool reader: Grant named user read access if True.
-        :param bool writer: Grant named user write access if True.
-        :param bool admin: Grant named user admin access if True.
+        :param list roles: A list of
+            `roles <https://docs.cloudant.com/authorization.html#roles>`_
+            to grant to the named user.
 
         :returns: Share database status in JSON format
         """
+        if roles is None:
+            roles = ['_reader']
+        valid_roles = [
+            '_reader',
+            '_writer',
+            '_admin',
+            '_replicator',
+            '_db_updates',
+            '_design',
+            '_shards',
+            '_security'
+        ]
         doc = self.security_document()
         data = doc.get('cloudant', {})
         perms = []
-        if reader:
-            perms.append('_reader')
-        if writer:
-            perms.append('_writer')
-        if admin:
-            perms.append('_admin')
+        if all(role in valid_roles for role in roles):
+            perms = list(set(roles))
+
+        if not perms:
+            msg = (
+                'Invalid role(s) provided: {0}.  Valid roles are: {1}.'
+            ).format(roles, valid_roles)
+            raise CloudantArgumentError(msg)
 
         data[username] = perms
         doc['cloudant'] = data

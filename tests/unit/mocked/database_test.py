@@ -275,8 +275,7 @@ class CloudantDBTest(unittest.TestCase):
 
         shared_resp = self.cl.share_database(
             'someotheruser',
-            reader=True,
-            writer=True
+            ['_reader', '_writer']
         )
 
         self.assertTrue(self.mock_session.get.called)

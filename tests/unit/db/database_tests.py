@@ -611,23 +611,83 @@ class CloudantDatabaseTests(UnitTestDbBase):
         super(CloudantDatabaseTests, self).tearDown()
 
     def test_get_security_document(self):
-        self.assertDictEqual(self.db.security_document(), dict())
-        share = 'unit-test-share-user-{0}'.format(unicode_(uuid.uuid4()))
+        """
+        Test the retrieval of the security document.
+        """
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
         self.db.share_database(share)
         expected = {'cloudant': {share: ['_reader']}}
         self.assertDictEqual(self.db.security_document(), expected)
 
-    def test_share_unshare_database(self):
-        share = 'unit-test-share-user-{0}'.format(unicode_(uuid.uuid4()))
+    def test_share_database_default_permissions(self):
+        """
+        Test the sharing of a database applying default permissions.
+        """
         self.assertDictEqual(self.db.security_document(), dict())
-        self.assertDictEqual(self.db.share_database(share), {'ok': True})
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
+        self.db.share_database(share)
         expected = {'cloudant': {share: ['_reader']}}
         self.assertDictEqual(self.db.security_document(), expected)
-        self.assertDictEqual(
-            self.db.share_database(share, True, True, True),
-            {'ok': True}
+
+    def test_share_database(self):
+        """
+        Test the sharing of a database.
+        """
+        self.assertDictEqual(self.db.security_document(), dict())
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
+        self.db.share_database(share, ['_writer', '_replicator'])
+        expected = {'cloudant': {share: ['_writer', '_replicator']}}
+        self.assertDictEqual(self.db.security_document(), expected)
+
+    def test_share_database_with_redundant_role_entries(self):
+        """
+        Test the sharing of a database works when the list of roles contains
+        valid entries but some entries are duplicates.
+        """
+        self.assertDictEqual(self.db.security_document(), dict())
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
+        self.db.share_database(share, ['_writer', '_replicator', '_writer'])
+        expected = {'cloudant': {share: ['_writer', '_replicator']}}
+        self.assertDictEqual(self.db.security_document(), expected)
+
+    def test_share_database_invalid_role(self):
+        """
+        Test the sharing of a database fails when provided an invalid role.
+        """
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.share_database(share, ['_writer', '_invalid_role'])
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Invalid role(s) provided: '
+            '[\'_writer\', \'_invalid_role\'].  Valid roles are: '
+            '[\'_reader\', \'_writer\', \'_admin\', \'_replicator\', '
+            '\'_db_updates\', \'_design\', \'_shards\', \'_security\'].'
         )
-        expected = {'cloudant': {share: ['_reader', '_writer', '_admin']}}
+
+    def test_share_database_empty_role_list(self):
+        """
+        Test the sharing of a database fails when provided an empty role list.
+        """
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.share_database(share, [])
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'Invalid role(s) provided: [].  Valid roles are: '
+            '[\'_reader\', \'_writer\', \'_admin\', \'_replicator\', '
+            '\'_db_updates\', \'_design\', \'_shards\', \'_security\'].'
+        )
+
+    def test_unshare_database(self):
+        """
+        Test the un-sharing of a database from a specified user.
+        """
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
+        self.db.share_database(share)
+        expected = {'cloudant': {share: ['_reader']}}
         self.assertDictEqual(self.db.security_document(), expected)
         self.assertDictEqual(self.db.unshare_database(share), {'ok': True})
         self.assertDictEqual(self.db.security_document(), {'cloudant': dict()})

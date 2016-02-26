@@ -1,6 +1,7 @@
 2.0.0 (Unreleased)
 ==================
 - [FIX] Fixed the handling of empty views in the DesignDocument.
+- [BREAKING] Fixed CloudantDatabase.share_database to accept all valid permission roles.  Changed the method signature to accept roles as a list argument.
 
 2.0.0b2 (2016-02-24)
 ====================
