@@ -110,22 +110,30 @@ class CouchDatabase(dict):
     def create_document(self, data, throw_on_exists=False):
         """
         Creates a new document in the remote and locally cached database, using
-        the data provided, assuming that there is an _id field provided.
+        the data provided.  If an _id is included in the data then depending on
+        that _id either a :class:`~cloudant.document.Document` or a
+        :class:`~cloudant.design_document.DesignDocument`
+        object will be added to the locally cached database and returned by this
+        method.
 
         :param dict data: Dictionary of document JSON data, containing _id.
         :param bool throw_on_exists: Optional flag dictating whether to raise
             an exception if the document already exists in the database.
 
-        :returns: Document instance corresponding to the new document in the
-            database
+        :returns: A :class:`~cloudant.document.Document` or
+            :class:`~cloudant.design_document.DesignDocument` instance
+            corresponding to the new document in the database.
         """
-        docid = data.get('_id')
-        doc = Document(self, docid)
-        if throw_on_exists:
-            if doc.exists():
-                raise CloudantException(
-                    'Error - Document with id {0} already exists.'.format(docid)
-                    )
+        docid = data.get('_id', None)
+        doc = None
+        if docid and docid.startswith('_design/'):
+            doc = DesignDocument(self, docid)
+        else:
+            doc = Document(self, docid)
+        if throw_on_exists and doc.exists():
+            raise CloudantException(
+                'Error - Document with id {0} already exists.'.format(docid)
+            )
         doc.update(data)
         doc.create()
         super(CouchDatabase, self).__setitem__(doc['_id'], doc)
