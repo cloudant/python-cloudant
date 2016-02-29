@@ -153,6 +153,8 @@ class DatabaseTests(UnitTestDbBase):
         self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(doc['name'], data['name'])
         self.assertEqual(doc['age'], data['age'])
+        self.assertIsInstance(doc, Document)
+        self.assertIsInstance(self.db['julia06'], Document)
         try:
             self.db.create_document(data, throw_on_exists=True)
             self.fail('Above statement should raise a CloudantException')
@@ -172,6 +174,23 @@ class DatabaseTests(UnitTestDbBase):
         self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(doc['name'], data['name'])
         self.assertEqual(doc['age'], data['age'])
+        self.assertIsInstance(doc, Document)
+        self.assertIsInstance(self.db[doc['_id']], Document)
+
+    def test_create_design_document(self):
+        """
+        Test creating a document using a supplied document id
+        """
+        data = {'_id': '_design/julia06', 'name': 'julia', 'age': 6}
+        doc = self.db.create_document(data)
+        self.assertEqual(self.db['_design/julia06'], doc)
+        self.assertEqual(doc['_id'], data['_id'])
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(doc['name'], data['name'])
+        self.assertEqual(doc['age'], data['age'])
+        self.assertEqual(doc.views, dict())
+        self.assertIsInstance(doc, DesignDocument)
+        self.assertIsInstance(self.db['_design/julia06'], DesignDocument)
 
     def test_create_empty_document(self):
         """
