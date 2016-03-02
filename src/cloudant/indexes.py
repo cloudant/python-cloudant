@@ -28,11 +28,11 @@ from .errors import CloudantArgumentError, CloudantException
 
 class Index(object):
     """
-    Provides an interface for managing a query JSON index.  Primarily meant to
-    be used by the database convenience methods
-    :func:`~cloudant.database.CloudantDatabase.create_index`,
-    :func:`~cloudant.database.CloudantDatabase.delete_index`, and
-    :func:`~cloudant.database.CloudantDatabase.get_all_indexes`.  It is
+    Provides an interface for managing a Cloudan Query JSON index.  Primarily
+    meant to be used by the database convenience methods
+    :func:`~cloudant.database.CloudantDatabase.create_cq_index`,
+    :func:`~cloudant.database.CloudantDatabase.delete_cq_index`, and
+    :func:`~cloudant.database.CloudantDatabase.get_cq_indexes`.  It is
     recommended that you use those methods to manage an index rather than
     directly interfacing with Index objects.
 
@@ -42,7 +42,7 @@ class Index(object):
     :param str name: Optional name of the index.
     :param kwargs: Options used to construct the index definition for the
         purposes of index creation.  For more details on valid options See
-        :func:`~cloudant.database.CloudantDatabase.create_index`.
+        :func:`~cloudant.database.CloudantDatabase.create_cq_index`.
     """
 
     def __init__(self, database, design_document_id=None, name=None, **kwargs):
@@ -181,26 +181,26 @@ class Index(object):
         resp.raise_for_status()
         return
 
-class SearchIndex(Index):
+class TextIndex(Index):
     """
-    Provides an interface for managing a query text index.  Primarily meant to
-    be used by the database convenience methods
-    :func:`~cloudant.database.CloudantDatabase.create_index`,
-    :func:`~cloudant.database.CloudantDatabase.delete_index`, and
-    :func:`~cloudant.database.CloudantDatabase.get_all_indexes`.  It is
+    Provides an interface for managing a Cloudant Query text index.  Primarily
+    meant to be used by the database convenience methods
+    :func:`~cloudant.database.CloudantDatabase.create_cq_index`,
+    :func:`~cloudant.database.CloudantDatabase.delete_cq_index`, and
+    :func:`~cloudant.database.CloudantDatabase.get_cq_indexes`.  It is
     recommended that you use those methods to manage an index rather than
-    directly interfacing with SearchIndex objects.
+    directly interfacing with TextIndex objects.
 
     :param CloudantDatabase database: A Cloudant database instance used by the
-        SearchIndex.
+        TextIndex.
     :param str design_document_id: Optional identifier of the design document.
     :param str name: Optional name of the index.
     :param kwargs: Options used to construct the index definition for the
         purposes of index creation.  For more details on valid options See
-        :func:`~cloudant.database.CloudantDatabase.create_index`.
+        :func:`~cloudant.database.CloudantDatabase.create_cq_index`.
     """
     def __init__(self, database, design_document_id=None, name=None, **kwargs):
-        super(SearchIndex, self).__init__(
+        super(TextIndex, self).__init__(
             database,
             design_document_id,
             name,
@@ -228,7 +228,7 @@ class SpecialIndex(Index):
     """
     Provides an interface for viewing the "special" primary index of a database.
     Primarily meant to be used by the database convenience method
-    :func:`~cloudant.database.CloudantDatabase.get_all_indexes`.  It is
+    :func:`~cloudant.database.CloudantDatabase.get_cq_indexes`.  It is
     recommended that you use that method to view the "special" index rather than
     directly interfacing with the SpecialIndex object.
     """
