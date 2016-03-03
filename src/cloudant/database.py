@@ -816,9 +816,9 @@ class CloudantDatabase(CouchDatabase):
 
         return resp.json()
 
-    def get_cq_indexes(self, raw_result=False):
+    def get_query_indexes(self, raw_result=False):
         """
-        Retrieves Cloudant Query indexes from the remote database.
+        Retrieves query indexes from the remote database.
 
         :param bool raw_result: If set to True then the raw JSON content for
             the request is returned.  Default is to return a list containing
@@ -826,7 +826,7 @@ class CloudantDatabase(CouchDatabase):
             :class:`~cloudant.indexes.TextIndex`, and
             :class:`~cloudant.indexes.SpecialIndex` wrapped objects.
 
-        :returns: The Cloudant Query indexes in the database
+        :returns: The query indexes in the database
         """
 
         url = posixpath.join(self.database_url, '_index')
@@ -863,7 +863,7 @@ class CloudantDatabase(CouchDatabase):
                 raise CloudantException('Unexpected index content: {0} found.')
         return indexes
 
-    def create_cq_index(
+    def create_query_index(
             self,
             design_document_id=None,
             index_name=None,
@@ -871,8 +871,7 @@ class CloudantDatabase(CouchDatabase):
             **kwargs
     ):
         """
-        Creates either a JSON or a text Cloudant Query index in the remote
-        database.
+        Creates either a JSON or a text query index in the remote database.
 
         :param str index_type: The type of the index to create.  Can
             be either 'text' or 'json'.  Defaults to 'json'.
@@ -918,9 +917,9 @@ class CloudantDatabase(CouchDatabase):
         index.create()
         return index
 
-    def delete_cq_index(self, design_document_id, index_type, index_name):
+    def delete_query_index(self, design_document_id, index_type, index_name):
         """
-        Deletes the Cloudant Query index identified by the design document id,
+        Deletes the query index identified by the design document id,
         index type and index name from the remote database.
 
         :param str design_document_id: The design document id that the index

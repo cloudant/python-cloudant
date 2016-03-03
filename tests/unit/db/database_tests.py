@@ -830,7 +830,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         Ensure that a JSON index is created as expected.
         """
-        index = self.db.create_cq_index(fields=['name', 'age'])
+        index = self.db.create_query_index(fields=['name', 'age'])
         self.assertIsInstance(index, Index)
         ddoc = self.db[index.design_document_id]
         self.assertTrue(ddoc['_rev'].startswith('1-'))
@@ -850,7 +850,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         Ensure that a text index is created as expected.
         """
-        index = self.db.create_cq_index(
+        index = self.db.create_query_index(
             index_type='text',
             fields=[{'name': 'name', 'type':'string'},
                     {'name': 'age', 'type':'number'}]
@@ -878,7 +878,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         Ensure that a text index is created for all fields as expected.
         """
-        index = self.db.create_cq_index(index_type='text')
+        index = self.db.create_query_index(index_type='text')
         self.assertIsInstance(index, TextIndex)
         ddoc = self.db[index.design_document_id]
         self.assertTrue(ddoc['_rev'].startswith('1-'))
@@ -902,13 +902,13 @@ class CloudantDatabaseTests(UnitTestDbBase):
         Tests that multiple indexes of different types can be stored in one
         design document.
         """
-        json_index = self.db.create_cq_index(
+        json_index = self.db.create_query_index(
             'ddoc001',
             'json-index-001',
             fields=['name', 'age']
         )
         self.assertIsInstance(json_index, Index)
-        search_index = self.db.create_cq_index(
+        search_index = self.db.create_query_index(
             'ddoc001',
             'text-index-001',
             'text',
@@ -941,13 +941,13 @@ class CloudantDatabaseTests(UnitTestDbBase):
                                    'fields': {'$default': 'standard'}}}}}
             )
     
-    def test_create_cq_index_failure(self):
+    def test_create_query_index_failure(self):
         """
         Tests that a type of something other than 'json' or 'text' will cause
         failure.
         """
         with self.assertRaises(CloudantArgumentError) as cm:
-            self.db.create_cq_index(
+            self.db.create_query_index(
                 None,
                 '_all_docs',
                 'special',
@@ -964,34 +964,34 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         Ensure that a JSON index is deleted as expected.
         """
-        index = self.db.create_cq_index(
+        index = self.db.create_query_index(
             'ddoc001',
             'index001',
             fields=['name', 'age'])
         self.assertIsInstance(index, Index)
         ddoc = self.db['_design/ddoc001']
         self.assertTrue(ddoc.exists())
-        self.db.delete_cq_index('ddoc001', 'json', 'index001')
+        self.db.delete_query_index('ddoc001', 'json', 'index001')
         self.assertFalse(ddoc.exists())
 
     def test_delete_text_index(self):
         """
         Ensure that a text index is deleted as expected.
         """
-        index = self.db.create_cq_index('ddoc001', 'index001', 'text')
+        index = self.db.create_query_index('ddoc001', 'index001', 'text')
         self.assertIsInstance(index, TextIndex)
         ddoc = self.db['_design/ddoc001']
         self.assertTrue(ddoc.exists())
-        self.db.delete_cq_index('ddoc001', 'text', 'index001')
+        self.db.delete_query_index('ddoc001', 'text', 'index001')
         self.assertFalse(ddoc.exists())
 
-    def test_delete_cq_index_failure(self):
+    def test_delete_query_index_failure(self):
         """
         Tests that a type of something other than 'json' or 'text' will cause
         failure.
         """
         with self.assertRaises(CloudantArgumentError) as cm:
-            self.db.delete_cq_index(None, 'special', '_all_docs')
+            self.db.delete_query_index(None, 'special', '_all_docs')
         err = cm.exception
         self.assertEqual(
             str(err),
@@ -999,15 +999,15 @@ class CloudantDatabaseTests(UnitTestDbBase):
             'Index type must be either \"json\" or \"text\"'
         )
 
-    def test_get_cq_indexes_raw(self):
+    def test_get_query_indexes_raw(self):
         """
-        Tests getting all Cloudant Query indexes from the _index endpoint in
+        Tests getting all query indexes from the _index endpoint in
         JSON format.
         """
-        self.db.create_cq_index('ddoc001', 'json-idx-001', fields=['name', 'age'])
-        self.db.create_cq_index('ddoc001', 'text-idx-001', 'text')
+        self.db.create_query_index('ddoc001', 'json-idx-001', fields=['name', 'age'])
+        self.db.create_query_index('ddoc001', 'text-idx-001', 'text')
         self.assertEqual(
-            self.db.get_cq_indexes(raw_result=True),
+            self.db.get_query_indexes(raw_result=True),
             {'indexes': [
                 {'ddoc': None,
                  'name': '_all_docs',
@@ -1028,14 +1028,14 @@ class CloudantDatabaseTests(UnitTestDbBase):
             ]}
         )
 
-    def test_get_cq_indexes(self):
+    def test_get_query_indexes(self):
         """
-        Tests getting all Cloudant Query indexes from the _index endpoint
+        Tests getting all query indexes from the _index endpoint
         wrapped as Index, TextIndex, and SpecialIndex.
         """
-        self.db.create_cq_index('ddoc001', 'json-idx-001', fields=['name', 'age'])
-        self.db.create_cq_index('ddoc001', 'text-idx-001', 'text')
-        indexes = self.db.get_cq_indexes()
+        self.db.create_query_index('ddoc001', 'json-idx-001', fields=['name', 'age'])
+        self.db.create_query_index('ddoc001', 'text-idx-001', 'text')
+        indexes = self.db.get_query_indexes()
         self.assertIsInstance(indexes[0], SpecialIndex)
         self.assertIsNone(indexes[0].design_document_id)
         self.assertEqual(indexes[0].name, '_all_docs')

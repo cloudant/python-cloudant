@@ -467,7 +467,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         self.assertTrue(ddoc['_rev'].startswith('1-'))
 
-    def test_cq_view_save_fails_when_lang_is_not_query(self):
+    def test_query_view_save_fails_when_lang_is_not_query(self):
         """
         Tests that save fails when language is not query but views are query
         index views.
@@ -500,7 +500,7 @@ class DesignDocumentTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(str(err), 'View view001 must be of type View.')
 
-    def test_cq_view_save_succeeds(self):
+    def test_query_view_save_succeeds(self):
         """
         Tests that save succeeds when language is query and views are query
         index views.
