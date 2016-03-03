@@ -60,10 +60,10 @@ class DesignDocument(Document):
     def add_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
         Appends a MapReduce view to the locally cached DesignDocument View
-        dictionary.  To create a query index use
-        :func:`~cloudant.database.CloudantDatabase.create_index` instead.  A
-        CloudantException is raised if an attempt to add a QueryIndexView
-        (query index) using this method is made.
+        dictionary.  To create a JSON query index use
+        :func:`~cloudant.database.CloudantDatabase.create_query_index` instead.
+        A CloudantException is raised if an attempt to add a QueryIndexView
+        (JSON query index) using this method is made.
 
         :param str view_name: Name used to identify the View.
         :param str map_func: Javascript map function.  Can also be a
@@ -85,11 +85,12 @@ class DesignDocument(Document):
     def update_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
         Modifies/overwrites an existing MapReduce view definition in the
-        locally cached DesignDocument View dictionary.  To update a query index
-        use :func:`~cloudant.database.CloudantDatabase.delete_index` followed by
-        :func:`~cloudant.database.CloudantDatabase.create_index` instead.  A
-        CloudantException is raised if an attempt to update a QueryIndexView
-        (query index) using this method is made.
+        locally cached DesignDocument View dictionary.  To update a JSON
+        query index use
+        :func:`~cloudant.database.CloudantDatabase.delete_query_index` followed
+        by :func:`~cloudant.database.CloudantDatabase.create_query_index`
+        instead.  A CloudantException is raised if an attempt to update a
+        QueryIndexView (JSON query index) using this method is made.
 
         :param str view_name: Name used to identify the View.
         :param str map_func: Javascript map function.  Can also be a
@@ -111,10 +112,10 @@ class DesignDocument(Document):
     def delete_view(self, view_name):
         """
         Removes an existing MapReduce view definition from the locally cached
-        DesignDocument View dictionary.  To delete a query index use
-        :func:`~cloudant.database.CloudantDatabase.delete_index` instead.  A
-        CloudantException is raised if an attempt to delete a QueryIndexView
-        (query index) using this method is made.
+        DesignDocument View dictionary.  To delete a JSON query index
+        use :func:`~cloudant.database.CloudantDatabase.delete_query_index`
+        instead.  A CloudantException is raised if an attempt to delete a
+        QueryIndexView (JSON query index) using this method is made.
 
         :param str view_name: Name used to identify the View.
         """

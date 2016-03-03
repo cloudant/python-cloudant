@@ -338,11 +338,12 @@ class View(dict):
 
 class QueryIndexView(View):
     """
-    A view that defines a JSON index in a design document.
+    A view that defines a JSON query index in a design document.
 
-    If you wish to manage a view that represents a query index it is strongly
-    recommended that :func:`~cloudant.database.CloudantDatabase.create_index`
-    and :func:`~cloudant.database.CloudantDatabase.delete_index` are used.
+    If you wish to manage a view that represents a JSON query index it
+    is strongly recommended that
+    :func:`~cloudant.database.CloudantDatabase.create_query_index`
+    and :func:`~cloudant.database.CloudantDatabase.delete_query_index` are used.
     """
     def __init__(self, ddoc, view_name, map_fields, reduce_func, **kwargs):
         if not isinstance(map_fields, dict):

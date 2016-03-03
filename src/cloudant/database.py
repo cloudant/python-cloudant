@@ -25,7 +25,7 @@ from ._2to3 import url_quote_plus
 from .document import Document
 from .design_document import DesignDocument
 from .views import View
-from .indexes import Index, SearchIndex, SpecialIndex
+from .indexes import Index, TextIndex, SpecialIndex
 from .index_constants import JSON_INDEX_TYPE
 from .index_constants import TEXT_INDEX_TYPE
 from .index_constants import SPECIAL_INDEX_TYPE
@@ -816,17 +816,17 @@ class CloudantDatabase(CouchDatabase):
 
         return resp.json()
 
-    def get_all_indexes(self, raw_result=False):
+    def get_query_indexes(self, raw_result=False):
         """
-        Retrieves indexes from the remote database.
+        Retrieves query indexes from the remote database.
 
         :param bool raw_result: If set to True then the raw JSON content for
             the request is returned.  Default is to return a list containing
             :class:`~cloudant.indexes.Index`,
-            :class:`~cloudant.indexes.SearchIndex`, and
+            :class:`~cloudant.indexes.TextIndex`, and
             :class:`~cloudant.indexes.SpecialIndex` wrapped objects.
 
-        :returns: The indexes in the database
+        :returns: The query indexes in the database
         """
 
         url = posixpath.join(self.database_url, '_index')
@@ -846,7 +846,7 @@ class CloudantDatabase(CouchDatabase):
                     **data.get('def', {})
                 ))
             elif data.get('type') == TEXT_INDEX_TYPE:
-                indexes.append(SearchIndex(
+                indexes.append(TextIndex(
                     self,
                     data.get('ddoc'),
                     data.get('name'),
@@ -863,7 +863,7 @@ class CloudantDatabase(CouchDatabase):
                 raise CloudantException('Unexpected index content: {0} found.')
         return indexes
 
-    def create_index(
+    def create_query_index(
             self,
             design_document_id=None,
             index_name=None,
@@ -871,7 +871,7 @@ class CloudantDatabase(CouchDatabase):
             **kwargs
     ):
         """
-        Creates either a JSON or a text index in the remote database.
+        Creates either a JSON or a text query index in the remote database.
 
         :param str index_type: The type of the index to create.  Can
             be either 'text' or 'json'.  Defaults to 'json'.
@@ -907,7 +907,7 @@ class CloudantDatabase(CouchDatabase):
         if index_type == JSON_INDEX_TYPE:
             index = Index(self, design_document_id, index_name, **kwargs)
         elif index_type == TEXT_INDEX_TYPE:
-            index = SearchIndex(self, design_document_id, index_name, **kwargs)
+            index = TextIndex(self, design_document_id, index_name, **kwargs)
         else:
             msg = (
                 'Invalid index type: {0}.  '
@@ -917,10 +917,10 @@ class CloudantDatabase(CouchDatabase):
         index.create()
         return index
 
-    def delete_index(self, design_document_id, index_type, index_name):
+    def delete_query_index(self, design_document_id, index_type, index_name):
         """
-        Deletes the index identified by the design document id, index type and
-        index name from the remote database.
+        Deletes the query index identified by the design document id,
+        index type and index name from the remote database.
 
         :param str design_document_id: The design document id that the index
             exists in.
@@ -931,7 +931,7 @@ class CloudantDatabase(CouchDatabase):
         if index_type == JSON_INDEX_TYPE:
             index = Index(self, design_document_id, index_name)
         elif index_type == TEXT_INDEX_TYPE:
-            index = SearchIndex(self, design_document_id, index_name)
+            index = TextIndex(self, design_document_id, index_name)
         else:
             msg = (
                 'Invalid index type: {0}.  '

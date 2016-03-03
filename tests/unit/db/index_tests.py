@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Unit tests for the Index module.  IndexTests and SearchIndexTests are tested
+Unit tests for the Index module.  IndexTests and TextIndexTests are tested
 against Cloudant only.
 
 See configuration options for environment variables in unit_t_db_base
@@ -28,7 +28,7 @@ import os
 import posixpath
 import requests
 
-from cloudant.indexes import Index, SearchIndex, SpecialIndex
+from cloudant.indexes import Index, TextIndex, SpecialIndex
 from cloudant.query import Query
 from cloudant.views import QueryIndexView
 from cloudant.design_document import DesignDocument
@@ -358,7 +358,7 @@ class IndexTests(UnitTestDbBase):
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant Search Index tests'
     )
-class SearchIndexTests(UnitTestDbBase):
+class TextIndexTests(UnitTestDbBase):
     """
     Search Index unit tests
     """
@@ -366,7 +366,7 @@ class SearchIndexTests(UnitTestDbBase):
         """
         Set up test attributes
         """
-        super(SearchIndexTests, self).setUp()
+        super(TextIndexTests, self).setUp()
         self.db_set_up()
 
     def tearDown(self):
@@ -374,16 +374,16 @@ class SearchIndexTests(UnitTestDbBase):
         Reset test attributes
         """
         self.db_tear_down()
-        super(SearchIndexTests, self).tearDown()
+        super(TextIndexTests, self).tearDown()
 
     def test_constructor_with_args(self):
         """
-        Test instantiating a SearchIndex by passing in arguments.  As a side effect
+        Test instantiating a TextIndex by passing in arguments.  As a side effect
         this test also tests the design_document_id, name, type, and definition
         property methods.
         """
-        index = SearchIndex(self.db, 'ddoc-id', 'index-name', foo={'bar': 'baz'})
-        self.assertIsInstance(index, SearchIndex)
+        index = TextIndex(self.db, 'ddoc-id', 'index-name', foo={'bar': 'baz'})
+        self.assertIsInstance(index, TextIndex)
         self.assertEqual(index.design_document_id, 'ddoc-id')
         self.assertEqual(index.name, 'index-name')
         self.assertEqual(index.type, 'text')
@@ -391,12 +391,12 @@ class SearchIndexTests(UnitTestDbBase):
 
     def test_constructor_with_only_a_db(self):
         """
-        Test instantiating an SearchIndex with a database only.  As a side effect
+        Test instantiating an TextIndex with a database only.  As a side effect
         this test also tests the design_document_id, name, type, and definition
         property methods.
         """
-        index = SearchIndex(self.db)
-        self.assertIsInstance(index, SearchIndex)
+        index = TextIndex(self.db)
+        self.assertIsInstance(index, TextIndex)
         self.assertIsNone(index.design_document_id)
         self.assertIsNone(index.name)
         self.assertEqual(index.type, 'text')
@@ -406,7 +406,7 @@ class SearchIndexTests(UnitTestDbBase):
         """
         Test that a TEXT index is created in the remote database.
         """
-        index = SearchIndex(self.db, 'ddoc001', 'index001')
+        index = TextIndex(self.db, 'ddoc001', 'index001')
         index.create()
         self.assertEqual(index.design_document_id, '_design/ddoc001')
         self.assertEqual(index.name, 'index001')
@@ -434,7 +434,7 @@ class SearchIndexTests(UnitTestDbBase):
         """
         Test that a TEXT index is created in the remote database.
         """
-        index = SearchIndex(
+        index = TextIndex(
             self.db,
             'ddoc001',
             'index001',
@@ -471,7 +471,7 @@ class SearchIndexTests(UnitTestDbBase):
         """
         Test that a TEXT index is not created when an invalid argument is given.
         """
-        index = SearchIndex(self.db, 'ddoc001', 'index001', foo='bar')
+        index = TextIndex(self.db, 'ddoc001', 'index001', foo='bar')
         with self.assertRaises(CloudantArgumentError) as cm:
             index.create()
         err = cm.exception
@@ -482,7 +482,7 @@ class SearchIndexTests(UnitTestDbBase):
         Test that a TEXT index is not created when an invalid fields value is
         given.
         """
-        index = SearchIndex(self.db, 'ddoc001', 'index001', fields=5)
+        index = TextIndex(self.db, 'ddoc001', 'index001', fields=5)
         with self.assertRaises(CloudantArgumentError) as cm:
             index.create()
         err = cm.exception
@@ -497,7 +497,7 @@ class SearchIndexTests(UnitTestDbBase):
         Test that a TEXT index is not created when an invalid default_field
         value is given.
         """
-        index = SearchIndex(self.db, 'ddoc001', 'index001', default_field=5)
+        index = TextIndex(self.db, 'ddoc001', 'index001', default_field=5)
         with self.assertRaises(CloudantArgumentError) as cm:
             index.create()
         err = cm.exception
@@ -512,7 +512,7 @@ class SearchIndexTests(UnitTestDbBase):
         Test that a TEXT index is not created when an invalid selector
         value is given.
         """
-        index = SearchIndex(self.db, 'ddoc001', 'index001', selector=5)
+        index = TextIndex(self.db, 'ddoc001', 'index001', selector=5)
         with self.assertRaises(CloudantArgumentError) as cm:
             index.create()
         err = cm.exception
@@ -526,7 +526,7 @@ class SearchIndexTests(UnitTestDbBase):
         """
         Test that a created TEXT index will produce expected query results.
         """
-        index = SearchIndex(self.db, 'ddoc001', 'index001')
+        index = TextIndex(self.db, 'ddoc001', 'index001')
         index.create()
         self.populate_db_with_documents(100)
         with Document(self.db, 'julia006') as doc:
