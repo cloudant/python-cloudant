@@ -26,12 +26,21 @@ import unittest
 import posixpath
 import json
 import requests
+import os
+import uuid
+import inspect
 
 from cloudant.document import Document
 from cloudant.errors import CloudantException
 
-from ... import StringIO
+from ... import StringIO, unicode_
 from .unit_t_db_base import UnitTestDbBase
+
+def find_fixture(name):
+    import tests.unit.db.fixtures as fixtures
+    dirname = os.path.dirname(inspect.getsourcefile(fixtures))
+    filename = os.path.join(dirname, name)
+    return filename
 
 class DocumentTests(UnitTestDbBase):
     """
@@ -468,6 +477,77 @@ class DocumentTests(UnitTestDbBase):
         del doc['_id']
         self.assertIsNone(doc.get('_id'))
         self.assertEqual(doc._document_id, None)
+
+    def test_get_text_attachment(self):
+        """
+        Test the retrieval of a text attachment
+        """
+        doc = self.db.create_document(
+            {'_id': 'julia006', 'name': 'julia', 'age': 6}
+        )
+        attachment = StringIO()
+        try:
+            filename = 'attachment-{0}{1}'.format(unicode_(uuid.uuid4()), '.txt')
+            attachment.write('This is line one of the attachment.\n')
+            attachment.write('This is line two of the attachment.\n')
+            resp = doc.put_attachment(
+                filename,
+                'text/plain',
+                attachment.getvalue()
+            )
+            with open(find_fixture(filename), 'wt') as f:
+                text_attachment = doc.get_attachment(filename, write_to=f)
+                self.assertEqual(text_attachment, attachment.getvalue())
+            with open(find_fixture(filename), 'rt') as f:
+                self.assertEqual(f.read(), attachment.getvalue())
+        finally:
+            attachment.close()
+            os.remove(find_fixture(filename))
+
+    def test_get_json_attachment(self):
+        """
+        Test the retrieval of a json attachment
+        """
+        doc = self.db.create_document(
+            {'_id': 'julia006', 'name': 'julia', 'age': 6}
+        )
+        try:
+            filename = 'attachment-{0}{1}'.format(unicode_(uuid.uuid4()), '.json')
+            data = {'foo': 'bar', 'baz': 99}
+            resp = doc.put_attachment(
+                filename,
+                'application/json',
+                json.dumps(data)
+            )
+            with open(find_fixture(filename), 'wt') as f:
+                json_attachment = doc.get_attachment(filename, write_to=f)
+                self.assertIsInstance(json_attachment, dict)
+                self.assertEqual(json_attachment, data)
+            with open(find_fixture(filename), 'rt') as f:
+                self.assertEqual(f.read(), json.dumps(data))
+        finally:
+            os.remove(find_fixture(filename))
+
+    def test_get_binary_attachment(self):
+        """
+        Test the retrieval of a binary attachment
+        """
+        doc = self.db.create_document(
+            {'_id': 'julia006', 'name': 'julia', 'age': 6}
+        )
+        try:
+            filename = 'attachment-{0}{1}'.format(unicode_(uuid.uuid4()), '.jpg')
+            data = None
+            with open(find_fixture('smile.jpg'), 'rb') as f:
+                data = f.read()
+                resp = doc.put_attachment(filename,'image/jpeg', data)
+            with open(find_fixture(filename), 'wb') as f:
+                binary_attachment = doc.get_attachment(filename, write_to=f)
+                self.assertEqual(binary_attachment, data)
+            with open(find_fixture(filename), 'rb') as f:
+                self.assertEqual(f.read(), data)
+        finally:
+            os.remove(find_fixture(filename))
 
     def test_attachment_management(self):
         """
