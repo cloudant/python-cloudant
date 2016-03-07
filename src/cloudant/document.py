@@ -20,7 +20,7 @@ import posixpath
 import requests
 from requests.exceptions import HTTPError
 
-from ._2to3 import unicode_, url_quote, url_quote_plus
+from ._2to3 import url_quote, url_quote_plus
 from .errors import CloudantException
 
 
@@ -363,9 +363,12 @@ class Document(dict):
             attachment,
             headers=None,
             write_to=None,
-            attachment_type="json"):
+            attachment_type=None):
         """
         Retrieves a document's attachment and optionally writes it to a file.
+        If the content_type of the attachment is 'application/json' then the
+        data returned will be in JSON format otherwise the response content will
+        be returned as text or binary.
 
         :param str attachment: Attachment file name used to identify the
             attachment.
@@ -374,8 +377,11 @@ class Document(dict):
         :param file write_to: Optional file handler to write the attachment to.
             The write_to file must be opened for writing prior to including it
             as an argument for this method.
-        :param str attachment_type: Data format of the attachment.  Valid
-            values are ``'json'`` and ``'binary'``.
+        :param str attachment_type: Optional setting to define how to handle the
+            attachment when returning its contents from this method.  Valid
+            values are ``'text'``, ``'json'``, and ``'binary'``  If
+            omitted then the returned content will be based on the
+            response Content-Type.
 
         :returns: The attachment content
         """
@@ -387,17 +393,28 @@ class Document(dict):
         else:
             headers['If-Match'] = self['_rev']
 
-        resp = self.r_session.get(
-            attachment_url,
-            headers=headers
-        )
+        resp = self.r_session.get(attachment_url, headers=headers)
         resp.raise_for_status()
-        if write_to is not None:
-            write_to.write(resp.raw)
 
-        if attachment_type == 'json':
+        if attachment_type is None:
+            if resp.headers['Content-Type'].startswith('text/'):
+                attachment_type = 'text'
+            elif resp.headers['Content-Type'] == 'application/json':
+                attachment_type = 'json'
+            else:
+                attachment_type = 'binary'
+
+        if write_to is not None:
+            if attachment_type == 'text' or attachment_type == 'json':
+                write_to.write(resp.text)
+            else:
+                write_to.write(resp.content)
+        if attachment_type == 'text':
+            return resp.text
+        elif attachment_type == 'json':
             return resp.json()
-        return unicode_(resp.content)
+
+        return resp.content
 
     def delete_attachment(self, attachment, headers=None):
         """
