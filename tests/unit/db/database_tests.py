@@ -76,12 +76,18 @@ class DatabaseTests(UnitTestDbBase):
 
     def test_retrieve_creds(self):
         """
-        Test retrieving account credentials
+        Test retrieving account credentials.
+        Account credentials are None if CouchDB Admin Party mode was selected.
         """
-        expected_keys = ['basic_auth', 'user_ctx']
-        self.assertTrue(all(x in expected_keys for x in self.db.creds.keys()))
-        self.assertTrue(self.db.creds['basic_auth'].startswith('Basic'))
-        self.assertEqual(self.db.creds['user_ctx']['name'], self.user)
+        if self.client.admin_party:
+            self.assertIsNone(self.db.creds)
+        else:
+            expected_keys = ['basic_auth', 'user_ctx']
+            self.assertTrue(
+                all(x in expected_keys for x in self.db.creds.keys())
+            )
+            self.assertTrue(self.db.creds['basic_auth'].startswith('Basic'))
+            self.assertEqual(self.db.creds['user_ctx']['name'], self.user)
 
     def test_exists(self):
         """

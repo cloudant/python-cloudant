@@ -75,6 +75,8 @@ class CouchDatabase(dict):
 
         :returns: Dictionary containing authentication information
         """
+        if self.cloudant_account.admin_party:
+            return None
         return {
             "basic_auth": self.cloudant_account.basic_auth_str(),
             "user_ctx": self.cloudant_account.session()['userCtx']

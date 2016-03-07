@@ -26,6 +26,7 @@ import unittest
 import uuid
 import time
 import requests
+import os
 
 from cloudant.replicator import Replicator
 from cloudant.document import Document
@@ -100,7 +101,7 @@ class ReplicatorTests(UnitTestDbBase):
 
     def test_create_replication(self):
         """
-        Test that the replication document gets created and that the 
+        Test that the replication document gets created and that the
         replication is successful.
         """
         self.populate_db_with_documents(3)
@@ -113,7 +114,10 @@ class ReplicatorTests(UnitTestDbBase):
         )
         self.replication_ids.append(repl_id)
         # Test that the replication document was created
-        expected_keys = ('_id', '_rev', 'source', 'target', 'user_ctx')
+        expected_keys = ['_id', '_rev', 'source', 'target', 'user_ctx']
+        # If Admin Party mode then user_ctx will not be in the key list
+        if self.client.admin_party:
+            expected_keys.pop()
         self.assertTrue(all(x in list(repl_doc.keys()) for x in expected_keys))
         self.assertEqual(repl_doc['_id'], repl_id)
         self.assertTrue(repl_doc['_rev'].startswith('1-'))

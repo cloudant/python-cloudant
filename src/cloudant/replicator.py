@@ -55,12 +55,15 @@ class Replicator(object):
             not explicitly set.
         :param source: Optional ``str`` or ``dict`` representing the source
             database, along with authentication info, if any.  Composed
-            internally if not explicitly set.
+            internally if not explicitly set and not in CouchDB Admin Party
+            mode.
         :param target: Optional ``str`` or ``dict`` representing the
             target database, possibly including authentication info.  Composed
-            internally if not explicitly set.
+            internally if not explicitly set and not in CouchDB Admin Party
+            mode.
         :param dict user_ctx: Optional user to act as.  Composed internally
-            if not explicitly set.
+            if not explicitly set and not in CouchDB Admin Party
+            mode.
         :param bool create_target: Specifies whether or not to
             create the target, if it does not already exist.
         :param bool continuous: If set to True then the replication will be
@@ -77,31 +80,30 @@ class Replicator(object):
         if not data.get('source'):
             if source_db is None:
                 raise CloudantException(
-                    "You must specify either a source_db Database "
-                    "object or a manually composed 'source' string/dict."
+                    'You must specify either a source_db Database '
+                    'object or a manually composed \'source\' string/dict.'
                 )
-            data['source'] = {
-                "url": source_db.database_url,
-                "headers": {
-                    "Authorization": source_db.creds['basic_auth']
-                }
-            }
+            data['source'] = {'url': source_db.database_url}
+            if not source_db.cloudant_account.admin_party:
+                data['source'].update(
+                    {'headers': {'Authorization': source_db.creds['basic_auth']}}
+                )
 
         if not data.get('target'):
             if target_db is None:
                 raise CloudantException(
-                    "You must specify either a target_db Database "
-                    "object or a manually composed 'target' string/dict."
+                    'You must specify either a target_db Database '
+                    'object or a manually composed \'target\' string/dict.'
                 )
-            data['target'] = {
-                "url": target_db.database_url,
-                "headers": {
-                    "Authorization": target_db.creds['basic_auth']
-                }
-            }
+            data['target'] = {'url': target_db.database_url}
+            if not target_db.cloudant_account.admin_party:
+                data['target'].update(
+                    {'headers': {'Authorization': target_db.creds['basic_auth']}}
+                )
 
         if not data.get('user_ctx'):
-            data['user_ctx'] = self.database.creds['user_ctx']
+            if not target_db.cloudant_account.admin_party:
+                data['user_ctx'] = self.database.creds['user_ctx']
 
         return self.database.create_document(data, throw_on_exists=True)
 
