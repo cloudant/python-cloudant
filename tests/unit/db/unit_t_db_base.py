@@ -128,10 +128,14 @@ class UnitTestDbBase(unittest.TestCase):
         Set up test attributes for unit tests targeting a database
         """
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
+            admin_party = False
+            if (os.environ.get('ADMIN_PARTY') and
+                os.environ.get('ADMIN_PARTY') == 'true'):
+                admin_party = True
             self.user = os.environ.get('DB_USER', None)
             self.pwd = os.environ.get('DB_PASSWORD', None)
             self.url = os.environ['DB_URL']
-            self.client = CouchDB(self.user, self.pwd, url=self.url)
+            self.client = CouchDB(self.user, self.pwd, admin_party, url=self.url)
         else:
             self.account = os.environ.get('CLOUDANT_ACCOUNT')
             self.user = os.environ.get('DB_USER')

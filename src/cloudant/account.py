@@ -46,33 +46,23 @@ class CouchDB(dict):
     :param str user: Username used to connect to CouchDB.
     :param str auth_token: Authentication token used to connect to CouchDB.
     :param str url: URL for CouchDB server.
+    :param bool admin_party: Setting to allow the use of Admin Party mode in
+        CouchDB.  Defaults to ``False``.
     :param str encoder: Optional json Encoder object used to encode
         documents for storage.  Defaults to json.JSONEncoder.
     """
     _DATABASE_CLASS = CouchDatabase
 
-    def __init__(self, user=None, auth_token=None, **kwargs):
+    def __init__(self, user, auth_token, admin_party=False, **kwargs):
         super(CouchDB, self).__init__()
         self._cloudant_user = user
         self._cloudant_token = auth_token
         self._cloudant_session = None
         self.cloudant_url = kwargs.get('url')
         self._cloudant_user_header = None
+        self.admin_party = admin_party
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
         self.r_session = None
-
-    @property
-    def admin_party(self):
-        """
-        If neither a username or a password have been provided during object
-        construction then CouchDB Admin Party mode is assumed.
-
-        :returns: Boolean value showing whether a username and password have
-            been provided
-        """
-        if self._cloudant_user is None and self._cloudant_token is None:
-            return True
-        return False
 
     def connect(self):
         """

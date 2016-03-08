@@ -660,8 +660,8 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         self.assertDictEqual(self.db.security_document(), dict())
         share = 'user-{0}'.format(unicode_(uuid.uuid4()))
-        self.db.share_database(share, ['_writer', '_replicator'])
-        expected = {'cloudant': {share: ['_writer', '_replicator']}}
+        self.db.share_database(share, ['_writer'])
+        expected = {'cloudant': {share: ['_writer']}}
         self.assertDictEqual(self.db.security_document(), expected)
 
     def test_share_database_with_redundant_role_entries(self):
@@ -671,8 +671,8 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         self.assertDictEqual(self.db.security_document(), dict())
         share = 'user-{0}'.format(unicode_(uuid.uuid4()))
-        self.db.share_database(share, ['_writer', '_replicator', '_writer'])
-        expected = {'cloudant': {share: ['_writer', '_replicator']}}
+        self.db.share_database(share, ['_writer', '_writer'])
+        expected = {'cloudant': {share: ['_writer']}}
         self.assertDictEqual(self.db.security_document(), expected)
 
     def test_share_database_invalid_role(self):

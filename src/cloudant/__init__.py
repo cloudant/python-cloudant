@@ -90,3 +90,31 @@ def couchdb(user, passwd, **kwargs):
     couchdb_session.connect()
     yield couchdb_session
     couchdb_session.disconnect()
+
+@contextlib.contextmanager
+def couchdb_admin_party(**kwargs):
+    """
+    Provides a context manager to create a CouchDB session in Admin Party mode
+    and provide access to databases, docs etc.
+
+    :param str url: URL for CouchDB server.
+    :param str encoder: Optional json Encoder object used to encode
+        documents for storage.  Defaults to json.JSONEncoder.
+
+    For example:
+
+    .. code-block:: python
+
+        # couchdb_admin_party context manager
+        from cloudant import couchdb_admin_party
+
+        with couchdb_admin_party(url=COUCHDB_URL) as client:
+            # Context handles connect() and disconnect() for you.
+            # Perform library operations within this context.  Such as:
+            print client.all_dbs()
+            # ...
+    """
+    couchdb_session = CouchDB(None, None, True, **kwargs)
+    couchdb_session.connect()
+    yield couchdb_session
+    couchdb_session.disconnect()

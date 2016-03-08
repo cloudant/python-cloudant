@@ -56,6 +56,16 @@ class CouchDatabase(dict):
         self.result = Result(self.all_docs)
 
     @property
+    def admin_party(self):
+        """
+        Returns the CouchDB Admin Party status.  ``True`` if using Admin Party
+        ``False`` otherwise.
+
+        :returns: CouchDB Admin Party mode status
+        """
+        return self.cloudant_account.admin_party
+
+    @property
     def database_url(self):
         """
         Constructs and returns the database URL.
@@ -75,7 +85,7 @@ class CouchDatabase(dict):
 
         :returns: Dictionary containing authentication information
         """
-        if self.cloudant_account.admin_party:
+        if self.admin_party:
             return None
         return {
             "basic_auth": self.cloudant_account.basic_auth_str(),

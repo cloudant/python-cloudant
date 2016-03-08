@@ -84,7 +84,7 @@ class Replicator(object):
                     'object or a manually composed \'source\' string/dict.'
                 )
             data['source'] = {'url': source_db.database_url}
-            if not source_db.cloudant_account.admin_party:
+            if not source_db.admin_party:
                 data['source'].update(
                     {'headers': {'Authorization': source_db.creds['basic_auth']}}
                 )
@@ -96,13 +96,13 @@ class Replicator(object):
                     'object or a manually composed \'target\' string/dict.'
                 )
             data['target'] = {'url': target_db.database_url}
-            if not target_db.cloudant_account.admin_party:
+            if not target_db.admin_party:
                 data['target'].update(
                     {'headers': {'Authorization': target_db.creds['basic_auth']}}
                 )
 
         if not data.get('user_ctx'):
-            if not target_db.cloudant_account.admin_party:
+            if not target_db.admin_party:
                 data['user_ctx'] = self.database.creds['user_ctx']
 
         return self.database.create_document(data, throw_on_exists=True)

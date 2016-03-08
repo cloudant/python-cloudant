@@ -29,17 +29,50 @@ import base64
 import os
 from datetime import datetime
 
-from cloudant.account import Cloudant
+from cloudant import cloudant, couchdb, couchdb_admin_party
+from cloudant.account import Cloudant, CouchDB
 from cloudant.errors import CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import bytes_, str_
 
-
 class AccountTests(UnitTestDbBase):
     """
     CouchDB/Cloudant Account unit tests
     """
+
+    @unittest.skipIf(
+        (os.environ.get('RUN_CLOUDANT_TESTS') is not None or
+        (os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
+        'Skipping couchdb context manager test'
+    )
+    def test_couchdb_context_helper(self):
+        """
+        Test that the couchdb context helper works as expected.
+        """
+        try:
+            with couchdb(self.user, self.pwd, url=self.url) as c:
+                self.assertIsInstance(c, CouchDB)
+                self.assertIsInstance(c.r_session, requests.Session)
+                self.assertEqual(c.r_session.auth, (self.user, self.pwd))
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
+
+    @unittest.skipUnless(
+        (os.environ.get('RUN_CLOUDANT_TESTS') is None and
+        (os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
+        'Skipping couchdb_admin_party context manager test'
+    )
+    def test_couchdb_admin_party_context_helper(self):
+        """
+        Test that the couchdb_admin_party context helper works as expected.
+        """
+        try:
+            with couchdb_admin_party(url=self.url) as c:
+                self.assertIsInstance(c, CouchDB)
+                self.assertIsInstance(c.r_session, requests.Session)
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
 
     def test_constructor_with_url(self):
         """
@@ -346,11 +379,23 @@ class AccountTests(UnitTestDbBase):
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant Account specific tests'
-    )
+)
 class CloudantAccountTests(UnitTestDbBase):
     """
     Cloudant specific Account unit tests
     """
+
+    def test_cloudant_context_helper(self):
+        """
+        Test that the cloudant context helper works as expected.
+        """
+        try:
+            with cloudant(self.user, self.pwd, account=self.account) as c:
+                self.assertIsInstance(c, Cloudant)
+                self.assertIsInstance(c.r_session, requests.Session)
+                self.assertEqual(c.r_session.auth, (self.user, self.pwd))
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
     
     def test_constructor_with_account(self):
         """
