@@ -19,6 +19,11 @@ unit_t_db_base module - The base class for all unit tests that target a db
 
 The unit tests are set to execute by default against a CouchDB instance.
 
+To run the tests using Admin Party security mode in Couchdb, set the 
+ADMIN_PARTY environment variable to true.
+
+  example: export ADMIN_PARTY=true
+
 In order to run the unit tests against a Cloudant instance, set the
 RUN_CLOUDANT_TESTS environment variable to something.
 
@@ -32,8 +37,8 @@ CLOUDANT_ACCOUNT: Set this to the Cloudant account that you wish to connect to.
   example: export CLOUDANT_ACCOUNT=account
 
 DB_USER: Set this to the username to connect with.  
-  - Optional for CouchDB tests.  If omitted then a user will be created before
-    tests are executed in CouchDB.
+  - Optional for CouchDB tests.  If omitted and ADMIN_PARTY is not "true" then
+    a user will be created before tests are executed in CouchDB.
   - Mandatory for Cloudant tests.  
 
   example: export DB_USER=user
@@ -75,6 +80,14 @@ class UnitTestDbBase(unittest.TestCase):
             if os.environ.get('DB_URL') is None:
                 os.environ['DB_URL'] = 'http://127.0.0.1:5984'
 
+            if (os.environ.get('ADMIN_PARTY') and
+                os.environ.get('ADMIN_PARTY') == 'true'):
+                if os.environ.get('DB_USER'):
+                    del os.environ['DB_USER']
+                if os.environ.get('DB_PASSWORD'):
+                    del os.environ['DB_PASSWORD']
+                return
+
             if os.environ.get('DB_USER') is None:
                 os.environ['DB_USER_CREATED'] = '1'
                 os.environ['DB_USER'] = 'user-{0}'.format(
@@ -115,10 +128,14 @@ class UnitTestDbBase(unittest.TestCase):
         Set up test attributes for unit tests targeting a database
         """
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
-            self.user = os.environ['DB_USER']
-            self.pwd = os.environ['DB_PASSWORD']
+            admin_party = False
+            if (os.environ.get('ADMIN_PARTY') and
+                os.environ.get('ADMIN_PARTY') == 'true'):
+                admin_party = True
+            self.user = os.environ.get('DB_USER', None)
+            self.pwd = os.environ.get('DB_PASSWORD', None)
             self.url = os.environ['DB_URL']
-            self.client = CouchDB(self.user, self.pwd, url=self.url)
+            self.client = CouchDB(self.user, self.pwd, admin_party, url=self.url)
         else:
             self.account = os.environ.get('CLOUDANT_ACCOUNT')
             self.user = os.environ.get('DB_USER')

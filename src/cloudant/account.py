@@ -46,18 +46,21 @@ class CouchDB(dict):
     :param str user: Username used to connect to CouchDB.
     :param str auth_token: Authentication token used to connect to CouchDB.
     :param str url: URL for CouchDB server.
+    :param bool admin_party: Setting to allow the use of Admin Party mode in
+        CouchDB.  Defaults to ``False``.
     :param str encoder: Optional json Encoder object used to encode
         documents for storage.  Defaults to json.JSONEncoder.
     """
     _DATABASE_CLASS = CouchDatabase
 
-    def __init__(self, user, auth_token, **kwargs):
+    def __init__(self, user, auth_token, admin_party=False, **kwargs):
         super(CouchDB, self).__init__()
         self._cloudant_user = user
         self._cloudant_token = auth_token
         self._cloudant_session = None
         self.cloudant_url = kwargs.get('url')
         self._cloudant_user_header = None
+        self.admin_party = admin_party
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
         self.r_session = None
 
@@ -67,10 +70,11 @@ class CouchDB(dict):
         authentication.
         """
         self.r_session = requests.Session()
-        self.r_session.auth = (self._cloudant_user, self._cloudant_token)
         if self._cloudant_user_header is not None:
             self.r_session.headers.update(self._cloudant_user_header)
-        self.session_login(self._cloudant_user, self._cloudant_token)
+        if not self.admin_party:
+            self.r_session.auth = (self._cloudant_user, self._cloudant_token)
+            self.session_login(self._cloudant_user, self._cloudant_token)
         self._cloudant_session = self.session()
 
     def disconnect(self):
@@ -88,6 +92,8 @@ class CouchDB(dict):
 
         :returns: Dictionary of session info for the current session.
         """
+        if self.admin_party:
+            return None
         sess_url = posixpath.join(self.cloudant_url, '_session')
         resp = self.r_session.get(sess_url)
         resp.raise_for_status()
@@ -100,6 +106,8 @@ class CouchDB(dict):
 
         :returns: Session cookie for the current session
         """
+        if self.admin_party:
+            return None
         return self.r_session.cookies.get('AuthSession')
 
     def session_login(self, user, passwd):
@@ -110,6 +118,8 @@ class CouchDB(dict):
         :param str user: Username used to connect.
         :param str passwd: Passcode used to connect.
         """
+        if self.admin_party:
+            return
         sess_url = posixpath.join(self.cloudant_url, '_session')
         resp = self.r_session.post(
             sess_url,
@@ -126,6 +136,8 @@ class CouchDB(dict):
         Performs a session logout and clears the current session by
         sending a delete request to the cloudant _session endpoint.
         """
+        if self.admin_party:
+            return
         sess_url = posixpath.join(self.cloudant_url, '_session')
         resp = self.r_session.delete(
             sess_url
@@ -139,6 +151,8 @@ class CouchDB(dict):
 
         :returns: Basic http authentication string
         """
+        if self.admin_party:
+            return None
         hash_ = base64.urlsafe_b64encode(bytes_("{username}:{password}".format(
             username=self._cloudant_user,
             password=self._cloudant_token

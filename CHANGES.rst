@@ -5,6 +5,7 @@
 - [FIX] The CouchDatabase.create_document method now will handle both documents and design documents correctly.  If the document created is a design document then the locally cached object will be a DesignDocument otherwise it will be a Document.
 - [BREAKING] Refactored the SearchIndex class to now be the TextIndex class.  Also renamed the CloudantDatabase convenience methods of get_all_indexes, create_index, and delete_index as get_query_indexes, create_query_index, and delete_query_index respectively.  These changes were made to clarify that the changed class and the changed methods were specific to query index processing only.
 - [FIX] Fixed Document.get_attachment method to successfully create text and binary files based on http response Content-Type.  The method also returns text, binary, and json content based on http response Content-Type.
+- [NEW] Added support for CouchDB Admin Party mode.  This library can now be used with CouchDB instances where everyone is Admin.
 
 2.0.0b2 (2016-02-24)
 ====================

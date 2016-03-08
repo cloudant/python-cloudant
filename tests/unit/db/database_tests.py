@@ -76,12 +76,18 @@ class DatabaseTests(UnitTestDbBase):
 
     def test_retrieve_creds(self):
         """
-        Test retrieving account credentials
+        Test retrieving account credentials.
+        Account credentials are None if CouchDB Admin Party mode was selected.
         """
-        expected_keys = ['basic_auth', 'user_ctx']
-        self.assertTrue(all(x in expected_keys for x in self.db.creds.keys()))
-        self.assertTrue(self.db.creds['basic_auth'].startswith('Basic'))
-        self.assertEqual(self.db.creds['user_ctx']['name'], self.user)
+        if self.client.admin_party:
+            self.assertIsNone(self.db.creds)
+        else:
+            expected_keys = ['basic_auth', 'user_ctx']
+            self.assertTrue(
+                all(x in expected_keys for x in self.db.creds.keys())
+            )
+            self.assertTrue(self.db.creds['basic_auth'].startswith('Basic'))
+            self.assertEqual(self.db.creds['user_ctx']['name'], self.user)
 
     def test_exists(self):
         """
@@ -654,8 +660,8 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         self.assertDictEqual(self.db.security_document(), dict())
         share = 'user-{0}'.format(unicode_(uuid.uuid4()))
-        self.db.share_database(share, ['_writer', '_replicator'])
-        expected = {'cloudant': {share: ['_writer', '_replicator']}}
+        self.db.share_database(share, ['_writer'])
+        expected = {'cloudant': {share: ['_writer']}}
         self.assertDictEqual(self.db.security_document(), expected)
 
     def test_share_database_with_redundant_role_entries(self):
@@ -665,8 +671,8 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         self.assertDictEqual(self.db.security_document(), dict())
         share = 'user-{0}'.format(unicode_(uuid.uuid4()))
-        self.db.share_database(share, ['_writer', '_replicator', '_writer'])
-        expected = {'cloudant': {share: ['_writer', '_replicator']}}
+        self.db.share_database(share, ['_writer', '_writer'])
+        expected = {'cloudant': {share: ['_writer']}}
         self.assertDictEqual(self.db.security_document(), expected)
 
     def test_share_database_invalid_role(self):

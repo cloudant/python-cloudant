@@ -61,6 +61,7 @@ class ReplicatorTests(unittest.TestCase):
         self.mock_account.session.return_value = {
             "userCtx": "user Context"
         }
+        self.mock_account.admin_party = False
 
     def tearDown(self):
         self.patcher.stop()
@@ -71,9 +72,13 @@ class ReplicatorTests(unittest.TestCase):
             mock_target = mock.Mock()
             mock_target.database_url = "http://bob.cloudant.com/target"
             mock_target.creds = {'basic_auth': "target_auth"}
+            mock_target.cloudant_account = self.mock_account
+            mock_target.admin_party = False
             mock_source = mock.Mock()
             mock_source.database_url = "http://bob.cloudant.com/source"
             mock_source.creds = {'basic_auth': "source_auth"}
+            mock_source.cloudant_account = self.mock_account
+            mock_source.admin_party = False
 
             repl = Replicator(self.mock_account)
             repl.create_replication(mock_source, mock_target, "REPLID")

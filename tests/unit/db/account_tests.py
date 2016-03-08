@@ -29,17 +29,50 @@ import base64
 import os
 from datetime import datetime
 
-from cloudant.account import Cloudant
+from cloudant import cloudant, couchdb, couchdb_admin_party
+from cloudant.account import Cloudant, CouchDB
 from cloudant.errors import CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import bytes_, str_
 
-
 class AccountTests(UnitTestDbBase):
     """
     CouchDB/Cloudant Account unit tests
     """
+
+    @unittest.skipIf(
+        (os.environ.get('RUN_CLOUDANT_TESTS') is not None or
+        (os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
+        'Skipping couchdb context manager test'
+    )
+    def test_couchdb_context_helper(self):
+        """
+        Test that the couchdb context helper works as expected.
+        """
+        try:
+            with couchdb(self.user, self.pwd, url=self.url) as c:
+                self.assertIsInstance(c, CouchDB)
+                self.assertIsInstance(c.r_session, requests.Session)
+                self.assertEqual(c.r_session.auth, (self.user, self.pwd))
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
+
+    @unittest.skipUnless(
+        (os.environ.get('RUN_CLOUDANT_TESTS') is None and
+        (os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
+        'Skipping couchdb_admin_party context manager test'
+    )
+    def test_couchdb_admin_party_context_helper(self):
+        """
+        Test that the couchdb_admin_party context helper works as expected.
+        """
+        try:
+            with couchdb_admin_party(url=self.url) as c:
+                self.assertIsInstance(c, CouchDB)
+                self.assertIsInstance(c.r_session, requests.Session)
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
 
     def test_constructor_with_url(self):
         """
@@ -54,50 +87,67 @@ class AccountTests(UnitTestDbBase):
 
     def test_connect(self):
         """
-        Test connect and disconnect functionality
+        Test connect and disconnect functionality.
+        Client r_session_auth is not set in CouchDB Admin Party mode.
         """
         try:
             self.client.connect()
             self.assertIsInstance(self.client.r_session, requests.Session)
-            self.assertEqual(self.client.r_session.auth, (self.user, self.pwd))
+            if self.client.admin_party:
+                self.assertIsNone(self.client.r_session.auth)
+            else:
+                self.assertEqual(
+                    self.client.r_session.auth, (self.user, self.pwd)
+                )
         finally:
             self.client.disconnect()
             self.assertIsNone(self.client.r_session)
 
     def test_session(self):
         """
-        Test getting session information
+        Test getting session information.  
+        Session info is None if CouchDB Admin Party mode was selected.
         """
         try:
             self.client.connect()
             session = self.client.session()
-            self.assertEqual(session['userCtx']['name'], self.user)
+            if self.client.admin_party:
+                self.assertIsNone(session)
+            else:
+                self.assertEqual(session['userCtx']['name'], self.user)
         finally:
             self.client.disconnect()
 
     def test_session_cookie(self):
         """
-        Test getting the session cookie
+        Test getting the session cookie.
+        Session cookie is None if CouchDB Admin Party mode was selected.
         """
         try:
             self.client.connect()
-            self.assertIsNotNone(self.client.session_cookie())
+            if self.client.admin_party:
+                self.assertIsNone(self.client.session_cookie())
+            else:
+                self.assertIsNotNone(self.client.session_cookie())
         finally:
             self.client.disconnect()
 
     def test_basic_auth_str(self):
         """
-        Test getting the basic authentication string
+        Test getting the basic authentication string.
+        Basic auth string is None if CouchDB Admin Party mode was selected.
         """
         try:
             self.client.connect()
-            expected = 'Basic {0}'.format(
-                str_(base64.urlsafe_b64encode(bytes_("{0}:{1}".format(self.user, self.pwd))))
+            if self.client.admin_party:
+                self.assertIsNone(self.client.basic_auth_str())
+            else:
+                expected = 'Basic {0}'.format(
+                    str_(base64.urlsafe_b64encode(bytes_("{0}:{1}".format(
+                        self.user, self.pwd
+                    ))))
                 )
-            self.assertEqual(
-                self.client.basic_auth_str(),
-                expected
-                )
+                self.assertEqual(self.client.basic_auth_str(), expected)
         finally:
             self.client.disconnect()
 
@@ -329,11 +379,23 @@ class AccountTests(UnitTestDbBase):
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant Account specific tests'
-    )
+)
 class CloudantAccountTests(UnitTestDbBase):
     """
     Cloudant specific Account unit tests
     """
+
+    def test_cloudant_context_helper(self):
+        """
+        Test that the cloudant context helper works as expected.
+        """
+        try:
+            with cloudant(self.user, self.pwd, account=self.account) as c:
+                self.assertIsInstance(c, Cloudant)
+                self.assertIsInstance(c.r_session, requests.Session)
+                self.assertEqual(c.r_session.auth, (self.user, self.pwd))
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
     
     def test_constructor_with_account(self):
         """
