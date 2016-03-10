@@ -299,19 +299,47 @@ class DatabaseTests(UnitTestDbBase):
         self.assertIsInstance(raw_rslt, dict)
         self.assertEqual(len(raw_rslt.get('rows')), 100)
 
-    def test_all_docs(self):
+    def test_all_docs_post(self):
         """
-        Test the all_docs functionality
+        Test the all_docs POST request functionality using keys param
+        """
+        # Create 200 documents with ids julia000, julia001, julia002, ..., julia199
+        self.populate_db_with_documents(200)
+        # Generate keys list for every other document created
+        # with ids julia000, julia002, julia004, ..., julia198
+        keys_list = ['julia{0:03d}'.format(i) for i in range(0, 200, 2)]
+        self.assertEqual(len(keys_list), 100)
+        rows = self.db.all_docs(keys=keys_list).get('rows')
+        self.assertEqual(len(rows), 100)
+        keys_returned = [row['key'] for row in rows]
+        self.assertTrue(all(x in keys_returned for x in keys_list))
+
+    def test_all_docs_post_multiple_params(self):
+        """
+        Test the all_docs POST request functionality using keys and other params
+        """
+        # Create 200 documents with ids julia000, julia001, julia002, ..., julia199
+        self.populate_db_with_documents(200)
+        # Generate keys list for every other document created
+        # with ids julia000, julia002, julia004, ..., julia198
+        keys_list = ['julia{0:03d}'.format(i) for i in range(0, 200, 2)]
+        self.assertEqual(len(keys_list), 100)
+        data = self.db.all_docs(limit=3, skip=10, keys=keys_list)
+        self.assertEqual(len(data.get('rows')), 3)
+        self.assertEqual(data['rows'][0]['key'], 'julia020')
+        self.assertEqual(data['rows'][1]['key'], 'julia022')
+        self.assertEqual(data['rows'][2]['key'], 'julia024')
+
+    def test_all_docs_get(self):
+        """
+        Test the all_docs GET request functionality
         """
         self.populate_db_with_documents()
-        data = self.db.all_docs(
-            limit=3,
-            keys=['julia006', 'julia024', 'julia045', 'julia099']
-        )
+        data = self.db.all_docs(limit=3, skip=10)
         self.assertEqual(len(data.get('rows')), 3)
-        self.assertEqual(data['rows'][0]['key'], 'julia006')
-        self.assertEqual(data['rows'][1]['key'], 'julia024')
-        self.assertEqual(data['rows'][2]['key'], 'julia045')
+        self.assertEqual(data['rows'][0]['key'], 'julia010')
+        self.assertEqual(data['rows'][1]['key'], 'julia011')
+        self.assertEqual(data['rows'][2]['key'], 'julia012')
 
     def test_custom_result_context_manager(self):
         """
