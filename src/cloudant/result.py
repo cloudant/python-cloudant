@@ -86,6 +86,10 @@ def python_to_couch(options):
                 ARG_TYPES[key]
             )
             raise CloudantArgumentError(msg)
+
+        if key == 'keys':
+            translation[key] = val
+            continue
         arg_converter = TYPE_CONVERTERS.get(type(val))
         if key == 'stale':
             if val not in ('ok', 'update_after'):

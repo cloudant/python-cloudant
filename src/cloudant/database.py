@@ -396,16 +396,17 @@ class CouchDatabase(dict):
         :returns: Raw JSON response content from ``_all_docs`` endpoint
 
         """
+        all_docs_url = posixpath.join(self.database_url, '_all_docs')
         params = python_to_couch(kwargs)
-        resp = self.r_session.get(
-            posixpath.join(
-                self.database_url,
-                '_all_docs'
-            ),
-            params=params
-        )
-        data = resp.json()
-        return data
+        keys_list = params.pop('keys', None)
+        resp = None
+        if keys_list:
+            keys = json.dumps({'keys': keys_list})
+            resp = self.r_session.post(all_docs_url, params=params, data=keys)
+        else:
+            resp = self.r_session.get(all_docs_url, params=params)
+        resp.raise_for_status()
+        return resp.json()
 
     @contextlib.contextmanager
     def custom_result(self, **options):

@@ -17,6 +17,7 @@ API module for interacting with a view in a design document.
 """
 import contextlib
 import posixpath
+import json
 
 from ._2to3 import STRTYPE
 from .result import Result, python_to_couch
@@ -244,7 +245,13 @@ class View(dict):
         :returns: View result data in JSON format
         """
         params = python_to_couch(kwargs)
-        resp = self._r_session.get(self.url, params=params)
+        keys_list = params.pop('keys', None)
+        resp = None
+        if keys_list:
+            keys = json.dumps({'keys': keys_list})
+            resp = self._r_session.post(self.url, params=params, data=keys)
+        else:
+            resp = self._r_session.get(self.url, params=params)
         resp.raise_for_status()
         return resp.json()
 
