@@ -156,10 +156,10 @@ class ViewTests(UnitTestDbBase):
             posixpath.join(ddoc.document_url, '_view/view001')
         )
 
-    def test_view_callable_raw_json(self):
+    def test_get_view_callable_raw_json(self):
         """
-        Test that the View __call__ method which is invoked by calling the
-        view object returns the appropriate raw JSON response.
+        Test that the GET request of the View __call__ method that is invoked
+        when calling the view object returns the appropriate raw JSON response.
         """
         self.populate_db_with_documents()
         ddoc = DesignDocument(self.db, 'ddoc001')
@@ -171,10 +171,59 @@ class ViewTests(UnitTestDbBase):
         view = ddoc.get_view('view001')
         ids = []
         # view(limit=3) calls the view object and passes it the limit parameter
+        # where a HTTP GET request is made.
         for row in view(limit=3)['rows']:
             ids.append(row['id'])
         expected = ['julia000', 'julia001', 'julia002']
         self.assertTrue(all(x in ids for x in expected))
+
+    def test_post_view_callable_raw_json(self):
+        """
+        Using the "keys" parameter test that the POST request of the View
+        __call__ method that is invoked when calling the view object returns the
+        appropriate raw JSON response.
+        """
+        # Create 200 documents with ids julia000, julia001, julia002, ..., julia199
+        self.populate_db_with_documents(200)
+        # Generate keys list for every other document created
+        # with ids julia000, julia002, julia004, ..., julia198
+        keys_list = ['julia{0:03d}'.format(i) for i in range(0, 200, 2)]
+        self.assertEqual(len(keys_list), 100)
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        ddoc.add_view(
+            'view001',
+            'function (doc) {\n  emit(doc._id, 1);\n}'
+        )
+        ddoc.save()
+        view = ddoc.get_view('view001')
+        # view(keys=keys_list) calls the view object and passes keys parameter
+        ids = [row['id'] for row in view(keys=keys_list)['rows']]
+        self.assertEqual(len(ids), 100)
+        self.assertTrue(all(x in ids for x in keys_list))
+
+    def test_post_view_callable_raw_json_multiple_params(self):
+        """
+        Using "keys" and other parameters test that the POST request of the View
+        __call__ method that is invoked when calling the view object returns the
+        appropriate raw JSON response.
+        """
+        # Create 200 documents with ids julia000, julia001, julia002, ..., julia199
+        self.populate_db_with_documents(200)
+        # Generate keys list for every other document created
+        # with ids julia000, julia002, julia004, ..., julia198
+        keys_list = ['julia{0:03d}'.format(i) for i in range(0, 200, 2)]
+        self.assertEqual(len(keys_list), 100)
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        ddoc.add_view(
+            'view001',
+            'function (doc) {\n  emit(doc._id, 1);\n}'
+        )
+        ddoc.save()
+        view = ddoc.get_view('view001')
+        # view(keys=keys_list, limit=3) calls the view object and passes keys
+        # and limit parameters
+        ids = [row['id'] for row in view(keys=keys_list, limit=3)['rows']]
+        self.assertTrue(all(x in ids for x in ['julia000', 'julia002', 'julia004']))
 
     def test_view_callable_view_result(self):
         """
