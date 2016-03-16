@@ -54,8 +54,8 @@ class PythonToCouchTests(unittest.TestCase):
         self.assertEqual(result['include_docs'], 'true')
         self.assertEqual(result['endkey'], '["string"]')
         self.assertEqual(result['skip'], 12)
-        self.assertEqual(result['endkey_docid'], '"string"')
-        self.assertEqual(result['stale'], '"ok"')
+        self.assertEqual(result['endkey_docid'], 'string')
+        self.assertEqual(result['stale'], 'ok')
 
     def test_other_valid_option_combos(self):
         result = python_to_couch({"skip": None})

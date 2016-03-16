@@ -22,21 +22,21 @@ from ._2to3 import STRTYPE, UNITYPE, NONETYPE, iteritems_
 from .errors import CloudantArgumentError
 
 ARG_TYPES = {
-    'descending': bool,
-    'endkey': (STRTYPE, Sequence),
-    'endkey_docid': STRTYPE,
-    'group': bool,
-    'group_level': (int, NONETYPE),
-    'include_docs': bool,
-    'inclusive_end': bool,
-    'key': (int, STRTYPE, Sequence),
-    'keys': list,
-    'limit': (int, NONETYPE),
-    'reduce': bool,
-    'skip': (int, NONETYPE),
-    'stale': STRTYPE,
-    'startkey': (STRTYPE, Sequence),
-    'startkey_docid': STRTYPE,
+    'descending': (bool,),
+    'endkey': (int, STRTYPE, Sequence,),
+    'endkey_docid': (STRTYPE,),
+    'group': (bool,),
+    'group_level': (int, NONETYPE,),
+    'include_docs': (bool,),
+    'inclusive_end': (bool,),
+    'key': (int, STRTYPE, Sequence,),
+    'keys': (list,),
+    'limit': (int, NONETYPE,),
+    'reduce': (bool,),
+    'skip': (int, NONETYPE,),
+    'stale': (STRTYPE,),
+    'startkey': (int, STRTYPE, Sequence,),
+    'startkey_docid': (STRTYPE,),
 }
 
 # pylint: disable=unnecessary-lambda
@@ -68,46 +68,59 @@ def python_to_couch(options):
     """
     translation = dict()
     for key, val in iteritems_(options):
-        if key not in ARG_TYPES:
-            msg = 'Invalid argument {0}'.format(key)
-            raise CloudantArgumentError(msg)
-        # pylint: disable=unidiomatic-typecheck
-        # Validate argument values and ensure that a boolean is not passed in
-        # if an integer is expected
-        if (
-                not isinstance(val, ARG_TYPES[key]) or
-                (
-                    ARG_TYPES[key] == (int, NONETYPE) and
-                    type(val) is bool
-                )
-        ):
-            msg = 'Argument {0} not instance of expected type: {1}'.format(
-                key,
-                ARG_TYPES[key]
-            )
-            raise CloudantArgumentError(msg)
-
-        if key == 'keys':
-            translation[key] = val
-            continue
-        arg_converter = TYPE_CONVERTERS.get(type(val))
-        if key == 'stale':
-            if val not in ('ok', 'update_after'):
-                msg = (
-                    'Invalid value for stale option {0} '
-                    'must be ok or update_after'
-                ).format(val)
-                raise CloudantArgumentError(msg)
-        try:
-            if val is None:
-                translation[key] = None
-            else:
-                translation[key] = arg_converter(val)
-        except Exception as ex:
-            msg = 'Error converting argument {0}: {1}'.format(key, ex)
-            raise CloudantArgumentError(msg)
-
+        _validate(key, val)
+        translation.update(_translate(key, val))
     return translation
+
+def _validate(key, val):
+    """
+    Validates the individual parameter key and value.
+    """
+    if key not in ARG_TYPES:
+        msg = 'Invalid argument {0}'.format(key)
+        raise CloudantArgumentError(msg)
+    # pylint: disable=unidiomatic-typecheck
+    # Validate argument values and ensure that a boolean is not passed in
+    # if an integer is expected
+    if (not isinstance(val, ARG_TYPES[key]) or
+            (type(val) is bool and int in ARG_TYPES[key])):
+        msg = 'Argument {0} not instance of expected type: {1}'.format(
+            key,
+            ARG_TYPES[key]
+        )
+        raise CloudantArgumentError(msg)
+    if key == 'keys':
+        for key_list_val in val:
+            if (not isinstance(key_list_val, ARG_TYPES['key']) or
+                    type(key_list_val) is bool):
+                msg = 'Key list element not of expected type: {0}'.format(
+                    ARG_TYPES['key']
+                )
+                raise CloudantArgumentError(msg)
+    if key == 'stale':
+        if val not in ('ok', 'update_after'):
+            msg = (
+                'Invalid value for stale option {0} '
+                'must be ok or update_after'
+            ).format(val)
+            raise CloudantArgumentError(msg)
+
+def _translate(key, val):
+    """
+    Performs the conversion of the Python parameter value to its CouchDB
+    equivalent.
+    """
+    try:
+        if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale']:
+            return {key: val}
+        elif val is None:
+            return {key: None}
+        else:
+            arg_converter = TYPE_CONVERTERS.get(type(val))
+            return {key: arg_converter(val)}
+    except Exception as ex:
+        msg = 'Error converting argument {0}: {1}'.format(key, ex)
+        raise CloudantArgumentError(msg)
 
 def type_or_none(typerefs, value):
     """
