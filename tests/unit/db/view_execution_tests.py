@@ -31,6 +31,7 @@ class QueryParmExecutionTests(UnitTestDbBase):
         """
         super(QueryParmExecutionTests, self).setUp()
         self.db_set_up()
+        self.populate_db_with_documents()
         self.ddoc = DesignDocument(self.db, 'ddoc001')
         self.ddoc.add_view(
             'view001',
@@ -79,7 +80,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(descending=True)['rows']
         expected = [{'key': 'julia{0:03d}'.format(x), 
                      'id': 'julia{0:03d}'.format(x),
@@ -97,7 +97,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(descending=False)['rows']
         expected = [{'key': 'julia{0:03d}'.format(x), 
                      'id': 'julia{0:03d}'.format(x),
@@ -119,7 +118,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 5, 'id': 'julia011', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view003(endkey=4)['rows']
         expected = [{'key': x // 2,
                      'id': 'julia{0:03d}'.format(x),
@@ -139,7 +137,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(endkey='julia009')['rows']
         expected = [{'key': 'julia{0:03d}'.format(x),
                      'id': 'julia{0:03d}'.format(x),
@@ -159,7 +156,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': ['julia', 2], 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view005(endkey=['julia', 9])['rows']
         expected = [{'key': ['julia', x],
                      'id': 'julia{0:03d}'.format(x),
@@ -183,7 +179,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 5, 'id': 'julia011', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         # Ensure that only rows of data up to and including the first document 
         # where the key is 5 are returned.
         actual = self.view003(endkey_docid='julia010', endkey=5)['rows']
@@ -206,7 +201,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         ...
         {'key': 49, 'value': 2}
         """
-        self.populate_db_with_documents(100)
         actual = self.view004(group=True)['rows']
         expected = [{'key': x, 'value': 2} for x in range(50)]
         self.assertEqual(len(actual), 50)
@@ -221,7 +215,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         documents matching the view query.  Such as:
         {'key': None, 'value': 100}
         """
-        self.populate_db_with_documents(100)
         actual = self.view004(group=False)['rows']
         self.assertEqual(actual, [{'key': None, 'value': 100}])
 
@@ -236,7 +229,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view002(group_level=1)['rows']
         expected = [{'key': 'julia{0:03d}'.format(x),
                      'value': 1} for x in range(100)]
@@ -253,7 +245,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         data = self.view001(key='julia010', include_docs=True)['rows']
         self.assertEqual(len(data), 1)
         self.assertTrue(
@@ -281,7 +272,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(key='julia010', include_docs=False)['rows']
         expected = [{'key': 'julia010', 'id': 'julia010', 'value': 1}]
         self.assertEqual(actual, expected)
@@ -297,7 +287,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(endkey='julia010', inclusive_end=True)['rows']
         expected = [{'key': 'julia{0:03d}'.format(x),
                      'id': 'julia{0:03d}'.format(x),
@@ -315,7 +304,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(endkey='julia010', inclusive_end=False)['rows']
         expected = [{'key': 'julia{0:03d}'.format(x),
                      'id': 'julia{0:03d}'.format(x),
@@ -337,7 +325,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 5, 'id': 'julia011', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view003(key=5)['rows']
         expected = [{'key': 5, 'id': 'julia010', 'value': 1},
                     {'key': 5, 'id': 'julia011', 'value': 1}]
@@ -354,7 +341,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(key='julia010')['rows']
         expected = [{'key': 'julia010', 'id': 'julia010', 'value': 1}]
         self.assertEqual(actual, expected)
@@ -370,7 +356,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': ['julia', 2], 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view005(key=['julia', 10])['rows']
         expected = [{'key': ['julia', 10], 'id': 'julia010', 'value': 1}]
         self.assertEqual(actual, expected)
@@ -390,7 +375,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 5, 'id': 'julia011', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view003(keys=[10, 20, 30])['rows']
         expected = [{'key': 10, 'id': 'julia020', 'value': 1},
                     {'key': 10, 'id': 'julia021', 'value': 1},
@@ -411,7 +395,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(keys=['julia010', 'julia020', 'julia030'])['rows']
         expected = [{'key': 'julia010', 'id': 'julia010', 'value': 1},
                     {'key': 'julia020', 'id': 'julia020', 'value': 1},
@@ -429,7 +412,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': ['julia', 2], 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view005(keys=[['julia', 10], ['julia', 20], ['julia', 30]])['rows']
         expected = [{'key': ['julia', 10], 'id': 'julia010', 'value': 1},
                     {'key': ['julia', 20], 'id': 'julia020', 'value': 1},
@@ -447,7 +429,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(limit=10)['rows']
         expected = [{'key': 'julia{0:03d}'.format(x),
                      'id': 'julia{0:03d}'.format(x),
@@ -462,7 +443,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         data containing the count of documents that match the query.  Such as:
         {'key': None, 'value': 100}
         """
-        self.populate_db_with_documents(100)
         actual = self.view004(reduce=True)['rows']
         self.assertEqual(actual, [{'key': None, 'value': 100}])
 
@@ -481,7 +461,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 5, 'id': 'julia011', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view004(reduce=False)['rows']
         expected = [{'key': x // 2,
                      'id': 'julia{0:03d}'.format(x),
@@ -501,7 +480,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(skip=10)['rows']
         expected = [{'key': 'julia{0:03d}'.format(x),
                      'id': 'julia{0:03d}'.format(x),
@@ -549,7 +527,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 5, 'id': 'julia011', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view003(startkey=5)['rows']
         expected = [{'key': x // 2,
                      'id': 'julia{0:03d}'.format(x),
@@ -569,7 +546,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 'julia002', 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view001(startkey='julia010')['rows']
         expected = [{'key': 'julia{0:03d}'.format(x),
                      'id': 'julia{0:03d}'.format(x),
@@ -589,7 +565,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': ['julia', 2], 'id': 'julia002', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         actual = self.view005(startkey=['julia', 10])['rows']
         expected = [{'key': ['julia', x],
                      'id': 'julia{0:03d}'.format(x),
@@ -613,7 +588,6 @@ class QueryParmExecutionTests(UnitTestDbBase):
         {'key': 5, 'id': 'julia011', 'value': 1},
         ...
         """
-        self.populate_db_with_documents(100)
         # Ensure that only rows of data starting at the second document 
         # where the key is 5 are returned.
         actual = self.view003(startkey_docid='julia011', startkey=5)['rows']
