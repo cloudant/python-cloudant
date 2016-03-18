@@ -212,8 +212,9 @@ class View(dict):
                 # Process view data (in JSON format).
 
         Note:  Rather than using the View callable directly, if you wish to
-        retrieve view results in raw JSON format use the provided database API
-        of :func:`~cloudant.database.CouchDatabase.get_view_raw_result` instead.
+        retrieve view results in raw JSON format use ``raw_result=True`` with
+        the provided database API of
+        :func:`~cloudant.database.CouchDatabase.get_view_result` instead.
 
         :param bool descending: Return documents in descending key order.
         :param endkey: Stop returning records at this specified key.  Can be

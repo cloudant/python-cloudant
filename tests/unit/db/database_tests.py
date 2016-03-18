@@ -295,7 +295,8 @@ class DatabaseTests(UnitTestDbBase):
         self.db.create_document(data)
         self.populate_db_with_documents()
 
-        raw_rslt = self.db.get_view_raw_result('_design/ddoc01', 'view01')
+        raw_rslt = self.db.get_view_result(
+            '_design/ddoc01', 'view01', raw_result=True)
         self.assertIsInstance(raw_rslt, dict)
         self.assertEqual(len(raw_rslt.get('rows')), 100)
 
