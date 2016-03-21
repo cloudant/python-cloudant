@@ -55,12 +55,18 @@ class QueryParmExecutionTests(UnitTestDbBase):
             'view005',
             'function (doc) {\n emit([doc.name, doc.age], 1);\n}'
         )
+        self.ddoc.add_view(
+            'view006',
+            'function (doc) {\n emit([doc.name, doc.age], 1);\n}',
+            '_count'
+        )
         self.ddoc.save()
         self.view001 = self.ddoc.get_view('view001')
         self.view002 = self.ddoc.get_view('view002')
         self.view003 = self.ddoc.get_view('view003')
         self.view004 = self.ddoc.get_view('view004')
         self.view005 = self.ddoc.get_view('view005')
+        self.view006 = self.ddoc.get_view('view006')
 
     def tearDown(self):
         """
@@ -222,16 +228,15 @@ class QueryParmExecutionTests(UnitTestDbBase):
         """
         Test view query using group_level parameter.
 
-        The view used here along with group_level=1 will generate rows of
-        data where each key will equal the document id.  Such as:
-        {'key': 'julia000', 'value': 1},
-        {'key': 'julia001', 'value': 1},
-        {'key': 'julia002', 'value': 1},
-        ...
+        The view used here along with group_level=1 will generate rows of data
+        that calculate the count for a grouping of the first element in the
+        complex key defined by this view.  In this case the output will yield a
+        single row of data for the key ['julia'].  Such as:
+
+        {'key': ['julia'], 'value': 100}
         """
-        actual = self.view002(group_level=1)['rows']
-        expected = [{'key': 'julia{0:03d}'.format(x),
-                     'value': 1} for x in range(100)]
+        actual = self.view006(group_level=1)['rows']
+        expected = [{'key': ['julia'], 'value': 100}]
         self.assertEqual(actual, expected)
 
     def test_include_docs_true(self):
