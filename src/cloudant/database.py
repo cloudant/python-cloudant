@@ -212,16 +212,19 @@ class CouchDatabase(dict):
 
         return ddoc
 
-    def get_view_result(self, ddoc_id, view_name, **kwargs):
+    def get_view_result(self, ddoc_id, view_name, raw_result=False, **kwargs):
         """
-        Retrieves a Result object based on the design document
-        and view name.  If you intend to iterate through the
-        result, do not use ``skip`` and/or ``limit`` in the kwargs as
-        that is handled in the Result.  If you would like to
-        manage paging and iteration manually over the result
-        then use the
-        :func:`~cloudant.database.CouchDatabase.get_view_raw_result`
-        method instead.
+        Retrieves the view result based on the design document
+        and view name.  By default the result is returned as a
+        :class:`~cloudant.result.Result` which uses the ``skip`` and
+        ``limit`` query parameters internally to handle slicing and iteration
+        through the view result collection.  Therefore ``skip`` and ``limit``
+        cannot be used as arguments to get the view result when
+        ``raw_result=False``.  However, by setting ``raw_result=True``, the
+        result will be returned as the raw JSON response content for the view
+        requested.  Using this setting requires the developer to manage their
+        own slicing and iteration.  Therefore ``skip`` and ``limit`` are valid
+        arguments in this instance.
 
         For example to retrieve the default Result object based on a
         design document view do:
@@ -238,73 +241,31 @@ class CouchDatabase(dict):
             db.get_view_result('_design/ddoc_id_001', 'view_001',
                 include_docs=True, reduce=False)
 
-        For more detail on slicing and iteration, refer to the
-        :class:`~cloudant.result.Result` documentation.
-
-        :param str ddoc_id: Design document id used to get result.
-        :param str view_name: Name of the view used to get result.
-        :param bool descending: Return documents in descending key order.
-        :param endkey: Stop returning records at this specified key.  Can be
-            either a ``str`` or, for complex keys, a ``list``.
-        :param str endkey_docid: Stop returning records when the specified
-            document id is reached.
-        :param bool group: Using the reduce function, group the results to a
-            group or single row.
-        :param group_level: Only applicable if the view uses complex keys: keys
-            that are lists. Groups reduce results for the specified number
-            of list fields.
-        :param bool include_docs: Include the full content of the documents.
-        :param bool inclusive_end: Include rows with the specified endkey.
-        :param str key: Return only documents that match the specified key.
-        :param list keys: Return only documents that match the specified keys.
-        :param int page_size: Sets the page size for result iteration.
-        :param bool reduce: True to use the reduce function, false otherwise.
-        :param str stale: Allow the results from a stale view to be used. This
-            makes the request return immediately, even if the view has not been
-            completely built yet. If this parameter is not given, a response is
-            returned only after the view has been built.
-        :param startkey: Return records starting with the specified key.  Can be
-            either a ``str`` or, for complex keys, a ``list``.
-        :param str startkey_docid: Return records starting with the specified
-            document ID.
-
-        :returns: The result content wrapped in a Result object
-        """
-        view = View(DesignDocument(self, ddoc_id), view_name)
-        if kwargs:
-            return view.make_result(**kwargs)
-        else:
-            return view.result
-
-    def get_view_raw_result(self, ddoc_id, view_name, **kwargs):
-        """
-        Retrieves the raw JSON content based on the design document
-        and view name.  Unlike
-        :func:`~cloudant.database.CouchDatabase.get_view_result` the use
-        of ``skip`` and ``limit`` as kwargs is valid and
-        actually necessary in order to manage paging and iteration.
-        If you would like paging and iteration handled automatically for you
-        then use the
-        :func:`~cloudant.database.CouchDatabase.get_view_result`
-        method instead.
-
-        For example to retrieve the raw JSON response content based on a
+        To retrieve the raw JSON response content based on a
         design document view do:
 
         .. code-block:: python
 
-            db.get_view_raw_result('_design/ddoc_id_001', 'view_001')
+            db.get_view_result('_design/ddoc_id_001', 'view_001',
+                raw_result=True)
 
         But to retrieve the raw JSON response content based on a set of
         parameters on the same design document view do something like:
 
         .. code-block:: python
 
-            db.get_view_raw_result('_design/ddoc_id_001', 'view_001',
-                include_docs=True, skip=100, limit=100, reduce=False)
+            db.get_view_result('_design/ddoc_id_001', 'view_001',
+                raw_result=True, include_docs=True, skip=100, limit=100,
+                reduce=False)
+
+        For more detail on slicing and iteration, refer to the
+        :class:`~cloudant.result.Result` documentation.
 
         :param str ddoc_id: Design document id used to get result.
         :param str view_name: Name of the view used to get result.
+        :param bool raw_result: Dictates whether the view result is returned
+            as a default Result object or a raw JSON response.
+            Defaults to False.
         :param bool descending: Return documents in descending key order.
         :param endkey: Stop returning records at this specified key.  Can be
             either a ``str`` or, for complex keys, a ``list``.
@@ -320,9 +281,12 @@ class CouchDatabase(dict):
         :param str key: Return only documents that match the specified key.
         :param list keys: Return only documents that match the specified keys.
         :param int limit: Limit the number of returned documents to the
-            specified count.
+            specified count. Only valid if used with ``raw_result=True``.
+        :param int page_size: Sets the page size for result iteration.
+             Only valid if used with ``raw_result=False``.
         :param bool reduce: True to use the reduce function, false otherwise.
-        :param int skip: Skip this number of rows from the start.
+        :param int skip: Skip this number of rows from the start. Only valid if
+            used with ``raw_result=True``.
         :param str stale: Allow the results from a stale view to be used. This
             makes the request return immediately, even if the view has not been
             completely built yet. If this parameter is not given, a response is
@@ -332,10 +296,16 @@ class CouchDatabase(dict):
         :param str startkey_docid: Return records starting with the specified
             document ID.
 
-        :returns: The raw JSON response content for the query requested
+        :returns: The result content either wrapped in a QueryResult or
+            as the raw response JSON content
         """
         view = View(DesignDocument(self, ddoc_id), view_name)
-        return view(**kwargs)
+        if raw_result:
+            return view(**kwargs)
+        elif kwargs:
+            return view.make_result(**kwargs)
+        else:
+            return view.result
 
     def create(self):
         """
