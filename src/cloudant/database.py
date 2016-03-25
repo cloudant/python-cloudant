@@ -214,51 +214,40 @@ class CouchDatabase(dict):
 
     def get_view_result(self, ddoc_id, view_name, raw_result=False, **kwargs):
         """
-        Retrieves the view result based on the design document
-        and view name.  By default the result is returned as a
-        :class:`~cloudant.result.Result` which uses the ``skip`` and
-        ``limit`` query parameters internally to handle slicing and iteration
-        through the view result collection.  Therefore ``skip`` and ``limit``
-        cannot be used as arguments to get the view result when
-        ``raw_result=False``.  However, by setting ``raw_result=True``, the
-        result will be returned as the raw JSON response content for the view
-        requested.  Using this setting requires the developer to manage their
-        own slicing and iteration.  Therefore ``skip`` and ``limit`` are valid
-        arguments in this instance.
+        Retrieves the view result based on the design document and view name.
+        By default the result is returned as a
+        :class:`~cloudant.result.Result` object which provides a key
+        accessible, sliceable, and iterable interface to the result collection.
+        Depending on how you are accessing, slicing or iterating through your
+        result collection certain query parameters are not permitted.  See
+        :class:`~cloudant.result.Result` for additional details.
 
-        For example to retrieve the default Result object based on a
-        design document view do:
+        However, by setting ``raw_result=True``, the result will be returned as
+        the raw JSON response content for the view requested.  With this setting
+        there are no restrictions on the query parameters used but it also
+        means that the result collection key access, slicing, and iteration is
+        the responsibility of the developer.
 
-        .. code-block:: python
-
-            db.get_view_result('_design/ddoc_id_001', 'view_001')
-
-        But to retrieve a customized Result object based on the
-        same design document view do something like:
+        For example:
 
         .. code-block:: python
 
-            db.get_view_result('_design/ddoc_id_001', 'view_001',
+            # get Result based on a design document view
+            result = db.get_view_result('_design/ddoc_id_001', 'view_001')
+
+            # get a customized Result based on a design document view
+            result = db.get_view_result('_design/ddoc_id_001', 'view_001',
                 include_docs=True, reduce=False)
 
-        To retrieve the raw JSON response content based on a
-        design document view do:
-
-        .. code-block:: python
-
-            db.get_view_result('_design/ddoc_id_001', 'view_001',
+            # get raw response content based on a design document view
+            result = db.get_view_result('_design/ddoc_id_001', 'view_001',
                 raw_result=True)
 
-        But to retrieve the raw JSON response content based on a set of
-        parameters on the same design document view do something like:
-
-        .. code-block:: python
-
+            # get customized raw response content for a design document view
             db.get_view_result('_design/ddoc_id_001', 'view_001',
-                raw_result=True, include_docs=True, skip=100, limit=100,
-                reduce=False)
+                raw_result=True, include_docs=True, skip=100, limit=100)
 
-        For more detail on slicing and iteration, refer to the
+        For more detail on key access, slicing and iteration, refer to the
         :class:`~cloudant.result.Result` documentation.
 
         :param str ddoc_id: Design document id used to get result.
@@ -267,8 +256,9 @@ class CouchDatabase(dict):
             as a default Result object or a raw JSON response.
             Defaults to False.
         :param bool descending: Return documents in descending key order.
-        :param endkey: Stop returning records at this specified key.  Can be
-            either a ``str`` or, for complex keys, a ``list``.
+        :param endkey: Stop returning records at this specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param str endkey_docid: Stop returning records when the specified
             document id is reached.
         :param bool group: Using the reduce function, group the results to a
@@ -278,21 +268,27 @@ class CouchDatabase(dict):
             of list fields.
         :param bool include_docs: Include the full content of the documents.
         :param bool inclusive_end: Include rows with the specified endkey.
-        :param str key: Return only documents that match the specified key.
+        :param key: Return only documents that match the specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param list keys: Return only documents that match the specified keys.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param int limit: Limit the number of returned documents to the
-            specified count. Only valid if used with ``raw_result=True``.
+            specified count.  Not valid when used with
+            :class:`~cloudant.result.Result` iteration.
         :param int page_size: Sets the page size for result iteration.
-             Only valid if used with ``raw_result=False``.
+            Only valid if used with ``raw_result=False``.
         :param bool reduce: True to use the reduce function, false otherwise.
-        :param int skip: Skip this number of rows from the start. Only valid if
-            used with ``raw_result=True``.
+        :param int skip: Skip this number of rows from the start.
+            Not valid when used with :class:`~cloudant.result.Result` iteration.
         :param str stale: Allow the results from a stale view to be used. This
             makes the request return immediately, even if the view has not been
             completely built yet. If this parameter is not given, a response is
             returned only after the view has been built.
-        :param startkey: Return records starting with the specified key.  Can be
-            either a ``str`` or, for complex keys, a ``list``.
+        :param startkey: Return records starting with the specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param str startkey_docid: Return records starting with the specified
             document ID.
 
@@ -338,28 +334,25 @@ class CouchDatabase(dict):
 
     def all_docs(self, **kwargs):
         """
-        Wraps the _all_docs primary index on the database,
-        and returns the results by value. This can be used
-        as a direct query to the _all_docs endpoint.
-        More convenient/efficient access using slices
-        and iterators can be accessed via the result attribute.
+        Wraps the _all_docs primary index on the database, and returns the
+        results by value. This can be used as a direct query to the _all_docs
+        endpoint.  More convenient/efficient access using keys, slicing
+        and iteration can be done through the ``result`` attribute.
 
         Keyword arguments supported are those of the view/index access API.
 
         :param bool descending: Return documents in descending key order.
-        :param endkey: Stop returning records at this specified key.  Can be
-            either a ``str`` or, for complex keys, a ``list``.
+        :param endkey: Stop returning records at this specified key.
         :param str endkey_docid: Stop returning records when the specified
             document id is reached.
         :param bool include_docs: Include the full content of the documents.
         :param bool inclusive_end: Include rows with the specified endkey.
-        :param str key: Return only documents that match the specified key.
+        :param key: Return only documents that match the specified key.
         :param list keys: Return only documents that match the specified keys.
         :param int limit: Limit the number of returned documents to the
             specified count.
         :param int skip: Skip this number of rows from the start.
-        :param startkey: Return records starting with the specified key.  Can be
-            either a ``str`` or, for complex keys, a ``list``.
+        :param startkey: Return records starting with the specified key.
         :param str startkey_docid: Return records starting with the specified
             document ID.
 
@@ -386,17 +379,23 @@ class CouchDatabase(dict):
         :class:`~cloudant.result.Result`.
 
         :param bool descending: Return documents in descending key order.
-        :param endkey: Stop returning records at this specified key.  Can be
-            either a ``str`` or ``list``.
+        :param endkey: Stop returning records at this specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param str endkey_docid: Stop returning records when the specified
             document id is reached.
         :param bool include_docs: Include the full content of the documents.
         :param bool inclusive_end: Include rows with the specified endkey.
-        :param str key: Return only documents that match the specified key.
+        :param key: Return only documents that match the specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param list keys: Return only documents that match the specified keys.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param int page_size: Sets the page size for result iteration.
-        :param startkey: Return records starting with the specified key.  Can be
-            either a ``str`` or ``list``
+        :param startkey: Return records starting with the specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param str startkey_docid: Return records starting with the specified
             document ID.
 
@@ -405,7 +404,7 @@ class CouchDatabase(dict):
         .. code-block:: python
 
             with database.custom_result(include_docs=True) as rslt:
-                data = rslt[100:200]
+                data = rslt[100: 200]
         """
         rslt = Result(self.all_docs, **options)
         yield rslt

@@ -50,30 +50,36 @@ class View(dict):
     DesignDocument and is typically used as part of the
     :class:`~cloudant.design_document.DesignDocument` view management API.
 
-    A View object provides a sliceable and iterable default result collection
-    that can be used to query the view data through the ``result`` attribute.
+    A View object provides a key accessible, sliceable, and iterable default
+    result collection that can be used to query the view data through the
+    ``result`` attribute.
 
     For example:
 
     .. code-block:: python
 
-        # Using integers to skip/limit:
-        view.result[100:200]
-        view.result[:200]
-        view.result[100:]
+        # Access result collection through individual keys
+        view.result[100]
+        view.result['foo']
 
-        # Using strings or lists as startkey/endkey:
-        view.result[['2013','10']:['2013','11']]
-        view.result[['2013','10']]
-        view.result[['2013','10']:]
+        # Access result collection through index slicing:
+        view.result[100: 200]
+        view.result[: 200]
+        view.result[100: ]
+        view.result[: ]
 
-        # Iteration is supported via the result attribute:
+        # Access result collection through key slicing:
+        view.result['bar': 'foo']
+        view.result['bar': ]
+        view.result[: 'foo']
+
+        # Iterate over the result collection:
         for doc in view.result:
             print doc
 
-    The default ``result`` collection provides basic functionality,
+    The default result collection provides basic functionality,
     which can be customized with other arguments using the
-    :func:`~cloudant.views.View.custom_result` context.
+    :func:`~cloudant.views.View.custom_result` context manager.
 
     For example:
 
@@ -81,8 +87,8 @@ class View(dict):
 
         # Including documents as part of a custom result
         with view.custom_result(include_docs=True) as rslt:
-            rslt[100:200] # slice by result
-            rslt[['2013','10']:['2013','11']] # slice by startkey/endkey
+            rslt[100: 200]                       # slice by result
+            rslt[['2013', '10']: ['2013', '11']] # slice by startkey/endkey
 
             # Iteration
             for doc in rslt:
@@ -217,8 +223,7 @@ class View(dict):
         :func:`~cloudant.database.CouchDatabase.get_view_result` instead.
 
         :param bool descending: Return documents in descending key order.
-        :param endkey: Stop returning records at this specified key.  Can be
-            either a ``str`` or ``list``.
+        :param endkey: Stop returning records at this specified key.
         :param str endkey_docid: Stop returning records when the specified
             document id is reached.
         :param bool group: Using the reduce function, group the results to a
@@ -238,8 +243,7 @@ class View(dict):
             makes the request return immediately, even if the view has not been
             completely built yet. If this parameter is not given, a response is
             returned only after the view has been built.
-        :param startkey: Return records starting with the specified key.  Can be
-            either a ``str`` or ``list``
+        :param startkey: Return records starting with the specified key.
         :param str startkey_docid: Return records starting with the specified
             document ID.
 
@@ -259,17 +263,19 @@ class View(dict):
     def make_result(self, **options):
         """
         Wraps the raw JSON content of the View object callable in a
-        :class:`~cloudant.result.Result` object.  The use of ``skip``
-        and ``limit`` as options are not valid when using a Result since the
-        ``skip`` and ``limit`` functionality is handled in the Result.
+        :class:`~cloudant.result.Result` object.  Depending on how you are
+        accessing, slicing or iterating through your result collection certain
+        query parameters are not permitted.  See
+        :class:`~cloudant.result.Result` for additional details.
 
         Note:  Rather than using this method directly, if you wish to
         retrieve view data as a Result object, use the provided database
         API of :func:`~cloudant.database.CouchDatabase.get_view_result` instead.
 
         :param bool descending: Return documents in descending key order.
-        :param endkey: Stop returning records at this specified key.  Can be
-            either a ``str`` or ``list``.
+        :param endkey: Stop returning records at this specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param str endkey_docid: Stop returning records when the specified
             document id is reached.
         :param bool group: Using the reduce function, group the results to a
@@ -279,16 +285,26 @@ class View(dict):
             of array fields.
         :param bool include_docs: Include the full content of the documents.
         :param bool inclusive_end: Include rows with the specified endkey.
-        :param str key: Return only documents that match the specified key.
+        :param key: Return only documents that match the specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param list keys: Return only documents that match the specified keys.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
+        :param int limit: Limit the number of returned documents to the
+            specified count.  Not valid when used with
+            :class:`~cloudant.result.Result` iteration.
         :param int page_size: Sets the page size for result iteration.
         :param bool reduce: True to use the reduce function, false otherwise.
+        :param int skip: Skip this number of rows from the start.
+            Not valid when used with :class:`~cloudant.result.Result` iteration.
         :param str stale: Allow the results from a stale view to be used. This
             makes the request return immediately, even if the view has not been
             completely built yet. If this parameter is not given, a response is
             returned only after the view has been built.
-        :param startkey: Return records starting with the specified key.  Can be
-            either a ``str`` or ``list``
+        :param startkey: Return records starting with the specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param str startkey_docid: Return records starting with the specified
             document ID.
 
@@ -302,20 +318,22 @@ class View(dict):
         Customizes the :class:`~cloudant.result.Result` behavior and provides
         a convenient context manager for the Result.  Result customizations
         can be made by providing extra options to the result call using this
-        context manager.  The use of ``skip`` and ``limit`` as options are not
-        valid when using a Result since the ``skip`` and ``limit``
-        functionality is handled in the Result.
+        context manager.  Depending on how you are accessing, slicing or
+        iterating through your result collection certain query parameters are
+        not permitted.  See :class:`~cloudant.result.Result` for additional
+        details.
 
         For example:
 
         .. code-block:: python
 
             with view.custom_result(include_docs=True, reduce=False) as rslt:
-                data = rslt[100:200]
+                data = rslt[100: 200]
 
         :param bool descending: Return documents in descending key order.
-        :param endkey: Stop returning records at this specified key.  Can be
-            either a ``str`` or ``list``.
+        :param endkey: Stop returning records at this specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param str endkey_docid: Stop returning records when the specified
             document id is reached.
         :param bool group: Using the reduce function, group the results to a
@@ -325,16 +343,26 @@ class View(dict):
             of array fields.
         :param bool include_docs: Include the full content of the documents.
         :param bool inclusive_end: Include rows with the specified endkey.
-        :param str key: Return only documents that match the specified key.
+        :param key: Return only documents that match the specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param list keys: Return only documents that match the specified keys.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
+        :param int limit: Limit the number of returned documents to the
+            specified count.  Not valid when used with
+            :class:`~cloudant.result.Result` iteration.
         :param int page_size: Sets the page size for result iteration.
         :param bool reduce: True to use the reduce function, false otherwise.
+        :param int skip: Skip this number of rows from the start.
+            Not valid when used with :class:`~cloudant.result.Result` iteration.
         :param str stale: Allow the results from a stale view to be used. This
             makes the request return immediately, even if the view has not been
             completely built yet. If this parameter is not given, a response is
             returned only after the view has been built.
-        :param startkey: Return records starting with the specified key.  Can be
-            either a ``str`` or ``list``
+        :param startkey: Return records starting with the specified key.
+            Not valid when used with :class:`~cloudant.result.Result` key
+            access and key slicing.
         :param str startkey_docid: Return records starting with the specified
             document ID.
 
