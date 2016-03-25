@@ -22,7 +22,7 @@ import datetime
 import unittest
 
 from cloudant.result import python_to_couch, Result, type_or_none
-from cloudant.errors import CloudantArgumentError
+from cloudant.errors import CloudantArgumentError, ResultException
 
 import mock
 
@@ -111,9 +111,9 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(rslt[1:], [1,2,3])
         self.assertEqual(ref.call_args, mock.call(skip=1))
         self.assertEqual(rslt[:100], [1,2,3])
-        self.assertEqual(ref.call_args, mock.call(limit=100))
+        self.assertEqual(ref.call_args, mock.call(limit=100, skip=0))
 
-        self.assertRaises(CloudantArgumentError, rslt.__getitem__, {})
+        self.assertRaises(ResultException, rslt.__getitem__, {})
 
     def test_iter_method(self):
         """test basics of iter method"""
@@ -126,10 +126,10 @@ class ResultTests(unittest.TestCase):
         run_iter = lambda x: [y for y in x]
 
         rslt = Result(ref, skip=1000)
-        self.assertRaises(CloudantArgumentError, run_iter, rslt)
+        self.assertRaises(ResultException, run_iter, rslt)
 
         rslt = Result(ref, limit=1000)
-        self.assertRaises(CloudantArgumentError, run_iter, rslt)
+        self.assertRaises(ResultException, run_iter, rslt)
 
     def test_iter_paging(self):
         """iterate with multiple pages of data"""
