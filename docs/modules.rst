@@ -15,4 +15,3 @@ Modules
    replicator
    changes
    errors
-   credentials
