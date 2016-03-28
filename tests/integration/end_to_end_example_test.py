@@ -22,7 +22,7 @@ import uuid
 import unittest
 
 from cloudant import cloudant, couchdb
-from cloudant.credentials import read_dot_cloudant, read_dot_couch
+from ..credentials import read_dot_cloudant, read_dot_couch
 
 class E2ECouchTest(unittest.TestCase):
     """
