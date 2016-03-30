@@ -8,6 +8,7 @@
 - [NEW] Added support for CouchDB Admin Party mode.  This library can now be used with CouchDB instances where everyone is Admin.
 - [IMPROVED] Changed the handling of queries using the keys argument to issue a http POST request instead of a http GET request so that the request is no longer bound by any URL length limitation.
 - [IMPROVED] Added support for Result data access via index value and added validation logic to ``Result.__getitem__()``.
+- [BREAKING] Removed credentials module from the API and moved it to the tests folder since the functionality is outside of the scope of this library but may still be useful in unit/integration tests.
 
 2.0.0b2 (2016-02-24)
 ====================
