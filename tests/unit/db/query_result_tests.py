@@ -26,7 +26,7 @@ import requests
 
 from cloudant.query import Query
 from cloudant.result import QueryResult
-from cloudant.errors import CloudantArgumentError
+from cloudant.errors import CloudantArgumentError, ResultException
 
 from .unit_t_db_base import UnitTestDbBase
 
@@ -204,11 +204,9 @@ class QueryResultTests(UnitTestDbBase):
             selector={'_id': {'$gt': 0}},
             fields=['_id', '_rev']
         )
-        try:
-            docs = result[10:5]
-            self.fail('Above statement should raise an Exception')
-        except requests.HTTPError as err:
-            self.assertEqual(err.response.status_code, 400)
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result[10:5]
+        self.assertEqual(cm.exception.status_code, 101)
 
     def test_key_access_is_not_supported(self):
         """
@@ -265,14 +263,9 @@ class QueryResultTests(UnitTestDbBase):
             fields=['_id', '_rev'],
             skip=10
         )
-        try:
-            for doc in result:
-                self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError as err:
-            self.assertEqual(
-                str(err),
-                'Cannot use skip for iteration'
-            )
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = [row for row in result]
+        self.assertEqual(cm.exception.status_code, 103)
 
     def test_iteration_with_limit_option_fails(self):
         """
@@ -285,14 +278,9 @@ class QueryResultTests(UnitTestDbBase):
             fields=['_id', '_rev'],
             limit=10
         )
-        try:
-            for doc in result:
-                self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError as err:
-            self.assertEqual(
-                str(err),
-                'Cannot use limit for iteration'
-            )
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = [row for row in result]
+        self.assertEqual(cm.exception.status_code, 103)
 
     def test_iteration_invalid_page_size(self):
         """
@@ -305,11 +293,9 @@ class QueryResultTests(UnitTestDbBase):
             fields=['_id', '_rev'],
             page_size=0
         )
-        try:
-            for doc in result:
-                self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError as err:
-            self.assertEqual(str(err), 'Invalid page_size: 0')
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = [row for row in result]
+        self.assertEqual(cm.exception.status_code, 104)
 
     def test_iteration_result_eq_page_size(self):
         """

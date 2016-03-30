@@ -182,36 +182,49 @@ Dealing with results
 ********************
 
 If you want to get Pythonic with your returned data content, we've added a 
-``Result`` class that wraps your content and exposes Pythonic ways to access it. 
-Instantiate a ``Result`` with a raw data callable such as ``all_docs`` from a 
-database object or the callable reference from a ``view`` and then access the 
-data as you would normally.  The following example uses ``all_docs`` and shows 
-ways to slice and iterate over the result set.  It assumes that either a 
-``CloudantDatabase`` or a ``CouchDatabase`` object already exists.
+``Result`` class that provides a key accessible, sliceable, and iterable 
+interface to result collections.  To use it, construct a ``Result`` object 
+passing in a reference to a raw data callable such as the ``all_docs`` method 
+from a database object or a ``view`` object itself, which happens to be defined 
+as callable and then access the data as you would using standard Python key 
+access, slicing, and iteration techniques.  The following set of examples 
+illustrate ``Result`` key access, slicing and iteration over a result collection 
+in action.  It assumes that either a ``CloudantDatabase`` or a ``CouchDatabase`` 
+object already exists.
 
 .. code-block:: python
 
-    from cloudant.result import Result
+    from cloudant.result import Result, ResultByKey
 
-    # Retrieve Result wrapped document content
-    # The include_docs argument is optional and defaults to False
-    result_set = Result(my_database.all_docs, include_docs=True)
+    # Retrieve Result wrapped document content.
+    # Note: The include_docs parameter is optional and is used to illustrate that view query 
+    # parameters can be used to customize the result collection.
+    result_collection = Result(my_database.all_docs, include_docs=True)
+
+    # Get the result at a given location in the result collection
+    # Note: Valid result collection indexing starts at 0
+    result = result_collection[0]                   # result is the 1st in the collection
+    result = result_collection[9]                   # result is the 10th in the collection
 
     # Get the result for matching a key
-    result = result_set['julia30']
+    result = result_collection['julia30']           # result is all that match key 'julia30'
+    
+    # If your key is an integer then use the ResultByKey class to differentiate your integer 
+    # key from an indexed location within the result collection which is also an integer.
+    result = result_collection[ResultByKey(9)]      # result is all that match key 9
 
-    # Slice by startkey and endkey
-    result = result_set['julia30':'ruby99'] # result between keys
-    result = result_set['julia30':] # result after key
-    result = result_set[:'ruby99'] # result up to key
+    # Slice by key values
+    result = result_collection['julia30': 'ruby99'] # result is between and including keys
+    result = result_collection['julia30': ]         # result is after and including key
+    result = result_collection[: 'ruby99']          # result is up to and including key
 
-    # Slice by block
-    result = result_set[100:200] # result 100 to 200
-    result = result_set[:200] # result up to the 200th
-    result = result_set[100:] # result after the 100th
+    # Slice by index values
+    result = result_collection[100: 200]            # result is between 100 to 200, including 200th
+    result = result_collection[: 200]               # result is up to and including the 200th
+    result = result_collection[100: ]               # result is after the 100th
 
-    # Iterate over results
-    for result in result_set:
+    # Iterate over the result collection
+    for result in result_collection:
         print result
 
 ****************
@@ -225,8 +238,8 @@ Handling your business using *with* blocks saves you from having to connect and
 disconnect your client as well as saves you from having to perform a lot of 
 fetch and save operations as the context managers handle these operations for 
 you.  This example uses the ``cloudant`` context helper to illustrate the 
-process but identical functionality exists for CouchDB through the use of the 
-``couchdb`` context helper.
+process but identical functionality exists for CouchDB through the ``couchdb`` 
+and ``couchdb_admin_party`` context helpers.
 
 .. code-block:: python
 

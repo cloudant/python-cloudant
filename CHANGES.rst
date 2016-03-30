@@ -7,6 +7,7 @@
 - [FIX] Fixed Document.get_attachment method to successfully create text and binary files based on http response Content-Type.  The method also returns text, binary, and json content based on http response Content-Type.
 - [NEW] Added support for CouchDB Admin Party mode.  This library can now be used with CouchDB instances where everyone is Admin.
 - [IMPROVED] Changed the handling of queries using the keys argument to issue a http POST request instead of a http GET request so that the request is no longer bound by any URL length limitation.
+- [IMPROVED] Added support for Result data access via index value and added validation logic to ``Result.__getitem__()``.
 
 2.0.0b2 (2016-02-24)
 ====================
