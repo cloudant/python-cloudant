@@ -15,11 +15,12 @@
 """
 Module providing utilities to support using an INI style configuration file
 to allow users to pass credentials.
+
+Note: For use with tests only
 """
 import os
 
-from ._2to3 import RawConfigParser
-
+from cloudant._2to3 import RawConfigParser
 
 def read_dot_couch(
         filename='~/.couch',
