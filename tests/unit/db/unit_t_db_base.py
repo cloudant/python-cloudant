@@ -59,6 +59,7 @@ import os
 import uuid
 
 from cloudant.account import CouchDB, Cloudant
+from cloudant.design_document import DesignDocument
 
 from ... import unicode_
 
@@ -182,3 +183,43 @@ class UnitTestDbBase(unittest.TestCase):
             for i in range(doc_count)
         ]
         return self.db.bulk_docs(docs)
+
+    def create_views(self):
+        """
+        Create a design document with views for use with tests.
+        """
+        self.ddoc = DesignDocument(self.db, 'ddoc001')
+        self.ddoc.add_view(
+            'view001',
+            'function (doc) {\n emit(doc._id, 1);\n}'
+        )
+        self.ddoc.add_view(
+            'view002',
+            'function (doc) {\n emit(doc._id, 1);\n}',
+            '_count'
+        )
+        self.ddoc.add_view(
+            'view003',
+            'function (doc) {\n emit(Math.floor(doc.age / 2), 1);\n}'
+        )
+        self.ddoc.add_view(
+            'view004',
+            'function (doc) {\n emit(Math.floor(doc.age / 2), 1);\n}',
+            '_count'
+        )
+        self.ddoc.add_view(
+            'view005',
+            'function (doc) {\n emit([doc.name, doc.age], 1);\n}'
+        )
+        self.ddoc.add_view(
+            'view006',
+            'function (doc) {\n emit([doc.name, doc.age], 1);\n}',
+            '_count'
+        )
+        self.ddoc.save()
+        self.view001 = self.ddoc.get_view('view001')
+        self.view002 = self.ddoc.get_view('view002')
+        self.view003 = self.ddoc.get_view('view003')
+        self.view004 = self.ddoc.get_view('view004')
+        self.view005 = self.ddoc.get_view('view005')
+        self.view006 = self.ddoc.get_view('view006')
