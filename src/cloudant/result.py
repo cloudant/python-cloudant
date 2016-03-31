@@ -176,7 +176,7 @@ class Result(object):
 
         # Access by index value:
         result = Result(callable)
-        result(9)                 # skip first 9 records and get 10th
+        result[9]                 # skip first 9 records and get 10th
 
         # Access by key value:
         result = Result(callable)
@@ -341,7 +341,7 @@ class Result(object):
         stop = idx_slice.stop
         data = None
         if (start is not None and stop is not None and
-                start >= 0 and stop >= 0 and start <= stop):
+                start >= 0 and stop >= 0 and start < stop):
             if limit is not None:
                 if start >= limit:
                     # Result is out of range
