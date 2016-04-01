@@ -1,5 +1,6 @@
 2.0.0 (Unreleased)
 ==================
+- [FIX] Added validation to Cloudant.bill, Cloudant.volume_usage, and Cloudant.requests_usage methods to ensure that a valid year/month combination or neither are used as arguments.
 - [FIX] Fixed the handling of empty views in the DesignDocument.
 - [BREAKING] Fixed CloudantDatabase.share_database to accept all valid permission roles.  Changed the method signature to accept roles as a list argument.
 - [FIX] The CouchDatabase.create_document method now will handle both documents and design documents correctly.  If the document created is a design document then the locally cached object will be a DesignDocument otherwise it will be a Document.

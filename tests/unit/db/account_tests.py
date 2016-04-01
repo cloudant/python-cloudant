@@ -31,7 +31,7 @@ from datetime import datetime
 
 from cloudant import cloudant, couchdb, couchdb_admin_party
 from cloudant.account import Cloudant, CouchDB
-from cloudant.errors import CloudantException
+from cloudant.errors import CloudantException, CloudantArgumentError
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import bytes_, str_
@@ -439,14 +439,80 @@ class CloudantAccountTests(UnitTestDbBase):
                 'http_light'
                 ]
             # Test using year and month
-            year = datetime.now().year
-            month = datetime.now().month
+            year = 2016
+            month = 1
             data = self.client.bill(year, month)
             self.assertTrue(all(x in expected for x in data.keys()))
             #Test without year and month arguments
             del data
             data = self.client.bill()
             self.assertTrue(all(x in expected for x in data.keys()))
+        finally:
+            self.client.disconnect()
+
+    def test_set_year_without_month_for_billing_data(self):
+        """
+        Test raising an exception when retrieving billing data with only
+        year parameter
+        """
+        try:
+            self.client.connect()
+            year = 2016
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.bill(year)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - 2016, month - None')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_month_without_year_for_billing_data(self):
+        """
+        Test raising an exception when retrieving billing data with only
+        month parameter
+        """
+        try:
+            self.client.connect()
+            month = 1
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.bill(None, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - None, month - 1')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_invalid_type_year_for_billing_data(self):
+        """
+        Test raising an exception when retrieving billing data with a type
+        string for the year parameter
+        """
+        try:
+            self.client.connect()
+            year = 'foo'
+            month = 1
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.bill(year, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - foo, month - 1')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_year_with_invalid_month_for_billing_data(self):
+        """
+        Test raising an exception when retrieving billing data with an
+        invalid month parameter
+        """
+        try:
+            self.client.connect()
+            year = 2016
+            month = 13
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.bill(year, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - 2016, month - 13')
+            self.assertEqual(str(cm.exception), expected)
         finally:
             self.client.disconnect()
 
@@ -463,14 +529,80 @@ class CloudantAccountTests(UnitTestDbBase):
                 'end'
                 ]
             # Test using year and month
-            year = datetime.now().year
-            month = datetime.now().month
+            year = 2016
+            month = 12
             data = self.client.volume_usage(year, month)
             self.assertTrue(all(x in expected for x in data.keys()))
             #Test without year and month arguments
             del data
             data = self.client.volume_usage()
             self.assertTrue(all(x in expected for x in data.keys()))
+        finally:
+            self.client.disconnect()
+
+    def test_set_year_without_month_for_volume_usage_data(self):
+        """
+        Test raising an exception when retrieving volume usage data with only
+        year parameter
+        """
+        try:
+            self.client.connect()
+            year = 2016
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.volume_usage(year)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - 2016, month - None')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_month_without_year_for_volume_usage_data(self):
+        """
+        Test raising an exception when retrieving volume usage data with only
+        month parameter
+        """
+        try:
+            self.client.connect()
+            month = 1
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.volume_usage(None, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - None, month - 1')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_invalid_type_year_for_volume_usage_data(self):
+        """
+        Test raising an exception when retrieving volume usage data with a type
+        string for the year parameter
+        """
+        try:
+            self.client.connect()
+            year = 'foo'
+            month = 1
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.volume_usage(year, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - foo, month - 1')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_year_with_invalid_month_for_volume_usage_data(self):
+        """
+        Test raising an exception when retrieving volume usage data with an
+        invalid month parameter
+        """
+        try:
+            self.client.connect()
+            year = 2016
+            month = 13
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.volume_usage(year, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - 2016, month - 13')
+            self.assertEqual(str(cm.exception), expected)
         finally:
             self.client.disconnect()
 
@@ -487,14 +619,80 @@ class CloudantAccountTests(UnitTestDbBase):
                 'end'
                 ]
             # Test using year and month
-            year = datetime.now().year
-            month = datetime.now().month
+            year = 2016
+            month = 1
             data = self.client.requests_usage(year, month)
             self.assertTrue(all(x in expected for x in data.keys()))
             #Test without year and month arguments
             del data
             data = self.client.requests_usage()
             self.assertTrue(all(x in expected for x in data.keys()))
+        finally:
+            self.client.disconnect()
+
+    def test_set_year_without_month_for_requests_usage_data(self):
+        """
+        Test raising an exception when retrieving requests usage data with an
+        invalid month parameter
+        """
+        try:
+            self.client.connect()
+            year = 2016
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.requests_usage(year)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - 2016, month - None')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_month_without_year_for_requests_usage_data(self):
+        """
+        Test raising an exception when retrieving requests usage data with only
+        month parameter
+        """
+        try:
+            self.client.connect()
+            month = 1
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.requests_usage(None, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - None, month - 1')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_invalid_type_year_for_requests_usage_data(self):
+        """
+        Test raising an exception when retrieving requests usage data with
+        a type string for the year parameter
+        """
+        try:
+            self.client.connect()
+            year = 'foo'
+            month = 1
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.requests_usage(year, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - foo, month - 1')
+            self.assertEqual(str(cm.exception), expected)
+        finally:
+            self.client.disconnect()
+
+    def test_set_year_with_invalid_month_for_requests_usage_data(self):
+        """
+        Test raising an exception when retrieving requests usage data with only
+        year parameter
+        """
+        try:
+            self.client.connect()
+            year = 2016
+            month = 13
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.client.requests_usage(year, month)
+            expected = ('Invalid year and/or month supplied.  '
+                        'Found: year - 2016, month - 13')
+            self.assertEqual(str(cm.exception), expected)
         finally:
             self.client.disconnect()
 

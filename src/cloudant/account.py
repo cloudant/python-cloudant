@@ -25,7 +25,7 @@ import requests
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .changes import Feed
-from .errors import CloudantException
+from .errors import CloudantException, CloudantArgumentError
 
 _USER_AGENT = 'python-cloudant/{0} (Python, Version {1}.{2}.{3})'.format(
     sys.modules['cloudant'].__version__,
@@ -392,32 +392,45 @@ class Cloudant(CouchDB):
         optional year and month URL elements.
 
         :param str endpoint: Cloudant usage endpoint.
-        :param int year: Year to query against.  Defaults to None.
-        :param int month: Month to query against.  Defaults to None.
+        :param int year: Year to query against.  Optional parameter.
+            Defaults to None.  If used, it must be accompanied by ``month``.
+        :param int month: Month to query against that must be an integer
+            between 1 and 12. Optional parameter. Defaults to None.
+            If used, it must be accompanied by ``year``.
         """
-        if year is not None:
-            endpoint = posixpath.join(endpoint, str(year))
-        if month is not None:
-            if year is None:
-                raise CloudantException(
-                    (
-                        "must supply both year and month "
-                        "to usage endpoint: {0}"
-                    ).format(endpoint)
-                )
-            endpoint = posixpath.join(endpoint, str(month))
-        resp = self.r_session.get(endpoint)
-        resp.raise_for_status()
-        return resp.json()
+        err = None
+        if year is None and month is None:
+            resp = self.r_session.get(endpoint)
+        else:
+            try:
+                if int(year) > 0 and int(month) in range(1, 13):
+                    resp = self.r_session.get(
+                        posixpath.join(
+                            endpoint, str(int(year)), str(int(month)))
+                    )
+                else:
+                    err = ('Invalid year and/or month supplied.  '
+                           'Found: year - {0}, month - {1}').format(year, month)
+            except (ValueError, TypeError):
+                err = ('Invalid year and/or month supplied.  '
+                       'Found: year - {0}, month - {1}').format(year, month)
+
+        if err:
+            raise CloudantArgumentError(err)
+        else:
+            resp.raise_for_status()
+            return resp.json()
 
     def bill(self, year=None, month=None):
         """
-        Retrieves Cloudant billing data, optionally for a given year/month.
+        Retrieves Cloudant billing data, optionally for a given year and month.
 
-        :param int year: Year to query against, for example 2014.  Defaults to
-            None.
-        :param int month: Month to query against, for example a number from
-            1 to 12.  Defaults to None.
+        :param int year: Year to query against, for example 2014.
+            Optional parameter.  Defaults to None.  If used, it must be
+            accompanied by ``month``.
+        :param int month: Month to query against that must be an integer
+            between 1 and 12.  Optional parameter.  Defaults to None.
+            If used, it must be accompanied by ``year``.
 
         :returns: Billing data in JSON format
         """
@@ -426,12 +439,15 @@ class Cloudant(CouchDB):
 
     def volume_usage(self, year=None, month=None):
         """
-        Retrieves Cloudant volume usage data, optionally for a given year/month.
+        Retrieves Cloudant volume usage data, optionally for a given
+        year and month.
 
-        :param int year: Year to query against, for example 2014.  Defaults to
-            None.
-        :param int month: Month to query against, for example a number from
-            1 to 12.  Defaults to None.
+        :param int year: Year to query against, for example 2014.
+            Optional parameter.  Defaults to None.  If used, it must be
+            accompanied by ``month``.
+        :param int month: Month to query against that must be an integer
+            between 1 and 12.  Optional parameter.  Defaults to None.
+            If used, it must be accompanied by ``year``.
 
         :returns: Volume usage data in JSON format
         """
@@ -443,12 +459,14 @@ class Cloudant(CouchDB):
     def requests_usage(self, year=None, month=None):
         """
         Retrieves Cloudant requests usage data, optionally for a given
-        year/month.
+        year and month.
 
-        :param int year: Year to query against, for example 2014.  Defaults to
-            None.
-        :param int month: Month to query against, for example a number from
-            1 to 12.  Defaults to None.
+        :param int year: Year to query against, for example 2014.
+            Optional parameter.  Defaults to None.  If used, it must be
+            accompanied by ``month``.
+        :param int month: Month to query against that must be an integer
+            between 1 and 12.  Optional parameter.  Defaults to None.
+            If used, it must be accompanied by ``year``.
 
         :returns: Requests usage data in JSON format
         """
