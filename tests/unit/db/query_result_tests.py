@@ -22,18 +22,15 @@ module docstring.
 
 import unittest
 import os
-import requests
 
 from cloudant.query import Query
 from cloudant.result import QueryResult
-from cloudant.errors import CloudantArgumentError, ResultException
+from cloudant.errors import ResultException
 
 from .unit_t_db_base import UnitTestDbBase
 
-@unittest.skipUnless(
-    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant QueryResult tests'
-    )
+@unittest.skipUnless(os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+    'Skipping Cloudant QueryResult tests')
 class QueryResultTests(UnitTestDbBase):
     """
     QueryResult unit tests
@@ -45,6 +42,7 @@ class QueryResultTests(UnitTestDbBase):
         """
         super(QueryResultTests, self).setUp()
         self.db_set_up()
+        self.populate_db_with_documents()
 
     def tearDown(self):
         """
@@ -52,6 +50,18 @@ class QueryResultTests(UnitTestDbBase):
         """
         self.db_tear_down()
         super(QueryResultTests, self).tearDown()
+
+    def create_result(self, selector={'_id': {'$gt': 0}},
+        fields=['_id', 'name', 'age'], **kwargs):
+        if kwargs.get('q_parms', None):
+            query = Query(self.db, **kwargs['q_parms'])
+        else:
+            query = Query(self.db)
+
+        if kwargs.get('qr_parms', None):
+            return QueryResult(query, selector=selector, fields=fields, **kwargs['qr_parms'])
+        else:
+            return QueryResult(query, selector=selector, fields=fields)
 
     def test_constructor_with_options(self):
         """
@@ -75,291 +85,421 @@ class QueryResultTests(UnitTestDbBase):
         self.assertEqual(result._ref, query)
         self.assertEqual(result._page_size, 100)
 
-    def test_slicing_with_skip_option_fails(self):
+    def test_constructor_with_query_skip_limit(self):
         """
-        Test __getitem__() fails when "skip" option is provided
+        Test instantiating a QueryResult when query callable already has
+        skip and/or limit
         """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev'],
-            skip=10
-        )
-        try:
-            docs = result[:]
-            self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError as err:
-            self.assertEqual(
-                str(err),
-                'Cannot use skip parameter with QueryResult slicing.'
-            )
+        query = Query(self.db, skip=10, limit=10)
+        result = QueryResult(query)
+        self.assertIsInstance(result, QueryResult)
+        self.assertDictEqual(result.options, {'skip': 10, 'limit': 10})
+        self.assertEqual(result._ref, query)
 
-    def test_slicing_with_limit_option_fails(self):
+    def test_constructor_with_query_skip_limit_options_skip_limit(self):
         """
-        Test __getitem__() fails when "limit" option is provided
+        Ensure that options skip and/or limit override the values in the query
+        callable if present when constructing a QueryResult
         """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev'],
-            limit=10
-        )
-        try:
-            docs = result[:]
-            self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError as err:
-            self.assertEqual(
-                str(err),
-                'Cannot use limit parameter with QueryResult slicing.'
-            )
+        query = Query(self.db, skip=10, limit=10)
+        result = QueryResult(query, skip=100, limit=100)
+        self.assertIsInstance(result, QueryResult)
+        self.assertDictEqual(result.options, {'skip': 100, 'limit': 100})
+        self.assertEqual(result._ref, query)
 
-    def test_slicing_with_start(self):
-        """
-        Test __getitem__() handles when only a start value is provided
-        """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev']
-        )
-        self.assertEqual(result[95:], result[95:100])
-        self.assertEqual(
-            [doc['_id'] for doc in result[95:]],
-            ['julia095', 'julia096', 'julia097', 'julia098', 'julia099']
-        )
-
-    def test_slicing_with_stop(self):
-        """
-        Test __getitem__() handles when only a stop value is provided
-        """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev']
-        )
-        self.assertEqual(result[:5], result[0:5])
-        self.assertEqual(
-            [doc['_id'] for doc in result[:5]],
-            ['julia000', 'julia001', 'julia002', 'julia003', 'julia004']
-        )
-
-    def test_slicing_without_start_stop(self):
-        """
-        Test __getitem__() handles when neither a start or a stop value is
-        provided
-        """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev']
-        )
-        self.assertEqual(result[:], result[0:100])
-        self.assertEqual(len(result[:]), 100)
-        i = 0
-        for doc in result[:]:
-            self.assertEqual(doc['_id'], 'julia{0:03d}'.format(i))
-            i += 1
-        self.assertEqual(i, 100)
-
-    def test_slicing_with_start_stop(self):
-        """
-        Test __getitem__() handles when both a start and stop values are
-        provided
-        """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev']
-        )
-        self.assertEqual(
-            [doc['_id'] for doc in result[5:10]],
-            ['julia005', 'julia006', 'julia007', 'julia008', 'julia009']
-        )
-
-    def test_slicing_with_same_start_stop(self):
-        """
-        Test __getitem__() handles when both a start and stop values are same
-        """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev']
-        )
-        self.assertEqual(result[5:5], [])
-
-    def test_slicing_with_start_gt_stop(self):
-        """
-        Test __getitem__() fails when start int value > stop int value
-        """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev']
-        )
-        with self.assertRaises(ResultException) as cm:
-            invalid_result = result[10:5]
-        self.assertEqual(cm.exception.status_code, 101)
-
-    def test_key_access_is_not_supported(self):
+    def test_key_value_access_is_not_supported(self):
         """
         Test __getitem__() fails when a key value is provided
         """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev']
-        )
-        try:
-            docs = result['julia006']
-            self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError as err:
-            self.assertEqual(
-                str(err),
-                'Failed to interpret the argument julia006 as an element slice.'
-                '  Only slicing by integer values is supported with '
-                'QueryResult.__getitem__.'
-            )
+        result = self.create_result()
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result['foo']
+        self.assertEqual(cm.exception.status_code, 101)
 
-    def test_non_integer_value_slicing_is_not_supported(self):
+    def test_key_value_slicing_is_not_supported(self):
         """
         Test __getitem__() fails when non-integer values for start and stop are
         provided
         """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev']
-        )
-        try:
-            docs = result['julia006': 'julia010']
-            self.fail('Above statement should raise an Exception')
-        except CloudantArgumentError as err:
-            self.assertEqual(
-                str(err),
-                'Failed to interpret the argument '
-                'slice(\'julia006\', \'julia010\', None) as an element slice.'
-                '  Only slicing by integer values is supported with '
-                'QueryResult.__getitem__.'
-            )
+        result = self.create_result()
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result['bar': 'foo']
+        self.assertEqual(cm.exception.status_code, 101)
 
-    def test_iteration_with_skip_option_fails(self):
+    def test_get_item_by_index(self):
         """
-        Test __iter__() fails when "skip" option is provided
+        Test retrieving a result using a value that refers to an index of the
+        result.
         """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev'],
-            skip=10
-        )
+        result = self.create_result()
+        expected = {0: [{'_id': 'julia000', 'name': 'julia', 'age': 0}],
+                    10: [{'_id': 'julia010', 'name': 'julia', 'age': 10}],
+                    99: [{'_id': 'julia099', 'name': 'julia', 'age': 99}],
+                    100: [], 110: []}
+
+        for key in expected:
+            self.assertEqual(result[key], expected[key])
+
+    def test_get_item_by_index_using_skip_limit(self):
+        """
+        Test retrieving a result using a value that refers to an index of the
+        result when the result uses skip and limit.  QueryResult skip/limit
+        parameters take precedence over Query skip/limit parameters.
+        """
+        results = [self.create_result(q_parms={'skip': 10, 'limit': 10}),
+            self.create_result(qr_parms={'skip': 10, 'limit': 10}),
+            self.create_result(q_parms={'skip': 100, 'limit': 100},
+                qr_parms={'skip': 10, 'limit': 10})]
+
+        expected = {0: [{'_id': 'julia010', 'name': 'julia', 'age': 10}],
+                    5: [{'_id': 'julia015', 'name': 'julia', 'age': 15}],
+                    9: [{'_id': 'julia019', 'name': 'julia', 'age': 19}],
+                    10: [], 20: []}
+
+        for key in expected:
+            for result in results:
+                self.assertEqual(result[key], expected[key])
+
+    def test_get_item_by_index_using_limit(self):
+        """
+        Test retrieving a result using a value that refers to an index of the
+        result when the result uses limit.  QueryResult limit parameter takes 
+        precedence over Query limit parameter.
+        """
+        results = [self.create_result(q_parms={'limit': 10}),
+            self.create_result(qr_parms={'limit': 10}),
+            self.create_result(q_parms={'limit': 100}, qr_parms={'limit': 10})]
+
+        expected = {0: [{'_id': 'julia000', 'name': 'julia', 'age': 0}],
+                    5: [{'_id': 'julia005', 'name': 'julia', 'age': 5}],
+                    9: [{'_id': 'julia009', 'name': 'julia', 'age': 9}],
+                    10: [], 20: []}
+
+        for key in expected:
+            for result in results:
+                self.assertEqual(result[key], expected[key])
+
+    def test_get_item_by_index_using_skip(self):
+        """
+        Test retrieving a result using a value that refers to an index of the
+        result when the result uses skip.  QueryResult skip parameter takes 
+        precedence over Query skip parameter.
+        """
+        results = [self.create_result(q_parms={'skip': 10}),
+            self.create_result(qr_parms={'skip': 10}),
+            self.create_result(q_parms={'skip': 100}, qr_parms={'skip': 10})]
+
+        expected = {0: [{'_id': 'julia010', 'name': 'julia', 'age': 10}],
+                    5: [{'_id': 'julia015', 'name': 'julia', 'age': 15}],
+                    89: [{'_id': 'julia099', 'name': 'julia', 'age': 99}],
+                    90: [], 100: []}
+
+        for key in expected:
+            for result in results:
+                self.assertEqual(result[key], expected[key])
+
+    def test_get_item_by_negative_index(self):
+        """
+        Test retrieving a result raises an exception when using a negative index.
+        """
+        result = self.create_result()
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result[-1]
+        self.assertEqual(cm.exception.status_code, 101)
+
+    def test_get_item_slice_no_start_no_stop(self):
+        """
+        Test that by not providing a start and a stop slice value, the entire
+        result is returned.
+        """
+        result = self.create_result({'_id': {'$lte': 'julia002'}})
+        expected = [{'_id': 'julia000', 'name': 'julia', 'age': 0},
+                    {'_id': 'julia001', 'name': 'julia', 'age': 1},
+                    {'_id': 'julia002', 'name': 'julia', 'age': 2}]
+        self.assertEqual(result[:], expected)
+
+    def test_get_item_invalid_index_slice(self):
+        """
+        Test that when invalid start and stop values are provided in a slice
+        an exception is raised.
+        """
+        result = self.create_result()
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result[-1: 10]
+        self.assertEqual(cm.exception.status_code, 101)
+
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result[1: -10]
+        self.assertEqual(cm.exception.status_code, 101)
+
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result[-1: -10]
+        self.assertEqual(cm.exception.status_code, 101)
+
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result[5: 2]
+        self.assertEqual(cm.exception.status_code, 101)
+
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = result[5: 5]
+        self.assertEqual(cm.exception.status_code, 101)
+
+    def test_get_item_index_slice_using_start_stop(self):
+        """
+        Test getting an index slice by using start and stop slice values.
+        """
+        result = self.create_result()
+        expected = [{'_id': 'julia098', 'name': 'julia', 'age': 98},
+                    {'_id': 'julia099', 'name': 'julia', 'age': 99}]
+        self.assertEqual(result[98:100], expected)
+        self.assertEqual(result[98:102], expected)
+        self.assertEqual(result[100:102], [])
+
+    def test_get_item_index_slice_using_start_stop_limit(self):
+        """
+        Test getting an index slice by using start and stop slice values when
+        the limit parameter is also used.  QueryResult limit parameter takes 
+        precedence over Query limit parameter.
+        """
+        results = [self.create_result(q_parms={'limit': 20}),
+            self.create_result(qr_parms={'limit': 20}),
+            self.create_result(q_parms={'limit': 100}, qr_parms={'limit': 20})]
+        expected = [{'_id': 'julia018', 'name': 'julia', 'age': 18},
+                    {'_id': 'julia019', 'name': 'julia', 'age': 19}]
+        for result in results:
+            self.assertEqual(result[18:20], expected)
+            self.assertEqual(result[18:22], expected)
+            self.assertEqual(result[20:22], [])
+
+    def test_get_item_index_slice_using_start_stop_skip(self):
+        """
+        Test getting an index slice by using start and stop slice values when
+        the skip parameter is also used.  QueryResult skip parameter takes 
+        precedence over Query skip parameter.
+        """
+        results = [self.create_result(q_parms={'skip': 98}),
+            self.create_result(qr_parms={'skip': 98}),
+            self.create_result(q_parms={'skip': 100}, qr_parms={'skip': 98})]
+        expected = [{'_id': 'julia098', 'name': 'julia', 'age': 98},
+                    {'_id': 'julia099', 'name': 'julia', 'age': 99}]
+        for result in results:
+            self.assertEqual(result[0:2], expected)
+            self.assertEqual(result[0:4], expected)
+            self.assertEqual(result[2:4], [])
+
+    def test_get_item_index_slice_using_start_stop_limit_skip(self):
+        """
+        Test getting an index slice by using start and stop slice values when
+        the skip and limit parameters are also used.  QueryResult skip/limit
+        parameters take precedence over Query skip/limit parameters.
+        """
+        results = [self.create_result(q_parms={'limit': 20, 'skip': 20}),
+            self.create_result(qr_parms={'limit': 20, 'skip': 20}),
+            self.create_result(q_parms={'limit': 100, 'skip': 100},
+                qr_parms={'limit': 20, 'skip': 20})]
+        expected = [{'_id': 'julia038', 'name': 'julia', 'age': 38},
+                    {'_id': 'julia039', 'name': 'julia', 'age': 39}]
+        for result in results:
+            self.assertEqual(result[18:20], expected)
+            self.assertEqual(result[18:22], expected)
+            self.assertEqual(result[20:22], [])
+
+    def test_get_item_index_slice_using_start_only(self):
+        """
+        Test getting an index slice by using start slice value only.
+        """
+        result = self.create_result()
+        expected = [{'_id': 'julia098', 'name': 'julia', 'age': 98},
+                    {'_id': 'julia099', 'name': 'julia', 'age': 99}]
+        self.assertEqual(result[98:], expected)
+        self.assertEqual(result[100:], [])
+
+    def test_get_item_index_slice_using_start_only_limit(self):
+        """
+        Test getting an index slice by using a start slice value when
+        the limit parameter is also used.  QueryResult limit parameter takes
+        precedence over Query limit parameter.
+        """
+        results = [self.create_result(q_parms={'limit': 20}),
+            self.create_result(qr_parms={'limit': 20}),
+            self.create_result(q_parms={'limit': 100}, qr_parms={'limit': 20})]
+        expected = [{'_id': 'julia018', 'name': 'julia', 'age': 18},
+                    {'_id': 'julia019', 'name': 'julia', 'age': 19}]
+        for result in results:
+            self.assertEqual(result[18:], expected)
+            self.assertEqual(result[20:], [])
+
+    def test_get_item_index_slice_using_start_only_skip(self):
+        """
+        Test getting an index slice by using a start slice value when
+        the skip parameter is also used.  QueryResult skip parameter takes
+        precedence over Query skip parameter.
+        """
+        results = [self.create_result(q_parms={'skip': 98}),
+            self.create_result(qr_parms={'skip': 98}),
+            self.create_result(q_parms={'skip': 100}, qr_parms={'skip': 98})]
+        expected = [{'_id': 'julia098', 'name': 'julia', 'age': 98},
+                    {'_id': 'julia099', 'name': 'julia', 'age': 99}]
+        for result in results:
+            self.assertEqual(result[0:], expected)
+            self.assertEqual(result[2:], [])
+
+    def test_get_item_index_slice_using_start_only_limit_skip(self):
+        """
+        Test getting an index slice by using a start slice value when
+        the skip and limit parameters are also used.  QueryResult skip/limit
+        parameters take precedence over Query skip/limit parameters.
+        """
+        results = [self.create_result(q_parms={'limit': 20, 'skip': 20}),
+            self.create_result(qr_parms={'limit': 20, 'skip': 20}),
+            self.create_result(q_parms={'limit': 100, 'skip': 100},
+                qr_parms={'limit': 20, 'skip': 20})]
+        expected = [{'_id': 'julia038', 'name': 'julia', 'age': 38},
+                    {'_id': 'julia039', 'name': 'julia', 'age': 39}]
+        for result in results:
+            self.assertEqual(result[18:], expected)
+            self.assertEqual(result[20:], [])
+
+    def test_get_item_index_slice_using_stop_only(self):
+        """
+        Test getting an index slice by using stop slice value only.
+        """
+        result = self.create_result()
+        expected = {2: [{'_id': 'julia000', 'name': 'julia', 'age': 0},
+                        {'_id': 'julia001', 'name': 'julia', 'age': 1}],
+                    102: [{'_id': 'julia{0:03d}'.format(x), 
+                           'name': 'julia',
+                           'age': x} for x in range(100)]}
+        for key in expected:
+            self.assertEqual(result[:key], expected[key])
+
+    def test_get_item_index_slice_using_stop_only_limit(self):
+        """
+        Test getting an index slice by using a stop slice value only when
+        the limit parameter is also used.  QueryResult limit parameter takes
+        precedence over Query limit parameter.
+        """
+        results = [self.create_result(q_parms={'limit': 20}),
+            self.create_result(qr_parms={'limit': 20}),
+            self.create_result(q_parms={'limit': 100}, qr_parms={'limit': 20})]
+        expected = {2: [{'_id': 'julia000', 'name': 'julia', 'age': 0},
+                        {'_id': 'julia001', 'name': 'julia', 'age': 1}],
+                    22: [{'_id': 'julia{0:03d}'.format(x), 
+                           'name': 'julia',
+                           'age': x} for x in range(20)]}
+        for result in results:
+            for key in expected:
+                self.assertEqual(result[:key], expected[key])
+
+    def test_get_item_index_slice_using_stop_only_skip(self):
+        """
+        Test getting an index slice by using a stop slice value only when
+        the skip parameter is also used.  QueryResult skip parameter takes
+        precedence over Query skip parameter.
+        """
+        results = [self.create_result(q_parms={'skip': 98}),
+            self.create_result(qr_parms={'skip': 98}),
+            self.create_result(q_parms={'skip': 100}, qr_parms={'skip': 98})]
+        expected = [{'_id': 'julia098', 'name': 'julia', 'age': 98},
+                    {'_id': 'julia099', 'name': 'julia', 'age': 99}]
+        for result in results:
+            self.assertEqual(result[:2], expected)
+            self.assertEqual(result[:4], expected)
+
+    def test_get_item_index_slice_using_stop_only_limit_skip(self):
+        """
+        Test getting an index slice by using a start slice value when
+        the skip and limit parameters are also used.  QueryResult skip/limit
+        parameters take precedence over Query skip/limit parameters.
+        """
+        results = [self.create_result(q_parms={'limit':2, 'skip': 20}),
+            self.create_result(qr_parms={'limit':2, 'skip': 20}),
+            self.create_result(q_parms={'limit':100, 'skip': 100},
+                qr_parms={'limit':2, 'skip': 20})]
+        expected = [{'_id': 'julia020', 'name': 'julia', 'age': 20},
+                    {'_id': 'julia021', 'name': 'julia', 'age': 21}]
+        for result in results:
+            self.assertEqual(result[:2], expected)
+            self.assertEqual(result[:4], expected)
+
+    def test_iteration_with_invalid_options(self):
+        """
+        Test that iteration raises an exception when "skip" and/or "limit" are
+        used as options for the result.
+        """
+        result = self.create_result(q_parms={'skip': 10})
         with self.assertRaises(ResultException) as cm:
             invalid_result = [row for row in result]
         self.assertEqual(cm.exception.status_code, 103)
 
-    def test_iteration_with_limit_option_fails(self):
-        """
-        Test __iter__() fails when "limit" option is provided
-        """
-        self.populate_db_with_documents(100)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev'],
-            limit=10
-        )
+        result = self.create_result(q_parms={'limit': 10})
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = [row for row in result]
+        self.assertEqual(cm.exception.status_code, 103)
+
+        result = self.create_result(q_parms={'limit': 10, 'skip': 10})
         with self.assertRaises(ResultException) as cm:
             invalid_result = [row for row in result]
         self.assertEqual(cm.exception.status_code, 103)
 
     def test_iteration_invalid_page_size(self):
         """
-        Test __iter__() fails as expected when page_size is set to 0 or less
+        Test that iteration raises an exception when and invalid "page_size" is
+        is used as an option for the result.
         """
-        self.populate_db_with_documents(5)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev'],
-            page_size=0
-        )
+        result = self.create_result(qr_parms={'page_size': -1})
         with self.assertRaises(ResultException) as cm:
             invalid_result = [row for row in result]
         self.assertEqual(cm.exception.status_code, 104)
 
-    def test_iteration_result_eq_page_size(self):
-        """
-        Test __iter__() works as expected when the result size is equal to the
-        page_size
-        """
-        self.populate_db_with_documents(5)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev'],
-            page_size=5
-        )
-        self.assertEqual(
-            [doc['_id'] for doc in result],
-            ['julia000', 'julia001', 'julia002', 'julia003', 'julia004']
-        )
+        result = self.create_result(qr_parms={'page_size': 'foo'})
+        with self.assertRaises(ResultException) as cm:
+            invalid_result = [row for row in result]
+        self.assertEqual(cm.exception.status_code, 104)
 
-    def test_iteration_result_gt_page_size(self):
+    def test_iteration_using_valid_page_size(self):
         """
-        Test __iter__() works as expected when the result size is more than the
-        page_size
+        Test that iteration works as expected when "page_size" is provided as
+        an option for the result.
         """
-        self.populate_db_with_documents(5)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev'],
-            page_size=3
-        )
-        self.assertEqual(
-            [doc['_id'] for doc in result],
-            ['julia000', 'julia001', 'julia002', 'julia003', 'julia004']
-        )
+        result = self.create_result({'_id': {'$lte': 'julia004'}}, qr_parms={'page_size': 3})
+        expected = [{'_id': 'julia000', 'name': 'julia', 'age': 0},
+                    {'_id': 'julia001', 'name': 'julia', 'age': 1},
+                    {'_id': 'julia002', 'name': 'julia', 'age': 2},
+                    {'_id': 'julia003', 'name': 'julia', 'age': 3},
+                    {'_id': 'julia004', 'name': 'julia', 'age': 4}]
+        self.assertEqual([x for x in result], expected)
 
-    def test_iteration_result_lt_page_size(self):
-        """
-        Test __iter__() works as expected when the result size is less than the
-        page_size
-        """
-        self.populate_db_with_documents(5)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$gt': 0}},
-            fields=['_id', '_rev'],
-            page_size=100
-        )
-        self.assertEqual(
-            [doc['_id'] for doc in result],
-            ['julia000', 'julia001', 'julia002', 'julia003', 'julia004']
-        )
+        result = self.create_result({'_id': {'$lte': 'julia002'}}, qr_parms={'page_size': 3})
+        expected = [{'_id': 'julia000', 'name': 'julia', 'age': 0},
+                    {'_id': 'julia001', 'name': 'julia', 'age': 1},
+                    {'_id': 'julia002', 'name': 'julia', 'age': 2}]
+        self.assertEqual([x for x in result], expected)
 
-    def test_iteration_no_results(self):
+        result = self.create_result({'_id': {'$lte': 'julia001'}}, qr_parms={'page_size': 3})
+        expected = [{'_id': 'julia000', 'name': 'julia', 'age': 0},
+                    {'_id': 'julia001', 'name': 'julia', 'age': 1}]
+        self.assertEqual([x for x in result], expected)
+
+    def test_iteration_using_default_page_size(self):
         """
-        Test __iter__() returns empty result set when no results are found
+        Test that iteration works as expected when "page_size" is not provided
+        as an option for the result.
         """
-        self.populate_db_with_documents(5)
-        result = QueryResult(
-            Query(self.db),
-            selector={'_id': {'$lt': 0}},
-            fields=['_id', '_rev'],
-            page_size=100
-        )
-        self.assertEqual([doc['_id'] for doc in result], [])
+        result = self.create_result({'_id': {'$lte': 'julia004'}})
+        expected = [{'_id': 'julia000', 'name': 'julia', 'age': 0},
+                    {'_id': 'julia001', 'name': 'julia', 'age': 1},
+                    {'_id': 'julia002', 'name': 'julia', 'age': 2},
+                    {'_id': 'julia003', 'name': 'julia', 'age': 3},
+                    {'_id': 'julia004', 'name': 'julia', 'age': 4}]
+        self.assertEqual([x for x in result], expected)
+
+    def test_iteration_no_data(self):
+        """
+        Test that iteration works as expected when no data matches the result.
+        """
+        result = self.create_result({'_id': {'$gt': 'ruby'}})
+        self.assertEqual([x for x in result], [])
 
 if __name__ == '__main__':
     unittest.main()
