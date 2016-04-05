@@ -39,7 +39,7 @@ class Replicator(object):
         except Exception:
             raise CloudantException(
                 'Unable to acquire _replicator database.  '
-                'Verify that the account client is valid and try again.'
+                'Verify that the client is valid and try again.'
             )
 
     def create_replication(self, source_db=None, target_db=None,

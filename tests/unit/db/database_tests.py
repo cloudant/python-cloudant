@@ -76,8 +76,8 @@ class DatabaseTests(UnitTestDbBase):
 
     def test_retrieve_creds(self):
         """
-        Test retrieving account credentials.
-        Account credentials are None if CouchDB Admin Party mode was selected.
+        Test retrieving client credentials. The client credentials are None if
+        CouchDB Admin Party mode was selected.
         """
         if self.client.admin_party:
             self.assertIsNone(self.db.creds)

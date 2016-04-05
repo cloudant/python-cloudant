@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (c) 2015, 2016 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_account_tests_
-
-account module - Unit tests for CouchDB and Cloudant account classes
+client module - Unit tests for CouchDB and Cloudant client classes
 
 See configuration options for environment variables in unit_t_db_base
 module docstring.
@@ -30,15 +28,15 @@ import os
 from datetime import datetime
 
 from cloudant import cloudant, couchdb, couchdb_admin_party
-from cloudant.account import Cloudant, CouchDB
+from cloudant.client import Cloudant, CouchDB
 from cloudant.errors import CloudantException, CloudantArgumentError
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import bytes_, str_
 
-class AccountTests(UnitTestDbBase):
+class ClientTests(UnitTestDbBase):
     """
-    CouchDB/Cloudant Account unit tests
+    CouchDB/Cloudant client unit tests
     """
 
     @unittest.skipIf(
@@ -76,7 +74,7 @@ class AccountTests(UnitTestDbBase):
 
     def test_constructor_with_url(self):
         """
-        Test instantiating an account object using a URL
+        Test instantiating a client object using a URL
         """
         self.assertEqual(
             self.client.cloudant_url,
@@ -153,7 +151,7 @@ class AccountTests(UnitTestDbBase):
 
     def test_all_dbs(self):
         """
-        Test getting a list of all of the databases in the account
+        Test getting a list of all of the databases
         """
         dbnames = [self.dbname() for _ in range(3)]
         try:
@@ -216,7 +214,7 @@ class AccountTests(UnitTestDbBase):
 
     def test_keys(self):
         """
-        Test retrieving the list of database names for the given client account
+        Test retrieving the list of database names
         """
         try:
             self.client.connect()
@@ -278,7 +276,7 @@ class AccountTests(UnitTestDbBase):
 
     def test_delete_remote_db_via_delitem(self):
         """
-        Test __delitem__ when removing a database from the account
+        Test __delitem__ when removing a database
         """
         dbname = self.dbname()
         try:
@@ -317,7 +315,7 @@ class AccountTests(UnitTestDbBase):
 
     def test_get_remote_db_via_get(self):
         """
-        Test retrieving a database from the account
+        Test retrieving a database
         """
         dbname = self.dbname()
         try:
@@ -378,11 +376,11 @@ class AccountTests(UnitTestDbBase):
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant Account specific tests'
+    'Skipping Cloudant client specific tests'
 )
-class CloudantAccountTests(UnitTestDbBase):
+class CloudantClientTests(UnitTestDbBase):
     """
-    Cloudant specific Account unit tests
+    Cloudant specific client unit tests
     """
 
     def test_cloudant_context_helper(self):
@@ -399,7 +397,7 @@ class CloudantAccountTests(UnitTestDbBase):
     
     def test_constructor_with_account(self):
         """
-        Test instantiating an account object using an account name
+        Test instantiating a client object using an account name
         """
         # Ensure that the client is new
         del self.client
@@ -708,7 +706,7 @@ class CloudantAccountTests(UnitTestDbBase):
 
     def test_generate_api_key(self):
         """
-        Test the generation of an API key for this account
+        Test the generation of an API key for this client account
         """
         try:
             self.client.connect()
@@ -721,7 +719,8 @@ class CloudantAccountTests(UnitTestDbBase):
 
     def test_cors_configuration(self):
         """
-        Test the retrieval of the current CORS configuration for this account
+        Test the retrieval of the current CORS configuration for this client
+        account
         """
         try:
             self.client.connect()

@@ -15,10 +15,10 @@ Connections
 In order to manage a connection you must first initialize the connection by 
 constructing either a ``Cloudant`` or ``CouchDB`` client.  Since connecting to 
 the Cloudant managed service provides extra end points as compared to a CouchDB 
-instance, we provide the two different client implementations in order to 
+server, we provide the two different client implementations in order to 
 connect to the desired database service.  Once the client is constructed, 
-you follow that up by connecting to the account, performing your tasks, and then 
-disconnecting from the account.
+you follow that up by connecting to the server, performing your tasks, and
+then disconnecting from the server.
 
 Later in the `Context managers`_ section we will see how to 
 simplify this process through the use of the Python *with* statement.
@@ -29,16 +29,16 @@ Connecting with a client
 .. code-block:: python
 
     # Use CouchDB to create a CouchDB client
-    # from cloudant.account import CouchDB
+    # from cloudant.client import CouchDB
     # client = CouchDB(USERNAME, PASSWORD, url='http://127.0.0.1:5984')
 
     # Use Cloudant to create a Cloudant client using account
-    from cloudant.account import Cloudant
+    from cloudant.client import Cloudant
     client = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME)
     # or using url
     # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
     
-    # Connect to the account
+    # Connect to the server
     client.connect()
 
     # Perform client tasks...
@@ -46,7 +46,7 @@ Connecting with a client
     print 'Username: {0}'.format(session['userCtx']['name'])
     print 'Databases: {0}'.format(client.all_dbs())
 
-    # Disconnect from the account
+    # Disconnect from the server
     client.disconnect()
 
 *********
@@ -75,8 +75,8 @@ Opening a database
 
 Opening an existing database is done by supplying the name of an existing 
 database to the client.  Since the ``Cloudant`` and ``CouchDB`` classes are 
-sub-classes of ``dict``, this is accomplished through standard ``dict`` 
-notation.
+sub-classes of ``dict``, this can be accomplished through standard Python
+``dict`` notation.
 
 .. code-block:: python
 

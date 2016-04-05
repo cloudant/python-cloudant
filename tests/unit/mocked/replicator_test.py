@@ -51,17 +51,17 @@ class ReplicatorTests(unittest.TestCase):
         self.username = "steve"
         self.password = "abc123"
 
-        self.mock_account = mock.Mock()
-        self.mock_account.__getitem__ = mock.Mock()
-        self.mock_account.__getitem__.return_value = CouchDatabase(
-            self.mock_account,
+        self.mock_client = mock.Mock()
+        self.mock_client.__getitem__ = mock.Mock()
+        self.mock_client.__getitem__.return_value = CouchDatabase(
+            self.mock_client,
             '_replicator'
         )
-        self.mock_account.session = mock.Mock()
-        self.mock_account.session.return_value = {
+        self.mock_client.session = mock.Mock()
+        self.mock_client.session.return_value = {
             "userCtx": "user Context"
         }
-        self.mock_account.admin_party = False
+        self.mock_client.admin_party = False
 
     def tearDown(self):
         self.patcher.stop()
@@ -72,15 +72,15 @@ class ReplicatorTests(unittest.TestCase):
             mock_target = mock.Mock()
             mock_target.database_url = "http://bob.cloudant.com/target"
             mock_target.creds = {'basic_auth': "target_auth"}
-            mock_target.cloudant_account = self.mock_account
+            mock_target.cloudant_account = self.mock_client
             mock_target.admin_party = False
             mock_source = mock.Mock()
             mock_source.database_url = "http://bob.cloudant.com/source"
             mock_source.creds = {'basic_auth': "source_auth"}
-            mock_source.cloudant_account = self.mock_account
+            mock_source.cloudant_account = self.mock_client
             mock_source.admin_party = False
 
-            repl = Replicator(self.mock_account)
+            repl = Replicator(self.mock_client)
             repl.create_replication(mock_source, mock_target, "REPLID")
 
         self.assertTrue(mock_create.called)
@@ -114,7 +114,7 @@ class ReplicatorTests(unittest.TestCase):
         mock_source.database_url = "http://bob.cloudant.com/source"
         mock_source.creds = {'basic_auth': "source_auth"}
 
-        repl = Replicator(self.mock_account)
+        repl = Replicator(self.mock_client)
         self.assertRaises(
             CloudantException,
             repl.create_replication,
@@ -137,7 +137,7 @@ class ReplicatorTests(unittest.TestCase):
                     {"id": "replication_2", "doc": {"_id": "replication_2"}}
                 ]
             }
-            repl = Replicator(self.mock_account)
+            repl = Replicator(self.mock_client)
 
             self.assertEqual(
                 repl.list_replications(),
@@ -146,7 +146,7 @@ class ReplicatorTests(unittest.TestCase):
 
     def test_replication_state(self):
         """test replication state method"""
-        repl = Replicator(self.mock_account)
+        repl = Replicator(self.mock_client)
 
         mock_doc = mock.Mock()
         mock_doc.fetch = mock.Mock()
@@ -166,7 +166,7 @@ class ReplicatorTests(unittest.TestCase):
 
     def test_stop_replication(self):
         """test stop_replication call"""
-        repl = Replicator(self.mock_account)
+        repl = Replicator(self.mock_client)
 
         mock_doc = mock.Mock()
         mock_doc.fetch = mock.Mock()
@@ -194,7 +194,7 @@ class ReplicatorTests(unittest.TestCase):
                 {"id": "replication_1", "_replication_state": "not finished"},
                 {"id": "replication_1", "_replication_state": "completed"},
             ]
-            repl = Replicator(self.mock_account)
+            repl = Replicator(self.mock_client)
 
             mock_doc = mock.Mock()
             mock_doc.fetch = mock.Mock()

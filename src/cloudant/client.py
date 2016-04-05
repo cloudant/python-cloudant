@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (c) 2015, 2016 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Top level API module that maps to a Cloudant or CouchDB
-client connection instance.
+Top level API module that maps to a Cloudant or CouchDB client connection
+instance.
 """
 import base64
 import json
@@ -38,8 +38,8 @@ class CouchDB(dict):
     Encapsulates a CouchDB client, handling top level user API calls having to
     do with session and database management.
 
-    Maintains a requests.Session for working with the
-    instance specified in the constructor.
+    Maintains a requests.Session for working with the instance specified in the
+    constructor.
 
     Parameters can be passed in to control behavior:
 
@@ -325,7 +325,7 @@ class CouchDB(dict):
         Note:  The only way to override the default for the ``remote`` argument
         setting it to True is to call __setitem__ directly.  A much simpler
         approach is to use
-        :func:`~cloudant.account.CouchDB.create_database` instead, if your
+        :func:`~cloudant.client.CouchDB.create_database` instead, if your
         intention is to create a database remotely.
 
         :param str key: Database name to be used as the key for the database in

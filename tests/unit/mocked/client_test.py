@@ -13,20 +13,17 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-_account_test_
-
-account module unit tests
-
+client module unit tests
 """
 import mock
 import unittest
 import requests
 
-from cloudant.account import Cloudant, CouchDB
+from cloudant.client import Cloudant, CouchDB
 from cloudant.errors import CloudantException
 
 
-class CouchDBAccountTests(unittest.TestCase):
+class CouchDBClientTests(unittest.TestCase):
     def setUp(self):
         """
         mock out requests.Session
@@ -59,7 +56,7 @@ class CouchDBAccountTests(unittest.TestCase):
             {"dbname": "somedb2", "type": "created", "account": "bob", "seq": "11-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJ3LlAIfa0tKQUQ2NTIkzIAgABWCJk"}
             {"dbname": "somedb1", "type": "updated", "account": "bob", "seq": "12-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJPLlAIfa0tKQUQ2NTIkzIAgABiSJl"}
         """
-        with mock.patch('cloudant.account.Feed') as mock_feed:
+        with mock.patch('cloudant.client.Feed') as mock_feed:
             feed = (x.strip() for x in updates_feed.split('\n'))
             mock_feed.__iter__ = mock.MagicMock()
             mock_feed.return_value = feed
@@ -195,7 +192,7 @@ class CouchDBAccountTests(unittest.TestCase):
         self.assertTrue(isinstance(c['b'], c._DATABASE_CLASS))
         self.assertRaises(KeyError, c.__getitem__, 'd')
 
-        with mock.patch('cloudant.account.CouchDatabase.exists') as mock_exists:
+        with mock.patch('cloudant.client.CouchDatabase.exists') as mock_exists:
             mock_exists.return_value = True
             self.assertTrue(isinstance(c['c'], c._DATABASE_CLASS))
 
@@ -239,13 +236,13 @@ class CouchDBAccountTests(unittest.TestCase):
         self.assertEqual(c.get('a'), c['a'])
         self.assertEqual(c.get('d', None), None)
 
-        with mock.patch('cloudant.account.CouchDatabase.exists') as mock_exists:
+        with mock.patch('cloudant.client.CouchDatabase.exists') as mock_exists:
             mock_exists.return_value = True
             self.assertTrue(isinstance(c.get('b', remote=True), c._DATABASE_CLASS))
 
         self.assertTrue(c.get('d', None, remote=True) is None)
 
-class CloudantAccountTests(unittest.TestCase):
+class CloudantClientTests(unittest.TestCase):
     """
     Unittests with mocked out remote calls
 
@@ -405,7 +402,7 @@ class CloudantAccountTests(unittest.TestCase):
     def test_bill(self):
         """test bill API call"""
         with mock.patch(
-            'cloudant.account.Cloudant._usage_endpoint'
+            'cloudant.client.Cloudant._usage_endpoint'
         ) as mock_usage:
             mock_usage.return_value = {'usage': 'mock'}
             c = Cloudant(self.username, self.password, account=self.username)
@@ -415,7 +412,7 @@ class CloudantAccountTests(unittest.TestCase):
 
     def test_volume_usage(self):
         with mock.patch(
-            'cloudant.account.Cloudant._usage_endpoint'
+            'cloudant.client.Cloudant._usage_endpoint'
         ) as mock_usage:
             mock_usage.return_value = {'usage': 'mock'}
             c = Cloudant(self.username, self.password, account=self.username)
@@ -425,7 +422,7 @@ class CloudantAccountTests(unittest.TestCase):
 
     def test_requests_usage(self):
         with mock.patch(
-            'cloudant.account.Cloudant._usage_endpoint'
+            'cloudant.client.Cloudant._usage_endpoint'
         ) as mock_usage:
             mock_usage.return_value = {'usage': 'mock'}
             c = Cloudant(self.username, self.password, account=self.username)

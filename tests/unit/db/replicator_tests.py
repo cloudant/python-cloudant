@@ -82,7 +82,7 @@ class ReplicatorTests(UnitTestDbBase):
     def test_constructor_failure(self):
         """
         Test that constructing a Replicator will not work
-        without a valid account.
+        without a valid client.
         """
         repl = None
         try:
@@ -93,7 +93,7 @@ class ReplicatorTests(UnitTestDbBase):
             self.assertEqual(
                 str(err),
                 'Unable to acquire _replicator database.  '
-                'Verify that the account client is valid and try again.'
+                'Verify that the client is valid and try again.'
             )
         finally:
             self.assertIsNone(repl)
