@@ -4,7 +4,7 @@ Modules
 .. toctree::
    :maxdepth: 2
 
-   account
+   client
    database
    document
    design_document

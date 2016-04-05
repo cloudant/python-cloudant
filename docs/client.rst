@@ -1,7 +1,7 @@
-account
-=======
+client
+======
 
-.. automodule:: cloudant.account
+.. automodule:: cloudant.client
     :members:
     :undoc-members:
     :special-members: __getitem__, __delitem__, __setitem__
