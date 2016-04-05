@@ -1,6 +1,6 @@
 2.0.0 (Unreleased)
 ==================
-- [FIX] Added validation to Cloudant.bill, Cloudant.volume_usage, and Cloudant.requests_usage methods to ensure that a valid year/month combination or neither are used as arguments.
+- [FIX] Added validation to ``Cloudant.bill``, ``Cloudant.volume_usage``, and ``Cloudant.requests_usage`` methods to ensure that a valid year/month combination or neither are used as arguments.
 - [FIX] Fixed the handling of empty views in the DesignDocument.
 - [BREAKING] Fixed CloudantDatabase.share_database to accept all valid permission roles.  Changed the method signature to accept roles as a list argument.
 - [FIX] The CouchDatabase.create_document method now will handle both documents and design documents correctly.  If the document created is a design document then the locally cached object will be a DesignDocument otherwise it will be a Document.
@@ -8,7 +8,7 @@
 - [FIX] Fixed Document.get_attachment method to successfully create text and binary files based on http response Content-Type.  The method also returns text, binary, and json content based on http response Content-Type.
 - [NEW] Added support for CouchDB Admin Party mode.  This library can now be used with CouchDB instances where everyone is Admin.
 - [IMPROVED] Changed the handling of queries using the keys argument to issue a http POST request instead of a http GET request so that the request is no longer bound by any URL length limitation.
-- [IMPROVED] Added support for Result data access via index value and added validation logic to ``Result.__getitem__()``.
+- [IMPROVED] Added support for Result/QueryResult data access via index value and added validation logic to ``Result.__getitem__()``.
 - [BREAKING] Removed credentials module from the API and moved it to the tests folder since the functionality is outside of the scope of this library but may still be useful in unit/integration tests.
 
 2.0.0b2 (2016-02-24)
