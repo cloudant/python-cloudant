@@ -58,7 +58,7 @@ import requests
 import os
 import uuid
 
-from cloudant.account import CouchDB, Cloudant
+from cloudant.client import CouchDB, Cloudant
 from cloudant.design_document import DesignDocument
 
 from ... import unicode_

@@ -27,7 +27,7 @@ class Feed(object):
     ``_changes`` and ``_db_updates``, suitable for feeding a daemon.  A Feed
     object is instantiated with a reference to a client's Session object and a
     feed endpoint URL.  Instead of using this class directly, it is recommended
-    to use the client API :func:`~cloudant.account.CouchDB.db_updates`
+    to use the client API :func:`~cloudant.client.CouchDB.db_updates`
     convenience method for interacting with a client's ``_db_updates`` feed
     and the database API :func:`~cloudant.database.CouchDatabase.changes`
     convenience method for interacting with a database's ``_changes`` feed.

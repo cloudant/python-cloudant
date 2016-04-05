@@ -20,7 +20,7 @@ __version__ = '2.0.0.dev'
 # pylint: disable=wrong-import-position
 import contextlib
 # pylint: disable=wrong-import-position
-from .account import Cloudant, CouchDB
+from .client import Cloudant, CouchDB
 
 @contextlib.contextmanager
 def cloudant(user, passwd, **kwargs):
