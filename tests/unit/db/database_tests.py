@@ -29,7 +29,7 @@ import os
 import uuid
 
 from cloudant.result import Result, QueryResult
-from cloudant.errors import CloudantException, CloudantArgumentError
+from cloudant.error import CloudantException, CloudantArgumentError
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
 from cloudant.index import Index, TextIndex, SpecialIndex

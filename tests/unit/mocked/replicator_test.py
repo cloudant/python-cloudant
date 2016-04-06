@@ -24,7 +24,7 @@ import mock
 import requests
 
 from cloudant.database import CouchDatabase
-from cloudant.errors import CloudantException
+from cloudant.error import CloudantException
 from cloudant.replicator import Replicator
 from cloudant.document import Document
 

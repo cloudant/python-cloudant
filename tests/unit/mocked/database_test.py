@@ -25,7 +25,7 @@ import posixpath
 import json
 
 from cloudant.database import CouchDatabase, CloudantDatabase
-from cloudant.errors import CloudantException
+from cloudant.error import CloudantException
 
 
 class CouchDBTest(unittest.TestCase):

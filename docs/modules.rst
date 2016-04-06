@@ -14,4 +14,4 @@ Modules
    result
    replicator
    changes
-   errors
+   error

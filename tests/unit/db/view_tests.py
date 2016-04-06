@@ -32,7 +32,7 @@ from cloudant.design_document import DesignDocument
 from cloudant.view import View, QueryIndexView
 from cloudant.view import Code
 from cloudant.result import Result
-from cloudant.errors import CloudantArgumentError, CloudantException
+from cloudant.error import CloudantArgumentError, CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
 

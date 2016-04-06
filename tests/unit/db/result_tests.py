@@ -19,7 +19,7 @@ import unittest
 import os
 from requests.exceptions import HTTPError
 
-from cloudant.errors import ResultException
+from cloudant.error import ResultException
 from cloudant.result import Result, ResultByKey
 
 from .unit_t_db_base import UnitTestDbBase

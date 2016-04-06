@@ -19,7 +19,7 @@ import json
 from collections import Sequence
 
 from ._2to3 import STRTYPE, UNITYPE, NONETYPE, iteritems_
-from .errors import CloudantArgumentError, ResultException
+from .error import CloudantArgumentError, ResultException
 
 ARG_TYPES = {
     'descending': (bool,),

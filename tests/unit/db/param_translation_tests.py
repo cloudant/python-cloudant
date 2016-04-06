@@ -17,7 +17,7 @@ Unit tests for Python to CouchDB translation of query parameters.
 """
 import unittest
 
-from cloudant.errors import CloudantArgumentError
+from cloudant.error import CloudantArgumentError
 from cloudant.result import python_to_couch
 
 class PythonToCouchTests(unittest.TestCase):

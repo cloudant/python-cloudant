@@ -26,7 +26,7 @@ import posixpath
 
 from cloudant.query import Query
 from cloudant.result import QueryResult
-from cloudant.errors import CloudantArgumentError
+from cloudant.error import CloudantArgumentError
 
 from .unit_t_db_base import UnitTestDbBase
 

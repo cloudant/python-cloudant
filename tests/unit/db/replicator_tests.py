@@ -30,7 +30,7 @@ import os
 
 from cloudant.replicator import Replicator
 from cloudant.document import Document
-from cloudant.errors import CloudantException
+from cloudant.error import CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import unicode_

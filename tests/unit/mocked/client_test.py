@@ -20,7 +20,7 @@ import unittest
 import requests
 
 from cloudant.client import Cloudant, CouchDB
-from cloudant.errors import CloudantException
+from cloudant.error import CloudantException
 
 
 class CouchDBClientTests(unittest.TestCase):

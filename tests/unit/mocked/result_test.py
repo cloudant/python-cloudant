@@ -22,7 +22,7 @@ import datetime
 import unittest
 
 from cloudant.result import python_to_couch, Result, type_or_none
-from cloudant.errors import CloudantArgumentError, ResultException
+from cloudant.error import CloudantArgumentError, ResultException
 
 import mock
 

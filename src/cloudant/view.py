@@ -21,7 +21,7 @@ import json
 
 from ._2to3 import STRTYPE
 from .result import Result, python_to_couch
-from .errors import CloudantArgumentError, CloudantException
+from .error import CloudantArgumentError, CloudantException
 
 class Code(str):
     """

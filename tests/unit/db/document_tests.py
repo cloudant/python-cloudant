@@ -31,7 +31,7 @@ import uuid
 import inspect
 
 from cloudant.document import Document
-from cloudant.errors import CloudantException
+from cloudant.error import CloudantException
 
 from ... import StringIO, unicode_
 from .unit_t_db_base import UnitTestDbBase

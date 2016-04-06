@@ -25,7 +25,7 @@ import requests
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .changes import Feed
-from .errors import CloudantException, CloudantArgumentError
+from .error import CloudantException, CloudantArgumentError
 
 _USER_AGENT = 'python-cloudant/{0} (Python, Version {1}.{2}.{3})'.format(
     sys.modules['cloudant'].__version__,

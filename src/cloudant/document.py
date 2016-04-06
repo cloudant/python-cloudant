@@ -21,7 +21,7 @@ import requests
 from requests.exceptions import HTTPError
 
 from ._2to3 import url_quote, url_quote_plus
-from .errors import CloudantException
+from .error import CloudantException
 
 
 class Document(dict):

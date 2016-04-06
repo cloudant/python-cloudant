@@ -19,7 +19,7 @@ API module/class for handling database replications
 import uuid
 
 from ._2to3 import unicode_
-from .errors import CloudantException
+from .error import CloudantException
 from .document import Document
 
 class Replicator(object):

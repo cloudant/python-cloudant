@@ -18,7 +18,7 @@ API module/class for interacting with a design document in a database.
 from ._2to3 import iteritems_
 from .document import Document
 from .view import View, QueryIndexView
-from .errors import CloudantArgumentError, CloudantException
+from .error import CloudantArgumentError, CloudantException
 
 QUERY_LANGUAGE = 'query'
 

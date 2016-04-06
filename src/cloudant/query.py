@@ -22,7 +22,7 @@ import contextlib
 
 from ._2to3 import NONETYPE, STRTYPE, iteritems_
 from .result import QueryResult
-from .errors import CloudantArgumentError
+from .error import CloudantArgumentError
 
 ARG_TYPES = {
     'selector': dict,
