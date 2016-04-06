@@ -25,7 +25,7 @@ from ._2to3 import url_quote_plus
 from .document import Document
 from .design_document import DesignDocument
 from .view import View
-from .indexes import Index, TextIndex, SpecialIndex
+from .index import Index, TextIndex, SpecialIndex
 from .index_constants import JSON_INDEX_TYPE
 from .index_constants import TEXT_INDEX_TYPE
 from .index_constants import SPECIAL_INDEX_TYPE
@@ -804,9 +804,9 @@ class CloudantDatabase(CouchDatabase):
 
         :param bool raw_result: If set to True then the raw JSON content for
             the request is returned.  Default is to return a list containing
-            :class:`~cloudant.indexes.Index`,
-            :class:`~cloudant.indexes.TextIndex`, and
-            :class:`~cloudant.indexes.SpecialIndex` wrapped objects.
+            :class:`~cloudant.index.Index`,
+            :class:`~cloudant.index.TextIndex`, and
+            :class:`~cloudant.index.SpecialIndex` wrapped objects.
 
         :returns: The query indexes in the database
         """
