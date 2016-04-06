@@ -8,7 +8,7 @@ Modules
    database
    document
    design_document
-   views
+   view
    query
    indexes
    result

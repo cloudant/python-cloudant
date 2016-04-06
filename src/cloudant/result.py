@@ -60,7 +60,7 @@ def python_to_couch(options):
     code that formulates a query to retrieve results data from the
     remote database, such as the database API convenience method
     :func:`~cloudant.database.CouchDatabase.all_docs` or the View
-    :func:`~cloudant.views.View.__call__` callable, both used to retrieve data.
+    :func:`~cloudant.view.View.__call__` callable, both used to retrieve data.
 
     :param dict options: Python style parameters to be translated.
 
@@ -158,7 +158,7 @@ class Result(object):
     collections.  A Result object is constructed with a raw data callable
     reference such as the database API convenience method
     :func:`~cloudant.database.CouchDatabase.all_docs` or the View
-    :func:`~cloudant.views.View.__call__` callable, used to retrieve data.
+    :func:`~cloudant.view.View.__call__` callable, used to retrieve data.
     A Result object can also use optional extra arguments for result
     customization and supports efficient, paged iteration over the result
     collection to avoid large result data from adversely affecting memory.
@@ -238,7 +238,7 @@ class Result(object):
 
     :param method_ref: A reference to the method or callable that returns
         the JSON content result to be wrapped as a Result.
-    :param options: See :func:`~cloudant.views.View.make_result` for a
+    :param options: See :func:`~cloudant.view.View.make_result` for a
         list of valid result customization options.
     """
     def __init__(self, method_ref, **options):
@@ -404,7 +404,7 @@ class Result(object):
         a batch of data from the result collection and then yields each
         element.
 
-        See :func:`~cloudant.views.View.make_result` for a list of valid
+        See :func:`~cloudant.view.View.make_result` for a list of valid
         result customization options.
 
         See :class:`~cloudant.result.Result` for Result iteration examples.

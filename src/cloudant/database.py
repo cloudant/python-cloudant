@@ -24,7 +24,7 @@ from requests.exceptions import HTTPError
 from ._2to3 import url_quote_plus
 from .document import Document
 from .design_document import DesignDocument
-from .views import View
+from .view import View
 from .indexes import Index, TextIndex, SpecialIndex
 from .index_constants import JSON_INDEX_TYPE
 from .index_constants import TEXT_INDEX_TYPE
