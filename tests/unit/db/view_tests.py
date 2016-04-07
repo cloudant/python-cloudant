@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-_views_tests_
+_view_tests_
 
-views module - Unit tests for the View/QueryIndexView classes
+view module - Unit tests for the View/QueryIndexView classes
 
 See configuration options for environment variables in unit_t_db_base
 module docstring.
@@ -29,8 +29,8 @@ import requests
 import os
 
 from cloudant.design_document import DesignDocument
-from cloudant.views import View, QueryIndexView
-from cloudant.views import Code
+from cloudant.view import View, QueryIndexView
+from cloudant.view import Code
 from cloudant.result import Result
 from cloudant.errors import CloudantArgumentError, CloudantException
 

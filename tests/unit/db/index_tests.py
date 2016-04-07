@@ -30,7 +30,7 @@ import requests
 
 from cloudant.indexes import Index, TextIndex, SpecialIndex
 from cloudant.query import Query
-from cloudant.views import QueryIndexView
+from cloudant.view import QueryIndexView
 from cloudant.design_document import DesignDocument
 from cloudant.document import Document
 from cloudant.errors import CloudantArgumentError, CloudantException

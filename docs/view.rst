@@ -1,7 +1,7 @@
-views
-=====
+view
+====
 
-.. automodule:: cloudant.views
+.. automodule:: cloudant.view
     :members:
     :undoc-members:
     :special-members: __call__

@@ -13,21 +13,21 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 """
-_views_test_
+_view_test_
 
-views module unit tests
+view module unit tests
 
 """
 import mock
 import unittest
 
-from cloudant.views import Code, View
+from cloudant.view import Code, View
 from cloudant.design_document import DesignDocument
 from cloudant.result import Result
 
 
 class CodeTests(unittest.TestCase):
-    """tests for cloudant.views.Code, not much to test here yet..."""
+    """tests for cloudant.view.Code, not much to test here yet..."""
     def test_code(self):
         """test instantiation/manipulation"""
         c = Code("function(doc){emit(doc._id, 1)}")

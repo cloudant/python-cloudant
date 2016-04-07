@@ -79,7 +79,7 @@ class View(dict):
 
     The default result collection provides basic functionality,
     which can be customized with other arguments using the
-    :func:`~cloudant.views.View.custom_result` context manager.
+    :func:`~cloudant.view.View.custom_result` context manager.
 
     For example:
 
@@ -106,9 +106,9 @@ class View(dict):
         identify the view.
     :param str view_name: Name used in part to identify the view.
     :param str map_func: Optional Javascript map function.  Can also be a
-        :class:`~cloudant.views.Code` object.
+        :class:`~cloudant.view.Code` object.
     :param str reduce_func: Optional Javascript reduce function.  Can also be a
-        :class:`~cloudant.views.Code` object.
+        :class:`~cloudant.view.Code` object.
     """
     def __init__(
             self,
@@ -144,7 +144,7 @@ class View(dict):
             print view.map
 
         :param str js_func: Javascript function.  Can also be a
-            :class:`~cloudant.views.Code` object.
+            :class:`~cloudant.view.Code` object.
 
         :returns: Codified map function
         """
@@ -173,7 +173,7 @@ class View(dict):
             print view.reduce
 
         :param str js_func: Javascript function.  Can also be a
-            :class:`~cloudant.views.Code` object.
+            :class:`~cloudant.view.Code` object.
 
         :returns: Codified reduce function
         """
@@ -454,7 +454,7 @@ class QueryIndexView(View):
     def make_result(self, **options):
         """
         This method overrides the View base class
-        :func:`~cloudant.views.View.make_result` method with the sole purpose of
+        :func:`~cloudant.view.View.make_result` method with the sole purpose of
         disabling it.  Since QueryIndexView objects are not callable, there is
         no reason to wrap their output in a Result.  If you wish to execute a
         query using a query index, use

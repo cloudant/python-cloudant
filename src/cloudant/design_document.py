@@ -17,7 +17,7 @@ API module/class for interacting with a design document in a database.
 """
 from ._2to3 import iteritems_
 from .document import Document
-from .views import View, QueryIndexView
+from .view import View, QueryIndexView
 from .errors import CloudantArgumentError, CloudantException
 
 QUERY_LANGUAGE = 'query'
@@ -67,9 +67,9 @@ class DesignDocument(Document):
 
         :param str view_name: Name used to identify the View.
         :param str map_func: Javascript map function.  Can also be a
-            :class:`~cloudant.views.Code` object.
+            :class:`~cloudant.view.Code` object.
         :param str reduce_func: Optional Javascript reduce function.
-            Can also be a :class:`~cloudant.views.Code` object.
+            Can also be a :class:`~cloudant.view.Code` object.
         """
         if self.get_view(view_name) is not None:
             msg = "View {0} already exists in this design doc".format(view_name)
@@ -94,9 +94,9 @@ class DesignDocument(Document):
 
         :param str view_name: Name used to identify the View.
         :param str map_func: Javascript map function.  Can also be a
-            :class:`~cloudant.views.Code` object.
+            :class:`~cloudant.view.Code` object.
         :param str reduce_func: Optional Javascript reduce function.
-            Can also be a :class:`~cloudant.views.Code` object.
+            Can also be a :class:`~cloudant.view.Code` object.
         """
         view = self.get_view(view_name)
         if view is None:
