@@ -23,3 +23,22 @@ You can download the CLAs here:
 
 If you are an IBMer, please contact us directly as the contribution process is
 slightly different.
+
+======================
+Development Quickstart
+======================
+
+Clone the repo into a folder, set up a `virtual environment <https://virtualenv.pypa.io/en/latest/>`_, 
+install the requirements, run the tests:
+
+.. code-block:: bash
+
+    $ git clone git clone git@github.com:cloudant/python-cloudant.git
+    $ cd python-cloudant
+    $ virtualenv .
+    $ ./bin/activate
+    $ pip install -r requirements.txt
+    $ pip install -r test-requirements.txt
+    $ nosetests -w ./tests/unit
+
+At this point most of the tests will fail; I'm not sure why.
