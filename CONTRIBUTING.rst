@@ -46,10 +46,11 @@ Before running the tests, start CouchDB:
     
     $ couchdb
 
+The tests create databases in your CouchDB instance, these are `db-<uuid4()>`. 
+They also create and delete documents in the `_replicator` database.
+
 Now, run the tests:
 
 .. code-block:: bash
 
     $ nosetests -w ./tests/unit
-
-At this point most of the tests will fail; I'm not sure why.
