@@ -29,7 +29,7 @@ Development Quickstart
 ======================
 
 Clone the repo into a folder, set up a `virtual environment <https://virtualenv.pypa.io/en/latest/>`_, 
-install the requirements, run the tests:
+install the requirements:
 
 .. code-block:: bash
 
@@ -39,6 +39,17 @@ install the requirements, run the tests:
     $ ./bin/activate
     $ pip install -r requirements.txt
     $ pip install -r test-requirements.txt
+    
+Before running the tests, start CouchDB:
+
+.. code-block:: bash
+    
+    $ couchdb
+
+Now, run the tests:
+
+.. code-block:: bash
+
     $ nosetests -w ./tests/unit
 
 At this point most of the tests will fail; I'm not sure why.
