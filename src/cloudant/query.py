@@ -193,43 +193,6 @@ class Query(dict):
         resp.raise_for_status()
         return resp.json()
 
-    def make_result(self, **options):
-        """
-        Wraps the raw JSON content of the Query object callable in a
-        :class:`~cloudant.result.QueryResult` object.  The use of ``skip``
-        and ``limit`` as options are not valid when using a QueryResult since
-        the ``skip`` and ``limit`` functionality is handled in the QueryResult.
-
-        Note:  Rather than using this method directly, if you wish to
-        retrieve query data as a QueryResult object, use the provided database
-        API of :func:`~cloudant.database.CouchDatabase.get_query_result`
-        using the ``raw_result=False`` default setting instead.
-
-        :param str bookmark: A string that enables you to specify which page of
-            results you require. Only valid for queries using indexes of type
-            *text*.
-        :param list fields: A list of fields to be returned by the query.
-        :param int page_size: Sets the page size for result iteration.  Default
-            is 100.
-        :param int r: Read quorum needed for the result.  Each document is read
-            from at least 'r' number of replicas before it is returned in the
-            results.
-        :param str selector: Dictionary object describing criteria used to
-            select documents.
-        :param list sort: A list of fields to sort by.  Optionally the list can
-            contain elements that are single member dictionary structures that
-            specify sort direction.  For example
-            ``sort=['name', {'age': 'desc'}]`` means to sort the query results
-            by the "name" field in ascending order and the "age" field in
-            descending order.
-        :param str use_index: Identifies a specific index for the query to run
-            against, rather than using the Cloudant Query algorithm which finds
-            what it believes to be the best index.
-
-        :returns: Query result data wrapped in a QueryResult instance
-        """
-        return QueryResult(self, **options)
-
     @contextlib.contextmanager
     def custom_result(self, **options):
         """
@@ -270,6 +233,6 @@ class Query(dict):
 
         :returns: Query result data wrapped in a QueryResult instance
         """
-        rslt = self.make_result(**options)
+        rslt = QueryResult(self, **options)
         yield rslt
         del rslt

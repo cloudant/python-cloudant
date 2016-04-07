@@ -168,25 +168,6 @@ class QueryTests(UnitTestDbBase):
             [{'_id': 'julia039'}, {'_id': 'julia038'}, {'_id': 'julia037'}]
         )
 
-    def test_make_result(self):
-        """
-        Test that make_result wraps the query response as a QueryResult
-        """
-        self.populate_db_with_documents(100)
-        query = Query(
-            self.db,
-            selector={'_id': {'$lt': 'julia050'}},
-            fields=['_id'],
-            sort=[{'_id': 'desc'}],
-            r=1
-        )
-        rslt = query.make_result()
-        self.assertIsInstance(rslt, QueryResult)
-        self.assertEqual(
-            rslt[10:13],
-            [{'_id': 'julia039'}, {'_id': 'julia038'}, {'_id': 'julia037'}]
-        )
-
     def test_custom_result_context_manager(self):
         """
         Test that custom_result yields a context manager and returns expected

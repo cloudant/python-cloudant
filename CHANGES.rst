@@ -1,5 +1,6 @@
 2.0.0 (Unreleased)
 ==================
+- [BREAKING] Removed the make_result method from View and Query classes.  If you need to make a query or view result, use ``CloudantDatabase.get_query_result``, ``CouchDatabase.get_view_result``, or the ``View.custom_result`` context manager.  Additionally, the ``Result`` and ``QueryResult`` classes can be called directly to construct a result object.
 - [BREAKING] Renamed modules account.py, errors.py, indexes.py, views.py, to client.py, error.py, index.py, and view.py.
 - [FIX] Added validation to ``Cloudant.bill``, ``Cloudant.volume_usage``, and ``Cloudant.requests_usage`` methods to ensure that a valid year/month combination or neither are used as arguments.
 - [FIX] Fixed the handling of empty views in the DesignDocument.

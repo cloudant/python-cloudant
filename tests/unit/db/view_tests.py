@@ -295,20 +295,6 @@ class ViewTests(UnitTestDbBase):
         except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 500)
 
-    def test_make_result(self):
-        """
-        Ensure that the view results are wrapped in a Result object
-        """
-        self.populate_db_with_documents()
-        ddoc = DesignDocument(self.db, 'ddoc001')
-        ddoc.add_view(
-            'view001',
-            'function (doc) {\n  emit(doc._id, 1);\n}'
-        )
-        ddoc.save()
-        view = ddoc.get_view('view001')
-        self.assertIsInstance(view.make_result(), Result)
-
     def test_custom_result_context_manager(self):
         """
         Test that the context manager for custom results returns
@@ -442,20 +428,6 @@ class QueryIndexViewTests(unittest.TestCase):
             'use the database \'get_query_result\' convenience method.'
         )
 
-    def test_make_result_disabled(self):
-        """
-        Test that the make_result method for QueryIndexView does not execute.
-        """
-        with self.assertRaises(CloudantException) as cm:
-            self.view.make_result()
-        err = cm.exception
-        self.assertEqual(
-            str(err),
-            'Cannot make a result using a QueryIndexView.  If you wish to '
-            'execute a query use the database \'get_query_result\' '
-            'convenience method.'
-        )
-
     def test_custom_result_disabled(self):
         """
         Test that the custom_result context manager for QueryIndexView does not
@@ -467,9 +439,9 @@ class QueryIndexViewTests(unittest.TestCase):
         err = cm.exception
         self.assertEqual(
             str(err),
-            'Cannot make a result using a QueryIndexView.  If you wish to '
-            'execute a query use the database \'get_query_result\' '
-            'convenience method.'
+            'Cannot create a custom result context manager using a '
+            'QueryIndexView.  If you wish to execute a query use the '
+            'database \'get_query_result\' convenience method instead.'
         )
 
 if __name__ == '__main__':
