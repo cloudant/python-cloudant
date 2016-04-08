@@ -32,7 +32,7 @@ from cloudant.result import Result, QueryResult
 from cloudant.errors import CloudantException, CloudantArgumentError
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
-from cloudant.indexes import Index, TextIndex, SpecialIndex
+from cloudant.index import Index, TextIndex, SpecialIndex
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import unicode_

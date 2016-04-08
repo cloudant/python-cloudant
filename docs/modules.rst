@@ -10,7 +10,7 @@ Modules
    design_document
    view
    query
-   indexes
+   index
    result
    replicator
    changes

@@ -28,7 +28,7 @@ import os
 import posixpath
 import requests
 
-from cloudant.indexes import Index, TextIndex, SpecialIndex
+from cloudant.index import Index, TextIndex, SpecialIndex
 from cloudant.query import Query
 from cloudant.view import QueryIndexView
 from cloudant.design_document import DesignDocument
