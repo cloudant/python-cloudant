@@ -1,5 +1,6 @@
 2.0.0 (Unreleased)
 ==================
+- [BREAKING] Renamed modules account.py, errors.py, indexes.py, views.py, to client.py, error.py, index.py, and view.py.
 - [FIX] Added validation to ``Cloudant.bill``, ``Cloudant.volume_usage``, and ``Cloudant.requests_usage`` methods to ensure that a valid year/month combination or neither are used as arguments.
 - [FIX] Fixed the handling of empty views in the DesignDocument.
 - [BREAKING] Fixed CloudantDatabase.share_database to accept all valid permission roles.  Changed the method signature to accept roles as a list argument.
