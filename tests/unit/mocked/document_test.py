@@ -24,7 +24,7 @@ import requests
 import unittest
 import json
 
-from cloudant.errors import CloudantException
+from cloudant.error import CloudantException
 from cloudant.document import Document
 
 from ... import iteritems_

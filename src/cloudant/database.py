@@ -30,7 +30,7 @@ from .index_constants import JSON_INDEX_TYPE
 from .index_constants import TEXT_INDEX_TYPE
 from .index_constants import SPECIAL_INDEX_TYPE
 from .query import Query
-from .errors import CloudantException, CloudantArgumentError
+from .error import CloudantException, CloudantArgumentError
 from .result import python_to_couch, Result
 from .changes import Feed
 

@@ -24,7 +24,7 @@ from .index_constants import JSON_INDEX_TYPE
 from .index_constants import TEXT_INDEX_TYPE
 from .index_constants import SPECIAL_INDEX_TYPE
 from .index_constants import TEXT_INDEX_ARGS
-from .errors import CloudantArgumentError, CloudantException
+from .error import CloudantArgumentError, CloudantException
 
 class Index(object):
     """

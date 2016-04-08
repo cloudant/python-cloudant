@@ -29,7 +29,7 @@ from datetime import datetime
 
 from cloudant import cloudant, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
-from cloudant.errors import CloudantException, CloudantArgumentError
+from cloudant.error import CloudantException, CloudantArgumentError
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import bytes_, str_

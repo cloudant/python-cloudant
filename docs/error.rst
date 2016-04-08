@@ -1,7 +1,7 @@
-errors
-======
+error
+=====
 
-.. automodule:: cloudant.errors
+.. automodule:: cloudant.error
     :members:
     :undoc-members:
     :show-inheritance:

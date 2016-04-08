@@ -33,7 +33,7 @@ from cloudant.query import Query
 from cloudant.view import QueryIndexView
 from cloudant.design_document import DesignDocument
 from cloudant.document import Document
-from cloudant.errors import CloudantArgumentError, CloudantException
+from cloudant.error import CloudantArgumentError, CloudantException
 
 from ... import PY2
 from .unit_t_db_base import UnitTestDbBase

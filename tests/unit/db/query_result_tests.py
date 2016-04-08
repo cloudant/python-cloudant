@@ -25,7 +25,7 @@ import os
 
 from cloudant.query import Query
 from cloudant.result import QueryResult
-from cloudant.errors import ResultException
+from cloudant.error import ResultException
 
 from .unit_t_db_base import UnitTestDbBase
 
