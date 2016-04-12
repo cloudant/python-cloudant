@@ -236,10 +236,38 @@ class Result(object):
     | Iteration                     | ``limit``, ``skip`` not permitted                         |
     +-------------------------------+-----------------------------------------------------------+
 
-    :param method_ref: A reference to the method or callable that returns
+    :param str method_ref: A reference to the method or callable that returns
         the JSON content result to be wrapped as a Result.
-    :param options: See :func:`~cloudant.view.View.make_result` for a
-        list of valid result customization options.
+    :param bool descending: Return documents in descending key order.
+    :param endkey: Stop returning records at this specified key.
+        Not valid when used with key access and key slicing.
+    :param str endkey_docid: Stop returning records when the specified
+        document id is reached.
+    :param bool group: Using the reduce function, group the results to a
+        group or single row.
+    :param group_level: Only applicable if the view uses complex keys: keys
+        that are JSON arrays. Groups reduce results for the specified number
+        of array fields.
+    :param bool include_docs: Include the full content of the documents.
+    :param bool inclusive_end: Include rows with the specified endkey.
+    :param key: Return only documents that match the specified key.
+        Not valid when used with key access and key slicing.
+    :param list keys: Return only documents that match the specified keys.
+        Not valid when used with key access and key slicing.
+    :param int limit: Limit the number of returned documents to the
+        specified count.  Not valid when used with key iteration.
+    :param int page_size: Sets the page size for result iteration.
+    :param bool reduce: True to use the reduce function, false otherwise.
+    :param int skip: Skip this number of rows from the start.
+        Not valid when used with key iteration.
+    :param str stale: Allow the results from a stale view to be used. This
+        makes the request return immediately, even if the view has not been
+        completely built yet. If this parameter is not given, a response is
+        returned only after the view has been built.
+    :param startkey: Return records starting with the specified key.
+        Not valid when used with key access and key slicing.
+    :param str startkey_docid: Return records starting with the specified
+        document ID.
     """
     def __init__(self, method_ref, **options):
         self.options = options
@@ -404,9 +432,6 @@ class Result(object):
         a batch of data from the result collection and then yields each
         element.
 
-        See :func:`~cloudant.view.View.make_result` for a list of valid
-        result customization options.
-
         See :class:`~cloudant.result.Result` for Result iteration examples.
 
         :returns: Iterable data sequence
@@ -505,8 +530,26 @@ class QueryResult(Result):
 
     :param query: A reference to the query callable that returns
         the JSON content result to be wrapped.
-    :param options: See :func:`~cloudant.query.Query.make_result` for a
-        list of valid query result customization options.
+    :param str bookmark: A string that enables you to specify which page of
+        results you require. Only valid for queries using indexes of type
+        *text*.
+    :param list fields: A list of fields to be returned by the query.
+    :param int page_size: Sets the page size for result iteration.  Default
+        is 100.
+    :param int r: Read quorum needed for the result.  Each document is read
+        from at least 'r' number of replicas before it is returned in the
+        results.
+    :param str selector: Dictionary object describing criteria used to
+        select documents.
+    :param list sort: A list of fields to sort by.  Optionally the list can
+        contain elements that are single member dictionary structures that
+        specify sort direction.  For example
+        ``sort=['name', {'age': 'desc'}]`` means to sort the query results
+        by the "name" field in ascending order and the "age" field in
+        descending order.
+    :param str use_index: Identifies a specific index for the query to run
+        against, rather than using the Cloudant Query algorithm which finds
+        what it believes to be the best index.
     """
     def __init__(self, query, **options):
         # Move skip/limit to options so super class Result can handle as needed.

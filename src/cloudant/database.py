@@ -31,7 +31,7 @@ from .index_constants import TEXT_INDEX_TYPE
 from .index_constants import SPECIAL_INDEX_TYPE
 from .query import Query
 from .error import CloudantException, CloudantArgumentError
-from .result import python_to_couch, Result
+from .result import python_to_couch, Result, QueryResult
 from .changes import Feed
 
 class CouchDatabase(dict):
@@ -299,7 +299,7 @@ class CouchDatabase(dict):
         if raw_result:
             return view(**kwargs)
         elif kwargs:
-            return view.make_result(**kwargs)
+            return Result(view, **kwargs)
         else:
             return view.result
 
@@ -998,6 +998,6 @@ class CloudantDatabase(CouchDatabase):
         if raw_result:
             return query(**kwargs)
         if kwargs:
-            return query.make_result(**kwargs)
+            return QueryResult(query, **kwargs)
         else:
             return query.result

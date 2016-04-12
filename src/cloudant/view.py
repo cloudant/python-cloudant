@@ -260,58 +260,6 @@ class View(dict):
         resp.raise_for_status()
         return resp.json()
 
-    def make_result(self, **options):
-        """
-        Wraps the raw JSON content of the View object callable in a
-        :class:`~cloudant.result.Result` object.  Depending on how you are
-        accessing, slicing or iterating through your result collection certain
-        query parameters are not permitted.  See
-        :class:`~cloudant.result.Result` for additional details.
-
-        Note:  Rather than using this method directly, if you wish to
-        retrieve view data as a Result object, use the provided database
-        API of :func:`~cloudant.database.CouchDatabase.get_view_result` instead.
-
-        :param bool descending: Return documents in descending key order.
-        :param endkey: Stop returning records at this specified key.
-            Not valid when used with :class:`~cloudant.result.Result` key
-            access and key slicing.
-        :param str endkey_docid: Stop returning records when the specified
-            document id is reached.
-        :param bool group: Using the reduce function, group the results to a
-            group or single row.
-        :param group_level: Only applicable if the view uses complex keys: keys
-            that are JSON arrays. Groups reduce results for the specified number
-            of array fields.
-        :param bool include_docs: Include the full content of the documents.
-        :param bool inclusive_end: Include rows with the specified endkey.
-        :param key: Return only documents that match the specified key.
-            Not valid when used with :class:`~cloudant.result.Result` key
-            access and key slicing.
-        :param list keys: Return only documents that match the specified keys.
-            Not valid when used with :class:`~cloudant.result.Result` key
-            access and key slicing.
-        :param int limit: Limit the number of returned documents to the
-            specified count.  Not valid when used with
-            :class:`~cloudant.result.Result` iteration.
-        :param int page_size: Sets the page size for result iteration.
-        :param bool reduce: True to use the reduce function, false otherwise.
-        :param int skip: Skip this number of rows from the start.
-            Not valid when used with :class:`~cloudant.result.Result` iteration.
-        :param str stale: Allow the results from a stale view to be used. This
-            makes the request return immediately, even if the view has not been
-            completely built yet. If this parameter is not given, a response is
-            returned only after the view has been built.
-        :param startkey: Return records starting with the specified key.
-            Not valid when used with :class:`~cloudant.result.Result` key
-            access and key slicing.
-        :param str startkey_docid: Return records starting with the specified
-            document ID.
-
-        :returns: View result data wrapped in a Result instance
-        """
-        return Result(self, **options)
-
     @contextlib.contextmanager
     def custom_result(self, **options):
         """
@@ -368,7 +316,7 @@ class View(dict):
 
         :returns: View result data wrapped in a Result instance
         """
-        rslt = self.make_result(**options)
+        rslt = Result(self, **options)
         yield rslt
         del rslt
 
@@ -451,17 +399,17 @@ class QueryIndexView(View):
             'use the database \'get_query_result\' convenience method.'
         )
 
-    def make_result(self, **options):
+    def custom_result(self, **options):
         """
         This method overrides the View base class
-        :func:`~cloudant.view.View.make_result` method with the sole purpose of
+        :func:`~cloudant.view.View.custom_result` method with the sole purpose of
         disabling it.  Since QueryIndexView objects are not callable, there is
         no reason to wrap their output in a Result.  If you wish to execute a
         query using a query index, use
         :func:`~cloudant.database.CloudantDatabase.get_query_result` instead.
         """
         raise CloudantException(
-            'Cannot make a result using a QueryIndexView.  If you wish to '
-            'execute a query use the database \'get_query_result\' convenience '
-            'method.'
+            'Cannot create a custom result context manager using a '
+            'QueryIndexView.  If you wish to execute a query use the '
+            'database \'get_query_result\' convenience method instead.'
         )

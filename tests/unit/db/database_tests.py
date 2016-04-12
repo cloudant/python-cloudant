@@ -277,7 +277,7 @@ class DatabaseTests(UnitTestDbBase):
         self.assertIsInstance(rslt, Result)
         self.assertEqual(rslt[:1], rslt['julia000'])
 
-        #Test with custom Result
+        # Test with custom Result
         rslt = self.db.get_view_result(
             '_design/ddoc01',
             'view01',
