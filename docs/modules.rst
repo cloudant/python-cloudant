@@ -13,5 +13,5 @@ Modules
    index
    result
    replicator
-   changes
+   feed
    error

@@ -1,7 +1,7 @@
-changes
-=======
+feed
+====
 
-.. automodule:: cloudant.changes
+.. automodule:: cloudant.feed
     :members:
     :undoc-members:
     :show-inheritance:
