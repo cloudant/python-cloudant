@@ -49,8 +49,27 @@ Before running the tests, start CouchDB:
 The tests create databases in your CouchDB instance, these are `db-<uuid4()>`. 
 They also create and delete documents in the `_replicator` database.
 
-Now, run the tests:
+Now, run the tests. Here, I use the ``ADMIN_PARTY`` environment variable to
+tell the tests not to use any authentication. See below for the full set of
+variables that can be used.
 
 .. code-block:: bash
 
-    $ nosetests -w ./tests/unit
+    $ ADMIN_PARTY=true nosetests -w ./tests/unit
+    
+There are several environment variables which affect
+test behaviour:
+
+- ``RUN_CLOUDANT_TESTS``: set this to run the tests that use Cloudant-specific features.
+  If you use this, you must set ``DB_URL``, ``DB_USER`` and ``DB_PASSWORD``.
+- Without ``RUN_CLOUDANT_TESTS``, the following environment variables have an effect:
+    - Set ``DB_URL`` to set the root URL of the CouchDB/Cloudant instance. It defaults
+      to ``http://localhost:5984``.
+    - Set ``ADMIN_PARTY`` to ``true`` to not use any authentication details.
+    - Without ``ADMIN_PARTY``, set ``DB_USER`` and ``DB_PASSWORD`` to use those
+      credentials to access the database.
+    - Without ``ADMIN_PARTY`` and ``DB_USER``, the tests assume CouchDB is in
+      admin party mode, but create a user via ``_config`` to run tests as.
+      This user is deleted at the end of the test run, but beware it'll 
+      break other applications using the CouchDB instance that rely on
+      admin party mode being in effect while the tests are running.
