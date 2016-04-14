@@ -60,8 +60,13 @@ variables that can be used.
 There are several environment variables which affect
 test behaviour:
 
-- ``RUN_CLOUDANT_TESTS``: set this to run the tests that use Cloudant-specific features.
-  If you use this, you must set ``DB_URL``, ``DB_USER`` and ``DB_PASSWORD``.
+- ``RUN_CLOUDANT_TESTS``: set this to run the tests that use Cloudant-specific features. If
+  you set this, you must set one of the following combinations of other variables:
+    - ``DB_URL``, ``DB_USER`` and ``DB_PASSWORD``.
+    - ``CLOUDANT_ACCOUNT``, ``DB_USER`` and ``DB_PASSWORD``.
+    - If you set both ``DB_URL`` and ``CLOUDANT_ACCOUNT``, ``DB_URL`` is used as the
+      URL to make requests to and ``CLOUDANT_ACCOUNT`` is inserted into the ``X-Cloudant-User``
+      header.
 - Without ``RUN_CLOUDANT_TESTS``, the following environment variables have an effect:
     - Set ``DB_URL`` to set the root URL of the CouchDB/Cloudant instance. It defaults
       to ``http://localhost:5984``.
