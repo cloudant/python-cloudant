@@ -607,17 +607,15 @@ class DatabaseTests(UnitTestDbBase):
         """
         i = 0
         doc = self.db.create_document(
-            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
-        )
-        for change in self.db.changes():
-            if change is not None:
-                self.assertEqual(change['id'], doc['_id'])
-                i += 1
-                doc = self.db.create_document(
-                    {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
-                )
+            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i})
+        feed = self.db.changes(feed='continuous')
+        for change in feed:
+            self.assertEqual(change['id'], doc['_id'])
+            i += 1
+            doc = self.db.create_document(
+                {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i})
             if i == 10:
-                break
+                feed.stop()
         self.assertEqual(i, 10)
 
     def test_retrieve_changes_with_docs(self):
@@ -627,18 +625,16 @@ class DatabaseTests(UnitTestDbBase):
         """
         i = 0
         doc = self.db.create_document(
-            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
-        )
-        for change in self.db.changes(include_docs=True):
-            if change is not None:
-                self.assertEqual(change['id'], doc['_id'])
-                self.assertEqual(change.get('doc'), doc)
-                i += 1
-                doc = self.db.create_document(
-                    {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
-                )
+            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i})
+        feed = self.db.changes(feed='continuous', include_docs=True)
+        for change in feed:
+            self.assertEqual(change['id'], doc['_id'])
+            self.assertEqual(change.get('doc'), doc)
+            i += 1
+            doc = self.db.create_document(
+                {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i})
             if i == 10:
-                break
+                feed.stop()
         self.assertEqual(i, 10)
 
 @unittest.skipUnless(

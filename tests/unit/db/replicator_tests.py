@@ -126,14 +126,23 @@ class ReplicatorTests(UnitTestDbBase):
         repl_doc = Document(self.replicator.database, repl_id)
         repl_doc.fetch()
         if repl_doc.get('_replication_state') not in ('completed', 'error'):
-            for change in self.replicator.database.changes():
-                if change.get('id') == repl_id:
+            changes = self.replicator.database.changes(
+                feed='continuous',
+                heartbeat=1000)
+            beats = 0
+            for change in changes:
+                if beats == 300:
+                    changes.stop()
+                if not change:
+                    beats += 1
+                    continue
+                elif change.get('id') == repl_id:
+                    beats = 0
                     repl_doc = Document(self.replicator.database, repl_id)
                     repl_doc.fetch()
-                    if (repl_doc.get('_replication_state')
-                        in ('completed', 'error')):
-                        break
-        self.assertEqual(repl_doc['_replication_state'], 'completed')
+                    if repl_doc.get('_replication_state') in ('completed', 'error'):
+                        changes.stop()
+        self.assertEqual(repl_doc.get('_replication_state'), 'completed')
         self.assertEqual(self.db.all_docs(), self.target_db.all_docs())
         self.assertTrue(
             all(x in self.target_db.keys(True) for x in [

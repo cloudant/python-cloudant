@@ -21,7 +21,7 @@ changes module unit tests
 import requests
 import unittest
 import mock
-from cloudant.changes import Feed
+from cloudant.feed import Feed
 
 
 FIXTURE_DATA = """
@@ -81,9 +81,6 @@ class FeedTests(unittest.TestCase):
         )
 
         result = [x for x in f]
-        # 5 empty lines
-        self.assertEqual(result.count({}), 5)
-        # six non empty lines
         changes = [
             x['changes'] for x in result if x.get('changes') is not None
         ]

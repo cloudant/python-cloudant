@@ -49,13 +49,11 @@ class CouchDBClientTests(unittest.TestCase):
     def test_db_updates(self):
         c = CouchDB(self.username, self.password, url=self.url)
         c.connect()
-        updates_feed = """
-            {"dbname": "somedb3", "type": "created", "account": "bob", "seq": "3-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJzLlAIfa0tKQUQ2NTIkzIAgD_wSJc"}
+        updates_feed = """{"dbname": "somedb3", "type": "created", "account": "bob", "seq": "3-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJzLlAIfa0tKQUQ2NTIkzIAgD_wSJc"}
             {"dbname": "somedb2", "type": "updated", "account": "bob", "seq": "4-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJLLlAIfa0tKQUQ2NTIkzIAgAAASJd"}
             {"dbname": "somedb1", "type": "deleted", "account": "bob", "seq": "9-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJnLlAIfa0tKQUQ2NTIkzIAgAA9iJi"}
             {"dbname": "somedb2", "type": "created", "account": "bob", "seq": "11-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJ3LlAIfa0tKQUQ2NTIkzIAgABWCJk"}
-            {"dbname": "somedb1", "type": "updated", "account": "bob", "seq": "12-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJPLlAIfa0tKQUQ2NTIkzIAgABiSJl"}
-        """
+            {"dbname": "somedb1", "type": "updated", "account": "bob", "seq": "12-g1AAAABteJzLYWBgYMxgTmFQSElKzi9KdUhJMtHLTc1NzTcwMNdLzskvTUnMK9HLSy3JAapkSmTIY2H4DwRZGcyJPLlAIfa0tKQUQ2NTIkzIAgABiSJl"}"""
         with mock.patch('cloudant.client.Feed') as mock_feed:
             feed = (x.strip() for x in updates_feed.split('\n'))
             mock_feed.__iter__ = mock.MagicMock()

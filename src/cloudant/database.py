@@ -32,7 +32,7 @@ from .index_constants import SPECIAL_INDEX_TYPE
 from .query import Query
 from .error import CloudantException, CloudantArgumentError
 from .result import python_to_couch, Result, QueryResult
-from .changes import Feed
+from .feed import Feed
 
 class CouchDatabase(dict):
     """
@@ -429,29 +429,68 @@ class CouchDatabase(dict):
         docs = self.all_docs()
         return [row['id'] for row in docs.get('rows', [])]
 
-    def changes(self, since=None, continuous=True, include_docs=False):
+    def changes(self, raw_data=False, **kwargs):
         """
-        Streams data from _changes feed. Yields information about
-        changes that have been made.
+        Returns the ``_changes`` feed iterator.  The ``_changes`` feed can be
+        iterated over and once complete can also provide the last sequence
+        identifier of the feed.
 
-        :param str since: Change streaming starts from this sequence identifier.
-        :param bool continuous: Dictates the streaming of data.
-            Defaults to True.
-        :param bool include_docs:
+        For example:
 
-        :returns: Iterable stream of changes
+        .. code-block:: python
+
+            # Iterate over a "normal" _changes feed
+            changes = db.changes()
+            for change in changes:
+                print(change)
+            print(changes.last_seq)
+
+            # Iterate over a "continuous" _changes feed with additional options
+            changes = db.changes(feed='continuous', since='now', descending=True)
+            for change in changes:
+                print(change)
+
+        :param bool raw_data: If set to True then the raw response data will be
+            streamed otherwise if set to False then JSON formatted data will be
+            streamed.  Default is False.
+        :param bool conflicts: Can only be set if include_docs is True. Adds
+            information about conflicts to each document.  Default is False.
+        :param bool descending: Changes appear in sequential order.  Default is
+            False.
+        :param list doc_ids: To be used only when ``filter`` is set to
+            ``_doc_ids``. Filters the feed so that only changes to the
+            specified documents are sent.
+        :param str feed: Type of feed.  Valid values are ``continuous``,
+            ``longpoll``, and ``normal``.  Default is ``normal``.
+        :param str filter: Name of filter function from a design document to get
+            updates.  Default is no filter.
+        :param int heartbeat: Time in milliseconds after which an empty line is
+            sent during ``longpoll`` or ``continuous`` if there have been no
+            changes.  Must be a positive number.  Default is no heartbeat.
+        :param bool include_docs: Include the document with the result.  The
+            document will not be returned as a
+            :class:`~cloudant.document.Document` but instead will be returned as
+            either formated JSON or as raw response content.  Default is False.
+        :param int limit: Maximum number of rows to return.  Must be a positive
+            number.  Default is no limit.
+        :param since: Start the results from changes after the specified
+            sequence identifier. In other words, using since excludes from the
+            list all changes up to and including the specified sequence
+            identifier. If since is 0 (the default), or omitted, the request
+            returns all changes. If it is ``now``, only changes made after the
+            time of the request will be emitted.
+        :param str style: Specifies how many revisions are returned in the
+            changes array. The default, ``main_only``, only returns the current
+            "winning" revision; ``all_docs`` returns all leaf revisions,
+            including conflicts and deleted former conflicts.
+        :param int timeout: Number of milliseconds to wait for data before
+            terminating the response. ``heartbeat`` supersedes ``timeout`` if
+            both are supplied.
+
+        :returns: Feed object that can be iterated over as a ``_changes`` feed.
         """
-        changes_feed = Feed(
-            self.r_session,
-            posixpath.join(self.database_url, '_changes'),
-            since=since,
-            continuous=continuous,
-            include_docs=include_docs
-        )
-
-        for change in changes_feed:
-            if change:
-                yield change
+        changes_url = '/'.join([self.database_url, '_changes'])
+        return Feed(self.r_session, changes_url, raw_data, **kwargs)
 
     def __getitem__(self, key):
         """

@@ -22,6 +22,8 @@ import sys
 
 PY2 = sys.version_info[0] < 3
 
+BYTETYPE = str if PY2 else bytes
+
 def unicode_(s):
     return unicode(s) if PY2 else s
 

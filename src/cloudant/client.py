@@ -24,7 +24,7 @@ import requests
 
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
-from .changes import Feed
+from .feed import Feed
 from .error import CloudantException, CloudantArgumentError
 
 _USER_AGENT = 'python-cloudant/{0} (Python, Version {1}.{2}.{3})'.format(
@@ -210,27 +210,54 @@ class CouchDB(dict):
         if dbname in list(self.keys()):
             super(CouchDB, self).__delitem__(dbname)
 
-    def db_updates(self, since=None, continuous=True):
+    def db_updates(self, raw_data=False, **kwargs):
         """
-        Streams data from _db_updates feed. Yields information about
-        databases that have been updated.
+        Returns the ``_db_updates`` feed iterator.  The ``_db_updates`` feed can
+        be iterated over and once complete can also provide the last sequence
+        identifier of the feed.
 
-        :param str since: Update streaming starts from this sequence identifier.
-        :param bool continuous: Dictates the streaming of data.
-            Defaults to True.
+        For example:
 
-        :returns: Iterable stream of database updates
+        .. code-block:: python
+
+            # Iterate over a "normal" _db_updates feed
+            db_updates = db.db_updates()
+            for db_update in db_updates:
+                print(db_update)
+            print(db_updates.last_seq)
+
+            # Iterate over a "continuous" _db_updates feed with additional options
+            db_updates = db.db_updates(feed='continuous', since='now', descending=True)
+            for db_update in db_updates:
+                print(db_update)
+
+        :param bool raw_data: If set to True then the raw response data will be
+            streamed otherwise if set to False then JSON formatted data will be
+            streamed.  Default is False.
+        :param bool descending: Whether results should be returned in
+            descending order, i.e. the latest event first. By default, the
+            oldest event is returned first.
+        :param str feed: Type of feed.  Valid values are ``continuous``,
+            ``longpoll``, and ``normal``.  Default is ``normal``.
+        :param int heartbeat: Time in milliseconds after which an empty line is
+            sent during ``longpoll`` or ``continuous`` if there have been no
+            changes.  Must be a positive number.  Default is no heartbeat.
+        :param int limit: Maximum number of rows to return.  Must be a positive
+            number.  Default is no limit.
+        :param since: Start the results from changes after the specified
+            sequence identifier. In other words, using since excludes from the
+            list all changes up to and including the specified sequence
+            identifier. If since is 0 (the default), or omitted, the request
+            returns all changes. If it is ``now``, only changes made after the
+            time of the request will be emitted.
+        :param int timeout: Number of milliseconds to wait for data before
+            terminating the response. ``heartbeat`` supersedes ``timeout`` if
+            both are supplied.
+
+        :returns: Feed object that can be iterated over as a ``_changes`` feed.
         """
-        db_updates_feed = Feed(
-            self.r_session,
-            posixpath.join(self.cloudant_url, '_db_updates'),
-            since=since,
-            continuous=continuous
-        )
-
-        for update in db_updates_feed:
-            if update:
-                yield update
+        db_updates_url = '/'.join([self.cloudant_url, '_db_updates'])
+        return Feed(self.r_session, db_updates_url, raw_data, **kwargs)
 
     def keys(self, remote=False):
         """

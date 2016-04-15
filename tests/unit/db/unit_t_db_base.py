@@ -177,10 +177,11 @@ class UnitTestDbBase(unittest.TestCase):
     def dbname(self, database_name='db'):
         return '{0}-{1}'.format(database_name, unicode_(uuid.uuid4()))
 
-    def populate_db_with_documents(self, doc_count=100):
+    def populate_db_with_documents(self, doc_count=100, **kwargs):
+        off_set = kwargs.get('off_set', 0)
         docs = [
             {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
-            for i in range(doc_count)
+            for i in range(off_set, off_set + doc_count)
         ]
         return self.db.bulk_docs(docs)
 
