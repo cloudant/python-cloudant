@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (c) 2015, 2016 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,58 +14,135 @@
 # limitations under the License.
 """
 Module containing the Feed class which provides iterator support for consuming
-changes-like feeds.
+continuous and non-continuous feeds like ``_changes`` and ``_db_updates``.
 """
 
 import json
 
-from ._2to3 import next_, unicode_
+from ._2to3 import iteritems_, next_, unicode_, STRTYPE, NONETYPE
+from .result import TYPE_CONVERTERS
+from .error import CloudantArgumentError, CloudantException
+
+_DB_UPDATES_ARG_TYPES = {
+    'descending': (bool,),
+    'feed': (STRTYPE,),
+    'heartbeat': (int, NONETYPE,),
+    'limit': (int, NONETYPE,),
+    'since': (int, STRTYPE,),
+    'timeout': (int, NONETYPE,),
+}
+
+_CHANGES_ARG_TYPES = {
+    'conflicts': (bool,),
+    'doc_ids': (list,),
+    'filter': (STRTYPE,),
+    'include_docs': (bool,),
+    'style': (STRTYPE,),
+}
+_CHANGES_ARG_TYPES.update(_DB_UPDATES_ARG_TYPES)
+
+def _validate(key, val, arg_types):
+    """
+    Ensures that the key and the value are valid arguments to be used with the
+    feed.
+    """
+    if key not in arg_types:
+        raise CloudantArgumentError('Invalid argument {0}'.format(key))
+    if (not isinstance(val, arg_types[key]) or
+            (isinstance(val, bool) and int in arg_types[key])):
+        msg = 'Argument {0} not instance of expected type: {1}'.format(
+            key, arg_types[key])
+        raise CloudantArgumentError(msg)
+    if isinstance(val, int) and val <= 0 and not isinstance(val, bool):
+        msg = 'Argument {0} must be > 0.  Found: {1}'.format(key, val)
+        raise CloudantArgumentError(msg)
+    if key == 'feed' and val not in ('continuous', 'normal', 'longpoll'):
+        msg = ('Invalid value ({0}) for feed option.  Must be continuous, '
+               'normal, or longpoll.').format(val)
+        raise CloudantArgumentError(msg)
+    if key == 'style' and val not in ('main_only', 'all_docs'):
+        msg = ('Invalid value ({0}) for style option.  Must be main_only, '
+               'or all_docs.').format(val)
+        raise CloudantArgumentError(msg)
 
 class Feed(object):
     """
-    Provides an infinite iterator for consuming database feeds such as
-    ``_changes`` and ``_db_updates``, suitable for feeding a daemon.  A Feed
-    object is instantiated with a reference to a client's Session object and a
-    feed endpoint URL.  Instead of using this class directly, it is recommended
-    to use the client API :func:`~cloudant.client.CouchDB.db_updates`
-    convenience method for interacting with a client's ``_db_updates`` feed
-    and the database API :func:`~cloudant.database.CouchDatabase.changes`
-    convenience method for interacting with a database's ``_changes`` feed.
+    Provides an iterator for consuming client and database feeds such as
+    ``_db_updates`` and ``_changes``.  A Feed object is constructed with a
+    reference to a client or database Requests Session object and a feed
+    endpoint URL. Instead of using this class directly, it is recommended to
+    use the client API :func:`~cloudant.client.CouchDB.db_updates` and the
+    database API :func:`~cloudant.database.CouchDatabase.changes`.  Reference
+    those methods for a valid list of feed options.
 
-    :param Session session: Client session used by the Feed.
+    :param Session session: Requests session used by the Feed.
     :param str url: URL used by the Feed.
-    :param bool include_docs: If set to True, documents will be returned as
-        part of the iteration.  Documents will be returned in JSON format and
-        not wrapped as a :class:`~cloudant.document.Document`.  Defaults to
+    :param bool raw_data: Dictates whether the streamed data is returned as
+        a decoded Python ``dict`` object or as raw response data.  Defaults to
         False.
-    :param str since: Feed streaming starts from this sequence identifier.
-    :param bool continuous: Dictates the streaming of data.
-        Defaults to False.
     """
-    def __init__(self, session, url, include_docs=False, **kwargs):
-        self._session = session
+    def __init__(self, session, url, raw_data=False, **options):
+        self._r_session = session
         self._url = url
-        self._resp = None
-        self._line_iter = None
-        self._last_seq = kwargs.get('since')
-        self._continuous = kwargs.get('continuous', False)
-        self._end_of_iteration = False
-        self._params = {'feed': 'continuous'}
-        if include_docs:
-            self._params['include_docs'] = 'true'
+        self._raw_data = raw_data
+        self._options = options
+        self._chunk_size = self._options.pop('chunk_size', 512)
 
-    def start(self):
+        self._resp = None
+        self._lines = None
+        self._last_seq = None
+        self._stop = False
+
+    @property
+    def last_seq(self):
         """
-        Starts streaming the feed using the provided session.  If a last
-        sequence identifier value was provided during instantiation then that
-        is used by the Feed as a starting point.
+        Returns the last sequence identifier for the feed.  Only available after
+        the feed has iterated through to completion.
+
+        :returns: A string representing the last sequence number of a feed.
         """
-        params = self._params
-        if self._last_seq is not None:
-            params['since'] = self._last_seq
-        self._resp = self._session.get(self._url, params=params, stream=True)
+        return self._last_seq
+
+    def stop(self):
+        """
+        Stops a feed iteration.
+        """
+        self._stop = True
+
+    def _start(self):
+        """
+        Starts streaming the feed using the provided session and feed options.
+        """
+        params = self._translate(self._options)
+        self._resp = self._r_session.get(self._url, params=params, stream=True)
         self._resp.raise_for_status()
-        self._line_iter = self._resp.iter_lines()
+        self._lines = self._resp.iter_lines(self._chunk_size)
+
+    def _translate(self, options):
+        """
+        Perform translation to CouchDB of feed options passed in as keyword
+        arguments.
+        """
+        if self._url.endswith('/_changes'):
+            arg_types = _CHANGES_ARG_TYPES
+        elif self._url.endswith('/_db_updates'):
+            arg_types = _DB_UPDATES_ARG_TYPES
+        else:
+            msg = 'Could not identify feed based on url: {0}'.format(self._url)
+            raise CloudantException(msg)
+        translation = dict()
+        for key, val in iteritems_(options):
+            _validate(key, val, arg_types)
+            try:
+                if isinstance(val, STRTYPE):
+                    translation[key] = val
+                elif not isinstance(val, NONETYPE):
+                    arg_converter = TYPE_CONVERTERS.get(type(val))
+                    translation[key] = arg_converter(val)
+            except Exception as ex:
+                msg = 'Error converting argument {0}: {1}'.format(key, ex)
+                raise CloudantArgumentError(msg)
+        return translation
 
     def __iter__(self):
         """
@@ -82,31 +159,50 @@ class Feed(object):
     def next(self):
         """
         Handles the iteration by pulling the next line out of the stream,
-        attempting to convert the response to JSON, and managing empty lines.
-        If the end of feed is encountered, the iterator is restarted.
+        attempting to convert the response to JSON if necessary.
 
-        :returns: Data representing what was seen in the feed in JSON format
-
+        :returns: Data representing what was seen in the feed
         """
-        if self._end_of_iteration:
-            raise StopIteration
         if not self._resp:
-            self.start()
-        line = next_(self._line_iter)
-        if len(line.strip()) == 0:
-            return dict()
+            self._start()
+        if self._stop:
+            raise StopIteration
+        skip, data = self._process_data(next_(self._lines))
+        if skip:
+            return self.next()
+        return data
+
+    def _process_data(self, line):
+        """
+        Validates and processes the line passed in and converts it to a
+        Python object if necessary.
+        """
+        skip = False
+        if self._raw_data:
+            return skip, line
+        else:
+            line = unicode_(line)
+        if not line:
+            if ('heartbeat' in self._options and
+                    self._options.get('feed') in ('continuous', 'longpoll') and
+                    not self._last_seq):
+                line = None
+            else:
+                skip = True
+        elif line in ('{"results":[', '],'):
+            skip = True
+        elif line[-1] == ',':
+            line = line[:-1]
+        elif line[:10] == ('"last_seq"'):
+            line = '{' + line
         try:
-            data = json.loads(unicode_(line))
+            if line:
+                data = json.loads(line)
+                if data.get('last_seq'):
+                    self._last_seq = data['last_seq']
+                    skip = True
+            else:
+                data = None
         except ValueError:
             data = {"error": "Bad JSON line", "line": line}
-
-        if data.get('last_seq'):
-            if self._continuous:
-                # forever mode => restart
-                self._last_seq = data['last_seq']
-                self.start()
-                return dict()
-            else:
-                # not forever mode => break
-                return data
-        return data
+        return skip, data
