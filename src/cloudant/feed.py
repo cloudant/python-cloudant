@@ -77,9 +77,9 @@ class Feed(object):
 
     :param Session session: Requests session used by the Feed.
     :param str url: URL used by the Feed.
-    :param bool raw_data: Dictates whether the streamed data is returned as
-        a decoded Python ``dict`` object or as raw response data.  Defaults to
-        False.
+    :param bool raw_data: If set to True then the raw response data will be
+        streamed otherwise if set to False then JSON formatted data will be
+        streamed.  Default is False.
     """
     def __init__(self, session, url, raw_data=False, **options):
         self._r_session = session
@@ -130,6 +130,11 @@ class Feed(object):
         else:
             msg = 'Could not identify feed based on url: {0}'.format(self._url)
             raise CloudantException(msg)
+        if isinstance(self, InfiniteFeed) and options.get('feed') != 'continuous':
+            msg = (
+                'Invalid infinite feed option: {0}.  Must be set to continuous.'
+            ).format(options.get('feed'))
+            raise CloudantArgumentError(msg)
         translation = dict()
         for key, val in iteritems_(options):
             _validate(key, val, arg_types)
@@ -206,3 +211,45 @@ class Feed(object):
         except ValueError:
             data = {"error": "Bad JSON line", "line": line}
         return skip, data
+
+class InfiniteFeed(Feed):
+    """
+    Provides an infinite iterator for consuming client and database feeds such
+    as ``_db_updates`` and ``_changes``.  An InfiniteFeed object is constructed
+    with a reference to a client or database Requests Session object and a feed
+    endpoint URL.  Unlike a :class:`~cloudant.feed.Feed` which can be either a
+    ``normal``, ``longpoll``, or ``continuous`` feed an InfiniteFeed can only be
+    ``continuous`` and the iterator will only stream formatted JSON objects.
+    Instead of using this class directly, it is recommended to use the client
+    API :func:`~cloudant.client.CouchDB.infinite_db_updates` and the database
+    API :func:`~cloudant.database.CouchDatabase.infinite_changes`.  Reference
+    those methods for a valid list of feed options.
+
+    Note: The infinite iterator is not exception resilient so if an
+    unexpected exception occurs, the iterator will terminate.  Any unexpected
+    exceptions should be handled in code outside of this library.  If you wish
+    to restart the infinite iterator from where it left off that can be done by
+    constructing a new InfiniteFeed object with the ``since`` option set to the
+    sequence number of the last row of data prior to termination.
+
+    :param Session session: Requests session used by the Feed.
+    :param str url: URL used by the Feed.
+    """
+    def __init__(self, session, url, **options):
+        super(InfiniteFeed, self).__init__(session, url, False, **options)
+        # feed must be set to "continuous" in the case of an infinite feed
+        if not self._options.get('feed'):
+            self._options.update({'feed': 'continuous'})
+
+    def next(self):
+        """
+        Handles the iteration by pulling the next line out of the stream and
+        converting the response to JSON.
+
+        :returns: Data representing what was seen in the feed
+        """
+        if self._last_seq:
+            self._options.update({'since': self._last_seq})
+            self._resp = None
+            self._last_seq = None
+        return super(InfiniteFeed, self).next()
