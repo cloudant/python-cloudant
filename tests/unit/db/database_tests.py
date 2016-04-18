@@ -33,6 +33,7 @@ from cloudant.error import CloudantException, CloudantArgumentError
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
 from cloudant.index import Index, TextIndex, SpecialIndex
+from cloudant.feed import Feed, InfiniteFeed
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import unicode_
@@ -601,41 +602,28 @@ class DatabaseTests(UnitTestDbBase):
         """
         self.assertEqual(self.db.view_cleanup(), {'ok': True})
 
-    def test_retrieve_changes(self):
+    def test_changes_feed_call(self):
         """
-        Test the retrieval of changes to documents via feed
+        Test that changes() method call constructs and returns a Feed object
         """
-        i = 0
-        doc = self.db.create_document(
-            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i})
-        feed = self.db.changes(feed='continuous')
-        for change in feed:
-            self.assertEqual(change['id'], doc['_id'])
-            i += 1
-            doc = self.db.create_document(
-                {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i})
-            if i == 10:
-                feed.stop()
-        self.assertEqual(i, 10)
+        changes = self.db.changes(limit=100)
+        self.assertIs(type(changes), Feed)
+        self.assertEqual(changes._url, '/'.join([self.db.database_url, '_changes']))
+        self.assertIsInstance(changes._r_session, requests.Session)
+        self.assertFalse(changes._raw_data)
+        self.assertDictEqual(changes._options, {'limit': 100})
 
-    def test_retrieve_changes_with_docs(self):
+    def test_changes_inifinite_feed_call(self):
         """
-        Test the retrieval of changes to documents including the documents
-        themselves via feed
+        Test that infinite_changes() method call constructs and returns an
+        InfiniteFeed object
         """
-        i = 0
-        doc = self.db.create_document(
-            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i})
-        feed = self.db.changes(feed='continuous', include_docs=True)
-        for change in feed:
-            self.assertEqual(change['id'], doc['_id'])
-            self.assertEqual(change.get('doc'), doc)
-            i += 1
-            doc = self.db.create_document(
-                {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i})
-            if i == 10:
-                feed.stop()
-        self.assertEqual(i, 10)
+        changes = self.db.infinite_changes()
+        self.assertIsInstance(changes, InfiniteFeed)
+        self.assertEqual(changes._url, '/'.join([self.db.database_url, '_changes']))
+        self.assertIsInstance(changes._r_session, requests.Session)
+        self.assertFalse(changes._raw_data)
+        self.assertDictEqual(changes._options, {'feed': 'continuous'})
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,

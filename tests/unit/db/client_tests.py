@@ -30,6 +30,7 @@ from datetime import datetime
 from cloudant import cloudant, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
 from cloudant.error import CloudantException, CloudantArgumentError
+from cloudant.feed import Feed, InfiniteFeed
 
 from .unit_t_db_base import UnitTestDbBase
 from ... import bytes_, str_
@@ -374,6 +375,22 @@ class ClientTests(UnitTestDbBase):
             self.client.delete_database(dbname)
             self.client.disconnect()
 
+    def test_db_updates_feed_call(self):
+        """
+        Test that db_updates() method call constructs and returns a Feed object
+        """
+        try:
+            self.client.connect()
+            db_updates = self.client.db_updates(limit=100)
+            self.assertIs(type(db_updates), Feed)
+            self.assertEqual(
+                db_updates._url, '/'.join([self.client.cloudant_url, '_db_updates']))
+            self.assertIsInstance(db_updates._r_session, requests.Session)
+            self.assertFalse(db_updates._raw_data)
+            self.assertDictEqual(db_updates._options, {'limit': 100})
+        finally:
+            self.client.disconnect()
+
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant client specific tests'
@@ -419,6 +436,23 @@ class CloudantClientTests(UnitTestDbBase):
                 )
             agent = self.client.r_session.headers.get('User-Agent')
             self.assertTrue(agent.startswith('python-cloudant'))
+        finally:
+            self.client.disconnect()
+
+    def test_db_updates_infinite_feed_call(self):
+        """
+        Test that infinite_db_updates() method call constructs and returns an
+        InfiniteFeed object
+        """
+        try:
+            self.client.connect()
+            db_updates = self.client.infinite_db_updates()
+            self.assertIsInstance(db_updates, InfiniteFeed)
+            self.assertEqual(
+                db_updates._url, '/'.join([self.client.cloudant_url, '_db_updates']))
+            self.assertIsInstance(db_updates._r_session, requests.Session)
+            self.assertFalse(db_updates._raw_data)
+            self.assertDictEqual(db_updates._options, {'feed': 'continuous'})
         finally:
             self.client.disconnect()
 
