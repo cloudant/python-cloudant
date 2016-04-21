@@ -24,7 +24,7 @@ import requests
 
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
-from .feed import Feed
+from .feed import Feed, InfiniteFeed
 from .error import CloudantException, CloudantArgumentError
 
 _USER_AGENT = 'python-cloudant/{0} (Python, Version {1}.{2}.{3})'.format(
@@ -214,21 +214,24 @@ class CouchDB(dict):
         """
         Returns the ``_db_updates`` feed iterator.  The ``_db_updates`` feed can
         be iterated over and once complete can also provide the last sequence
-        identifier of the feed.
+        identifier of the feed.  If necessary, the iteration can be stopped by
+        issuing a call to the ``stop()`` method on the returned iterator object.
 
         For example:
 
         .. code-block:: python
 
             # Iterate over a "normal" _db_updates feed
-            db_updates = db.db_updates()
+            db_updates = client.db_updates()
             for db_update in db_updates:
                 print(db_update)
             print(db_updates.last_seq)
 
             # Iterate over a "continuous" _db_updates feed with additional options
-            db_updates = db.db_updates(feed='continuous', since='now', descending=True)
+            db_updates = client.db_updates(feed='continuous', since='now', descending=True)
             for db_update in db_updates:
+                if some_condition:
+                    db_updates.stop()
                 print(db_update)
 
         :param bool raw_data: If set to True then the raw response data will be
@@ -238,7 +241,8 @@ class CouchDB(dict):
             descending order, i.e. the latest event first. By default, the
             oldest event is returned first.
         :param str feed: Type of feed.  Valid values are ``continuous``,
-            ``longpoll``, and ``normal``.  Default is ``normal``.
+            ``longpoll``, and ``normal``.  Default is ``normal`` for Cloudant
+            and ``longpoll`` for CouchDB.
         :param int heartbeat: Time in milliseconds after which an empty line is
             sent during ``longpoll`` or ``continuous`` if there have been no
             changes.  Must be a positive number.  Default is no heartbeat.
@@ -253,8 +257,11 @@ class CouchDB(dict):
         :param int timeout: Number of milliseconds to wait for data before
             terminating the response. ``heartbeat`` supersedes ``timeout`` if
             both are supplied.
+        :param int chunk_size: The HTTP response stream chunk size.  Defaults to
+            512.
 
-        :returns: Feed object that can be iterated over as a ``_changes`` feed.
+        :returns: Feed object that can be iterated over as a ``_db_updates``
+            feed.
         """
         db_updates_url = '/'.join([self.cloudant_url, '_db_updates'])
         return Feed(self.r_session, db_updates_url, raw_data, **kwargs)
@@ -412,6 +419,47 @@ class Cloudant(CouchDB):
 
         if self.cloudant_url is None:
             raise CloudantException('You must provide a url or an account.')
+
+    def infinite_db_updates(self, **kwargs):
+        """
+        Returns an infinite (perpetually refreshed) ``_db_updates`` feed
+        iterator.  If necessary, the iteration can be stopped by issuing a call
+        to the ``stop()`` method on the returned iterator object.
+
+        For example:
+
+        .. code-block:: python
+
+            # Iterate over an infinite _db_updates feed
+            db_updates = client.infinite_db_updates()
+            for db_update in db_updates:
+                if some_condition:
+                    db_updates.stop()
+                print(db_update)
+
+        :param bool descending: Whether results should be returned in
+            descending order, i.e. the latest event first. By default, the
+            oldest event is returned first.
+        :param int heartbeat: Time in milliseconds after which an empty line is
+            sent if there have been no changes.  Must be a positive number.
+            Default is no heartbeat.
+        :param since: Start the results from changes after the specified
+            sequence identifier. In other words, using since excludes from the
+            list all changes up to and including the specified sequence
+            identifier. If since is 0 (the default), or omitted, the request
+            returns all changes. If it is ``now``, only changes made after the
+            time of the request will be emitted.
+        :param int timeout: Number of milliseconds to wait for data before
+            terminating the response. ``heartbeat`` supersedes ``timeout`` if
+            both are supplied.
+        :param int chunk_size: The HTTP response stream chunk size.  Defaults to
+            512.
+
+        :returns: Feed object that can be iterated over as a ``_db_updates``
+            feed.
+        """
+        db_updates_url = '/'.join([self.cloudant_url, '_db_updates'])
+        return InfiniteFeed(self.r_session, db_updates_url, **kwargs)
 
     def _usage_endpoint(self, endpoint, year=None, month=None):
         """
