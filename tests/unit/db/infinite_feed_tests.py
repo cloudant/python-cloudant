@@ -23,9 +23,24 @@ import os
 from time import sleep
 
 from cloudant.feed import InfiniteFeed, Feed
-from cloudant.error import CloudantArgumentError
+from cloudant.client import CouchDB
+from cloudant.error import CloudantException, CloudantArgumentError
 
 from .unit_t_db_base import UnitTestDbBase
+
+class MethodCallCount(object):
+    """
+    This callable class is used as a proxy by the infinite feed tests to wrap
+    method calls with the intent of tracking the number of times a specific
+    method has been called.
+    """
+    def __init__(self, meth_ref):
+        self._ref = meth_ref
+        self.called_count = 0
+
+    def __call__(self):
+        self.called_count += 1
+        self._ref()
 
 class InfiniteFeedTests(UnitTestDbBase):
     """
@@ -38,8 +53,6 @@ class InfiniteFeedTests(UnitTestDbBase):
         """
         super(InfiniteFeedTests, self).setUp()
         self.db_set_up()
-        self.changes_url = '/'.join([self.db.database_url, '_changes'])
-        self.session = self.client.r_session
 
     def tearDown(self):
         """
@@ -50,11 +63,10 @@ class InfiniteFeedTests(UnitTestDbBase):
 
     def test_constructor_no_feed_option(self):
         """
-        Test constructing an infinite _changes feed when no feed option is set
+        Test constructing an infinite feed when no feed option is set
         """
-        feed = InfiniteFeed(self.session, self.changes_url, chunk_size=1,
-            timeout=100)
-        self.assertEqual(feed._url, self.changes_url)
+        feed = InfiniteFeed(self.db, chunk_size=1, timeout=100)
+        self.assertEqual(feed._url, '/'.join([self.db.database_url, '_changes']))
         self.assertIsInstance(feed._r_session, Session)
         self.assertFalse(feed._raw_data)
         self.assertDictEqual(feed._options, {'feed': 'continuous', 'timeout': 100})
@@ -62,12 +74,11 @@ class InfiniteFeedTests(UnitTestDbBase):
 
     def test_constructor_with_feed_option(self):
         """
-        Test constructing an infinite _changes feed when the continuous feed
+        Test constructing an infinite feed when the continuous feed
         option is set.
         """
-        feed = InfiniteFeed(self.session, self.changes_url, chunk_size=1,
-            timeout=100, feed='continuous')
-        self.assertEqual(feed._url, self.changes_url)
+        feed = InfiniteFeed(self.db, chunk_size=1, timeout=100, feed='continuous')
+        self.assertEqual(feed._url, '/'.join([self.db.database_url, '_changes']))
         self.assertIsInstance(feed._r_session, Session)
         self.assertFalse(feed._raw_data)
         self.assertDictEqual(feed._options, {'feed': 'continuous', 'timeout': 100})
@@ -75,14 +86,38 @@ class InfiniteFeedTests(UnitTestDbBase):
 
     def test_constructor_with_invalid_feed_option(self):
         """
-        Test constructing an infinite _changes feed when a feed option is set
+        Test constructing an infinite feed when a feed option is set
         to an invalid value raises an exception.
         """
-        feed = InfiniteFeed(self.session, self.changes_url, feed='longpoll')
+        feed = InfiniteFeed(self.db, feed='longpoll')
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
         self.assertEqual(str(cm.exception), 
             'Invalid infinite feed option: longpoll.  Must be set to continuous.')
+
+    @unittest.skipIf(os.environ.get('RUN_CLOUDANT_TESTS'), 
+        'Skipping since test is possible only when testing against CouchDB.')
+    def test_invalid_source_couchdb(self):
+        """
+        Ensure that a CouchDB client cannot be used with an infinite feed.
+        """
+        with self.assertRaises(CloudantException) as cm:
+            invalid_feed = [x for x in InfiniteFeed(self.client)]
+        self.assertEqual(str(cm.exception),
+            'Infinite _db_updates feed not supported for CouchDB.')
+    
+    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
+        os.environ.get('SKIP_DB_UPDATES'), 'Skipping Cloudant _db_updates feed tests')
+    def test_constructor_db_updates(self):
+        """
+        Test constructing an infinite _db_updates feed.
+        """
+        feed = InfiniteFeed(self.client, chunk_size=1, timeout=100, feed='continuous')
+        self.assertEqual(feed._url, '/'.join([self.client.cloudant_url, '_db_updates']))
+        self.assertIsInstance(feed._r_session, Session)
+        self.assertFalse(feed._raw_data)
+        self.assertDictEqual(feed._options, {'feed': 'continuous', 'timeout': 100})
+        self.assertEqual(feed._chunk_size, 1)
 
     def test_infinite_feed(self):
         """
@@ -91,19 +126,8 @@ class InfiniteFeedTests(UnitTestDbBase):
         documents 3 separate times and checking that the "_start" method on the
         InfiniteFeed object was called 3 times as well.
         """
-        
-        # Method proxy callable class
-        class MethodCallCount(object):
-            def __init__(self, meth_ref):
-                self._ref = meth_ref
-                self.called_count = 0
-
-            def __call__(self):
-                self.called_count += 1
-                self._ref()
-
         self.populate_db_with_documents()
-        feed = InfiniteFeed(self.session, self.changes_url, timeout=100)
+        feed = InfiniteFeed(self.db, timeout=100)
 
         # Create a proxy for the feed._start method so that we can track how
         # many times it has been called.
@@ -122,13 +146,50 @@ class InfiniteFeedTests(UnitTestDbBase):
         self.assertSetEqual(set([x['id'] for x in changes]), expected)
         self.assertIsNone(feed.last_seq)
         # Compare infinite/continuous with normal
-        normal = Feed(self.session, self.changes_url)
+        normal = Feed(self.db)
         self.assertSetEqual(
             set([x['id'] for x in changes]), set([n['id'] for n in normal]))
 
         # Ensuring that the feed._start method was called 3 times, verifies that
         # the continuous feed was started/restarted 3 separate times.
         self.assertEqual(feed._start.called_count, 3)
+
+    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
+        os.environ.get('SKIP_DB_UPDATES'), 'Skipping Cloudant _db_updates feed tests')
+    def test_infinite_db_updates_feed(self):
+        """
+        Test that an _db_updates infinite feed will continue to issue multiple
+        requests until stopped.  Since we do not have control over updates
+        happening within the account as we do within a database, this test is
+        stopped after 15 database creations regardless.  Within that span of
+        time we expect that the feed would have been restarted at least once.
+
+        """
+        feed = InfiniteFeed(self.client, since='now', timeout=100)
+
+        # Create a proxy for the feed._start method so that we can track how
+        # many times it has been called.
+        feed._start = MethodCallCount(feed._start)
+
+        new_dbs = list()
+        try:
+            new_dbs.append(self.client.create_database(self.dbname()))
+            for change in feed:
+                self.assertTrue(all(x in change for x in ('seq', 'type')))
+                new_dbs.append(self.client.create_database(self.dbname()))
+                if feed._start.called_count >= 3 and len(new_dbs) >= 3:
+                    feed.stop()
+                if len(new_dbs) >= 15:
+                    # We stop regardless after 15 databases have been created
+                    feed.stop()
+        finally:
+            [db.delete() for db in new_dbs]
+        # The test is considered a success if feed._start was called 2+ times.
+        # If failure occurs it does not necessarily mean that the InfiniteFeed
+        # is not functioning as expected, it might also mean that we reached the
+        # db limit threshold of 15 before a timeout and restart of the
+        # InfiniteFeed could happen.
+        self.assertTrue(feed._start.called_count > 1)
 
 if __name__ == '__main__':
     unittest.main()

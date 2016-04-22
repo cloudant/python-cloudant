@@ -387,7 +387,7 @@ class ClientTests(UnitTestDbBase):
                 db_updates._url, '/'.join([self.client.cloudant_url, '_db_updates']))
             self.assertIsInstance(db_updates._r_session, requests.Session)
             self.assertFalse(db_updates._raw_data)
-            self.assertDictEqual(db_updates._options, {'limit': 100})
+            self.assertEqual(db_updates._options.get('limit'), 100)
         finally:
             self.client.disconnect()
 
