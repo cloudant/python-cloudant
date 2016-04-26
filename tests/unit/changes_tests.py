@@ -28,7 +28,7 @@ from cloudant.error import CloudantArgumentError, CloudantException
 from cloudant._2to3 import unicode_
 
 from .unit_t_db_base import UnitTestDbBase
-from ... import BYTETYPE
+from .. import BYTETYPE
 
 class ChangesTests(UnitTestDbBase):
     """

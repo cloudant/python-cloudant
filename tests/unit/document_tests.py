@@ -33,11 +33,11 @@ import inspect
 from cloudant.document import Document
 from cloudant.error import CloudantException
 
-from ... import StringIO, unicode_
+from .. import StringIO, unicode_
 from .unit_t_db_base import UnitTestDbBase
 
 def find_fixture(name):
-    import tests.unit.db.fixtures as fixtures
+    import tests.unit.fixtures as fixtures
     dirname = os.path.dirname(inspect.getsourcefile(fixtures))
     filename = os.path.join(dirname, name)
     return filename
