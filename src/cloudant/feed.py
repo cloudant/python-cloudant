@@ -23,14 +23,19 @@ from ._2to3 import iteritems_, next_, unicode_, STRTYPE, NONETYPE
 from .result import TYPE_CONVERTERS
 from .error import CloudantArgumentError, CloudantException
 
-_DB_UPDATES_ARG_TYPES = {
-    'descending': (bool,),
+_COUCH_DB_UPDATES_ARG_TYPES = {
     'feed': (STRTYPE,),
-    'heartbeat': (int, NONETYPE,),
-    'limit': (int, NONETYPE,),
-    'since': (int, STRTYPE,),
+    'heartbeat': (bool,),
     'timeout': (int, NONETYPE,),
 }
+
+_DB_UPDATES_ARG_TYPES = {
+    'descending': (bool,),
+    'limit': (int, NONETYPE,),
+    'since': (int, STRTYPE,),
+}
+_DB_UPDATES_ARG_TYPES.update(_COUCH_DB_UPDATES_ARG_TYPES)
+_DB_UPDATES_ARG_TYPES['heartbeat'] = (int, NONETYPE,)
 
 _CHANGES_ARG_TYPES = {
     'conflicts': (bool,),
@@ -41,51 +46,39 @@ _CHANGES_ARG_TYPES = {
 }
 _CHANGES_ARG_TYPES.update(_DB_UPDATES_ARG_TYPES)
 
-def _validate(key, val, arg_types):
-    """
-    Ensures that the key and the value are valid arguments to be used with the
-    feed.
-    """
-    if key not in arg_types:
-        raise CloudantArgumentError('Invalid argument {0}'.format(key))
-    if (not isinstance(val, arg_types[key]) or
-            (isinstance(val, bool) and int in arg_types[key])):
-        msg = 'Argument {0} not instance of expected type: {1}'.format(
-            key, arg_types[key])
-        raise CloudantArgumentError(msg)
-    if isinstance(val, int) and val <= 0 and not isinstance(val, bool):
-        msg = 'Argument {0} must be > 0.  Found: {1}'.format(key, val)
-        raise CloudantArgumentError(msg)
-    if key == 'feed' and val not in ('continuous', 'normal', 'longpoll'):
-        msg = ('Invalid value ({0}) for feed option.  Must be continuous, '
-               'normal, or longpoll.').format(val)
-        raise CloudantArgumentError(msg)
-    if key == 'style' and val not in ('main_only', 'all_docs'):
-        msg = ('Invalid value ({0}) for style option.  Must be main_only, '
-               'or all_docs.').format(val)
-        raise CloudantArgumentError(msg)
-
 class Feed(object):
     """
     Provides an iterator for consuming client and database feeds such as
     ``_db_updates`` and ``_changes``.  A Feed object is constructed with a
-    reference to a client or database Requests Session object and a feed
-    endpoint URL. Instead of using this class directly, it is recommended to
-    use the client API :func:`~cloudant.client.CouchDB.db_updates` and the
-    database API :func:`~cloudant.database.CouchDatabase.changes`.  Reference
-    those methods for a valid list of feed options.
+    :mod:`~cloudant.client` or a :mod:`~cloudant.database` which it uses to
+    issue HTTP requests to the appropriate feed endpoint. Instead of using this
+    class directly, it is recommended to use the client APIs
+    :func:`~cloudant.client.CouchDB.db_updates`,
+    :func:`~cloudant.client.Cloudant.db_updates`, or the database API
+    :func:`~cloudant.database.CouchDatabase.changes`.  Reference those methods
+    for a list of valid feed options.
 
-    :param Session session: Requests session used by the Feed.
-    :param str url: URL used by the Feed.
+    :param source: Either a :mod:`~cloudant.client` object or a
+        :mod:`~cloudant.database` object.
     :param bool raw_data: If set to True then the raw response data will be
         streamed otherwise if set to False then JSON formatted data will be
         streamed.  Default is False.
     """
-    def __init__(self, session, url, raw_data=False, **options):
-        self._r_session = session
-        self._url = url
+    def __init__(self, source, raw_data=False, **options):
+        self._r_session = source.r_session
         self._raw_data = raw_data
         self._options = options
+        self._source = source.__class__.__name__
+        if self._source == 'CouchDB':
+            self._url = '/'.join([source.cloudant_url, '_db_updates'])
+            # Set CouchDB _db_updates option defaults as they differ from
+            # the _changes and Cloudant _db_updates option defaults
+            self._options['feed'] = self._options.get('feed', 'longpoll')
+            self._options['heartbeat'] = self._options.get('heartbeat', True)
+        elif self._source == 'Cloudant':
+            self._url = '/'.join([source.cloudant_url, '_db_updates'])
+        else:
+            self._url = '/'.join([source.database_url, '_changes'])
         self._chunk_size = self._options.pop('chunk_size', 512)
 
         self._resp = None
@@ -120,24 +113,17 @@ class Feed(object):
 
     def _translate(self, options):
         """
-        Perform translation to CouchDB of feed options passed in as keyword
-        arguments.
+        Perform translation of feed options passed in as keyword
+        arguments to CouchDB/Cloudant equivalent.
         """
-        if self._url.endswith('/_changes'):
-            arg_types = _CHANGES_ARG_TYPES
-        elif self._url.endswith('/_db_updates'):
-            arg_types = _DB_UPDATES_ARG_TYPES
-        else:
-            msg = 'Could not identify feed based on url: {0}'.format(self._url)
-            raise CloudantException(msg)
-        if isinstance(self, InfiniteFeed) and options.get('feed') != 'continuous':
-            msg = (
-                'Invalid infinite feed option: {0}.  Must be set to continuous.'
-            ).format(options.get('feed'))
-            raise CloudantArgumentError(msg)
         translation = dict()
         for key, val in iteritems_(options):
-            _validate(key, val, arg_types)
+            if self._source == 'Cloudant':
+                self._validate(key, val, _DB_UPDATES_ARG_TYPES)
+            elif self._source == 'CouchDB':
+                self._validate(key, val, _COUCH_DB_UPDATES_ARG_TYPES)
+            else:
+                self._validate(key, val, _CHANGES_ARG_TYPES)
             try:
                 if isinstance(val, STRTYPE):
                     translation[key] = val
@@ -148,6 +134,35 @@ class Feed(object):
                 msg = 'Error converting argument {0}: {1}'.format(key, ex)
                 raise CloudantArgumentError(msg)
         return translation
+
+    def _validate(self, key, val, arg_types):
+        """
+        Ensures that the key and the value are valid arguments to be used with
+        the feed.
+        """
+        if key not in arg_types:
+            raise CloudantArgumentError('Invalid argument {0}'.format(key))
+        if (not isinstance(val, arg_types[key]) or
+                (isinstance(val, bool) and int in arg_types[key])):
+            msg = 'Argument {0} not instance of expected type: {1}'.format(
+                key, arg_types[key])
+            raise CloudantArgumentError(msg)
+        if isinstance(val, int) and val <= 0 and not isinstance(val, bool):
+            msg = 'Argument {0} must be > 0.  Found: {1}'.format(key, val)
+            raise CloudantArgumentError(msg)
+        if key == 'feed':
+            valid_vals = ('continuous', 'normal', 'longpoll')
+            if self._source == 'CouchDB':
+                valid_vals = ('continuous', 'longpoll')
+            if val not in valid_vals:
+                msg = (
+                    'Invalid value ({0}) for feed option.  Must be one of {1}.'
+                ).format(val, valid_vals)
+                raise CloudantArgumentError(msg)
+        if key == 'style' and val not in ('main_only', 'all_docs'):
+            msg = ('Invalid value ({0}) for style option.  Must be main_only, '
+                   'or all_docs.').format(val)
+            raise CloudantArgumentError(msg)
 
     def __iter__(self):
         """
@@ -188,7 +203,7 @@ class Feed(object):
         else:
             line = unicode_(line)
         if not line:
-            if ('heartbeat' in self._options and
+            if (self._options.get('heartbeat', False) and
                     self._options.get('feed') in ('continuous', 'longpoll') and
                     not self._last_seq):
                 line = None
@@ -216,13 +231,16 @@ class InfiniteFeed(Feed):
     """
     Provides an infinite iterator for consuming client and database feeds such
     as ``_db_updates`` and ``_changes``.  An InfiniteFeed object is constructed
-    with a reference to a client or database Requests Session object and a feed
-    endpoint URL.  Unlike a :class:`~cloudant.feed.Feed` which can be either a
-    ``normal``, ``longpoll``, or ``continuous`` feed an InfiniteFeed can only be
-    ``continuous`` and the iterator will only stream formatted JSON objects.
-    Instead of using this class directly, it is recommended to use the client
-    API :func:`~cloudant.client.CouchDB.infinite_db_updates` and the database
-    API :func:`~cloudant.database.CouchDatabase.infinite_changes`.  Reference
+    with a :class:`~cloudant.client.Cloudant` object or a
+    :mod:`~cloudant.database` object which it uses to issue HTTP requests to the
+    appropriate feed endpoint.  An infinite feed is NOT supported for use with a
+    :class:`~cloudant.client.CouchDB` object and unlike a
+    :class:`~cloudant.feed.Feed` which can be a ``normal``, ``longpoll``,
+    or ``continuous`` feed, an InfiniteFeed can only be ``continuous`` and the
+    iterator will only stream formatted JSON objects.  Instead of using this
+    class directly, it is recommended to use the client
+    API :func:`~cloudant.client.Cloudant.infinite_db_updates` or the database
+    API :func:`~cloudant.database.CouchDatabase._infinite_changes`.  Reference
     those methods for a valid list of feed options.
 
     Note: The infinite iterator is not exception resilient so if an
@@ -232,14 +250,25 @@ class InfiniteFeed(Feed):
     constructing a new InfiniteFeed object with the ``since`` option set to the
     sequence number of the last row of data prior to termination.
 
-    :param Session session: Requests session used by the Feed.
-    :param str url: URL used by the Feed.
+    :param source: Either a :class:`~cloudant.client.Cloudant` object or a
+        :mod:`~cloudant.database` object.
     """
-    def __init__(self, session, url, **options):
-        super(InfiniteFeed, self).__init__(session, url, False, **options)
-        # feed must be set to "continuous" in the case of an infinite feed
-        if not self._options.get('feed'):
-            self._options.update({'feed': 'continuous'})
+    def __init__(self, source, **options):
+        super(InfiniteFeed, self).__init__(source, False, **options)
+        # Default feed to continuous if not explicitly set
+        self._options['feed'] = self._options.get('feed', 'continuous')
+
+    def _validate(self, key, val, arg_types):
+        """
+        Ensures that the key and the value are valid arguments to be used with
+        the feed.
+        """
+        if key == 'feed' and val != 'continuous':
+            msg = (
+                'Invalid infinite feed option: {0}.  Must be set to continuous.'
+            ).format(val)
+            raise CloudantArgumentError(msg)
+        super(InfiniteFeed, self)._validate(key, val, arg_types)
 
     def next(self):
         """
@@ -248,6 +277,9 @@ class InfiniteFeed(Feed):
 
         :returns: Data representing what was seen in the feed
         """
+        if self._source == 'CouchDB':
+            raise CloudantException(
+                'Infinite _db_updates feed not supported for CouchDB.')
         if self._last_seq:
             self._options.update({'since': self._last_seq})
             self._resp = None

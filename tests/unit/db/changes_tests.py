@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-feed module - Unit tests for Feed class
+Unit tests for _changes feed
 """
 
 import unittest
@@ -30,20 +30,17 @@ from cloudant._2to3 import unicode_
 from .unit_t_db_base import UnitTestDbBase
 from ... import BYTETYPE
 
-class FeedTests(UnitTestDbBase):
+class ChangesTests(UnitTestDbBase):
     """
-    Feed unit tests
+    _changes feed unit tests
     """
 
     def setUp(self):
         """
         Set up test attributes
         """
-        super(FeedTests, self).setUp()
+        super(ChangesTests, self).setUp()
         self.db_set_up()
-        self.db_updates_url = '/'.join([self.client.cloudant_url, '_db_updates'])
-        self.changes_url = '/'.join([self.db.database_url, '_changes'])
-        self.session = self.client.r_session
         self.cloudant_test = os.environ.get('RUN_CLOUDANT_TESTS') is not None
 
     def tearDown(self):
@@ -51,38 +48,25 @@ class FeedTests(UnitTestDbBase):
         Reset test attributes
         """
         self.db_tear_down()
-        super(FeedTests, self).tearDown()
+        super(ChangesTests, self).tearDown()
 
     def test_constructor_changes(self):
         """
         Test constructing a _changes feed
         """
-        feed = Feed(self.session, self.changes_url, raw_data=True,
-            chunk_size=1, feed='continuous')
-        self.assertEqual(feed._url, self.changes_url)
+        feed = Feed(self.db, raw_data=True, chunk_size=1, feed='continuous')
+        self.assertEqual(feed._url, '/'.join([self.db.database_url, '_changes']))
         self.assertIsInstance(feed._r_session, Session)
         self.assertTrue(feed._raw_data)
         self.assertDictEqual(feed._options, {'feed': 'continuous'})
         self.assertEqual(feed._chunk_size, 1)
-
-    def test_constructor_db_updates(self):
-        """
-        Test constructing a _db_updates feed
-        """
-        feed = Feed(self.session, self.db_updates_url, feed='continuous',
-            heartbeat=5000)
-        self.assertEqual(feed._url, self.db_updates_url)
-        self.assertIsInstance(feed._r_session, Session)
-        self.assertFalse(feed._raw_data)
-        self.assertDictEqual(feed._options,
-            {'feed': 'continuous', 'heartbeat': 5000})
 
     def test_get_last_seq(self):
         """
         Test getting the last sequence identifier
         """
         self.populate_db_with_documents(10)
-        feed = Feed(self.session, self.changes_url)
+        feed = Feed(self.db)
         changes = [x for x in feed]
         self.assertTrue(str(feed.last_seq).startswith('10'))
 
@@ -91,7 +75,7 @@ class FeedTests(UnitTestDbBase):
         Test stopping the iteration
         """
         self.populate_db_with_documents(10)
-        feed = Feed(self.session, self.changes_url, feed='continuous')
+        feed = Feed(self.db, feed='continuous')
         count = 0
         changes = list()
         for change in feed:
@@ -110,7 +94,7 @@ class FeedTests(UnitTestDbBase):
         Test getting raw feed content
         """
         self.populate_db_with_documents(3)
-        feed = Feed(self.session, self.changes_url, raw_data=True)
+        feed = Feed(self.db, raw_data=True)
         raw_content = list()
         for raw_line in feed:
             self.assertIsInstance(raw_line, BYTETYPE)
@@ -136,7 +120,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a "normal" feed without feed option
         """
         self.populate_db_with_documents(3)
-        feed = Feed(self.session, self.changes_url)
+        feed = Feed(self.db)
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -150,7 +134,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a "normal" feed using feed option
         """
         self.populate_db_with_documents(3)
-        feed = Feed(self.session, self.changes_url, feed='normal')
+        feed = Feed(self.db, feed='normal')
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -164,7 +148,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a "continuous" feed
         """
         self.populate_db_with_documents()
-        feed = Feed(self.session, self.changes_url, feed='continuous')
+        feed = Feed(self.db, feed='continuous')
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -175,7 +159,7 @@ class FeedTests(UnitTestDbBase):
         self.assertSetEqual(set([x['id'] for x in changes]), expected)
         self.assertIsNone(feed.last_seq)
         # Compare continuous with normal
-        normal = Feed(self.session, self.changes_url)
+        normal = Feed(self.db)
         self.assertSetEqual(
             set([x['id'] for x in changes]), set([n['id'] for n in normal]))
 
@@ -183,7 +167,7 @@ class FeedTests(UnitTestDbBase):
         """
         Test getting content back for a "longpoll" feed
         """
-        feed = Feed(self.session, self.changes_url, feed='longpoll', heartbeat=10)
+        feed = Feed(self.db, feed='longpoll', heartbeat=10)
         changes = list()
         for change in feed:
             if not change:
@@ -199,7 +183,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a feed with a heartbeat
         """
         self.populate_db_with_documents()
-        feed = Feed(self.session, self.changes_url, feed='continuous', heartbeat=10)
+        feed = Feed(self.db, feed='continuous', heartbeat=10)
         changes = list()
         heartbeats = 0
         for change in feed:
@@ -220,8 +204,7 @@ class FeedTests(UnitTestDbBase):
         Test getting raw content back for a feed with a heartbeat
         """
         self.populate_db_with_documents()
-        feed = Feed(self.session, self.changes_url, raw_data=True,
-            feed='continuous', heartbeat=10)
+        feed = Feed(self.db, raw_data=True, feed='continuous', heartbeat=10)
         raw_content = list()
         heartbeats = 0
         for raw_line in feed:
@@ -248,7 +231,7 @@ class FeedTests(UnitTestDbBase):
         character sequence suffix is longer than its predecessor.
         """
         self.populate_db_with_documents(50)
-        feed = Feed(self.session, self.changes_url, descending=True)
+        feed = Feed(self.db, descending=True)
         seq_list = list()
         last_seq = None
         for change in feed:
@@ -273,7 +256,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a feed that includes documents
         """
         self.populate_db_with_documents(3)
-        feed = Feed(self.session, self.changes_url, include_docs=True)
+        feed = Feed(self.db, include_docs=True)
         ids = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id', 'doc']))
@@ -294,7 +277,7 @@ class FeedTests(UnitTestDbBase):
             with Document(self.db, docid) as doc:
                 doc['name'] = 'Jules'
                 doc['age'] = i
-        feed = Feed(self.session, self.changes_url, style='main_only')
+        feed = Feed(self.db, style='main_only')
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -316,7 +299,7 @@ class FeedTests(UnitTestDbBase):
             with Document(self.db, docid) as doc:
                 doc['name'] = 'Jules'
                 doc['age'] = i
-        feed = Feed(self.session, self.changes_url, style='all_docs')
+        feed = Feed(self.db, style='all_docs')
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -332,11 +315,11 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a feed using the since option
         """
         self.populate_db_with_documents(3)
-        feed = Feed(self.session, self.changes_url)
+        feed = Feed(self.db)
         changes = [change for change in feed]
         last_seq = feed.last_seq
         self.populate_db_with_documents(3, off_set=3)
-        feed = Feed(self.session, self.changes_url, since=last_seq)
+        feed = Feed(self.db, since=last_seq)
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -350,8 +333,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a feed using since set to "now"
         """
         self.populate_db_with_documents(3)
-        feed = Feed(self.session, self.changes_url,
-            feed='continuous', heartbeat=1000, since='now')
+        feed = Feed(self.db, feed='continuous', heartbeat=1000, since='now')
         changes = list()
         first_pass = True
         beats = 0
@@ -376,7 +358,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a feed using timeout
         """
         self.populate_db_with_documents()
-        feed = Feed(self.session, self.changes_url, feed='continuous', timeout=100)
+        feed = Feed(self.db, feed='continuous', timeout=100)
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -385,7 +367,7 @@ class FeedTests(UnitTestDbBase):
         self.assertSetEqual(set([x['id'] for x in changes]), expected)
         self.assertTrue(str(feed.last_seq).startswith('100'))
         # Compare continuous with normal
-        normal = Feed(self.session, self.changes_url)
+        normal = Feed(self.db)
         self.assertSetEqual(
             set([x['id'] for x in changes]), set([n['id'] for n in normal]))
 
@@ -394,7 +376,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a feed using limit
         """
         self.populate_db_with_documents()
-        feed = Feed(self.session, self.changes_url, limit=3)
+        feed = Feed(self.db, limit=3)
         seq_list = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -415,7 +397,7 @@ class FeedTests(UnitTestDbBase):
             'even_docs': 'function(doc, req){if (doc.age % 2 != 0){return false;} return true;}'
         }
         ddoc.create()
-        feed = Feed(self.session, self.changes_url, filter='ddoc001/even_docs')
+        feed = Feed(self.db, filter='ddoc001/even_docs')
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
@@ -431,7 +413,7 @@ class FeedTests(UnitTestDbBase):
         process for the conflicts option is working.
         """
         self.populate_db_with_documents(3)
-        feed = Feed(self.session, self.changes_url, include_docs=True, conflicts=True)
+        feed = Feed(self.db, include_docs=True, conflicts=True)
         changes = list()
         for change in feed:
             self.assertSetEqual(
@@ -446,7 +428,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a feed using conflicts set to False
         """
         self.populate_db_with_documents(3)
-        feed = Feed(self.session, self.changes_url, include_docs=True, conflicts=False)
+        feed = Feed(self.db, include_docs=True, conflicts=False)
         changes = list()
         for change in feed:
             self.assertSetEqual(
@@ -463,7 +445,7 @@ class FeedTests(UnitTestDbBase):
         Test getting content back for a feed using doc_ids
         """
         self.populate_db_with_documents()
-        feed = Feed(self.session, self.changes_url, filter='_doc_ids',
+        feed = Feed(self.db, filter='_doc_ids',
             doc_ids=['julia000', 'julia010', 'julia020'])
         changes = list()
         for change in feed:
@@ -477,7 +459,7 @@ class FeedTests(UnitTestDbBase):
         """
         Test that an invalid argument is caught and an exception is raised
         """
-        feed = Feed(self.session, self.changes_url, foo='bar')
+        feed = Feed(self.db, foo='bar')
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
         self.assertEqual(str(cm.exception), 'Invalid argument foo')
@@ -486,7 +468,7 @@ class FeedTests(UnitTestDbBase):
         """
         Test that an invalid argument type is caught and an exception is raised
         """
-        feed = Feed(self.session, self.changes_url, conflicts=0)
+        feed = Feed(self.db, conflicts=0)
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
         self.assertTrue(
@@ -498,7 +480,7 @@ class FeedTests(UnitTestDbBase):
         Test that an invalid integer argument type is caught and an exception is
         raised
         """
-        feed = Feed(self.session, self.changes_url, limit=-1)
+        feed = Feed(self.db, limit=-1)
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
         self.assertEqual(
@@ -509,36 +491,23 @@ class FeedTests(UnitTestDbBase):
         Test that an invalid feed argument value is caught and an exception is
         raised
         """
-        feed = Feed(self.session, self.changes_url, feed='foo')
+        feed = Feed(self.db, feed='foo')
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
-        self.assertEqual(
-            str(cm.exception), 
-            'Invalid value (foo) for feed option.  Must be continuous, normal, or longpoll.')
+        self.assertTrue(str(cm.exception).startswith(
+            'Invalid value (foo) for feed option.'))
 
     def test_invalid_style_value(self):
         """
         Test that an invalid feed argument value is caught and an exception is
         raised
         """
-        feed = Feed(self.session, self.changes_url, style='foo')
+        feed = Feed(self.db, style='foo')
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
         self.assertEqual(
             str(cm.exception), 
             'Invalid value (foo) for style option.  Must be main_only, or all_docs.')
-
-    def test_invalid_url(self):
-        """
-        Test that if a url that is not a _changes or an _updates url it will be
-        caught and an exception is raised.
-        """
-        feed = Feed(self.session, 'http://example.com/foo')
-        with self.assertRaises(CloudantException) as cm:
-            invalid_feed = [x for x in feed]
-        self.assertEqual(
-            str(cm.exception), 
-            'Could not identify feed based on url: http://example.com/foo')
 
 if __name__ == '__main__':
     unittest.main()

@@ -51,6 +51,10 @@ DB_URL: Optionally set this to override the construction of the database URL.
 
   example: export DB_URL=https://account.cloudant.com
 
+SKIP_DB_UPDATES: Set this to something to bypass all Cloudant _db_updates tests.
+
+  example: export SKIP_DB_UPDATES=1
+
 """
 
 import unittest

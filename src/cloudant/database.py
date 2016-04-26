@@ -494,8 +494,7 @@ class CouchDatabase(dict):
 
         :returns: Feed object that can be iterated over as a ``_changes`` feed.
         """
-        changes_url = '/'.join([self.database_url, '_changes'])
-        return Feed(self.r_session, changes_url, raw_data, **kwargs)
+        return Feed(self, raw_data, **kwargs)
 
     def infinite_changes(self, **kwargs):
         """
@@ -548,8 +547,7 @@ class CouchDatabase(dict):
 
         :returns: Feed object that can be iterated over as a ``_changes`` feed.
         """
-        changes_url = '/'.join([self.database_url, '_changes'])
-        return InfiniteFeed(self.r_session, changes_url, **kwargs)
+        return InfiniteFeed(self, **kwargs)
 
     def __getitem__(self, key):
         """
