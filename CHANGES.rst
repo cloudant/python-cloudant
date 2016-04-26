@@ -1,5 +1,7 @@
 2.0.0 (Unreleased)
 ==================
+- [BREAKING] Replace "session" and "url" feed constructor arguments with "source" which can be either a client or a database object.  Changes also made to the client ``db_updates`` method signature and the database ``changes`` method signature.
+- [IMPORVED] Added feed functionality to process ``_changes`` and ``_db_updates`` with their supported options.  Also added an infinite feed option.
 - [BREAKING] Removed the make_result method from View and Query classes.  If you need to make a query or view result, use ``CloudantDatabase.get_query_result``, ``CouchDatabase.get_view_result``, or the ``View.custom_result`` context manager.  Additionally, the ``Result`` and ``QueryResult`` classes can be called directly to construct a result object.
 - [BREAKING] Renamed modules account.py, errors.py, indexes.py, views.py, to client.py, error.py, index.py, and view.py.
 - [FIX] Added validation to ``Cloudant.bill``, ``Cloudant.volume_usage``, and ``Cloudant.requests_usage`` methods to ensure that a valid year/month combination or neither are used as arguments.
