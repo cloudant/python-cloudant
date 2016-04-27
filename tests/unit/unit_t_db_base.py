@@ -65,7 +65,7 @@ import uuid
 from cloudant.client import CouchDB, Cloudant
 from cloudant.design_document import DesignDocument
 
-from ... import unicode_
+from .. import unicode_
 
 class UnitTestDbBase(unittest.TestCase):
     """

@@ -33,7 +33,7 @@ from cloudant.error import CloudantException, CloudantArgumentError
 from cloudant.feed import Feed, InfiniteFeed
 
 from .unit_t_db_base import UnitTestDbBase
-from ... import bytes_, str_
+from .. import bytes_, str_
 
 class ClientTests(UnitTestDbBase):
     """

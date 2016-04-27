@@ -33,7 +33,7 @@ from cloudant.document import Document
 from cloudant.error import CloudantException
 
 from .unit_t_db_base import UnitTestDbBase
-from ... import unicode_
+from .. import unicode_
 
 class ReplicatorTests(UnitTestDbBase):
     """

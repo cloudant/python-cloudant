@@ -35,7 +35,7 @@ from cloudant.design_document import DesignDocument
 from cloudant.document import Document
 from cloudant.error import CloudantArgumentError, CloudantException
 
-from ... import PY2
+from .. import PY2
 from .unit_t_db_base import UnitTestDbBase
 
 @unittest.skipUnless(
@@ -260,12 +260,8 @@ class IndexTests(UnitTestDbBase):
         with self.assertRaises(CloudantArgumentError) as cm:
             index.create()
         err = cm.exception
-        self.assertEqual(
-            str(err), (
-                '{0} provided as argument(s).  A JSON index requires that '
-                'only a \'fields\' argument is provided.'
-            ).format({'fields': ['name', 'age'], 'selector': {}})
-        )
+        self.assertTrue(str(err).endswith(
+            'A JSON index requires that only a \'fields\' argument is provided.'))
 
     def test_deleting_index(self):
         """

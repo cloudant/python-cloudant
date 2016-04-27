@@ -36,7 +36,7 @@ from cloudant.index import Index, TextIndex, SpecialIndex
 from cloudant.feed import Feed, InfiniteFeed
 
 from .unit_t_db_base import UnitTestDbBase
-from ... import unicode_
+from .. import unicode_
 
 class DatabaseTests(UnitTestDbBase):
     """
