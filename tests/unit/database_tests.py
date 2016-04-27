@@ -61,7 +61,7 @@ class DatabaseTests(UnitTestDbBase):
         """
         Test instantiating a database
         """
-        self.assertEqual(self.db.cloudant_account, self.client)
+        self.assertEqual(self.db.client, self.client)
         self.assertEqual(self.db.database_name, self.test_dbname)
         self.assertEqual(self.db.r_session, self.client.r_session)
         self.assertIsInstance(self.db.result, Result)
@@ -72,7 +72,7 @@ class DatabaseTests(UnitTestDbBase):
         """
         self.assertEqual(
             self.db.database_url,
-            posixpath.join(self.client.cloudant_url, self.test_dbname)
+            posixpath.join(self.client.server_url, self.test_dbname)
             )
 
     def test_retrieve_creds(self):
@@ -136,7 +136,7 @@ class DatabaseTests(UnitTestDbBase):
         same.  Therefore comparing keys is a valid test of this functionality.
         """
         resp = self.db.r_session.get(
-            posixpath.join(self.client.cloudant_url, self.test_dbname)
+            posixpath.join(self.client.server_url, self.test_dbname)
             )
         expected = resp.json()
         actual = self.db.metadata()

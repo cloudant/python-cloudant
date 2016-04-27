@@ -70,13 +70,13 @@ class Feed(object):
         self._options = options
         self._source = source.__class__.__name__
         if self._source == 'CouchDB':
-            self._url = '/'.join([source.cloudant_url, '_db_updates'])
+            self._url = '/'.join([source.server_url, '_db_updates'])
             # Set CouchDB _db_updates option defaults as they differ from
             # the _changes and Cloudant _db_updates option defaults
             self._options['feed'] = self._options.get('feed', 'longpoll')
             self._options['heartbeat'] = self._options.get('heartbeat', True)
         elif self._source == 'Cloudant':
-            self._url = '/'.join([source.cloudant_url, '_db_updates'])
+            self._url = '/'.join([source.server_url, '_db_updates'])
         else:
             self._url = '/'.join([source.database_url, '_changes'])
         self._chunk_size = self._options.pop('chunk_size', 512)
