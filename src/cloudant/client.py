@@ -20,6 +20,7 @@ import base64
 import json
 import posixpath
 import sys
+import os
 import requests
 
 from ._2to3 import bytes_, unicode_
@@ -27,11 +28,15 @@ from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
 from .error import CloudantException, CloudantArgumentError
 
-_USER_AGENT = 'python-cloudant/{0} (Python, Version {1}.{2}.{3})'.format(
+_USER_AGENT = '/'.join([
+    'python-cloudant',
     sys.modules['cloudant'].__version__,
-    sys.version_info[0],
-    sys.version_info[1],
-    sys.version_info[2])
+    'Python',
+    '{0}.{1}.{2}'.format(
+        sys.version_info[0], sys.version_info[1], sys.version_info[2]),
+    os.uname()[0],
+    os.uname()[4]
+])
 
 class CouchDB(dict):
     """

@@ -24,6 +24,7 @@ import unittest
 import requests
 import json
 import base64
+import sys
 import os
 from datetime import datetime
 
@@ -435,7 +436,15 @@ class CloudantClientTests(UnitTestDbBase):
                 self.account
                 )
             agent = self.client.r_session.headers.get('User-Agent')
-            self.assertTrue(agent.startswith('python-cloudant'))
+            ua_parts = agent.split('/')
+            self.assertEqual(len(ua_parts), 6)
+            self.assertEqual(ua_parts[0], 'python-cloudant')
+            self.assertEqual(ua_parts[1], sys.modules['cloudant'].__version__)
+            self.assertEqual(ua_parts[2], 'Python')
+            self.assertEqual(ua_parts[3], '{0}.{1}.{2}'.format(
+                sys.version_info[0], sys.version_info[1], sys.version_info[2])),
+            self.assertEqual(ua_parts[4], os.uname()[0]),
+            self.assertEqual(ua_parts[5], os.uname()[4])
         finally:
             self.client.disconnect()
 
