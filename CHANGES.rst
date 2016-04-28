@@ -1,5 +1,7 @@
 2.0.0 (Unreleased)
 ==================
+- [CHANGE] Move internal ``Code`` class, functions like ``python_to_couch`` and ``type_or_none``, and constants into a _common_util module.
+- [CHANGE] Update User-Agent header format to be ``python-cloudant/<library version>/Python/<Python version>/<OS name>/<OS architecture>``.
 - [NEW] Handle HTTP status code ``429 Too Many Requests`` with blocking backoff and retries.
 - [BREAKING] Replace "session" and "url" feed constructor arguments with "source" which can be either a client or a database object.  Changes also made to the client ``db_updates`` method signature and the database ``changes`` method signature.
 - [IMPORVED] Added feed functionality to process ``_changes`` and ``_db_updates`` with their supported options.  Also added an infinite feed option.
