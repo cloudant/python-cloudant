@@ -78,7 +78,7 @@ class ClientTests(UnitTestDbBase):
         Test instantiating a client object using a URL
         """
         self.assertEqual(
-            self.client.cloudant_url,
+            self.client.server_url,
             self.url
             )
         self.assertEqual(self.client.encoder, json.JSONEncoder)
@@ -384,7 +384,7 @@ class ClientTests(UnitTestDbBase):
             db_updates = self.client.db_updates(limit=100)
             self.assertIs(type(db_updates), Feed)
             self.assertEqual(
-                db_updates._url, '/'.join([self.client.cloudant_url, '_db_updates']))
+                db_updates._url, '/'.join([self.client.server_url, '_db_updates']))
             self.assertIsInstance(db_updates._r_session, requests.Session)
             self.assertFalse(db_updates._raw_data)
             self.assertEqual(db_updates._options.get('limit'), 100)
@@ -420,7 +420,7 @@ class CloudantClientTests(UnitTestDbBase):
         del self.client
         self.client = Cloudant(self.user, self.pwd, account=self.account)
         self.assertEqual(
-            self.client.cloudant_url,
+            self.client.server_url,
             'https://{0}.cloudant.com'.format(self.account)
             )
 
@@ -449,7 +449,7 @@ class CloudantClientTests(UnitTestDbBase):
             db_updates = self.client.infinite_db_updates()
             self.assertIsInstance(db_updates, InfiniteFeed)
             self.assertEqual(
-                db_updates._url, '/'.join([self.client.cloudant_url, '_db_updates']))
+                db_updates._url, '/'.join([self.client.server_url, '_db_updates']))
             self.assertIsInstance(db_updates._r_session, requests.Session)
             self.assertFalse(db_updates._raw_data)
             self.assertDictEqual(db_updates._options, {'feed': 'continuous'})

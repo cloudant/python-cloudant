@@ -55,11 +55,11 @@ class CouchDB(dict):
 
     def __init__(self, user, auth_token, admin_party=False, **kwargs):
         super(CouchDB, self).__init__()
-        self._cloudant_user = user
-        self._cloudant_token = auth_token
-        self._cloudant_session = None
-        self.cloudant_url = kwargs.get('url')
-        self._cloudant_user_header = None
+        self._user = user
+        self._auth_token = auth_token
+        self._client_session = None
+        self.server_url = kwargs.get('url')
+        self._client_user_header = None
         self.admin_party = admin_party
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
         self.r_session = None
@@ -70,12 +70,12 @@ class CouchDB(dict):
         authentication.
         """
         self.r_session = requests.Session()
-        if self._cloudant_user_header is not None:
-            self.r_session.headers.update(self._cloudant_user_header)
+        if self._client_user_header is not None:
+            self.r_session.headers.update(self._client_user_header)
         if not self.admin_party:
-            self.r_session.auth = (self._cloudant_user, self._cloudant_token)
-            self.session_login(self._cloudant_user, self._cloudant_token)
-        self._cloudant_session = self.session()
+            self.r_session.auth = (self._user, self._auth_token)
+            self.session_login(self._user, self._auth_token)
+        self._client_session = self.session()
 
     def disconnect(self):
         """
@@ -94,7 +94,7 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return None
-        sess_url = posixpath.join(self.cloudant_url, '_session')
+        sess_url = posixpath.join(self.server_url, '_session')
         resp = self.r_session.get(sess_url)
         resp.raise_for_status()
         sess_data = resp.json()
@@ -120,7 +120,7 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return
-        sess_url = posixpath.join(self.cloudant_url, '_session')
+        sess_url = posixpath.join(self.server_url, '_session')
         resp = self.r_session.post(
             sess_url,
             data={
@@ -134,14 +134,12 @@ class CouchDB(dict):
     def session_logout(self):
         """
         Performs a session logout and clears the current session by
-        sending a delete request to the cloudant _session endpoint.
+        sending a delete request to the _session endpoint.
         """
         if self.admin_party:
             return
-        sess_url = posixpath.join(self.cloudant_url, '_session')
-        resp = self.r_session.delete(
-            sess_url
-        )
+        sess_url = posixpath.join(self.server_url, '_session')
+        resp = self.r_session.delete(sess_url)
         resp.raise_for_status()
 
     def basic_auth_str(self):
@@ -154,8 +152,8 @@ class CouchDB(dict):
         if self.admin_party:
             return None
         hash_ = base64.urlsafe_b64encode(bytes_("{username}:{password}".format(
-            username=self._cloudant_user,
-            password=self._cloudant_token
+            username=self._user,
+            password=self._auth_token
         )))
         return "Basic {0}".format(unicode_(hash_))
 
@@ -165,7 +163,7 @@ class CouchDB(dict):
 
         :returns: List of database names for the client
         """
-        url = posixpath.join(self.cloudant_url, '_all_dbs')
+        url = posixpath.join(self.server_url, '_all_dbs')
         resp = self.r_session.get(url)
         resp.raise_for_status()
         return resp.json()
@@ -391,18 +389,18 @@ class Cloudant(CouchDB):
     def __init__(self, cloudant_user, auth_token, **kwargs):
         super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
 
-        self._cloudant_user_header = {'User-Agent': _USER_AGENT}
+        self._client_user_header = {'User-Agent': _USER_AGENT}
         account = kwargs.get('account')
         url = kwargs.get('url')
         x_cloudant_user = kwargs.get('x_cloudant_user')
         if account is not None:
-            self.cloudant_url = 'https://{0}.cloudant.com'.format(account)
+            self.server_url = 'https://{0}.cloudant.com'.format(account)
         elif kwargs.get('url') is not None:
-            self.cloudant_url = url
+            self.server_url = url
             if x_cloudant_user is not None:
-                self._cloudant_user_header['X-Cloudant-User'] = x_cloudant_user
+                self._client_user_header['X-Cloudant-User'] = x_cloudant_user
 
-        if self.cloudant_url is None:
+        if self.server_url is None:
             raise CloudantException('You must provide a url or an account.')
 
     def db_updates(self, raw_data=False, **kwargs):
@@ -547,7 +545,7 @@ class Cloudant(CouchDB):
 
         :returns: Billing data in JSON format
         """
-        endpoint = posixpath.join(self.cloudant_url, '_api', 'v2', 'bill')
+        endpoint = posixpath.join(self.server_url, '_api', 'v2', 'bill')
         return self._usage_endpoint(endpoint, year, month)
 
     def volume_usage(self, year=None, month=None):
@@ -565,7 +563,7 @@ class Cloudant(CouchDB):
         :returns: Volume usage data in JSON format
         """
         endpoint = posixpath.join(
-            self.cloudant_url, '_api', 'v2', 'usage', 'data_volume'
+            self.server_url, '_api', 'v2', 'usage', 'data_volume'
         )
         return self._usage_endpoint(endpoint, year, month)
 
@@ -584,7 +582,7 @@ class Cloudant(CouchDB):
         :returns: Requests usage data in JSON format
         """
         endpoint = posixpath.join(
-            self.cloudant_url, '_api', 'v2', 'usage', 'requests'
+            self.server_url, '_api', 'v2', 'usage', 'requests'
         )
         return self._usage_endpoint(endpoint, year, month)
 
@@ -596,7 +594,7 @@ class Cloudant(CouchDB):
         :returns: List of database names
         """
         endpoint = posixpath.join(
-            self.cloudant_url, '_api', 'v2', 'user', 'shared_databases'
+            self.server_url, '_api', 'v2', 'user', 'shared_databases'
         )
         resp = self.r_session.get(endpoint)
         resp.raise_for_status()
@@ -610,7 +608,7 @@ class Cloudant(CouchDB):
         :returns: API key/pass pair in JSON format
         """
         endpoint = posixpath.join(
-            self.cloudant_url, '_api', 'v2', 'api_keys'
+            self.server_url, '_api', 'v2', 'api_keys'
         )
         resp = self.r_session.post(endpoint)
         resp.raise_for_status()
@@ -623,7 +621,7 @@ class Cloudant(CouchDB):
         :returns: CORS data in JSON format
         """
         endpoint = posixpath.join(
-            self.cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
+            self.server_url, '_api', 'v2', 'user', 'config', 'cors'
         )
         resp = self.r_session.get(endpoint)
         resp.raise_for_status()
@@ -715,7 +713,7 @@ class Cloudant(CouchDB):
         :returns: CORS configuration update status in JSON format
         """
         endpoint = posixpath.join(
-            self.cloudant_url, '_api', 'v2', 'user', 'config', 'cors'
+            self.server_url, '_api', 'v2', 'user', 'config', 'cors'
         )
         resp = self.r_session.put(
             endpoint,

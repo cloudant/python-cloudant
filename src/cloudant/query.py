@@ -103,7 +103,7 @@ class Query(dict):
         super(Query, self).__init__()
         self._database = database
         self._r_session = self._database.r_session
-        self._encoder = self._database.cloudant_account.encoder
+        self._encoder = self._database.client.encoder
         if kwargs:
             super(Query, self).update(kwargs)
         self.result = QueryResult(self)

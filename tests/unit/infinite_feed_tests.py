@@ -113,7 +113,7 @@ class InfiniteFeedTests(UnitTestDbBase):
         Test constructing an infinite _db_updates feed.
         """
         feed = InfiniteFeed(self.client, chunk_size=1, timeout=100, feed='continuous')
-        self.assertEqual(feed._url, '/'.join([self.client.cloudant_url, '_db_updates']))
+        self.assertEqual(feed._url, '/'.join([self.client.server_url, '_db_updates']))
         self.assertIsInstance(feed._r_session, Session)
         self.assertFalse(feed._raw_data)
         self.assertDictEqual(feed._options, {'feed': 'continuous', 'timeout': 100})

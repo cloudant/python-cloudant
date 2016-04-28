@@ -48,8 +48,8 @@ class CouchDatabase(dict):
     """
     def __init__(self, client, database_name, fetch_limit=100):
         super(CouchDatabase, self).__init__()
-        self.cloudant_account = client
-        self._database_host = client.cloudant_url
+        self.client = client
+        self._database_host = client.server_url
         self.database_name = database_name
         self.r_session = client.r_session
         self._fetch_limit = fetch_limit
@@ -63,7 +63,7 @@ class CouchDatabase(dict):
 
         :returns: CouchDB Admin Party mode status
         """
-        return self.cloudant_account.admin_party
+        return self.client.admin_party
 
     @property
     def database_url(self):
@@ -88,8 +88,8 @@ class CouchDatabase(dict):
         if self.admin_party:
             return None
         return {
-            "basic_auth": self.cloudant_account.basic_auth_str(),
-            "user_ctx": self.cloudant_account.session()['userCtx']
+            "basic_auth": self.client.basic_auth_str(),
+            "user_ctx": self.client.session()['userCtx']
         }
 
     def exists(self):

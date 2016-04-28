@@ -66,7 +66,7 @@ class CouchDbUpdatesTests(DbUpdatesTestsBase):
         """
         feed = Feed(self.client, feed='continuous', heartbeat=False, timeout=2)
         self.assertEqual(feed._url,
-            '/'.join([self.client.cloudant_url, '_db_updates']))
+            '/'.join([self.client.server_url, '_db_updates']))
         self.assertIsInstance(feed._r_session, Session)
         self.assertFalse(feed._raw_data)
         self.assertDictEqual(feed._options,
@@ -225,7 +225,7 @@ class CloudantDbUpdatesTests(DbUpdatesTestsBase):
         """
         feed = Feed(self.client, feed='continuous', heartbeat=5000)
         self.assertEqual(feed._url,
-            '/'.join([self.client.cloudant_url, '_db_updates']))
+            '/'.join([self.client.server_url, '_db_updates']))
         self.assertIsInstance(feed._r_session, Session)
         self.assertFalse(feed._raw_data)
         self.assertDictEqual(feed._options,

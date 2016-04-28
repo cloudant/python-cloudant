@@ -57,15 +57,15 @@ class Document(dict):
     """
     def __init__(self, database, document_id=None):
         super(Document, self).__init__()
-        self._cloudant_account = database.cloudant_account
-        self._cloudant_database = database
-        self._database_host = self._cloudant_account.cloudant_url
+        self._client = database.client
+        self._database = database
+        self._database_host = self._client.server_url
         self._database_name = database.database_name
         self.r_session = database.r_session
         self._document_id = document_id
         if self._document_id is not None:
             self['_id'] = self._document_id
-        self._encoder = self._cloudant_account.encoder
+        self._encoder = self._client.encoder
 
     @property
     def document_url(self):
@@ -131,7 +131,7 @@ class Document(dict):
 
         headers = {'Content-Type': 'application/json'}
         resp = self.r_session.post(
-            self._cloudant_database.database_url,
+            self._database.database_url,
             headers=headers,
             data=json.dumps(doc, cls=self._encoder)
         )
