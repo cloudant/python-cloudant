@@ -20,20 +20,10 @@ import posixpath
 import json
 import contextlib
 
-from ._2to3 import NONETYPE, STRTYPE, iteritems_
+from ._2to3 import iteritems_
 from .result import QueryResult
 from .error import CloudantArgumentError
-
-ARG_TYPES = {
-    'selector': dict,
-    'limit': (int, NONETYPE),
-    'skip': (int, NONETYPE),
-    'sort': list,
-    'fields': list,
-    'r': (int, NONETYPE),
-    'bookmark': STRTYPE,
-    'use_index': STRTYPE
-}
+from ._common_util import QUERY_ARG_TYPES
 
 class Query(dict):
     """
@@ -168,13 +158,13 @@ class Query(dict):
 
         # Validate query arguments and values
         for key, val in iteritems_(data):
-            if key not in list(ARG_TYPES.keys()):
+            if key not in list(QUERY_ARG_TYPES.keys()):
                 msg = 'Invalid argument: {0}'.format(key)
                 raise CloudantArgumentError(msg)
-            if not isinstance(val, ARG_TYPES[key]):
+            if not isinstance(val, QUERY_ARG_TYPES[key]):
                 msg = (
                     'Argument {0} is not an instance of expected type: {1}'
-                ).format(key, ARG_TYPES[key])
+                ).format(key, QUERY_ARG_TYPES[key])
                 raise CloudantArgumentError(msg)
         if data.get('selector', None) is None or data.get('selector') == {}:
             msg = (

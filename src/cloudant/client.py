@@ -19,8 +19,6 @@ instance.
 import base64
 import json
 import posixpath
-import sys
-import os
 import requests
 
 from requests.adapters import HTTPAdapter
@@ -29,16 +27,7 @@ from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
 from .error import CloudantException, CloudantArgumentError
-
-_USER_AGENT = '/'.join([
-    'python-cloudant',
-    sys.modules['cloudant'].__version__,
-    'Python',
-    '{0}.{1}.{2}'.format(
-        sys.version_info[0], sys.version_info[1], sys.version_info[2]),
-    os.uname()[0],
-    os.uname()[4]
-])
+from ._common_util import USER_AGENT
 
 class CouchDB(dict):
     """
@@ -411,7 +400,7 @@ class Cloudant(CouchDB):
     def __init__(self, cloudant_user, auth_token, **kwargs):
         super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
 
-        self._client_user_header = {'User-Agent': _USER_AGENT}
+        self._client_user_header = {'User-Agent': USER_AGENT}
         account = kwargs.get('account')
         url = kwargs.get('url')
         x_cloudant_user = kwargs.get('x_cloudant_user')

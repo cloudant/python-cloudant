@@ -20,27 +20,9 @@ import posixpath
 import json
 
 from ._2to3 import STRTYPE
-from .result import Result, python_to_couch
+from ._common_util import python_to_couch, codify
+from .result import Result
 from .error import CloudantArgumentError, CloudantException
-
-class Code(str):
-    """
-    Wraps a ``str`` object as a Code object providing the means to handle
-    Javascript blob content.  Used internally by the View object when
-    codifying map and reduce Javascript content.
-    """
-    def __new__(cls, code):
-        return str.__new__(cls, code)
-
-def _codify(code_or_str):
-    """
-    Provides a helper to rationalize code content.
-    """
-    if code_or_str is None:
-        return None
-    if not isinstance(code_or_str, Code):
-        return Code(code_or_str)
-    return code_or_str
 
 class View(dict):
     """
@@ -105,10 +87,8 @@ class View(dict):
     :param DesignDocument ddoc: DesignDocument instance used in part to
         identify the view.
     :param str view_name: Name used in part to identify the view.
-    :param str map_func: Optional Javascript map function.  Can also be a
-        :class:`~cloudant.view.Code` object.
-    :param str reduce_func: Optional Javascript reduce function.  Can also be a
-        :class:`~cloudant.view.Code` object.
+    :param str map_func: Optional Javascript map function.
+    :param str reduce_func: Optional Javascript reduce function.
     """
     def __init__(
             self,
@@ -123,17 +103,16 @@ class View(dict):
         self._r_session = self.design_doc.r_session
         self.view_name = view_name
         if map_func is not None:
-            self['map'] = _codify(map_func)
+            self['map'] = codify(map_func)
         if reduce_func is not None:
-            self['reduce'] = _codify(reduce_func)
+            self['reduce'] = codify(reduce_func)
         self.update(kwargs)
         self.result = Result(self)
 
     @property
     def map(self):
         """
-        Provides an map property accessor and setter.  A ``str`` or a ``Code``
-        object is acceptable when setting the map property.
+        Provides an map property accessor and setter.
 
         For example:
 
@@ -143,8 +122,7 @@ class View(dict):
             view.map = 'function (doc) {\\n  emit(doc._id, 1);\\n}'
             print view.map
 
-        :param str js_func: Javascript function.  Can also be a
-            :class:`~cloudant.view.Code` object.
+        :param str js_func: Javascript function.
 
         :returns: Codified map function
         """
@@ -153,15 +131,14 @@ class View(dict):
     @map.setter
     def map(self, js_func):
         """
-        Provides a map property setter, accepts ``str`` or ``Code`` object.
+        Provides a map property setter.
         """
-        self['map'] = _codify(js_func)
+        self['map'] = codify(js_func)
 
     @property
     def reduce(self):
         """
-        Provides an reduce property accessor and setter.  A ``str`` or a
-        ``Code`` object is acceptable when setting the reduce property.
+        Provides an reduce property accessor and setter.
 
         For example:
 
@@ -172,8 +149,7 @@ class View(dict):
             # Get and print the View reduce property
             print view.reduce
 
-        :param str js_func: Javascript function.  Can also be a
-            :class:`~cloudant.view.Code` object.
+        :param str js_func: Javascript function.
 
         :returns: Codified reduce function
         """
@@ -182,9 +158,9 @@ class View(dict):
     @reduce.setter
     def reduce(self, js_func):
         """
-        Provides a reduce property setter, accepts ``str`` or ``Code`` object.
+        Provides a reduce property setter.
         """
-        self['reduce'] = _codify(js_func)
+        self['reduce'] = codify(js_func)
 
     @property
     def url(self):

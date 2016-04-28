@@ -26,12 +26,13 @@ from .document import Document
 from .design_document import DesignDocument
 from .view import View
 from .index import Index, TextIndex, SpecialIndex
-from .index_constants import JSON_INDEX_TYPE
-from .index_constants import TEXT_INDEX_TYPE
-from .index_constants import SPECIAL_INDEX_TYPE
+from ._common_util import JSON_INDEX_TYPE
+from ._common_util import TEXT_INDEX_TYPE
+from ._common_util import SPECIAL_INDEX_TYPE
+from ._common_util import python_to_couch
 from .query import Query
 from .error import CloudantException, CloudantArgumentError
-from .result import python_to_couch, Result, QueryResult
+from .result import Result, QueryResult
 from .feed import Feed, InfiniteFeed
 
 class CouchDatabase(dict):
