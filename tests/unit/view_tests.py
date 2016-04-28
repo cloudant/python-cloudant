@@ -30,7 +30,7 @@ import os
 
 from cloudant.design_document import DesignDocument
 from cloudant.view import View, QueryIndexView
-from cloudant.view import Code
+from cloudant._common_util import _Code
 from cloudant.result import Result
 from cloudant.error import CloudantArgumentError, CloudantException
 
@@ -38,16 +38,16 @@ from .unit_t_db_base import UnitTestDbBase
 
 class CodeTests(unittest.TestCase):
     """
-    Code class unit test
+    _Code class unit test
     """
 
     def test_constructor(self):
         """
-        Ensure that the Code class constructor returns a Code object that
+        Ensure that the _Code class constructor returns a _Code object that
         wraps a Python str
         """
-        code = Code('this is code.')
-        self.assertIsInstance(code, Code)
+        code = _Code('this is code.')
+        self.assertIsInstance(code, _Code)
         self.assertEqual(code, 'this is code.')
 
 class ViewTests(UnitTestDbBase):
@@ -83,12 +83,12 @@ class ViewTests(UnitTestDbBase):
         )
         self.assertEqual(view.design_doc, ddoc)
         self.assertEqual(view.view_name, 'view001')
-        self.assertIsInstance(view['map'], Code)
+        self.assertIsInstance(view['map'], _Code)
         self.assertEqual(
             view['map'],
             'function (doc) {\n  emit(doc._id, 1);\n}'
         )
-        self.assertIsInstance(view['reduce'], Code)
+        self.assertIsInstance(view['reduce'], _Code)
         self.assertEqual(view['reduce'], '_count')
         self.assertEqual(
             view['dbcopy'],
@@ -121,7 +121,7 @@ class ViewTests(UnitTestDbBase):
         view = View(ddoc, 'view001')
         self.assertIsNone(view.map)
         view.map = 'function (doc) {\n  emit(doc._id, 1);\n}'
-        self.assertIsInstance(view.map, Code)
+        self.assertIsInstance(view.map, _Code)
         self.assertEqual(view.map, 'function (doc) {\n  emit(doc._id, 1);\n}')
 
     def test_reduce_setter(self):
@@ -142,7 +142,7 @@ class ViewTests(UnitTestDbBase):
         view = View(ddoc, 'view001')
         self.assertIsNone(view.reduce)
         view.reduce = '_count'
-        self.assertIsInstance(view.reduce, Code)
+        self.assertIsInstance(view.reduce, _Code)
         self.assertEqual(view.reduce, '_count')
 
     def test_retrieve_view_url(self):

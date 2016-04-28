@@ -20,31 +20,8 @@ continuous and non-continuous feeds like ``_changes`` and ``_db_updates``.
 import json
 
 from ._2to3 import iteritems_, next_, unicode_, STRTYPE, NONETYPE
-from .result import TYPE_CONVERTERS
 from .error import CloudantArgumentError, CloudantException
-
-_COUCH_DB_UPDATES_ARG_TYPES = {
-    'feed': (STRTYPE,),
-    'heartbeat': (bool,),
-    'timeout': (int, NONETYPE,),
-}
-
-_DB_UPDATES_ARG_TYPES = {
-    'descending': (bool,),
-    'limit': (int, NONETYPE,),
-    'since': (int, STRTYPE,),
-}
-_DB_UPDATES_ARG_TYPES.update(_COUCH_DB_UPDATES_ARG_TYPES)
-_DB_UPDATES_ARG_TYPES['heartbeat'] = (int, NONETYPE,)
-
-_CHANGES_ARG_TYPES = {
-    'conflicts': (bool,),
-    'doc_ids': (list,),
-    'filter': (STRTYPE,),
-    'include_docs': (bool,),
-    'style': (STRTYPE,),
-}
-_CHANGES_ARG_TYPES.update(_DB_UPDATES_ARG_TYPES)
+from ._common_util import feed_arg_types, TYPE_CONVERTERS
 
 class Feed(object):
     """
@@ -118,12 +95,7 @@ class Feed(object):
         """
         translation = dict()
         for key, val in iteritems_(options):
-            if self._source == 'Cloudant':
-                self._validate(key, val, _DB_UPDATES_ARG_TYPES)
-            elif self._source == 'CouchDB':
-                self._validate(key, val, _COUCH_DB_UPDATES_ARG_TYPES)
-            else:
-                self._validate(key, val, _CHANGES_ARG_TYPES)
+            self._validate(key, val, feed_arg_types(self._source))
             try:
                 if isinstance(val, STRTYPE):
                     translation[key] = val

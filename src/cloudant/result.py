@@ -15,119 +15,9 @@
 """
 API module for interacting with result collections.
 """
-import json
-from collections import Sequence
-
-from ._2to3 import STRTYPE, UNITYPE, NONETYPE, iteritems_
-from .error import CloudantArgumentError, ResultException
-
-ARG_TYPES = {
-    'descending': (bool,),
-    'endkey': (int, STRTYPE, Sequence,),
-    'endkey_docid': (STRTYPE,),
-    'group': (bool,),
-    'group_level': (int, NONETYPE,),
-    'include_docs': (bool,),
-    'inclusive_end': (bool,),
-    'key': (int, STRTYPE, Sequence,),
-    'keys': (list,),
-    'limit': (int, NONETYPE,),
-    'reduce': (bool,),
-    'skip': (int, NONETYPE,),
-    'stale': (STRTYPE,),
-    'startkey': (int, STRTYPE, Sequence,),
-    'startkey_docid': (STRTYPE,),
-}
-
-# pylint: disable=unnecessary-lambda
-TYPE_CONVERTERS = {
-    STRTYPE: lambda x: json.dumps(x),
-    str: lambda x: json.dumps(x),
-    UNITYPE: lambda x: json.dumps(x),
-    Sequence: lambda x: json.dumps(list(x)),
-    list: lambda x: json.dumps(x),
-    tuple: lambda x: json.dumps(list(x)),
-    int: lambda x: x,
-    bool: lambda x: 'true' if x else 'false',
-    NONETYPE: lambda x: x
-}
-
-def python_to_couch(options):
-    """
-    Translates query options from python style options into CouchDB/Cloudant
-    query options.  For example ``{'include_docs': True}`` will
-    translate to ``{'include_docs': 'true'}``.  Primarily meant for use by
-    code that formulates a query to retrieve results data from the
-    remote database, such as the database API convenience method
-    :func:`~cloudant.database.CouchDatabase.all_docs` or the View
-    :func:`~cloudant.view.View.__call__` callable, both used to retrieve data.
-
-    :param dict options: Python style parameters to be translated.
-
-    :returns: Dictionary of translated CouchDB/Cloudant query parameters
-    """
-    translation = dict()
-    for key, val in iteritems_(options):
-        _validate(key, val)
-        translation.update(_translate(key, val))
-    return translation
-
-def _validate(key, val):
-    """
-    Validates the individual parameter key and value.
-    """
-    if key not in ARG_TYPES:
-        msg = 'Invalid argument {0}'.format(key)
-        raise CloudantArgumentError(msg)
-    # pylint: disable=unidiomatic-typecheck
-    # Validate argument values and ensure that a boolean is not passed in
-    # if an integer is expected
-    if (not isinstance(val, ARG_TYPES[key]) or
-            (type(val) is bool and int in ARG_TYPES[key])):
-        msg = 'Argument {0} not instance of expected type: {1}'.format(
-            key,
-            ARG_TYPES[key]
-        )
-        raise CloudantArgumentError(msg)
-    if key == 'keys':
-        for key_list_val in val:
-            if (not isinstance(key_list_val, ARG_TYPES['key']) or
-                    type(key_list_val) is bool):
-                msg = 'Key list element not of expected type: {0}'.format(
-                    ARG_TYPES['key']
-                )
-                raise CloudantArgumentError(msg)
-    if key == 'stale':
-        if val not in ('ok', 'update_after'):
-            msg = (
-                'Invalid value for stale option {0} '
-                'must be ok or update_after'
-            ).format(val)
-            raise CloudantArgumentError(msg)
-
-def _translate(key, val):
-    """
-    Performs the conversion of the Python parameter value to its CouchDB
-    equivalent.
-    """
-    try:
-        if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale']:
-            return {key: val}
-        elif val is None:
-            return {key: None}
-        else:
-            arg_converter = TYPE_CONVERTERS.get(type(val))
-            return {key: arg_converter(val)}
-    except Exception as ex:
-        msg = 'Error converting argument {0}: {1}'.format(key, ex)
-        raise CloudantArgumentError(msg)
-
-def type_or_none(typerefs, value):
-    """
-    Provides a helper function to check that a value is of the types passed or
-    None.
-    """
-    return isinstance(value, typerefs) or value is None
+from ._2to3 import STRTYPE
+from .error import ResultException
+from ._common_util import py_to_couch_validate, type_or_none
 
 class ResultByKey(object):
     """
@@ -340,8 +230,8 @@ class Result(object):
         opts = dict(self.options)
         skip = opts.pop('skip', 0)
         limit = opts.pop('limit', None)
-        _validate('skip', skip)
-        _validate('limit', limit)
+        py_to_couch_validate('skip', skip)
+        py_to_couch_validate('limit', limit)
         if limit is not None and idx >= limit:
             # Result is out of range
             return dict()
@@ -363,8 +253,8 @@ class Result(object):
         opts = dict(self.options)
         skip = opts.pop('skip', 0)
         limit = opts.pop('limit', None)
-        _validate('skip', skip)
-        _validate('limit', limit)
+        py_to_couch_validate('skip', skip)
+        py_to_couch_validate('limit', limit)
         start = idx_slice.start
         stop = idx_slice.stop
         data = None
