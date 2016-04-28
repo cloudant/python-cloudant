@@ -23,6 +23,8 @@ import sys
 import os
 import requests
 
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util import Retry
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
@@ -75,6 +77,21 @@ class CouchDB(dict):
         authentication.
         """
         self.r_session = requests.Session()
+        # Configure a Transport Adapter for custom retry behaviour
+        self.r_session.mount(self.server_url, HTTPAdapter(
+            max_retries=Retry(
+                # Allow 10 retries for status
+                total=10,
+                # No retries for connect|read errors
+                connect=0,
+                read=0,
+                # Allow retries for all the CouchDB HTTP method types
+                method_whitelist=frozenset(['GET', 'HEAD', 'PUT', 'POST',
+                                            'DELETE', 'COPY']),
+                # Only retry for a 429 too many requests status code
+                status_forcelist=[429],
+                # Configure the doubling backoff to start at 0.25 s
+                backoff_factor=0.25)))
         if self._client_user_header is not None:
             self.r_session.headers.update(self._client_user_header)
         if not self.admin_party:
