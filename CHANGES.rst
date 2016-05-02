@@ -1,22 +1,23 @@
-2.0.0 (Unreleased)
+2.0.0 (2016-05-02)
 ==================
-- [CHANGE] Move internal ``Code`` class, functions like ``python_to_couch`` and ``type_or_none``, and constants into a _common_util module.
-- [CHANGE] Update User-Agent header format to be ``python-cloudant/<library version>/Python/<Python version>/<OS name>/<OS architecture>``.
-- [NEW] Handle HTTP status code ``429 Too Many Requests`` with blocking backoff and retries.
-- [BREAKING] Replace "session" and "url" feed constructor arguments with "source" which can be either a client or a database object.  Changes also made to the client ``db_updates`` method signature and the database ``changes`` method signature.
-- [IMPORVED] Added feed functionality to process ``_changes`` and ``_db_updates`` with their supported options.  Also added an infinite feed option.
-- [BREAKING] Removed the make_result method from View and Query classes.  If you need to make a query or view result, use ``CloudantDatabase.get_query_result``, ``CouchDatabase.get_view_result``, or the ``View.custom_result`` context manager.  Additionally, the ``Result`` and ``QueryResult`` classes can be called directly to construct a result object.
 - [BREAKING] Renamed modules account.py, errors.py, indexes.py, views.py, to client.py, error.py, index.py, and view.py.
-- [FIX] Added validation to ``Cloudant.bill``, ``Cloudant.volume_usage``, and ``Cloudant.requests_usage`` methods to ensure that a valid year/month combination or neither are used as arguments.
-- [FIX] Fixed the handling of empty views in the DesignDocument.
-- [BREAKING] Fixed CloudantDatabase.share_database to accept all valid permission roles.  Changed the method signature to accept roles as a list argument.
-- [FIX] The CouchDatabase.create_document method now will handle both documents and design documents correctly.  If the document created is a design document then the locally cached object will be a DesignDocument otherwise it will be a Document.
-- [BREAKING] Refactored the SearchIndex class to now be the TextIndex class.  Also renamed the CloudantDatabase convenience methods of get_all_indexes, create_index, and delete_index as get_query_indexes, create_query_index, and delete_query_index respectively.  These changes were made to clarify that the changed class and the changed methods were specific to query index processing only.
-- [FIX] Fixed Document.get_attachment method to successfully create text and binary files based on http response Content-Type.  The method also returns text, binary, and json content based on http response Content-Type.
-- [NEW] Added support for CouchDB Admin Party mode.  This library can now be used with CouchDB instances where everyone is Admin.
+- [BREAKING] Removed the ``make_result`` method from ``View`` and ``Query`` classes.  If you need to make a query or view result, use ``CloudantDatabase.get_query_result``, ``CouchDatabase.get_view_result``, or the ``View.custom_result`` context manager.  Additionally, the ``Result`` and ``QueryResult`` classes can be called directly to construct a result object.
+- [BREAKING] Refactored the ``SearchIndex`` class to now be the ``TextIndex`` class.  Also renamed the ``CloudantDatabase`` convenience methods of ``get_all_indexes``, ``create_index``, and ``delete_index`` as ``get_query_indexes``, ``create_query_index``, and ``delete_query_index`` respectively.  These changes were made to clarify that the changed class and the changed methods were specific to query index processing only.
+- [BREAKING] Replace "session" and "url" feed constructor arguments with "source" which can be either a client or a database object.  Changes also made to the client ``db_updates`` method signature and the database ``changes`` method signature.
+- [BREAKING] Fixed ``CloudantDatabase.share_database`` to accept all valid permission roles.  Changed the method signature to accept roles as a list argument.
+- [BREAKING] Removed credentials module from the API and moved it to the tests folder since the functionality is outside of the scope of this library but is still be useful in unit/integration tests.
 - [IMPROVED] Changed the handling of queries using the keys argument to issue a http POST request instead of a http GET request so that the request is no longer bound by any URL length limitation.
 - [IMPROVED] Added support for Result/QueryResult data access via index value and added validation logic to ``Result.__getitem__()``.
-- [BREAKING] Removed credentials module from the API and moved it to the tests folder since the functionality is outside of the scope of this library but may still be useful in unit/integration tests.
+- [IMPROVED] Updated feed functionality to process ``_changes`` and ``_db_updates`` with their supported options.  Also added an infinite feed option.
+- [NEW] Handled HTTP status code ``429 Too Many Requests`` with blocking backoff and retries.
+- [NEW] Added support for CouchDB Admin Party mode.  This library can now be used with CouchDB instances where everyone is Admin.
+- [FIX] Fixed ``Document.get_attachment`` method to successfully create text and binary files based on http response Content-Type.  The method also returns text, binary, and json content based on http response Content-Type.
+- [FIX] Added validation to ``Cloudant.bill``, ``Cloudant.volume_usage``, and ``Cloudant.requests_usage`` methods to ensure that a valid year/month combination or neither are used as arguments.
+- [FIX] Fixed the handling of empty views in the DesignDocument.
+- [FIX] The ``CouchDatabase.create_document`` method now handles documents and design documents correctly.  If the document created is a design document then the locally cached object will be a DesignDocument otherwise it will be a Document.
+- [CHANGE] Moved internal ``Code`` class, functions like ``python_to_couch`` and ``type_or_none``, and constants into a _common_util module.
+- [CHANGE] Updated User-Agent header format to be ``python-cloudant/<library version>/Python/<Python version>/<OS name>/<OS architecture>``.
+- [CHANGE] Completed the addition of unit tests that target a database server.  Removed all mocked unit tests.
 
 2.0.0b2 (2016-02-24)
 ====================

@@ -287,21 +287,20 @@ and ``couchdb_admin_party`` context helpers.
         print 'Databases: {0}'.format(client.all_dbs())
 
 ****************
-End point access
+Endpoint access
 ****************
 
-This library is currently a preview of Cloudant's new Python library. As such 
-it's API coverage is still incomplete. While we work towards complete
-coverage, API that isn't covered can still benefit from the client's
-authentication and session usage by directly accessing the underlying Requests_
+If for some reason you need to call a Cloudant/CouchDB endpoint directly rather 
+using the API you can still benefit from the Cloudant/CouchDB client's 
+authentication and session usage by directly accessing its underlying Requests_ 
 session object.
 
 Access the session object using the ``r_session`` attribute on your client 
 object. From there, use the session to make requests as the user the client is 
-set up with. The following example shows a ``GET`` to ``_all_docs``, but 
-obviously you can use this for any HTTP request to the Cloudant/CouchDB server.  
-This example assumes that either a ``Cloudant`` or a ``CouchDB`` client object 
-already exists.
+set up with. The following example shows a ``GET`` to the ``_all_docs`` 
+endpoint, but obviously you can use this for any HTTP request to the 
+Cloudant/CouchDB server.  This example assumes that either a ``Cloudant`` or a 
+``CouchDB`` client object already exists.
 
 .. _Requests: http://docs.python-requests.org/en/latest/
 
