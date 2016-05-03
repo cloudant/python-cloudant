@@ -114,6 +114,27 @@ QUERY_ARG_TYPES = {
 
 TEXT_INDEX_ARGS = {'fields': list, 'default_field': dict, 'selector': dict}
 
+SEARCH_INDEX_ARGS = {
+    'bookmark': STRTYPE,
+    'counts': list,
+    'drilldown': list,
+    'group_field': STRTYPE,
+    'group_limit': (int, NONETYPE),
+    'group_sort': list,
+    'include_docs': bool,
+    'limit': (int, NONETYPE),
+    'query': (STRTYPE, int),
+    'ranges': dict,
+    'sort': (STRTYPE, list),
+    'stale': STRTYPE,
+    'highlight_fields': list,
+    'highlight_pre_tag': STRTYPE,
+    'highlight_post_tag': STRTYPE,
+    'highlight_number': (int, NONETYPE),
+    'highlight_size': (int, NONETYPE),
+    'include_fields': list
+}
+
 # Functions
 
 def feed_arg_types(feed_type):

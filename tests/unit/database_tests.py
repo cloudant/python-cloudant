@@ -1065,5 +1065,156 @@ class CloudantDatabaseTests(UnitTestDbBase):
         self.assertEqual(indexes[2].design_document_id, '_design/ddoc001')
         self.assertEqual(indexes[2].name, 'text-idx-001')
 
+    def test_get_search_result_with_invalid_argument(self):
+        """
+        Test get_search_result by passing in invalid arguments
+        """
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.get_search_result('searchddoc001', 'searchindex001',
+                                      query='julia*', foo={'bar': 'baz'})
+        err = cm.exception
+        self.assertEqual(str(err), 'Invalid argument: foo')
+
+    def test_get_search_result_with_invalid_value_types(self):
+        """
+        Test get_search_result by passing in invalid value types for
+        query parameters
+        """
+        test_data = [
+            {'bookmark': 1},                    # Should be a STRTYPE
+            {'counts': 'blah'},                 # Should be a list
+            {'drilldown': 'blah'},              # Should be a list
+            {'group_field': ['blah']},          # Should be a STRTYPE
+            {'group_limit': 'int'},             # Should be an int
+            {'group_sort': 'blah'},             # Should be a list
+            {'include_docs': 'blah'},           # Should be a boolean
+            {'limit': 'blah'},                  # Should be an int
+            {'ranges': 1},                      # Should be a dict
+            {'sort': 10},                       # Should be a STRTYPE or list
+            {'stale': ['blah']},                # Should be a STRTYPE
+            {'highlight_fields': 'blah'},       # Should be a list
+            {'highlight_pre_tag': ['blah']},    # Should be a STRTYPE
+            {'highlight_post_tag': 1},          # Should be a STRTYPE
+            {'highlight_number': ['int']},      # Should be an int
+            {'highlight_size': 'blah'},         # Should be an int
+            {'include_fields': 'list'},         # Should be a list
+        ]
+
+        for argument in test_data:
+            with self.assertRaises(CloudantArgumentError) as cm:
+                self.db.get_search_result('searchddoc001', 'searchindex001',
+                                          query='julia*', **argument)
+            err = cm.exception
+            self.assertTrue(str(err).startswith(
+                'Argument {0} is not an instance of expected type:'.format(
+                    list(argument.keys())[0])
+            ))
+
+    def test_get_search_result_without_query(self):
+        """
+        Test get_search_result without providing a search query
+        """
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.get_search_result('searchddoc001', 'searchindex001',
+                                      limit=10, include_docs=True)
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'No query parameter found.  Please add a query parameter '
+            'containing Lucene syntax and retry.'
+        )
+
+    def test_get_search_result_with_invalid_query_type(self):
+        """
+        Test get_search_result by passing an invalid query type
+        """
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.get_search_result(
+                'searchddoc001', 'searchindex001', query=['blah']
+            )
+        err = cm.exception
+        self.assertTrue(str(err).startswith(
+            'Argument query is not an instance of expected type:'
+        ))
+
+    def test_get_search_result_executes_search_query(self):
+        """
+        Test get_search_result executes a search query
+        """
+        self.create_search_index()
+        self.populate_db_with_documents(100)
+        resp = self.db.get_search_result(
+            'searchddoc001',
+            'searchindex001',
+            query='julia*',
+            limit=5,
+            include_docs=True
+        )
+        self.assertEqual(len(resp['rows']), 5)
+        self.assertTrue(resp['bookmark'])
+        resp.pop('bookmark')
+        for row in resp['rows']:
+            self.assertTrue(row['doc']['_rev'].startswith('1-'))
+            row['doc'].pop('_rev')
+        self.assertEqual(
+            resp,
+            {'rows': [{'fields': {'name': 'julia'}, 'doc': {'_id': 'julia000',
+                                                            'age': 0,
+                                                            'name': 'julia'},
+                       'id': 'julia000', 'order': [1.0, 0]},
+                      {'fields': {'name': 'julia'}, 'doc': {'_id': 'julia001',
+                                                            'age': 1,
+                                                            'name': 'julia'},
+                       'id': 'julia001', 'order': [1.0, 0]},
+                      {'fields': {'name': 'julia'},'doc': {'_id': 'julia002',
+                                                           'age': 2,
+                                                           'name': 'julia'},
+                       'id': 'julia002', 'order': [1.0, 0]},
+                      {'fields': {'name': 'julia'}, 'doc': {'_id': 'julia004',
+                                                            'age': 4,
+                                                            'name': 'julia'},
+                       'id': 'julia004', 'order': [1.0, 1]},
+                      {'fields': {'name': 'julia'},
+                       'doc': {'_id': 'julia005', 'age': 5,
+                               'name': 'julia'},
+                       'id': 'julia005', 'order': [1.0, 1]}], 'total_rows': 100}
+        )
+
+    def test_get_search_result_executes_search_query_with_group_option(self):
+        """
+        Test get_search_result executes a search query with grouping parameters.
+        """
+        self.create_search_index()
+        self.populate_db_with_documents(100)
+        resp = self.db.get_search_result(
+            'searchddoc001',
+            'searchindex001',
+            query='name:julia*',
+            group_field='_id',
+            group_limit=5
+        )
+        # for group parameter options, 'rows' results are within 'groups' key
+        self.assertEqual(len(resp['groups']), 5)
+        self.assertEqual(
+            resp,
+            {'total_rows': 100, 'groups': [
+                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia000',
+                           'order': [1.0, 0]}], 'total_rows': 1,
+                 'by': 'julia000'},
+                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia004',
+                           'order': [1.0, 1]}], 'total_rows': 1,
+                 'by': 'julia004'},
+                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia008',
+                           'order': [1.0, 2]}], 'total_rows': 1,
+                 'by': 'julia008'},
+                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia010',
+                           'order': [1.0, 3]}], 'total_rows': 1,
+                 'by': 'julia010'},
+                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia014',
+                           'order': [1.0, 4]}], 'total_rows': 1,
+                 'by': 'julia014'}
+            ]}
+        )
+
 if __name__ == '__main__':
     unittest.main()
