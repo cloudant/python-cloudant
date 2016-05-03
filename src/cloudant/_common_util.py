@@ -24,6 +24,7 @@ import json
 
 from ._2to3 import STRTYPE, NONETYPE, UNITYPE, iteritems_
 from .error import CloudantArgumentError
+from cloudant.document import Document
 
 # Library Constants
 
@@ -113,6 +114,28 @@ QUERY_ARG_TYPES = {
 }
 
 TEXT_INDEX_ARGS = {'fields': list, 'default_field': dict, 'selector': dict}
+
+SEARCH_INDEX_ARGS = {
+    'bookmark': STRTYPE,
+    'counts': list,
+    'drilldown': list,
+    'group_field': STRTYPE,
+    'group_limit': (int, NONETYPE),
+    'group_sort': list,
+    'include_docs': bool,
+    'limit': (int, NONETYPE),
+    'q': (STRTYPE, int),
+    'query': (STRTYPE, int),
+    'ranges': dict,
+    'sort': (STRTYPE, list),
+    'stale': STRTYPE,
+    'highlight_fields': list,
+    'highlight_pre_tag': STRTYPE,
+    'highlight_post_tag': STRTYPE,
+    'highlight_number': (int, NONETYPE),
+    'highlight_size': (int, NONETYPE),
+    'include_fields': list
+}
 
 # Functions
 
@@ -212,6 +235,26 @@ def codify(code_or_str):
     if not isinstance(code_or_str, _Code):
         return _Code(code_or_str)
     return code_or_str
+
+def execute_search_or_find_query(db_or_ddoc, url, data):
+    """
+    Provides a helper function to execute a query against the _find or _search
+    endpoint.
+    """
+    if isinstance(db_or_ddoc, Document):
+        # Set encoder variable if db_or_ddoc is a DesignDocument
+        encoder = db_or_ddoc.encoder
+    else:
+        # Set encoder variable if db_or_ddoc is a CloudantDatabase
+        encoder = db_or_ddoc.client.encoder
+    headers = {'Content-Type': 'application/json'}
+    resp = db_or_ddoc.r_session.post(
+        url,
+        headers=headers,
+        data=json.dumps(data, cls=encoder)
+    )
+    resp.raise_for_status()
+    return resp.json()
 
 # Classes
 

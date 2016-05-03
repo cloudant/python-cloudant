@@ -64,7 +64,7 @@ class Document(dict):
         self._document_id = document_id
         if self._document_id is not None:
             self['_id'] = self._document_id
-        self._encoder = self._client.encoder
+        self.encoder = self._client.encoder
 
     @property
     def document_url(self):
@@ -112,7 +112,7 @@ class Document(dict):
 
         :returns: Encoded JSON string containing the document data
         """
-        return json.dumps(dict(self), cls=self._encoder)
+        return json.dumps(dict(self), cls=self.encoder)
 
     def create(self):
         """
@@ -132,7 +132,7 @@ class Document(dict):
         resp = self.r_session.post(
             self._database.database_url,
             headers=headers,
-            data=json.dumps(doc, cls=self._encoder)
+            data=json.dumps(doc, cls=self.encoder)
         )
         resp.raise_for_status()
         data = resp.json()

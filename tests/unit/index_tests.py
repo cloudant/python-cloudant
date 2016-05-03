@@ -28,7 +28,8 @@ import os
 import posixpath
 import requests
 
-from cloudant.index import Index, TextIndex, SpecialIndex
+from cloudant._common_util import _Code
+from cloudant.index import Index, TextIndex, SpecialIndex, SearchIndex
 from cloudant.query import Query
 from cloudant.view import QueryIndexView
 from cloudant.design_document import DesignDocument
@@ -352,7 +353,7 @@ class IndexTests(UnitTestDbBase):
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant Search Index tests'
+    'Skipping Cloudant Text Index tests'
     )
 class TextIndexTests(UnitTestDbBase):
     """
@@ -583,6 +584,251 @@ class SpecialIndexTests(unittest.TestCase):
             str(err),
             'Deleting the \"special\" index is not allowed.'
         )
+
+@unittest.skipUnless(
+    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+    'Skipping Cloudant Search Index tests'
+    )
+class SearchIndexTests(UnitTestDbBase):
+    """
+    Search index unit tests
+    """
+
+    def setUp(self):
+        """
+        Set up test attributes
+        """
+        super(SearchIndexTests, self).setUp()
+        self.db_set_up()
+        self.create_search_index()
+
+    def tearDown(self):
+        """
+        Reset test attributes
+        """
+        self.db_tear_down()
+        super(SearchIndexTests, self).tearDown()
+
+    def test_constructor(self):
+        """
+        Test instantiating a SearchIndex
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(
+            ddoc,
+            'searchindex001',
+            'function (doc) { index("default", doc._id); }}'
+            )
+        self.assertEqual(search.design_doc, ddoc)
+        self.assertEqual(search.index_name, 'searchindex001')
+        self.assertIsInstance(search['index'], _Code)
+        self.assertEqual(
+            search['index'],
+            'function (doc) { index("default", doc._id); }}'
+        )
+        self.assertEqual(
+            search['analyzer'],
+            'standard'
+        )
+
+        self.assertEqual(search, {
+            'index': 'function (doc) { index("default", doc._id); }}',
+            'analyzer': 'standard'
+        })
+
+    def test_index_setter(self):
+        """
+        Test that the search index setter works
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(ddoc, 'searchindex001')
+        self.assertIsNone(search.get('index'))
+        search.index = 'function (doc) { index("default", doc._id); }}'
+        self.assertEqual(
+            search.get('index'),
+            'function (doc) { index("default", doc._id); }}'
+        )
+
+    def test_index_getter(self):
+        """
+        Test that the search index getter works
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(ddoc, 'searchindex001')
+        self.assertIsNone(search.index)
+        search.index = 'function (doc) { index("default", doc._id); }}'
+        self.assertIsInstance(search.index, _Code)
+        self.assertEqual(search.index,
+                         'function (doc) { index("default", doc._id); }}')
+
+    def test_analyzer_setter(self):
+        """
+        Test that the analyzer setter works
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(ddoc, 'searchindex001')
+        self.assertEqual(search.get('analyzer'), 'standard')
+        search.analyzer = 'simple'
+        self.assertEqual(search.get('analyzer'), 'simple')
+
+    def test_analyzer_getter(self):
+        """
+        Test that the analyzer getter works
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(ddoc, 'searchindex001')
+        self.assertEqual(search.analyzer, 'standard')
+        search.analyzer = {
+            "name": "perfield", "default": "english",
+            "fields": {
+                "spanish": "spanish",
+                "german": "german"
+            }
+        }
+        self.assertEqual(search.analyzer,
+        {
+            "name": "perfield", "default": "english",
+            "fields": {
+                "spanish": "spanish",
+                "german": "german"
+            }
+        })
+
+    def test_retrieve_search_query_url(self):
+        """
+        Test constructing the search query test url
+        """
+        search = SearchIndex(self.ddoc, 'searchindex001')
+        self.assertEqual(
+            search.url,
+            '/'.join([self.ddoc.document_url,
+                      '_search',
+                      'searchindex001'])
+        )
+
+    def test_callable_with_invalid_argument(self):
+        """
+        Test Search __call__ by passing in invalid arguments
+        """
+        search = SearchIndex(self.ddoc, 'searchindex001')
+        try:
+            search(foo={'bar': 'baz'})
+            self.fail('Above statement should raise an Exception')
+        except CloudantArgumentError as err:
+            self.assertEqual(str(err), 'Invalid argument: foo')
+
+    def test_callable_with_invalid_value_types(self):
+        """
+        Test Search __call__ by passing in invalid value types for
+        query parameters
+        """
+        test_data = [
+            {'bookmark': 1},                    # Should be a basestring
+            {'counts': 'blah'},                 # Should be a list
+            {'drilldown': 'blah'},              # Should be a list
+            {'group_field': ['blah']},          # Should be an basestring
+            {'group_limit': 'int'},             # Should be an int
+            {'group_sort': 'blah'},             # Should be a list
+            {'include_docs': 'blah'},           # Should be an boolean
+            {'limit': 'blah'},                  # Should be an int
+            {'query': ['blah']},                # Should be a basestring or int
+            {'ranges': 1},                      # Should be a dict
+            {'sort': 10},                       # Should be a basestring or list
+            {'stale': ['blah']},                # Should be a basestring
+            {'highlight_fields': 'blah'},       # Should be a list
+            {'highlight_pre_tag': ['blah']},    # Should be a basestring
+            {'highlight_post_tag': 1},          # Should be a basestring
+            {'highlight_number': ['int']},      # Should be an int
+            {'highlight_size': 'blah'},         # Should be an int
+            {'include_fields': 'list'},         # Should be a list
+        ]
+
+        for argument in test_data:
+            search = SearchIndex(self.ddoc, 'searchindex001')
+            try:
+                search(**argument)
+                self.fail('Above statement should raise an Exception')
+            except CloudantArgumentError as err:
+                self.assertTrue(str(err).startswith(
+                    'Argument {0} is not an instance of expected type:'.format(
+                        list(argument.keys())[0]
+                    )
+                ))
+
+    def test_callable_without_query(self):
+        """
+        Test Search __call__ without providing a search query
+        """
+        search = SearchIndex(self.ddoc, 'searchindex001')
+        try:
+            search(limit=10, include_docs=True)
+            self.fail('Above statement should raise an Exception')
+        except CloudantArgumentError as err:
+            self.assertEqual(
+                str(err),
+                'Null value or empty lucene search syntax in '
+                'the query parameter. Add a search query and retry.'
+            )
+
+    def test_callable_with_empty_query(self):
+        """
+        Test Search __call__ without providing a search query
+        """
+        search = SearchIndex(self.ddoc, 'searchindex001')
+        try:
+            search(query='')
+            self.fail('Above statement should raise an Exception')
+        except CloudantArgumentError as err:
+            self.assertEqual(
+                str(err),
+                'Null value or empty lucene search syntax in '
+                'the query parameter. Add a search query and retry.'
+            )
+
+    def test_callable_executes_search_query(self):
+        """
+        Test Search __call__ executes a search query
+        """
+        self.populate_db_with_documents(100)
+        search = SearchIndex(self.ddoc, 'searchindex001')
+        resp = search(
+            # Lucene search query
+            query='julia*',
+            limit=5,
+            include_docs=True
+        )
+        self.assertEqual(len(resp['rows']), 5)
+        self.assertEqual(resp['total_rows'], 100)
+        for row in resp['rows']:
+            self.assertIsNotNone(row['fields'])
+            self.assertTrue(row['id'].startswith('julia0'))
+            self.assertIsNotNone(row['order'])
+            self.assertIsNotNone(row['doc'])
+
+    def test_callable_executes_search_query_with_group_option(self):
+        """
+        Test Search __call__ executes a search query with grouping parameters.
+        """
+        self.populate_db_with_documents(100)
+        search = SearchIndex(self.ddoc, 'searchindex001')
+        resp = search(
+            # Lucene search query
+            query='name:julia*',
+            group_field='_id',
+            group_limit=5,
+        )
+        # for group parameter options, 'rows' results are within 'groups' key
+        self.assertEqual(len(resp['groups']), 5)
+        self.assertEqual(resp['total_rows'], 100)
+        for group in resp['groups']:
+            for row in group['rows']:
+                self.assertEqual(row['fields'], {u'name': u'julia'})
+                self.assertTrue(row['id'].startswith('julia0'))
+                self.assertIsNotNone(row['order'])
+            self.assertEqual(group['total_rows'], 1)
+            self.assertIsNotNone(group['by'])
+
+
 
 if __name__ == '__main__':
     unittest.main()

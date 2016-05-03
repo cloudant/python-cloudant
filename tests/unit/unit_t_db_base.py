@@ -64,6 +64,7 @@ import uuid
 
 from cloudant.client import CouchDB, Cloudant
 from cloudant.design_document import DesignDocument
+from cloudant.document import Document
 
 from .. import unicode_
 
@@ -228,3 +229,17 @@ class UnitTestDbBase(unittest.TestCase):
         self.view004 = self.ddoc.get_view('view004')
         self.view005 = self.ddoc.get_view('view005')
         self.view006 = self.ddoc.get_view('view006')
+
+    def create_search_index(self):
+        """
+        Create a design document with search indexes for use
+        with search query tests.
+        """
+        self.ddoc = DesignDocument(self.db, 'ddoc001')
+        self.ddoc['indexes'] = {'searchindex001': {
+                'index': 'function (doc) {\n  index("default", doc._id); \n '
+                'if (doc.name) {\n index("name", doc.name, {"store": true}); \n} '
+                'if (doc.age) {\n index("age", doc.age, {"facet": true}); \n} \n} '
+            }
+        }
+        self.ddoc.save()

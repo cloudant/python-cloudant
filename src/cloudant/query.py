@@ -17,13 +17,12 @@ API module for composing and executing Cloudant queries.
 """
 
 import posixpath
-import json
 import contextlib
 
 from ._2to3 import iteritems_
+from ._common_util import QUERY_ARG_TYPES, execute_search_or_find_query
 from .result import QueryResult
 from .error import CloudantArgumentError
-from ._common_util import QUERY_ARG_TYPES
 
 class Query(dict):
     """
@@ -174,14 +173,7 @@ class Query(dict):
             raise CloudantArgumentError(msg)
 
         # Execute query find
-        headers = {'Content-Type': 'application/json'}
-        resp = self._r_session.post(
-            self.url,
-            headers=headers,
-            data=json.dumps(data, cls=self._encoder)
-        )
-        resp.raise_for_status()
-        return resp.json()
+        return execute_search_or_find_query(self._database, self.url, data)
 
     @contextlib.contextmanager
     def custom_result(self, **options):

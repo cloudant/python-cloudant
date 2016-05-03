@@ -20,10 +20,15 @@ import posixpath
 import json
 
 from ._2to3 import STRTYPE, iteritems_
-from ._common_util import JSON_INDEX_TYPE
-from ._common_util import TEXT_INDEX_TYPE
-from ._common_util import SPECIAL_INDEX_TYPE
-from ._common_util import TEXT_INDEX_ARGS
+from ._common_util import (
+    JSON_INDEX_TYPE,
+    TEXT_INDEX_TYPE,
+    SPECIAL_INDEX_TYPE,
+    TEXT_INDEX_ARGS,
+    SEARCH_INDEX_ARGS,
+    codify,
+    execute_search_or_find_query
+)
 from .error import CloudantArgumentError, CloudantException
 
 class Index(object):
@@ -262,3 +267,201 @@ class SpecialIndex(Index):
         """
         msg = 'Deleting the \"special\" index is not allowed.'
         raise CloudantException(msg)
+
+class SearchIndex(dict):
+    """
+    Encapsulates a SearchIndex as a dictionary based object, exposing the
+    search index function and analyzer as attributes. A SearchIndex object is
+    instantiated with a reference to a DesignDocument and is typically used as
+    part of the :class:`~cloudant.design_document.DesignDocument`
+    search index management API.
+
+    :param DesignDocument ddoc: DesignDocument instance used in part to
+        identify the search index.
+    :param str search_index_name: Name used in part to identify the index.
+    :param str search_index_func: Javascript search index function.
+        Optional only if executing a search query.
+    :param str analyzer: Optional analyzer of the index.  Defaults to standard.
+    """
+
+    def __init__(
+            self,
+            ddoc,
+            index_name,
+            search_func=None,
+            analyzer='standard'
+        ):
+        super(SearchIndex, self).__init__()
+        self.design_doc = ddoc
+        self.index_name = index_name
+        if search_func is not None:
+            self['index'] = codify(search_func)
+        self['analyzer'] = analyzer
+
+    @property
+    def analyzer(self):
+        """
+        Get the analyzer for this index.  Default value is a ``standard``
+        analyzer.  For more details on supported analyzers for a Cloudant
+        search index, see the analyzer
+        `documentation <https://docs.cloudant.com/search.html#analyzers>`_.
+
+        :param str analyzer: Analyzer for this index.
+
+        :returns: Search index analyzer
+        """
+        return self.get('analyzer')
+
+    @analyzer.setter
+    def analyzer(self, analyzer):
+        """
+        Set the analyzer for this index.
+        """
+        self['analyzer'] = analyzer
+
+    @property
+    def index(self):
+        """
+        Get the Javascript function for this index.
+
+        For example:
+
+        .. code-block:: python
+
+            # Set the SearchIndex index property
+            search.index = 'function (doc) {  index(\"default\", doc._id); }'
+
+        :param str index_func: Javascript search index function.
+
+        :returns: Codified search index function
+        """
+        return self.get('index')
+
+    @index.setter
+    def index(self, index_func):
+        """
+        Set the Javascript function for this index.
+        """
+        self['index'] = codify(index_func)
+
+    @property
+    def url(self):
+        """
+        Constructs and returns the Cloudant Search URL.
+
+        :returns: Search URL
+        """
+        return '/'.join([
+            self.design_doc.document_url,
+            '_search',
+            self.index_name
+        ])
+
+    def __call__(self, **kwargs):
+        """
+        Makes the SearchIndex object callable and retrieves the raw JSON
+        content from the remote database based on the search index on the
+        server, using the kwargs provided as query parameters.
+
+        Example for search index queries:
+
+        .. code-block:: python
+
+            # Construct a SearchIndex
+            search = SearchIndex(ddoc, 'searchindex001')
+            # Assuming that 'searchindex001' exists as part of the
+            # design document ddoc in the remote database...
+            # Use SearchIndex as a callable
+            for row in search(query='julia*', include_docs=True)['rows']:
+                # Process search index data (in JSON format).
+
+        Example if the search query requires grouping by using
+        the ``group_field`` parameter:
+
+        .. code-block:: python
+
+            # Construct a SearchIndex
+            search = SearchIndex(ddoc, 'searchindex001')
+            # Use SearchIndex as a callable
+            response = search(query='julia*', group_field='name')
+            for group in response['groups']:
+                for row in group['rows']:
+                # Process search index data (in JSON format).
+
+        :param str bookmark: A string that enables you to specify which page of
+            results you require. Only valid for queries that do not specify the
+            ``group_field`` query parameter.
+        :param list counts: A JSON array of field names for which counts should
+            be produced. The response will contain counts for each unique value
+            of this field name among the documents matching the search query.
+            Requires the index to have faceting enabled.
+        :param list drilldown:  A list of fields that each define a pair of a
+            field name and a value. This field can be used several times.
+            The search will only match documents that have the given value in
+            the field name. It differs from using ``query=fieldname:value``
+            only in that the values are not analyzed.
+        :param str group_field: A string field by which to group search matches.
+            Fields containing other data (numbers, objects, arrays)
+            can not be used.
+        :param int group_limit: Maximum group count.
+            This field can only be used if ``group_field`` query parameter
+            is specified.
+        :param group_sort: A JSON field that defines the order of the
+            groups in a search using ``group_field``. The default sort order
+            is relevance. This field can have the same values as the sort field,
+            so single fields as well as arrays of fields are supported.
+        :param int limit: Limit the number of the returned documents to the
+            specified count. In case of a grouped search, this parameter limits
+            the number of documents per group.
+        :param query: A Lucene query in the form of ``name:value``.
+            If name is omitted, the special value ``default`` is used.
+        :param ranges: A JSON facet syntax that reuses the standard Lucene
+            syntax to return counts of results which fit into each specified
+            category. Inclusive range queries are denoted by brackets.
+            Exclusive range queries are denoted by curly brackets.
+            For example ``ranges={"price":{"cheap":"[0 TO 100]"}}`` has an
+            inclusive range of 0 to 100.
+            Requires the index to have faceting enabled.
+        :param sort: A JSON string of the form ``fieldname<type>`` for ascending
+            or ``-fieldname<type>`` for descending sort order. Fieldname is the
+            name of a string or number field and type is either number or string
+            or a JSON array of such strings. The type part is optional and
+            defaults to number.
+        :param str stale: Allow the results from a stale index to be used. This
+            makes the request return immediately, even if the index has not been
+            completely built yet.
+        :param list highlight_fields: A list of fields which should be
+            highlighted.
+        :param str highlight_pre_tag: A string inserted before the highlighted
+            word in the highlights output.  Defaults to ``<em>``.
+        :param str highlight_post_tag: A string inserted after the highlighted
+            word in the highlights output.  Defaults to ``<em>``.
+        :param int highlight_number: A number of fragments returned in
+            highlights. If the search term occurs less often than the number of
+            fragments specified, longer fragments are returned.  Default is 1.
+        :param int highlight_size: A number of characters in each fragment for
+            highlights.  Defaults to 100 characters.
+        :param list include_fields: A list of field names to include in search
+            results. Any fields included must have been indexed with the
+            ``store:true`` option.
+
+        :returns: Search query result data in JSON format
+        """
+        # Validate query arguments and values
+        for key, val in iteritems_(kwargs):
+            if key not in list(SEARCH_INDEX_ARGS.keys()):
+                msg = 'Invalid argument: {0}'.format(key)
+                raise CloudantArgumentError(msg)
+            if not isinstance(val, SEARCH_INDEX_ARGS[key]):
+                msg = (
+                    'Argument {0} is not an instance of expected type: {1}'
+                ).format(key, SEARCH_INDEX_ARGS[key])
+                raise CloudantArgumentError(msg)
+        if not kwargs.get('query'):
+            msg = (
+                'Null value or empty lucene search syntax in '
+                'the query parameter. Add a search query and retry.'
+            )
+            raise CloudantArgumentError(msg)
+        # Execute search query
+        return execute_search_or_find_query(self.design_doc, self.url, kwargs)
