@@ -1,7 +1,7 @@
 2.1.0 (Unreleased)
 ==================
 - [NEW] Added support for Cloudant Search execution.
-
+- [NEW] Added support for Cloudant Search index management.
 
 2.0.3 (2016-06-03)
 ==================

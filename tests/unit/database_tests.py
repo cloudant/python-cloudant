@@ -253,8 +253,8 @@ class DatabaseTests(UnitTestDbBase):
         """
         # Get an empty design document object that does not exist remotely
         local_ddoc = self.db.get_design_document('_design/ddoc01')
-        self.assertEqual(local_ddoc, {'_id': '_design/ddoc01', 'views': {}})
-
+        self.assertEqual(local_ddoc, {'_id': '_design/ddoc01', 'indexes': {},
+                                      'views': {}})
         # Add the design document to the database
         map_func = 'function(doc) {\n emit(doc._id, 1); \n}'
         local_ddoc.add_view('view01', map_func)
@@ -856,6 +856,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         self.assertEqual(ddoc,
                 {'_id': index.design_document_id,
                  '_rev': ddoc['_rev'],
+                 'indexes': {},
                  'language': 'query',
                  'views': {index.name: {'map': {'fields': {'name': 'asc', 
                                                            'age': 'asc'}},

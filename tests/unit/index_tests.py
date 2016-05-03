@@ -138,8 +138,9 @@ class IndexTests(UnitTestDbBase):
             self.assertEqual(ddoc,
                 {'_id': '_design/ddoc001',
                  '_rev': ddoc['_rev'],
+                 'indexes': {},
                  'language': 'query',
-                 'views': {'index001': {'map': {'fields': {'name': 'asc', 
+                 'views': {'index001': {'map': {'fields': {'name': 'asc',
                                                            'age': 'asc'}},
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
@@ -164,8 +165,9 @@ class IndexTests(UnitTestDbBase):
             self.assertEqual(ddoc,
                 {'_id': index.design_document_id,
                  '_rev': ddoc['_rev'],
+                 'indexes': {},
                  'language': 'query',
-                 'views': {index.name: {'map': {'fields': {'name': 'asc', 
+                 'views': {index.name: {'map': {'fields': {'name': 'asc',
                                                            'age': 'asc'}},
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
@@ -190,8 +192,9 @@ class IndexTests(UnitTestDbBase):
             self.assertEqual(ddoc,
                 {'_id': index.design_document_id,
                  '_rev': ddoc['_rev'],
+                 'indexes': {},
                  'language': 'query',
-                 'views': {index.name: {'map': {'fields': {'name': 'asc', 
+                 'views': {index.name: {'map': {'fields': {'name': 'asc',
                                                            'age': 'asc'}},
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
@@ -216,8 +219,9 @@ class IndexTests(UnitTestDbBase):
             self.assertEqual(ddoc,
                 {'_id': '_design/ddoc001',
                  '_rev': ddoc['_rev'],
+                 'indexes': {},
                  'language': 'query',
-                 'views': {'index001': {'map': {'fields': {'name': 'asc', 
+                 'views': {'index001': {'map': {'fields': {'name': 'asc',
                                                            'age': 'asc'}},
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
@@ -352,7 +356,7 @@ class IndexTests(UnitTestDbBase):
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant Search Index tests'
+    'Skipping Cloudant Text Index tests'
     )
 class TextIndexTests(UnitTestDbBase):
     """
