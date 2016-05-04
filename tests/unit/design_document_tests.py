@@ -26,6 +26,7 @@ import unittest
 
 from cloudant.document import Document 
 from cloudant.design_document import DesignDocument
+from cloudant.search import SearchIndex
 from cloudant.view import View, QueryIndexView
 from cloudant.error import CloudantArgumentError, CloudantException
 
@@ -310,6 +311,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertEqual(ddoc_remote, {
             '_id': '_design/ddoc001',
             '_rev': ddoc['_rev'],
+            'indexes': {},
             'views': {
                 'view001': {'map': view_map, 'reduce': view_reduce},
                 'view002': {'map': view_map, 'reduce': view_reduce, 'dbcopy': db_copy},
@@ -330,7 +332,8 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
-        self.assertEqual(set(ddoc_remote.keys()), {'_id', '_rev', 'views'})
+        self.assertEqual(set(ddoc_remote.keys()),
+                         {'_id', '_rev', 'indexes', 'views'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -346,6 +349,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # views but it works best for this test.
         data = {
             '_id': '_design/ddoc001',
+            'indexes': {},
             'language': 'query',
             'views': {
                 'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
@@ -536,7 +540,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         # Ensure that locally cached DesignDocument contains an
         # empty views dict.
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'views'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         self.assertEqual(ddoc.views, {})
@@ -625,6 +629,260 @@ class DesignDocumentTests(UnitTestDbBase):
             self.fail('Above statement should raise an Exception')
         except NotImplementedError as err:
             self.assertEqual(str(err), '_info not yet implemented')
+
+    def test_add_a_search_index(self):
+        """
+        Test that adding a search index adds a SearchIndex object to
+        the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        self.assertEqual(ddoc.get('indexes'), {})
+        ddoc.add_search_index(
+            'search001',
+            'function (doc) {\n  index("default", doc._id); '
+            'if (doc._id) {index("name", doc.name, '
+            '{"store": true}); }\n}'
+        )
+        self.assertListEqual(list(ddoc.get('indexes').keys()), ['search001'])
+        self.assertIsInstance(ddoc.get('indexes')['search001'], SearchIndex)
+        self.assertEqual(
+            ddoc.get('indexes')['search001'],
+            {'index': 'function (doc) {\n  index("default", doc._id); '
+                'if (doc._id) {index("name", doc.name, '
+                '{"store": true}); }\n}'}
+        )
+
+    def test_adding_existing_search_index(self):
+        """
+        Test that adding an existing search index fails as expected.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_search_index(
+            'search001',
+            'function (doc) {\n  index("default", doc._id); '
+            'if (doc._id) {index("name", doc.name, '
+            '{"store": true}); }\n}'
+        )
+        try:
+            ddoc.add_search_index(
+                'search001',
+                'function (doc) {\n  index("default", doc._id); '
+                'if (doc._id) {index("name", doc.name, '
+                '{"store": true}); }\n}'
+                )
+            self.fail('Above statement should raise an Exception')
+        except CloudantArgumentError as err:
+            self.assertEqual(
+                str(err),
+                'Search index search001 already exists in this design doc'
+            )
+
+    def test_update_a_search_index(self):
+        """
+        Test that updating a search index updates the contents of the correct
+        SearchIndex object in the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_search_index('search001', 'not-a-valid-search-index')
+        self.assertEqual(
+            ddoc.get('indexes')['search001'],
+            {'index': 'not-a-valid-search-index'}
+        )
+        ddoc.update_search_index(
+            'search001',
+            'function (doc) {\n  index("default", doc._id); '
+            'if (doc._id) {index("name", doc.name, '
+            '{"store": true}); }\n}'
+        )
+        self.assertEqual(
+            ddoc.get('indexes')['search001'],
+            {'index': 'function (doc) {\n  index("default", doc._id); '
+                'if (doc._id) {index("name", doc.name, '
+                '{"store": true}); }\n}'
+            }
+        )
+
+    def test_update_non_existing_search_index(self):
+        """
+        Test that updating a non-existing search index fails as expected.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        try:
+            ddoc.update_search_index(
+                'search001',
+                'function (doc) {\n  index("default", doc._id); '
+                'if (doc._id) {index("name", doc.name, '
+                '{"store": true}); }\n}'
+            )
+            self.fail('Above statement should raise an Exception')
+        except CloudantArgumentError as err:
+            self.assertEqual(
+                str(err),
+                'Search index search001 does not exist in this design doc'
+            )
+
+    def test_delete_a_search_index(self):
+        """
+        Test deleting a search index from the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_search_index(
+            'search001',
+            'function (doc) {\n  index("default", doc._id); '
+            'if (doc._id) {index("name", doc.name, '
+            '{"store": true}); }\n}'
+        )
+        self.assertEqual(
+            ddoc.get('indexes')['search001'],
+            {'index': 'function (doc) {\n  index("default", doc._id); '
+                'if (doc._id) {index("name", doc.name, '
+                '{"store": true}); }\n}'}
+        )
+        ddoc.delete_search_index('search001')
+        self.assertEqual(ddoc.get('indexes'), {})
+
+    def test_fetch_search_index(self):
+        """
+        Ensure that the document fetch from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing search indexes.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        search_index = ('function (doc) {\n  index("default", doc._id); '
+                        'if (doc._id) {index("name", doc.name, '
+                        '{"store": true}); }\n}')
+        ddoc.add_search_index('search001', search_index)
+        ddoc.add_search_index('search002', search_index)
+        ddoc.add_search_index('search003', search_index)
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        self.assertNotEqual(ddoc_remote, ddoc)
+        ddoc_remote.fetch()
+        self.assertEqual(ddoc_remote, ddoc)
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote, {
+            '_id': '_design/ddoc001',
+            '_rev': ddoc['_rev'],
+            'indexes': {
+                'search001': {'index': search_index},
+                'search002': {'index': search_index},
+                'search003': {'index': search_index}
+            },
+            'views': {}
+        })
+        self.assertIsInstance(ddoc_remote['indexes']['search001'], SearchIndex)
+        self.assertIsInstance(ddoc_remote['indexes']['search002'], SearchIndex)
+        self.assertIsInstance(ddoc_remote['indexes']['search003'], SearchIndex)
+
+    def test_fetch_no_search_index(self):
+        """
+        Ensure that the document fetched from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing no search indexes.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        ddoc_remote.fetch()
+        self.assertEqual(set(ddoc_remote.keys()),
+                         {'_id', '_rev', 'indexes', 'views'})
+        self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
+        self.assertEqual(ddoc_remote.search_indexes, {})
+
+    def test_search_index_save_succeeds(self):
+        """
+        Tests that save succeeds when no language is specified for search
+        indexes.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        search_index = ('function (doc) {\n  index("default", doc._id); '
+                        'if (doc._id) {index("name", doc.name, '
+                        '{"store": true}); }\n}')
+        ddoc.add_search_index('search001', search_index)
+        ddoc.save()
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+
+    def test_save_with_no_search_indexes(self):
+        """
+        Tests the functionality when saving a design document without a search
+        index. Both the locally cached and remote DesignDocument should not
+        include the empty indexes sub-document.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.save()
+        # Ensure that locally cached DesignDocument contains an
+        # empty search indexes and views dict.
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views'})
+        self.assertEqual(ddoc['_id'], '_design/ddoc001')
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+        # Ensure that remotely saved design document does not
+        # include a search indexes sub-document.
+        resp = self.client.r_session.get(ddoc.document_url)
+        raw_ddoc = resp.json()
+        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
+        self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
+        self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
+
+    def test_iterating_over_search_indexes(self):
+        """
+        Test iterating over search indexes within the DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        search_index = ('function (doc) {\n  index("default", doc._id); '
+                        'if (doc._id) {index("name", doc.name, '
+                        '{"store": true}); }\n}')
+        ddoc.add_search_index('search001', search_index)
+        ddoc.add_search_index('search002', search_index)
+        ddoc.add_search_index('search003', search_index)
+        search_index_names = []
+        for search_index_name, search_index in ddoc.itersearchindexes():
+            self.assertIsInstance(search_index, SearchIndex)
+            search_index_names.append(search_index_name)
+        self.assertTrue(
+            all(x in search_index_names for
+                x in ['search001', 'search002', 'search003'])
+        )
+
+    def test_list_search_indexes(self):
+        """
+        Test the retrieval of search index name list from DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        index = 'function (doc) {\n  index("default", doc._id); '
+        'if (doc._id) {index("name", doc.name, '
+        '{"store": true}); }\n}'
+        ddoc.add_search_index('search001', index)
+        ddoc.add_search_index('search002', index)
+        ddoc.add_search_index('search003', index)
+        self.assertTrue(
+            all(x in ddoc.list_search_indexes() for x in [
+                'search001',
+                'search002',
+                'search003'
+            ])
+        )
+
+    def test_get_search_index(self):
+        """
+        Test retrieval of a search index from the DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        index = ('function (doc) {\n  index("default", doc._id); '
+        'if (doc._id) {index("name", doc.name, '
+        '{"store": true}); }\n}')
+        ddoc.add_search_index('search001', index)
+        ddoc.add_search_index('search002', index)
+        ddoc.add_search_index('search003', index)
+        self.assertIsInstance(ddoc.get_search_index('search002'), SearchIndex)
+        self.assertEqual(
+            ddoc.get_search_index('search002'),
+            {'index': 'function (doc) {\n  index("default", doc._id); '
+                'if (doc._id) {index("name", doc.name, '
+                '{"store": true}); }\n}'
+            }
+        )
 
 if __name__ == '__main__':
     unittest.main()

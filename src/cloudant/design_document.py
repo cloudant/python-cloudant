@@ -15,6 +15,7 @@
 """
 API module/class for interacting with a design document in a database.
 """
+from cloudant.search import SearchIndex
 from ._2to3 import iteritems_
 from .document import Document
 from .view import View, QueryIndexView
@@ -26,14 +27,11 @@ class DesignDocument(Document):
     Encapsulates a specialized version of a
     :class:`~cloudant.document.Document`.  A DesignDocument object is
     instantiated with a reference to a database and
-    provides an API to view management, list and show
-    functions, search indexes, etc.  When instantiating a DesignDocument or
+    provides an API to view management, search index management, list and show
+    functions, etc.  When instantiating a DesignDocument or
     when setting the document id (``_id``) field, the value must start with
     ``_design/``.  If it does not, then ``_design/`` will be prepended to
     the provided document id value.
-
-    Note:  Currently only the view management API exists.  Remaining design
-    document functionality will be added later.
 
     :param database: A database instance used by the DesignDocument.  Can be
         either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
@@ -45,6 +43,7 @@ class DesignDocument(Document):
             document_id = '_design/{0}'.format(document_id)
         super(DesignDocument, self).__init__(database, document_id)
         self.setdefault('views', dict())
+        self.setdefault('indexes', dict())
 
     @property
     def views(self):
@@ -55,6 +54,17 @@ class DesignDocument(Document):
         :returns: Dictionary containing view names and View objects as key/value
         """
         return self.get('views')
+
+    @property
+    def search_indexes(self):
+        """
+        Provides an accessor property to the SearchIndex dictionary in the
+        locally cached DesignDocument.
+
+        :returns: Dictionary containing search index names and objects
+            as key/value
+        """
+        return self.get('indexes')
 
     def add_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
@@ -78,6 +88,22 @@ class DesignDocument(Document):
 
         view = View(self, view_name, map_func, reduce_func, **kwargs)
         self.views.__setitem__(view_name, view)
+
+    def add_search_index(self, search_index_name, search_index, **kwargs):
+        """
+        Appends a Cloudant search index to the locally cached DesignDocument
+        SearchIndex dictionary.
+
+        :param str search_index_name: Name used to identify the SearchIndex.
+        :param str search_index: Javascript search index function.
+        """
+        if self.get_search_index(search_index_name) is not None:
+            msg = "Search index {0} already exists in this design doc"\
+                .format(search_index_name)
+            raise CloudantArgumentError(msg)
+
+        search = SearchIndex(self, search_index_name, search_index, **kwargs)
+        self.search_indexes.__setitem__(search_index_name, search)
 
     def update_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
@@ -104,6 +130,23 @@ class DesignDocument(Document):
         view = View(self, view_name, map_func, reduce_func, **kwargs)
         self.views.__setitem__(view_name, view)
 
+    def update_search_index(self, search_index_name, search_index, **kwargs):
+        """
+        Modifies/overwrites an existing Cloudant search index in the
+        locally cached DesignDocument SearchIndex dictionary.
+
+        :param str search_index_name: Name used to identify the SearchIndex.
+        :param str search_index: Javascript search index function.
+        """
+        search = self.get_search_index(search_index_name)
+        if search is None:
+            msg = "Search index {0} does not exist in this design doc"\
+                .format(search_index_name)
+            raise CloudantArgumentError(msg)
+
+        search = SearchIndex(self, search_index_name, search_index, **kwargs)
+        self.search_indexes.__setitem__(search_index_name, search)
+
     def delete_view(self, view_name):
         """
         Removes an existing MapReduce view definition from the locally cached
@@ -122,6 +165,19 @@ class DesignDocument(Document):
             raise CloudantException(msg)
 
         self.views.__delitem__(view_name)
+
+    def delete_search_index(self, search_index_name):
+        """
+        Removes an existing Cloudant search index in the locally cached
+        DesignDocument SearchIndex dictionary.
+
+        :param str search_index_name: Name used to identify the Search index.
+        """
+        search_index = self.get_search_index(search_index_name)
+        if search_index is None:
+            return
+
+        self.search_indexes.__delitem__(search_index_name)
 
     def fetch(self):
         """
@@ -153,6 +209,18 @@ class DesignDocument(Document):
                         view_def.pop('reduce', None),
                         **view_def
                     )
+        if not self.search_indexes:
+            # Ensure indexes dict exists in locally cached DesignDocument.
+            self.setdefault('indexes', dict())
+        if self.search_indexes:
+            for (search_index_name, search_index) \
+                    in iteritems_(self.get('indexes', dict())):
+                self['indexes'][search_index_name] = SearchIndex(
+                    self,
+                    search_index_name,
+                    search_index,
+                    **search_index
+                )
 
     def save(self):
         """
@@ -180,11 +248,18 @@ class DesignDocument(Document):
             # Ensure empty views dict is not saved remotely.
             self.__delitem__('views')
 
+        if not self.search_indexes:
+            # Ensure empty indexes dict is not saved remotely.
+            self.__delitem__('indexes')
+
         super(DesignDocument, self).save()
 
         if not self.views:
             # Ensure views dict exists in locally cached DesignDocument.
             self.setdefault('views', dict())
+        if not self.search_indexes:
+            # Ensure indexes dict exists in locally cached DesignDocument.
+            self.setdefault('indexes', dict())
 
     def __setitem__(self, key, value):
         """
@@ -216,6 +291,24 @@ class DesignDocument(Document):
         for view_name, view in iteritems_(self.views):
             yield view_name, view
 
+    def itersearchindexes(self):
+        """
+        Provides a way to iterate over the locally cached DesignDocument
+        SearchIndex dictionary.
+
+        For example:
+
+        .. code-block:: python
+
+            for search_index_name, search_index in ddoc.itersearchindexes():
+                # Perform search index processing
+
+        :returns: Iterable containing search index name and associated
+        SearchIndex object
+        """
+        for search_index_name, search_index in iteritems_(self.search_indexes):
+            yield search_index_name, search_index
+
     def list_views(self):
         """
         Retrieves a list of available View objects in the locally cached
@@ -224,6 +317,15 @@ class DesignDocument(Document):
         :returns: List of view names
         """
         return list(self.views.keys())
+
+    def list_search_indexes(self):
+        """
+        Retrieves a list of available SearchIndex objects in the locally cached
+        DesignDocument.
+
+        :returns: List of search index names
+        """
+        return list(self.search_indexes.keys())
 
     def get_view(self, view_name):
         """
@@ -235,6 +337,17 @@ class DesignDocument(Document):
         :returns: View object for the specified view_name
         """
         return self.views.get(view_name)
+
+    def get_search_index(self, search_index_name):
+        """
+        Retrieves a specific SearchIndex from the locally cached DesignDocument
+        by name.
+
+        :param str search_index_name: Name used to identify the SearchIndex.
+
+        :returns: SearchIndex object for the specified search_index_name
+        """
+        return self.search_indexes.get(search_index_name)
 
     def info(self):
         """
