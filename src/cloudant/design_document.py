@@ -27,7 +27,7 @@ class DesignDocument(Document):
     :class:`~cloudant.document.Document`.  A DesignDocument object is
     instantiated with a reference to a database and
     provides an API to view management, list and show
-    functions, search indexes, etc.  When instantiating a DesignDocument or
+    functions, etc.  When instantiating a DesignDocument or
     when setting the document id (``_id``) field, the value must start with
     ``_design/``.  If it does not, then ``_design/`` will be prepended to
     the provided document id value.
@@ -59,10 +59,7 @@ class DesignDocument(Document):
     def add_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
         Appends a MapReduce view to the locally cached DesignDocument View
-        dictionary.  To create a JSON query index use
-        :func:`~cloudant.database.CloudantDatabase.create_query_index` instead.
-        A CloudantException is raised if an attempt to add a QueryIndexView
-        (JSON query index) using this method is made.
+        dictionary.
 
         :param str view_name: Name used to identify the View.
         :param str map_func: Javascript map function.
@@ -71,10 +68,6 @@ class DesignDocument(Document):
         if self.get_view(view_name) is not None:
             msg = "View {0} already exists in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
-        if self.get('language', None) == QUERY_LANGUAGE:
-            msg = ('Cannot add a MapReduce view to a '
-                   'design document for query indexes.')
-            raise CloudantException(msg)
 
         view = View(self, view_name, map_func, reduce_func, **kwargs)
         self.views.__setitem__(view_name, view)
@@ -82,12 +75,7 @@ class DesignDocument(Document):
     def update_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
         Modifies/overwrites an existing MapReduce view definition in the
-        locally cached DesignDocument View dictionary.  To update a JSON
-        query index use
-        :func:`~cloudant.database.CloudantDatabase.delete_query_index` followed
-        by :func:`~cloudant.database.CloudantDatabase.create_query_index`
-        instead.  A CloudantException is raised if an attempt to update a
-        QueryIndexView (JSON query index) using this method is made.
+        locally cached DesignDocument View dictionary.
 
         :param str view_name: Name used to identify the View.
         :param str map_func: Javascript map function.
@@ -97,9 +85,6 @@ class DesignDocument(Document):
         if view is None:
             msg = "View {0} does not exist in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
-        if isinstance(view, QueryIndexView):
-            msg = 'Cannot update a query index view using this method.'
-            raise CloudantException(msg)
 
         view = View(self, view_name, map_func, reduce_func, **kwargs)
         self.views.__setitem__(view_name, view)
@@ -107,27 +92,21 @@ class DesignDocument(Document):
     def delete_view(self, view_name):
         """
         Removes an existing MapReduce view definition from the locally cached
-        DesignDocument View dictionary.  To delete a JSON query index
-        use :func:`~cloudant.database.CloudantDatabase.delete_query_index`
-        instead.  A CloudantException is raised if an attempt to delete a
-        QueryIndexView (JSON query index) using this method is made.
+        DesignDocument View dictionary.
 
         :param str view_name: Name used to identify the View.
         """
         view = self.get_view(view_name)
         if view is None:
             return
-        if isinstance(view, QueryIndexView):
-            msg = 'Cannot delete a query index view using this method.'
-            raise CloudantException(msg)
 
         self.views.__delitem__(view_name)
 
     def fetch(self):
         """
         Retrieves the remote design document content and populates the locally
-        cached DesignDocument dictionary.  View content is stored either as
-        View or QueryIndexView objects which are extensions of the ``dict``
+        cached DesignDocument dictionary.  View content is stored as
+        a View object which is an extension of the ``dict``
         type.  All other design document data are stored directly as
         ``dict`` types.
         """
@@ -139,14 +118,6 @@ class DesignDocument(Document):
             for view_name, view_def in iteritems_(self.get('views', dict())):
                 if self.get('language', None) != QUERY_LANGUAGE:
                     self['views'][view_name] = View(
-                        self,
-                        view_name,
-                        view_def.pop('map', None),
-                        view_def.pop('reduce', None),
-                        **view_def
-                    )
-                else:
-                    self['views'][view_name] = QueryIndexView(
                         self,
                         view_name,
                         view_def.pop('map', None),
@@ -168,13 +139,6 @@ class DesignDocument(Document):
                 for view_name, view in self.iterviews():
                     if isinstance(view, QueryIndexView):
                         msg = 'View {0} must be of type View.'.format(view_name)
-                        raise CloudantException(msg)
-            else:
-                for view_name, view in self.iterviews():
-                    if not isinstance(view, QueryIndexView):
-                        msg = (
-                            'View {0} must be of type QueryIndexView.'
-                        ).format(view_name)
                         raise CloudantException(msg)
         else:
             # Ensure empty views dict is not saved remotely.
@@ -243,3 +207,128 @@ class DesignDocument(Document):
         GET databasename/_design/{ddoc}/_info
         """
         raise NotImplementedError("_info not yet implemented")
+
+class CloudantDesignDocument(DesignDocument):
+    """
+    Encapsulates a Cloudant version of a
+    :class:`~cloudant.design_document.DesignDocument`.
+    A CloudantDesignDocument object is instantiated with a reference
+    to a Cloudant database and provides an API to query index management,
+    list and show functions, etc.
+
+    Note:  Currently only the query view management API exists.  Remaining
+    Cloudant design document functionality will be added later.
+
+    :param database: A ``CloudantDatabase`` instance used by the
+        CloudantDesignDocument.
+    :param str document_id: Optional document id.  If provided and does not
+        start with ``_design/``, it will be prepended with ``_design/``.
+    """
+    def __init__(self, database, document_id=None):
+        super(CloudantDesignDocument, self).__init__(database, document_id)
+
+    def add_view(self, view_name, map_func, reduce_func=None, **kwargs):
+        """
+        Appends a MapReduce view to the locally cached CloudantDesignDocument
+        View dictionary. A CloudantException is raised if an attempt to add a
+        QueryIndexView (JSON query index) using this method is made.
+
+        :param str view_name: Name used to identify the View.
+        :param str map_func: Javascript map function.
+        :param str reduce_func: Optional Javascript reduce function.
+        """
+        if self.get('language', None) == QUERY_LANGUAGE:
+            msg = ('Cannot add a MapReduce view to a '
+                   'design document for query indexes.')
+            raise CloudantException(msg)
+
+        super(CloudantDesignDocument, self).add_view(view_name, map_func,
+                                                     reduce_func, **kwargs)
+
+    def update_view(self, view_name, map_func, reduce_func=None, **kwargs):
+        """
+        Modifies/overwrites an existing MapReduce view definition in the
+        locally cached CloudantDesignDocument View dictionary.
+        To update a JSON query index use
+        :func:`~cloudant.database.CloudantDatabase.delete_query_index` followed
+        by :func:`~cloudant.database.CloudantDatabase.create_query_index`
+        instead.  A CloudantException is raised if an attempt to update a
+        QueryIndexView (JSON query index) using this method is made.
+
+        :param str view_name: Name used to identify the View.
+        :param str map_func: Javascript map function.
+        :param str reduce_func: Optional Javascript reduce function.
+        """
+        view = self.get_view(view_name)
+        if isinstance(view, QueryIndexView):
+            msg = 'Cannot update a query index view using this method.'
+            raise CloudantException(msg)
+
+        super(CloudantDesignDocument, self).update_view(view_name, map_func,
+                                                        reduce_func, **kwargs)
+
+    def delete_view(self, view_name):
+        """
+        Removes an existing MapReduce view definition from the locally cached
+        CloudantDesignDocument View dictionary.  To delete a JSON query index
+        use :func:`~cloudant.database.CloudantDatabase.delete_query_index`
+        instead.  A CloudantException is raised if an attempt to delete a
+        QueryIndexView (JSON query index) using this method is made.
+
+        :param str view_name: Name used to identify the View.
+        """
+        view = self.get_view(view_name)
+        if isinstance(view, QueryIndexView):
+            msg = 'Cannot delete a query index view using this method.'
+            raise CloudantException(msg)
+
+        super(CloudantDesignDocument, self).delete_view(view_name)
+
+    def fetch(self):
+        """
+        Retrieves the remote design document content and populates the locally
+        cached CloudantDesignDocument dictionary.  View content is stored either
+        as View or QueryIndexView objects which are extensions of the ``dict``
+        type.  All other design document data are stored directly as
+        ``dict`` types.
+        """
+        super(CloudantDesignDocument, self).fetch()
+
+        if self.views:
+            for view_name, view_def in iteritems_(self.get('views', dict())):
+                if self.get('language', None) == QUERY_LANGUAGE:
+                    self['views'][view_name] = QueryIndexView(
+                        self,
+                        view_name,
+                        view_def.pop('map', None),
+                        view_def.pop('reduce', None),
+                        **view_def
+                    )
+
+    def save(self):
+        """
+        Saves changes made to the locally cached CloudantDesignDocument object's
+        data structures to the remote database.  If the design document does not
+        exist remotely then it is created in the remote database.  If the object
+        does exist remotely then the design document is updated remotely.  In
+        either case the locally cached CloudantDesignDocument object is also
+        updated accordingly based on the successful response of the operation.
+        """
+        if self.views:
+            for view_name, view in self.iterviews():
+                if not isinstance(view, QueryIndexView):
+                    msg = (
+                        'View {0} must be of type QueryIndexView.'
+                    ).format(view_name)
+                    raise CloudantException(msg)
+
+        super(CloudantDesignDocument, self).save()
+
+    def info(self):
+        """
+        Retrieves the Cloudant design document view information data,
+        returns dictionary
+
+        GET databasename/_design/{ddoc}/_info
+        """
+        super(CloudantDesignDocument, self).info()
