@@ -18,7 +18,7 @@ throughout the library.
 """
 
 import sys
-import os
+import platform
 from collections import Sequence
 import json
 
@@ -33,8 +33,8 @@ USER_AGENT = '/'.join([
     'Python',
     '{0}.{1}.{2}'.format(
         sys.version_info[0], sys.version_info[1], sys.version_info[2]),
-    os.uname()[0],
-    os.uname()[4]
+    platform.system(),
+    platform.machine()
 ])
 
 QUERY_LANGUAGE = 'query'

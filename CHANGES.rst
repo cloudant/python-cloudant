@@ -1,6 +1,6 @@
-2.1.0 (Unreleased)
+2.0.1 (Unreleased)
 ==================
-
+- [FIX] Fixed issue with Windows platform compatibility,replaced usage of os.uname for the user-agent string.
 
 2.0.0 (2016-05-02)
 ==================
