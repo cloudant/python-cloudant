@@ -25,18 +25,17 @@ class DesignDocument(Document):
     """
     Encapsulates a specialized version of a
     :class:`~cloudant.document.Document`.  A DesignDocument object is
-    instantiated with a reference to a database and
-    provides an API to view management, list and show
-    functions, etc.  When instantiating a DesignDocument or
-    when setting the document id (``_id``) field, the value must start with
-    ``_design/``.  If it does not, then ``_design/`` will be prepended to
-    the provided document id value.
+    instantiated with a reference to a :class:`~cloudant.database.CouchDatabase`
+    and provides an API to view management, list and show functions, etc.
+    When instantiating a DesignDocument or when setting the document id
+    (``_id``) field, the value must start with ``_design/``.  If it does not,
+    then ``_design/`` will be prepended to the provided document id value.
 
     Note:  Currently only the view management API exists.  Remaining design
     document functionality will be added later.
 
-    :param database: A database instance used by the DesignDocument.  Can be
-        either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
+    :param CouchDatabase database: A ``CouchDatabase`` instance used to
+        manipulate ``DesignDocument`` content.
     :param str document_id: Optional document id.  If provided and does not
         start with ``_design/``, it will be prepended with ``_design/``.
     """
@@ -116,14 +115,13 @@ class DesignDocument(Document):
             self.setdefault('views', dict())
         else:
             for view_name, view_def in iteritems_(self.get('views', dict())):
-                if self.get('language', None) != QUERY_LANGUAGE:
-                    self['views'][view_name] = View(
-                        self,
-                        view_name,
-                        view_def.pop('map', None),
-                        view_def.pop('reduce', None),
-                        **view_def
-                    )
+                self['views'][view_name] = View(
+                    self,
+                    view_name,
+                    view_def.pop('map', None),
+                    view_def.pop('reduce', None),
+                    **view_def
+                )
 
     def save(self):
         """
@@ -135,11 +133,10 @@ class DesignDocument(Document):
         accordingly based on the successful response of the operation.
         """
         if self.views:
-            if self.get('language', None) != QUERY_LANGUAGE:
-                for view_name, view in self.iterviews():
-                    if isinstance(view, QueryIndexView):
-                        msg = 'View {0} must be of type View.'.format(view_name)
-                        raise CloudantException(msg)
+            for view_name, view in self.iterviews():
+                if isinstance(view, QueryIndexView):
+                    msg = 'View {0} must be of type View.'.format(view_name)
+                    raise CloudantException(msg)
         else:
             # Ensure empty views dict is not saved remotely.
             self.__delitem__('views')
@@ -213,19 +210,17 @@ class CloudantDesignDocument(DesignDocument):
     Encapsulates a Cloudant version of a
     :class:`~cloudant.design_document.DesignDocument`.
     A CloudantDesignDocument object is instantiated with a reference
-    to a Cloudant database and provides an API to query index management,
-    list and show functions, etc.
+    to a :class:`~cloudant.database.CloudantDatabase` and provides
+    an API to query index management, list and show functions, etc.
 
     Note:  Currently only the query view management API exists.  Remaining
     Cloudant design document functionality will be added later.
 
-    :param database: A ``CloudantDatabase`` instance used by the
-        CloudantDesignDocument.
+    :param CloudantDatabase database: A ``CloudantDatabase``  instance used to
+        manipulate ``CloudantDesignDocument`` content.
     :param str document_id: Optional document id.  If provided and does not
         start with ``_design/``, it will be prepended with ``_design/``.
     """
-    def __init__(self, database, document_id=None):
-        super(CloudantDesignDocument, self).__init__(database, document_id)
 
     def add_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
@@ -292,7 +287,7 @@ class CloudantDesignDocument(DesignDocument):
         type.  All other design document data are stored directly as
         ``dict`` types.
         """
-        super(CloudantDesignDocument, self).fetch()
+        Document.fetch(self)
 
         if self.views:
             for view_name, view_def in iteritems_(self.get('views', dict())):
@@ -304,6 +299,18 @@ class CloudantDesignDocument(DesignDocument):
                         view_def.pop('reduce', None),
                         **view_def
                     )
+                else:
+                    self['views'][view_name] = View(
+                        self,
+                        view_name,
+                        view_def.pop('map', None),
+                        view_def.pop('reduce', None),
+                        **view_def
+                    )
+
+        if not self.views:
+            # Ensure views dict exists in locally cached DesignDocument.
+            self.setdefault('views', dict())
 
     def save(self):
         """
@@ -314,7 +321,7 @@ class CloudantDesignDocument(DesignDocument):
         either case the locally cached CloudantDesignDocument object is also
         updated accordingly based on the successful response of the operation.
         """
-        if self.views:
+        if self.views and self.get('language', None) == QUERY_LANGUAGE:
             for view_name, view in self.iterviews():
                 if not isinstance(view, QueryIndexView):
                     msg = (
@@ -322,7 +329,13 @@ class CloudantDesignDocument(DesignDocument):
                     ).format(view_name)
                     raise CloudantException(msg)
 
-        super(CloudantDesignDocument, self).save()
+            Document.save(self)
+
+            if not self.views:
+                # Ensure views dict exists in locally cached DesignDocument.
+                self.setdefault('views', dict())
+        else:
+            super(CloudantDesignDocument, self).save()
 
     def info(self):
         """

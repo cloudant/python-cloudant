@@ -1,7 +1,6 @@
 2.0.1 (Unreleased)
 ==================
 - [FIX] Fixed issue with Windows platform compatibility,replaced usage of os.uname for the user-agent string.
-- [BREAKING] Moved existing query index management into new Cloudant-based design document class.
 
 2.0.0 (2016-05-02)
 ==================
