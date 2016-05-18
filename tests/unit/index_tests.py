@@ -828,7 +828,5 @@ class SearchIndexTests(UnitTestDbBase):
             self.assertEqual(group['total_rows'], 1)
             self.assertIsNotNone(group['by'])
 
-
-
 if __name__ == '__main__':
     unittest.main()

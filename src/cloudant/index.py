@@ -26,8 +26,7 @@ from ._common_util import (
     SPECIAL_INDEX_TYPE,
     TEXT_INDEX_ARGS,
     SEARCH_INDEX_ARGS,
-    codify,
-    execute_search_or_find_query
+    codify
 )
 from .error import CloudantArgumentError, CloudantException
 
@@ -278,8 +277,8 @@ class SearchIndex(dict):
 
     :param DesignDocument ddoc: DesignDocument instance used in part to
         identify the search index.
-    :param str search_index_name: Name used in part to identify the index.
-    :param str search_index_func: Javascript search index function.
+    :param str index_name: Name used in part to identify the index.
+    :param str search_func: Javascript search index function.
         Optional only if executing a search query.
     :param str analyzer: Optional analyzer of the index.  Defaults to standard.
     """
@@ -293,6 +292,8 @@ class SearchIndex(dict):
         ):
         super(SearchIndex, self).__init__()
         self.design_doc = ddoc
+        self._r_session = self.design_doc.r_session
+        self._encoder = self.design_doc.encoder
         self.index_name = index_name
         if search_func is not None:
             self['index'] = codify(search_func)
@@ -331,18 +332,18 @@ class SearchIndex(dict):
             # Set the SearchIndex index property
             search.index = 'function (doc) {  index(\"default\", doc._id); }'
 
-        :param str index_func: Javascript search index function.
+        :param str search_func: Javascript search index function.
 
         :returns: Codified search index function
         """
         return self.get('index')
 
     @index.setter
-    def index(self, index_func):
+    def index(self, search_func):
         """
         Set the Javascript function for this index.
         """
-        self['index'] = codify(index_func)
+        self['index'] = codify(search_func)
 
     @property
     def url(self):
@@ -463,5 +464,12 @@ class SearchIndex(dict):
                 'the query parameter. Add a search query and retry.'
             )
             raise CloudantArgumentError(msg)
-        # Execute search query
-        return execute_search_or_find_query(self.design_doc, self.url, kwargs)
+        # Execute query search
+        headers = {'Content-Type': 'application/json'}
+        resp = self._r_session.post(
+            self.url,
+            headers=headers,
+            data=json.dumps(kwargs, cls=self._encoder)
+        )
+        resp.raise_for_status()
+        return resp.json()
