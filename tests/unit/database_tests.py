@@ -28,7 +28,6 @@ import posixpath
 import os
 import uuid
 
-from cloudant._common_util import search_url
 from cloudant.result import Result, QueryResult
 from cloudant.error import CloudantException, CloudantArgumentError
 from cloudant.document import Document
@@ -1067,24 +1066,12 @@ class CloudantDatabaseTests(UnitTestDbBase):
         self.assertEqual(indexes[2].design_document_id, '_design/ddoc001')
         self.assertEqual(indexes[2].name, 'text-idx-001')
 
-    def test_retrieve_search_query_url(self):
-        """
-        Test constructing the search query test url
-        """
-        url = search_url('searchindex001', self.search_ddoc.document_url)
-        self.assertEqual(
-            url,
-            '/'.join([self.search_ddoc.document_url,
-                      '_search',
-                      'searchindex001'])
-        )
-
     def test_get_search_result_with_invalid_argument(self):
         """
         Test get_search_result by passing in invalid arguments
         """
         try:
-            self.db.get_search_result(self.search_ddoc, 'searchindex001',
+            self.db.get_search_result('searchddoc001', 'searchindex001',
                                       'julia*', foo={'bar': 'baz'})
             self.fail('Above statement should raise an Exception')
         except CloudantArgumentError as err:
@@ -1117,7 +1104,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
 
         for argument in test_data:
             try:
-                self.db.get_search_result(self.search_ddoc, 'searchindex001',
+                self.db.get_search_result('searchddoc001', 'searchindex001',
                                           'julia*', **argument)
                 self.fail('Above statement should raise an Exception')
             except CloudantArgumentError as err:
@@ -1132,7 +1119,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         Test get_search_result by passing an invalid query type
         """
         try:
-            self.db.get_search_result(self.search_ddoc, 'searchindex001', ['blah'])
+            self.db.get_search_result('searchddoc001', 'searchindex001', ['blah'])
             self.fail('Above statement should raise an Exception')
         except CloudantArgumentError as err:
             self.assertTrue(str(err).startswith(
@@ -1144,7 +1131,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         Test get_search_result without providing a search query
         """
         try:
-            self.db.get_search_result(self.search_ddoc, 'searchindex001',
+            self.db.get_search_result('searchddoc001', 'searchindex001',
                                       limit=10, include_docs=True)
             self.fail('Above statement should raise an Exception')
         except TypeError as err:
@@ -1157,7 +1144,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         self.populate_db_with_documents(100)
         resp = self.db.get_search_result(
-            self.search_ddoc,
+            'searchddoc001',
             'searchindex001',
             'julia*',
             limit=5,
@@ -1177,7 +1164,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         self.populate_db_with_documents(100)
         resp = self.db.get_search_result(
-            self.search_ddoc,
+            'searchddoc001',
             'searchindex001',
             'name:julia*',
             group_field='_id',

@@ -291,8 +291,6 @@ class SearchIndex(dict):
         ):
         super(SearchIndex, self).__init__()
         self.design_doc = ddoc
-        self._r_session = self.design_doc.r_session
-        self._encoder = self.design_doc.encoder
         self.index_name = index_name
         self['index'] = codify(search_func)
         self['analyzer'] = analyzer

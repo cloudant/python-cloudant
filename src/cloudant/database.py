@@ -27,7 +27,6 @@ from ._common_util import (
     SEARCH_INDEX_ARGS,
     SPECIAL_INDEX_TYPE,
     TEXT_INDEX_TYPE,
-    search_url,
     python_to_couch
 )
 from .document import Document
@@ -1103,7 +1102,7 @@ class CloudantDatabase(CouchDatabase):
         else:
             return query.result
 
-    def get_search_result(self, ddoc, index_name, query, **kwargs):
+    def get_search_result(self, ddoc_id, index_name, query, **kwargs):
         """
         Retrieves the raw JSON content from the remote database based on the
         search index on the server, using the kwargs provided as query
@@ -1138,8 +1137,7 @@ class CloudantDatabase(CouchDatabase):
                 for row in group['rows']:
                 # Process search index data (in JSON format).
 
-        :param DesignDocument ddoc: DesignDocument instance used in part to
-            identify the search index.
+        :param str ddoc_id: Design document id used to get the search result.
         :param str index_name: Name used in part to identify the index.
         :param query: A Lucene query in the form of ``name:value``.
             If name is omitted, the special value ``default`` is used.
@@ -1216,10 +1214,11 @@ class CloudantDatabase(CouchDatabase):
                 raise CloudantArgumentError(msg)
         # Execute query search
         headers = {'Content-Type': 'application/json'}
+        ddoc = DesignDocument(self, ddoc_id)
         resp = ddoc.r_session.post(
-            search_url(index_name, ddoc.document_url),
+            '/'.join([ddoc.document_url, '_search', index_name]),
             headers=headers,
-            data=json.dumps(data, cls=ddoc.encoder)
+            data=json.dumps(data, cls=self.client.encoder)
         )
         resp.raise_for_status()
         return resp.json()
