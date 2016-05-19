@@ -234,6 +234,21 @@ def codify(code_or_str):
         return _Code(code_or_str)
     return code_or_str
 
+def search_url(index_name, design_document_url):
+    """
+    Constructs and returns the Cloudant Search URL.
+
+    :param index_name Name of the search index.
+    :param design_document_url Design document URL containing the search index.
+
+    :returns: Search URL
+    """
+    return '/'.join([
+        design_document_url,
+        '_search',
+        index_name
+    ])
+
 # Classes
 
 class _Code(str):

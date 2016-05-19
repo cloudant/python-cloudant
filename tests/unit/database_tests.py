@@ -28,6 +28,7 @@ import posixpath
 import os
 import uuid
 
+from cloudant._common_util import search_url
 from cloudant.result import Result, QueryResult
 from cloudant.error import CloudantException, CloudantArgumentError
 from cloudant.document import Document
@@ -640,6 +641,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         super(CloudantDatabaseTests, self).setUp()
         self.db_set_up()
+        self.create_search_index()
 
     def tearDown(self):
         """
@@ -1064,6 +1066,133 @@ class CloudantDatabaseTests(UnitTestDbBase):
         self.assertIsInstance(indexes[2], TextIndex)
         self.assertEqual(indexes[2].design_document_id, '_design/ddoc001')
         self.assertEqual(indexes[2].name, 'text-idx-001')
+
+    def test_retrieve_search_query_url(self):
+        """
+        Test constructing the search query test url
+        """
+        url = search_url('searchindex001', self.search_ddoc.document_url)
+        self.assertEqual(
+            url,
+            '/'.join([self.search_ddoc.document_url,
+                      '_search',
+                      'searchindex001'])
+        )
+
+    def test_get_search_result_with_invalid_argument(self):
+        """
+        Test get_search_result by passing in invalid arguments
+        """
+        try:
+            self.db.get_search_result(self.search_ddoc, 'searchindex001',
+                                      'julia*', foo={'bar': 'baz'})
+            self.fail('Above statement should raise an Exception')
+        except CloudantArgumentError as err:
+            self.assertEqual(str(err), 'Invalid argument: foo')
+
+    def test_get_search_result_with_invalid_value_types(self):
+        """
+        Test get_search_result by passing in invalid value types for
+        query parameters
+        """
+        test_data = [
+            {'bookmark': 1},                    # Should be a basestring
+            {'counts': 'blah'},                 # Should be a list
+            {'drilldown': 'blah'},              # Should be a list
+            {'group_field': ['blah']},          # Should be an basestring
+            {'group_limit': 'int'},             # Should be an int
+            {'group_sort': 'blah'},             # Should be a list
+            {'include_docs': 'blah'},           # Should be an boolean
+            {'limit': 'blah'},                  # Should be an int
+            {'ranges': 1},                      # Should be a dict
+            {'sort': 10},                       # Should be a basestring or list
+            {'stale': ['blah']},                # Should be a basestring
+            {'highlight_fields': 'blah'},       # Should be a list
+            {'highlight_pre_tag': ['blah']},    # Should be a basestring
+            {'highlight_post_tag': 1},          # Should be a basestring
+            {'highlight_number': ['int']},      # Should be an int
+            {'highlight_size': 'blah'},         # Should be an int
+            {'include_fields': 'list'},         # Should be a list
+        ]
+
+        for argument in test_data:
+            try:
+                self.db.get_search_result(self.search_ddoc, 'searchindex001',
+                                          'julia*', **argument)
+                self.fail('Above statement should raise an Exception')
+            except CloudantArgumentError as err:
+                self.assertTrue(str(err).startswith(
+                    'Argument {0} is not an instance of expected type:'.format(
+                        list(argument.keys())[0]
+                    )
+                ))
+
+    def test_get_search_result_with_invalid_query_type(self):
+        """
+        Test get_search_result by passing an invalid query type
+        """
+        try:
+            self.db.get_search_result(self.search_ddoc, 'searchindex001', ['blah'])
+            self.fail('Above statement should raise an Exception')
+        except CloudantArgumentError as err:
+            self.assertTrue(str(err).startswith(
+                'Argument query is not an instance of expected type:'
+            ))
+
+    def test_get_search_result_without_query(self):
+        """
+        Test get_search_result without providing a search query
+        """
+        try:
+            self.db.get_search_result(self.search_ddoc, 'searchindex001',
+                                      limit=10, include_docs=True)
+            self.fail('Above statement should raise an Exception')
+        except TypeError as err:
+            # TypeError message in python 2.7 is different from python 3.5
+            self.assertTrue(str(err).startswith('get_search_result()'))
+
+    def test_get_search_result_executes_search_query(self):
+        """
+        Test get_search_result executes a search query
+        """
+        self.populate_db_with_documents(100)
+        resp = self.db.get_search_result(
+            self.search_ddoc,
+            'searchindex001',
+            'julia*',
+            limit=5,
+            include_docs=True
+        )
+        self.assertEqual(len(resp['rows']), 5)
+        self.assertEqual(resp['total_rows'], 100)
+        for row in resp['rows']:
+            self.assertIsNotNone(row['fields'])
+            self.assertTrue(row['id'].startswith('julia0'))
+            self.assertIsNotNone(row['order'])
+            self.assertIsNotNone(row['doc'])
+
+    def test_get_search_result_executes_search_query_with_group_option(self):
+        """
+        Test get_search_result executes a search query with grouping parameters.
+        """
+        self.populate_db_with_documents(100)
+        resp = self.db.get_search_result(
+            self.search_ddoc,
+            'searchindex001',
+            'name:julia*',
+            group_field='_id',
+            group_limit=5,
+        )
+        # for group parameter options, 'rows' results are within 'groups' key
+        self.assertEqual(len(resp['groups']), 5)
+        self.assertEqual(resp['total_rows'], 100)
+        for group in resp['groups']:
+            for row in group['rows']:
+                self.assertEqual(row['fields'], {u'name': u'julia'})
+                self.assertTrue(row['id'].startswith('julia0'))
+                self.assertIsNotNone(row['order'])
+            self.assertEqual(group['total_rows'], 1)
+            self.assertIsNotNone(group['by'])
 
 if __name__ == '__main__':
     unittest.main()
