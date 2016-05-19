@@ -28,7 +28,8 @@ import os
 import posixpath
 import requests
 
-from cloudant.index import Index, TextIndex, SpecialIndex
+from cloudant._common_util import _Code
+from cloudant.index import Index, TextIndex, SpecialIndex, SearchIndex
 from cloudant.query import Query
 from cloudant.view import QueryIndexView
 from cloudant.design_document import DesignDocument
@@ -352,7 +353,7 @@ class IndexTests(UnitTestDbBase):
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant Search Index tests'
+    'Skipping Cloudant Text Index tests'
     )
 class TextIndexTests(UnitTestDbBase):
     """
@@ -583,6 +584,125 @@ class SpecialIndexTests(unittest.TestCase):
             str(err),
             'Deleting the \"special\" index is not allowed.'
         )
+
+@unittest.skipUnless(
+    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+    'Skipping Cloudant Search Index tests'
+    )
+class SearchIndexTests(UnitTestDbBase):
+    """
+    Search index unit tests
+    """
+
+    def setUp(self):
+        """
+        Set up test attributes
+        """
+        super(SearchIndexTests, self).setUp()
+        self.db_set_up()
+        self.create_search_index()
+
+    def tearDown(self):
+        """
+        Reset test attributes
+        """
+        self.db_tear_down()
+        super(SearchIndexTests, self).tearDown()
+
+    def test_constructor(self):
+        """
+        Test instantiating a SearchIndex
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(
+            ddoc,
+            'searchindex001',
+            'function (doc) { index("default", doc._id); }}'
+            )
+        self.assertEqual(search.design_doc, ddoc)
+        self.assertEqual(search.index_name, 'searchindex001')
+        self.assertIsInstance(search['index'], _Code)
+        self.assertEqual(
+            search['index'],
+            'function (doc) { index("default", doc._id); }}'
+        )
+        self.assertEqual(
+            search['analyzer'],
+            'standard'
+        )
+
+        self.assertEqual(search, {
+            'index': 'function (doc) { index("default", doc._id); }}',
+            'analyzer': 'standard'
+        })
+
+    def test_index_setter(self):
+        """
+        Test that the search index setter works
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(ddoc, 'searchindex001', 'function (doc) {}')
+        self.assertEqual(
+            search.get('index'),
+            'function (doc) {}'
+        )
+        search.index = 'function (doc) { index("default", doc._id); }}'
+        self.assertEqual(
+            search.get('index'),
+            'function (doc) { index("default", doc._id); }}'
+        )
+
+    def test_index_getter(self):
+        """
+        Test that the search index getter works
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(ddoc, 'searchindex001', 'function (doc) {}')
+        self.assertEqual(
+            search.index,
+            'function (doc) {}'
+        )
+        search.index = 'function (doc) { index("default", doc._id); }}'
+        self.assertIsInstance(search.index, _Code)
+        self.assertEqual(
+            search.index,
+            'function (doc) { index("default", doc._id); }}'
+        )
+
+    def test_analyzer_setter(self):
+        """
+        Test that the analyzer setter works
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(ddoc, 'searchindex001',
+                             'function (doc) { index("default", doc._id); }}')
+        self.assertEqual(search.get('analyzer'), 'standard')
+        search.analyzer = 'simple'
+        self.assertEqual(search.get('analyzer'), 'simple')
+
+    def test_analyzer_getter(self):
+        """
+        Test that the analyzer getter works
+        """
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        search = SearchIndex(ddoc, 'searchindex001',
+                             'function (doc) { index("default", doc._id); }}')
+        self.assertEqual(search.analyzer, 'standard')
+        search.analyzer = {
+            "name": "perfield", "default": "english",
+            "fields": {
+                "spanish": "spanish",
+                "german": "german"
+            }
+        }
+        self.assertEqual(search.analyzer,
+        {
+            "name": "perfield", "default": "english",
+            "fields": {
+                "spanish": "spanish",
+                "german": "german"
+            }
+        })
 
 if __name__ == '__main__':
     unittest.main()

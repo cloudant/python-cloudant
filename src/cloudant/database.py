@@ -21,15 +21,18 @@ import posixpath
 
 from requests.exceptions import HTTPError
 
-from ._2to3 import url_quote_plus
+from ._2to3 import url_quote_plus, iteritems_
+from ._common_util import (
+    JSON_INDEX_TYPE,
+    SEARCH_INDEX_ARGS,
+    SPECIAL_INDEX_TYPE,
+    TEXT_INDEX_TYPE,
+    python_to_couch
+)
 from .document import Document
 from .design_document import DesignDocument
 from .view import View
 from .index import Index, TextIndex, SpecialIndex
-from ._common_util import JSON_INDEX_TYPE
-from ._common_util import TEXT_INDEX_TYPE
-from ._common_util import SPECIAL_INDEX_TYPE
-from ._common_util import python_to_couch
 from .query import Query
 from .error import CloudantException, CloudantArgumentError
 from .result import Result, QueryResult
@@ -1098,3 +1101,124 @@ class CloudantDatabase(CouchDatabase):
             return QueryResult(query, **kwargs)
         else:
             return query.result
+
+    def get_search_result(self, ddoc_id, index_name, query, **kwargs):
+        """
+        Retrieves the raw JSON content from the remote database based on the
+        search index on the server, using the kwargs provided as query
+        parameters.
+
+        Example for search queries:
+
+        .. code-block:: python
+
+            # Assuming that 'searchindex001' exists as part of the
+            # design document ddoc in the remote database...
+            # Retrieve documents where the Lucene field name is 'name' and
+            # the value is 'julia*'
+            query = 'name:julia*'
+            resp = db.get_search_result(ddoc, 'searchindex001', query,
+                                        include_docs=True)
+            for row in resp['rows']:
+                # Process search index data (in JSON format).
+
+        Example if the search query requires grouping by using
+        the ``group_field`` parameter:
+
+        .. code-block:: python
+
+            # Assuming that 'searchindex001' exists as part of the
+            # design document ddoc in the remote database...
+            query = 'julia*'
+            # Retrieve JSON response content, limiting response to 10 documents
+            resp = db.get_search_result(ddoc, 'searchindex001',
+                                        group_field='name', limit=10)
+            for group in resp['groups']:
+                for row in group['rows']:
+                # Process search index data (in JSON format).
+
+        :param str ddoc_id: Design document id used to get the search result.
+        :param str index_name: Name used in part to identify the index.
+        :param query: A Lucene query in the form of ``name:value``.
+            If name is omitted, the special value ``default`` is used.
+        :param str bookmark: A string that enables you to specify which page of
+            results you require. Only valid for queries that do not specify the
+            ``group_field`` query parameter.
+        :param list counts: A JSON array of field names for which counts should
+            be produced. The response will contain counts for each unique value
+            of this field name among the documents matching the search query.
+            Requires the index to have faceting enabled.
+        :param list drilldown:  A list of fields that each define a pair of a
+            field name and a value. This field can be used several times.
+            The search will only match documents that have the given value in
+            the field name. It differs from using ``query=fieldname:value``
+            only in that the values are not analyzed.
+        :param str group_field: A string field by which to group search matches.
+            Fields containing other data (numbers, objects, arrays)
+            can not be used.
+        :param int group_limit: Maximum group count.
+            This field can only be used if ``group_field`` query parameter
+            is specified.
+        :param group_sort: A JSON field that defines the order of the
+            groups in a search using ``group_field``. The default sort order
+            is relevance. This field can have the same values as the sort field,
+            so single fields as well as arrays of fields are supported.
+        :param int limit: Limit the number of the returned documents to the
+            specified count. In case of a grouped search, this parameter limits
+            the number of documents per group.
+        :param ranges: A JSON facet syntax that reuses the standard Lucene
+            syntax to return counts of results which fit into each specified
+            category. Inclusive range queries are denoted by brackets.
+            Exclusive range queries are denoted by curly brackets.
+            For example ``ranges={"price":{"cheap":"[0 TO 100]"}}`` has an
+            inclusive range of 0 to 100.
+            Requires the index to have faceting enabled.
+        :param sort: A JSON string of the form ``fieldname<type>`` for ascending
+            or ``-fieldname<type>`` for descending sort order. Fieldname is the
+            name of a string or number field and type is either number or string
+            or a JSON array of such strings. The type part is optional and
+            defaults to number.
+        :param str stale: Allow the results from a stale index to be used. This
+            makes the request return immediately, even if the index has not been
+            completely built yet.
+        :param list highlight_fields: A list of fields which should be
+            highlighted.
+        :param str highlight_pre_tag: A string inserted before the highlighted
+            word in the highlights output.  Defaults to ``<em>``.
+        :param str highlight_post_tag: A string inserted after the highlighted
+            word in the highlights output.  Defaults to ``<em>``.
+        :param int highlight_number: A number of fragments returned in
+            highlights. If the search term occurs less often than the number of
+            fragments specified, longer fragments are returned.  Default is 1.
+        :param int highlight_size: A number of characters in each fragment for
+            highlights.  Defaults to 100 characters.
+        :param list include_fields: A list of field names to include in search
+            results. Any fields included must have been indexed with the
+            ``store:true`` option.
+
+        :returns: Search query result data in JSON format
+        """
+        data = dict(self)
+        data.update(query=query)
+        data.update(kwargs)
+
+        # Validate query arguments and values
+        for key, val in iteritems_(data):
+            if key not in list(SEARCH_INDEX_ARGS.keys()):
+                msg = 'Invalid argument: {0}'.format(key)
+                raise CloudantArgumentError(msg)
+            if not isinstance(val, SEARCH_INDEX_ARGS[key]):
+                msg = (
+                    'Argument {0} is not an instance of expected type: {1}'
+                ).format(key, SEARCH_INDEX_ARGS[key])
+                raise CloudantArgumentError(msg)
+        # Execute query search
+        headers = {'Content-Type': 'application/json'}
+        ddoc = DesignDocument(self, ddoc_id)
+        resp = ddoc.r_session.post(
+            '/'.join([ddoc.document_url, '_search', index_name]),
+            headers=headers,
+            data=json.dumps(data, cls=self.client.encoder)
+        )
+        resp.raise_for_status()
+        return resp.json()

@@ -20,10 +20,13 @@ import posixpath
 import json
 
 from ._2to3 import STRTYPE, iteritems_
-from ._common_util import JSON_INDEX_TYPE
-from ._common_util import TEXT_INDEX_TYPE
-from ._common_util import SPECIAL_INDEX_TYPE
-from ._common_util import TEXT_INDEX_ARGS
+from ._common_util import (
+    JSON_INDEX_TYPE,
+    TEXT_INDEX_TYPE,
+    SPECIAL_INDEX_TYPE,
+    TEXT_INDEX_ARGS,
+    codify
+)
 from .error import CloudantArgumentError, CloudantException
 
 class Index(object):
@@ -262,3 +265,79 @@ class SpecialIndex(Index):
         """
         msg = 'Deleting the \"special\" index is not allowed.'
         raise CloudantException(msg)
+
+class SearchIndex(dict):
+    """
+    Encapsulates a SearchIndex as a dictionary based object, exposing the
+    search index function and analyzer as attributes. A SearchIndex object is
+    instantiated with a reference to a DesignDocument and is typically used as
+    part of the :class:`~cloudant.design_document.DesignDocument`
+    search index management API.
+
+    :param DesignDocument ddoc: DesignDocument instance used in part to
+        identify the search index.
+    :param str index_name: Name used in part to identify the index.
+    :param str search_func: Javascript search index function.
+        Optional only if executing a search query.
+    :param str analyzer: Optional analyzer of the index.  Defaults to standard.
+    """
+
+    def __init__(
+            self,
+            ddoc,
+            index_name,
+            search_func,
+            analyzer='standard'
+        ):
+        super(SearchIndex, self).__init__()
+        self.design_doc = ddoc
+        self.index_name = index_name
+        self['index'] = codify(search_func)
+        self['analyzer'] = analyzer
+
+    @property
+    def analyzer(self):
+        """
+        Get the analyzer for this index.  Default value is a ``standard``
+        analyzer.  For more details on supported analyzers for a Cloudant
+        search index, see the analyzer
+        `documentation <https://docs.cloudant.com/search.html#analyzers>`_.
+
+        :param str analyzer: Analyzer for this index.
+
+        :returns: Search index analyzer
+        """
+        return self.get('analyzer')
+
+    @analyzer.setter
+    def analyzer(self, analyzer):
+        """
+        Set the analyzer for this index.
+        """
+        self['analyzer'] = analyzer
+
+    @property
+    def index(self):
+        """
+        Get the Javascript function for this index.
+
+        For example:
+
+        .. code-block:: python
+
+            # Set the SearchIndex index property
+            search.index = 'function (doc) {  index(\"default\", doc._id); }'
+
+        :param str search_func: Javascript search index function.
+
+        :returns: Codified search index function
+        """
+        return self.get('index')
+
+    @index.setter
+    def index(self, search_func):
+        """
+        Set the Javascript function for this index.
+        """
+        self['index'] = codify(search_func)
+
