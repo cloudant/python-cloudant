@@ -11,7 +11,7 @@ Cloudant Python Client
 .. |docs| image:: https://readthedocs.org/projects/pip/badge/
     :alt: docs
     :scale: 100%
-    :target: http://python-cloudant.readthedocs.io/en/latest/default.html
+    :target: http://python-cloudant.readthedocs.io
 
 .. |compatibility| image:: https://img.shields.io/badge/python-2.7%2C%203.5-blue.svg
     :alt: compatibility
