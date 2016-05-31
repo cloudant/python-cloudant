@@ -1,6 +1,8 @@
 2.0.1 (Unreleased)
 ==================
 - [FIX] Fixed issue with Windows platform compatibility,replaced usage of os.uname for the user-agent string.
+- [FIX] Fixed readthedocs link in README.rst to resolve to documentation home page.
+- [IMPROVED] Updated documentation links from python-cloudant.readthedocs.org to python-cloudant.readthedocs.io.
 
 2.0.0 (2016-05-02)
 ==================

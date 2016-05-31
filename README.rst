@@ -11,12 +11,12 @@ Cloudant Python Client
 .. |docs| image:: https://readthedocs.org/projects/pip/badge/
     :alt: docs
     :scale: 100%
-    :target: http://python-cloudant.readthedocs.org
+    :target: http://python-cloudant.readthedocs.io/en/latest/default.html
 
 .. |compatibility| image:: https://img.shields.io/badge/python-2.7%2C%203.5-blue.svg
     :alt: compatibility
     :scale: 100%
-    :target: http://python-cloudant.readthedocs.org/en/latest/compatibility.html
+    :target: http://python-cloudant.readthedocs.io/en/latest/compatibility.html
 
 This is the official Cloudant library for Python.
 
@@ -42,19 +42,19 @@ In order to install the latest version, execute
 Getting started
 ===============
 
-See `Getting started (readthedocs.org) <http://python-cloudant.readthedocs.org/en/latest/getting_started.html>`_
+See `Getting started (readthedocs.io) <http://python-cloudant.readthedocs.io/en/latest/getting_started.html>`_
 
 =============
 API Reference
 =============
 
-See `API reference docs (readthedocs.org) <http://python-cloudant.readthedocs.org/en/latest/cloudant.html>`_
+See `API reference docs (readthedocs.io) <http://python-cloudant.readthedocs.io/en/latest/cloudant.html>`_
 
 =====================
 Related Documentation
 =====================
 
-* `Cloudant Python client library docs (readthedocs.org) <http://python-cloudant.readthedocs.org>`_
+* `Cloudant Python client library docs (readthedocs.io) <http://python-cloudant.readthedocs.io>`_
 * `Cloudant documentation <http://docs.cloudant.com/>`_
 * `Cloudant for developers <https://cloudant.com/for-developers/>`_
 
