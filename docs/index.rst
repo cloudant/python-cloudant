@@ -1,7 +1,14 @@
-index
-=====
+python-cloudant documentation
+=============================
 
-.. automodule:: cloudant.index
-    :members:
-    :undoc-members:
-    :show-inheritance:
+This is the official Cloudant client library for Python.
+
+.. toctree::
+   :maxdepth: 4
+
+   compatibility
+   getting_started
+   cloudant
+
+* :ref:`genindex`
+

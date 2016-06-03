@@ -10,7 +10,7 @@ Modules
    design_document
    view
    query
-   index
+   module_index
    result
    replicator
    feed
