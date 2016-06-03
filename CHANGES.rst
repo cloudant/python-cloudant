@@ -1,3 +1,7 @@
+2.1.0 (Unreleased)
+==================
+
+
 2.0.3 (2016-06-03)
 ==================
 - [FIX] Fixed the python-cloudant readthedocs documentation home page to resolve correctly.
