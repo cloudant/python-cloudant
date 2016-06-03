@@ -1,5 +1,6 @@
 2.1.0 (Unreleased)
 ==================
+- [NEW] Added support for Cloudant Search execution.
 
 
 2.0.3 (2016-06-03)
