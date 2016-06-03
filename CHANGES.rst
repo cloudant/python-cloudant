@@ -1,3 +1,7 @@
+2.0.3 (2016-06-03)
+==================
+- [FIX] Fixed the python-cloudant readthedocs documentation home page to resolve correctly.
+
 2.0.2 (2016-06-02)
 ==================
 - [IMPROVED] Updated documentation links from python-cloudant.readthedocs.org to python-cloudant.readthedocs.io.
