@@ -1035,5 +1035,31 @@ class DesignDocumentTests(UnitTestDbBase):
                 '{"store": true}); }\n}'}
         )
 
+    def test_rewrite_rule(self):
+        """
+        Test that design document URL is rewritten to the expected test document.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc['rewrites'] = [
+            {"from": "",
+             "to": "/../../rewrite_doc",
+             "method": "GET",
+             "query": {}
+             }
+        ]
+        self.assertIsInstance(ddoc.rewrites, list)
+        self.assertIsInstance(ddoc.rewrites[0], dict)
+        ddoc.save()
+        doc = Document(self.db, 'rewrite_doc')
+        doc.save()
+        resp = self.client.r_session.get('/'.join([ddoc.document_url, '_rewrite']))
+        self.assertEquals(
+            resp.json(),
+            {
+                '_id': 'rewrite_doc',
+                '_rev': doc['_rev']
+            }
+        )
+
 if __name__ == '__main__':
     unittest.main()
