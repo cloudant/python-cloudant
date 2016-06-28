@@ -234,6 +234,31 @@ def codify(code_or_str):
         return _Code(code_or_str)
     return code_or_str
 
+def get_docs(r_session, url, encoder=None, **params):
+    """
+    Provides a helper for functions that require GET or POST requests
+    with a JSON, text, or raw response containing documents.
+
+    :param r_session: Authentication session from the client
+    :param str url: URL containing the endpoint
+    :param JSONEncoder encoder: Custom encoder from the client
+
+    :returns: Raw response content from the specified endpoint
+    """
+    keys_list = params.pop('keys', None)
+    keys = None
+    if keys_list:
+        keys = json.dumps({'keys': keys_list}, cls=encoder)
+    f_params = python_to_couch(params)
+
+    resp = None
+    if keys:
+        resp = r_session.post(url, params=f_params, data=keys)
+    else:
+        resp = r_session.get(url, params=f_params)
+    resp.raise_for_status()
+    return resp
+
 # Classes
 
 class _Code(str):
