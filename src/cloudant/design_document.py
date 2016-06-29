@@ -48,6 +48,44 @@ class DesignDocument(Document):
         self.setdefault('indexes', dict())
 
     @property
+    def rewrites(self):
+        """
+        Provides an accessor property to a list of dictionaries with rewrite
+        rules in the locally cached DesignDocument.  Each rule for URL rewriting
+        is a JSON object with four fields: ``from``, ``to``, ``method``,
+        and ``query``.
+
+        Note: Requests that match the rewrite rules must have a URL path that
+        starts with ``/$DATABASE/_design/doc/_rewrite``.
+
+        Rewrite rule example:
+
+        .. code-block:: python
+
+            # Add the rule to ``rewrites`` and save the design document
+            ddoc = DesignDocument(self.db, '_design/ddoc001')
+            ddoc['rewrites'] = [
+                {"from": "/old/topic",
+                 "to": "/new/",
+                 "method": "GET",
+                 "query": {}
+                 }
+            ]
+            ddoc.save()
+
+        Once the rewrite rule is saved to the remote database, the GET
+        request URL ``/$DATABASE/_design/doc/_rewrite/old/topic?k=v`` would be
+        rewritten as ``/$DATABASE/_design/doc/_rewrite/new?k=v``.
+
+        For more details on URL rewriting, see the `rewrite rules
+        documentation <https://docs.cloudant.com/design_documents.html
+        #rewrite-rules>`_.
+
+        :returns: List of dictionaries containing rewrite rules as key/value
+        """
+        return self.get('rewrites')
+
+    @property
     def views(self):
         """
         Provides an accessor property to the View dictionary in the locally

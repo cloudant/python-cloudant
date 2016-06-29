@@ -2,6 +2,7 @@
 ==================
 - [NEW] Added support for Cloudant Search execution.
 - [NEW] Added support for Cloudant Search index management.
+- [NEW] Added ``rewrites`` accessor property for URL rewriting.
 
 2.0.3 (2016-06-03)
 ==================
