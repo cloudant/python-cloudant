@@ -234,7 +234,7 @@ def codify(code_or_str):
         return _Code(code_or_str)
     return code_or_str
 
-def get_docs(r_session, url, encoder=None, **params):
+def get_docs(r_session, url, encoder=None, headers=None, **params):
     """
     Provides a helper for functions that require GET or POST requests
     with a JSON, text, or raw response containing documents.
@@ -242,6 +242,7 @@ def get_docs(r_session, url, encoder=None, **params):
     :param r_session: Authentication session from the client
     :param str url: URL containing the endpoint
     :param JSONEncoder encoder: Custom encoder from the client
+    :param dict headers: Optional HTTP Headers to send with the request
 
     :returns: Raw response content from the specified endpoint
     """
@@ -253,9 +254,9 @@ def get_docs(r_session, url, encoder=None, **params):
 
     resp = None
     if keys:
-        resp = r_session.post(url, params=f_params, data=keys)
+        resp = r_session.post(url, headers=headers, params=f_params, data=keys)
     else:
-        resp = r_session.get(url, params=f_params)
+        resp = r_session.get(url, headers=headers, params=f_params)
     resp.raise_for_status()
     return resp
 

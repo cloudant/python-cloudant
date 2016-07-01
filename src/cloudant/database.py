@@ -762,6 +762,49 @@ class CouchDatabase(dict):
 
         return resp.json()
 
+    def get_list_function_result(self, ddoc_id, list_name, view_name, **kwargs):
+        """
+        Retrieves a customized MapReduce view result from the specified
+        database based on the list function provided.  List functions are
+        used, for example,  when you want to access Cloudant directly
+        from a browser, and need data to be returned in a different
+        format, such as HTML.
+
+        Note: All query parameters for View requests are supported.
+        See :class:`~cloudant.database.get_view_result` for
+        all supported query parameters.
+
+        For example:
+
+        .. code-block:: python
+
+            # Assuming that 'view001' exists as part of the
+            # 'ddoc001' design document in the remote database...
+            # Retrieve documents where the list function is 'list1'
+            resp = db.get_list_result('ddoc001', 'list1', 'view001', limit=10)
+            for row in resp['rows']:
+                # Process data (in text format).
+
+        For more detail on list functions, refer to the
+        `Cloudant documentation <https://docs.cloudant.com/
+        design_documents.html#list-functions>`_.
+
+        :param str ddoc_id: Design document id used to get result.
+        :param str list_name: Name used in part to identify the
+            list function.
+        :param str view_name: Name used in part to identify the view.
+
+        :return: Formatted view result data in text format
+        """
+        ddoc = DesignDocument(self, ddoc_id)
+        headers = {'Content-Type': 'application/json'}
+        resp = get_docs(self.r_session,
+                        '/'.join([ddoc.document_url, '_list', list_name, view_name]),
+                        self.client.encoder,
+                        headers,
+                        **kwargs)
+        return resp.text
+
 class CloudantDatabase(CouchDatabase):
     """
     Encapsulates a Cloudant database.  A CloudantDatabase object is

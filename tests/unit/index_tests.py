@@ -145,7 +145,9 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}}}
+                                                    'w': 2}}},
+                 'lists': {}
+                 }
             )
 
     def test_create_an_index_without_ddoc_index_name(self):
@@ -172,7 +174,9 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}}}
+                                                    'w': 2}}},
+                 'lists': {}
+                 }
             )
 
     def test_create_an_index_with_empty_ddoc_index_name(self):
@@ -199,7 +203,9 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}}}
+                                                    'w': 2}}},
+                 'lists': {}
+                 }
             )
 
     def test_create_an_index_using_design_prefix(self):
@@ -226,7 +232,9 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}}}
+                                                    'w': 2}}},
+                 'lists': {}
+                 }
             )
 
     def test_create_fails_due_to_ddocid_validation(self):
@@ -427,7 +435,9 @@ class TextIndexTests(UnitTestDbBase):
                                 'selector': {}},
                       'analyzer': {'name': 'perfield',
                                    'default': 'keyword',
-                                   'fields': {'$default': 'standard'}}}}}
+                                   'fields': {'$default': 'standard'}}}},
+                 'lists': {}
+                 }
             )
 
     def test_create_a_search_index_with_kwargs(self):
@@ -464,7 +474,9 @@ class TextIndexTests(UnitTestDbBase):
                                 'selector': {}},
                       'analyzer': {'name': 'perfield',
                                    'default': 'keyword',
-                                   'fields': {'$default': 'german'}}}}}
+                                   'fields': {'$default': 'german'}}}},
+                 'lists': {}
+                 }
             )
 
     def test_create_a_search_index_invalid_argument(self):

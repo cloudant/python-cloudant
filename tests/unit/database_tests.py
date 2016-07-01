@@ -254,7 +254,7 @@ class DatabaseTests(UnitTestDbBase):
         # Get an empty design document object that does not exist remotely
         local_ddoc = self.db.get_design_document('_design/ddoc01')
         self.assertEqual(local_ddoc, {'_id': '_design/ddoc01', 'indexes': {},
-                                      'views': {}})
+                                      'views': {}, 'lists': {}})
         # Add the design document to the database
         map_func = 'function(doc) {\n emit(doc._id, 1); \n}'
         local_ddoc.add_view('view01', map_func)
@@ -625,6 +625,48 @@ class DatabaseTests(UnitTestDbBase):
         self.assertFalse(changes._raw_data)
         self.assertDictEqual(changes._options, {'feed': 'continuous'})
 
+    def test_get_list_function_result_with_invalid_argument(self):
+        """
+        Test get_list_result by passing in invalid arguments
+        """
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.get_list_function_result('ddoc001', 'list001', 'view001', foo={'bar': 'baz'})
+        err = cm.exception
+        self.assertEqual(str(err), 'Invalid argument foo')
+
+    def test_get_list_function_result(self):
+        """
+        Test get_list_result executes a list function against a view's MapReduce
+        function.
+        """
+        self.populate_db_with_documents()
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_view('view001', 'function (doc) {\n  emit(doc._id, 1);\n}')
+        ddoc.add_list_function(
+            'list001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.save()
+        # Execute list function
+        resp = self.db.get_list_function_result(
+            '_design/ddoc001',
+            'list001',
+            'view001',
+            limit=5
+        )
+        self.assertEqual(
+            resp,
+            '<html><body><ol>\n'
+            '<li>julia000:1</li>\n'
+            '<li>julia001:1</li>\n'
+            '<li>julia002:1</li>\n'
+            '<li>julia003:1</li>\n'
+            '<li>julia004:1</li>\n'
+            '</ol></body></html>'
+        )
+
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant specific Database tests'
@@ -857,6 +899,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                 {'_id': index.design_document_id,
                  '_rev': ddoc['_rev'],
                  'indexes': {},
+                 'lists': {},
                  'language': 'query',
                  'views': {index.name: {'map': {'fields': {'name': 'asc', 
                                                            'age': 'asc'}},
@@ -883,6 +926,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                  '_rev': ddoc['_rev'],
                  'language': 'query',
                  'views': {},
+                 'lists': {},
                  'indexes': {index.name: {'index': {'index_array_lengths': True,
                                 'fields': [{'name': 'name', 'type': 'string'},
                                            {'name': 'age', 'type': 'number'}],
@@ -907,6 +951,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                  '_rev': ddoc['_rev'],
                  'language': 'query',
                  'views': {},
+                 'lists': {},
                  'indexes': {index.name: {'index': {'index_array_lengths': True,
                                 'fields': 'all_fields',
                                 'default_field': {},
@@ -942,6 +987,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                 {'_id': '_design/ddoc001',
                  '_rev': ddoc['_rev'],
                  'language': 'query',
+                 'lists': {},
                  'views': {'json-index-001': {
                                 'map': {'fields': {'name': 'asc', 
                                                    'age': 'asc'}},

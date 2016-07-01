@@ -309,6 +309,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertEqual(ddoc_remote, {
             '_id': '_design/ddoc001',
             '_rev': ddoc['_rev'],
+            'lists': {},
             'indexes': {},
             'views': {
                 'view001': {'map': view_map, 'reduce': view_reduce},
@@ -331,7 +332,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views'})
+                         {'_id', '_rev', 'indexes', 'views', 'lists'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -348,6 +349,7 @@ class DesignDocumentTests(UnitTestDbBase):
         data = {
             '_id': '_design/ddoc001',
             'indexes': {},
+            'lists': {},
             'language': 'query',
             'views': {
                 'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
@@ -377,6 +379,7 @@ class DesignDocumentTests(UnitTestDbBase):
         data = {
             '_id': '_design/ddoc001',
             'language': 'query',
+            'lists': {},
             'indexes': {'index001':
                      {'index': {'index_array_lengths': True,
                                 'fields': [{'name': 'name', 'type': 'string'},
@@ -409,6 +412,7 @@ class DesignDocumentTests(UnitTestDbBase):
         data = {
             '_id': '_design/ddoc001',
             'language': 'query',
+            'lists': {},
             'views': {
                 'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
                             'reduce': '_count',
@@ -597,7 +601,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         # Ensure that locally cached DesignDocument contains an
         # empty views dict.
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views', 'lists'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         self.assertEqual(ddoc.views, {})
@@ -868,7 +872,8 @@ class DesignDocumentTests(UnitTestDbBase):
                 'search002': {'index': search_index, 'analyzer': 'simple'},
                 'search003': {'index': search_index, 'analyzer': 'standard'}
             },
-            'views': {}
+            'views': {},
+            'lists': {}
         })
 
     def test_fetch_no_search_index(self):
@@ -885,7 +890,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views'})
+                         {'_id', '_rev', 'indexes', 'views', 'lists'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -968,7 +973,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         # Ensure that locally cached DesignDocument contains an
         # empty search indexes and views dict.
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views', 'lists'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         # Ensure that remotely saved design document does not
@@ -1059,6 +1064,251 @@ class DesignDocumentTests(UnitTestDbBase):
                 '_id': 'rewrite_doc',
                 '_rev': doc['_rev']
             }
+        )
+
+    def test_add_a_list_function(self):
+        """
+        Test that adding a list function adds a list object to
+        the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        self.assertEqual(ddoc.get('lists'), {})
+        ddoc.add_list_function(
+            'list001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        self.assertListEqual(list(ddoc.get('lists').keys()), ['list001'])
+        self.assertEqual(
+            ddoc.get('lists'),
+            {'list001': 'function(head, req) { provides(\'html\', function() '
+             '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+             '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+             'html += \'</ol></body></html>\'; return html; }); }'}
+         )
+
+    def test_adding_existing_list_function(self):
+        """
+        Test that adding an existing list function fails as expected.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_list_function(
+            'list001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        with self.assertRaises(CloudantArgumentError) as cm:
+            ddoc.add_list_function(
+                'list001',
+                'function (doc) { existing list }'
+            )
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'A list with name list001 already exists in this design doc'
+        )
+
+    def test_update_a_list_function(self):
+        """
+        Test that updating a list function updates the contents of the correct
+        list object in the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_list_function('list001', 'not-a-valid-list-function')
+        self.assertEqual(
+            ddoc.get('lists')['list001'],
+            'not-a-valid-list-function'
+        )
+        ddoc.update_list_function(
+            'list001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        self.assertEqual(
+            ddoc.get('lists')['list001'],
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+
+    def test_update_non_existing_list_function(self):
+        """
+        Test that updating a non-existing list function fails as expected.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        with self.assertRaises(CloudantArgumentError) as cm:
+            ddoc.update_list_function(
+                'list001',
+                'function(head, req) { provides(\'html\', function() '
+                '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                'html += \'</ol></body></html>\'; return html; }); }'
+            )
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'A list with name list001 does not exist in this design doc'
+        )
+
+    def test_delete_a_list_function(self):
+        """
+        Test deleting a list function from the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_list_function(
+            'list001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        self.assertEqual(
+            ddoc.get('lists')['list001'],
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        ddoc.delete_list_function('list001')
+        self.assertEqual(ddoc.get('lists'), {})
+
+    def test_fetch_list_functions(self):
+        """
+        Ensure that the document fetch from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing list functions.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        list_func = ('function(head, req) { provides(\'html\', function() '
+                     '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                     '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                     'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.add_list_function('list001', list_func)
+        ddoc.add_list_function('list002', list_func)
+        ddoc.add_list_function('list003', list_func)
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        self.assertNotEqual(ddoc_remote, ddoc)
+        ddoc_remote.fetch()
+        self.assertEqual(ddoc_remote, ddoc)
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote, {
+            '_id': '_design/ddoc001',
+            '_rev': ddoc['_rev'],
+            'lists': {
+                'list001': list_func,
+                'list002': list_func,
+                'list003': list_func
+            },
+            'indexes': {},
+            'views': {}
+        })
+
+    def test_fetch_no_list_functions(self):
+        """
+        Ensure that the document fetched from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing no list functions.
+        The :func:`~cloudant.design_document.DesignDocument.fetch` function
+        adds the ``lists`` key in the locally cached DesignDocument if
+        list functions do not exist in the remote design document.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        ddoc_remote.fetch()
+        self.assertEqual(set(ddoc_remote.keys()),
+                         {'_id', '_rev', 'indexes', 'views', 'lists'})
+        self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
+        self.assertEqual(ddoc_remote.lists, {})
+
+    def test_save_with_no_list_functions(self):
+        """
+        Tests the functionality when saving a design document without list functions.
+        Both the locally cached and remote DesignDocument should not
+        include the empty lists sub-document.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.save()
+        # Ensure that locally cached DesignDocument contains lists dict
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'lists', 'indexes', 'views'})
+        self.assertEqual(ddoc['_id'], '_design/ddoc001')
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+        # Ensure that remotely saved design document does not
+        # include a lists sub-document.
+        resp = self.client.r_session.get(ddoc.document_url)
+        raw_ddoc = resp.json()
+        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
+        self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
+        self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
+
+    def test_iterating_over_list_functions(self):
+        """
+        Test iterating over list functions within the DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        list_func = ('function(head, req) { provides(\'html\', function() '
+                     '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                     '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                     'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.add_list_function('list001', list_func)
+        ddoc.add_list_function('list002', list_func)
+        ddoc.add_list_function('list003', list_func)
+        list_names = []
+        for list_name, list_func in ddoc.iterlists():
+            list_names.append(list_name)
+        self.assertTrue(
+            all(x in list_names for
+                x in ['list001', 'list002', 'list003'])
+        )
+
+    def test_listing_list_functions(self):
+        """
+        Test retrieving a list of list function names from DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        list_func = ('function(head, req) { provides(\'html\', function() '
+                     '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                     '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                     'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.add_list_function('list001', list_func)
+        ddoc.add_list_function('list002', list_func)
+        ddoc.add_list_function('list003', list_func)
+        self.assertTrue(
+            all(x in ddoc.list_list_functions() for x in [
+                'list001',
+                'list002',
+                'list003'
+            ])
+        )
+
+    def test_get_list_function(self):
+        """
+        Test retrieval of a list function from the DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        list_func = ('function(head, req) { provides(\'html\', function() '
+                     '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                     '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                     'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.add_list_function('list001', list_func)
+        ddoc.add_list_function('list002', list_func)
+        ddoc.add_list_function('list003', list_func)
+        self.assertEqual(
+            ddoc.get_list_function('list002'),
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
         )
 
 if __name__ == '__main__':
