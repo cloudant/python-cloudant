@@ -17,10 +17,9 @@ API module for interacting with a view in a design document.
 """
 import contextlib
 import posixpath
-import json
 
 from ._2to3 import STRTYPE
-from ._common_util import python_to_couch, codify
+from ._common_util import codify, get_docs
 from .result import Result
 from .error import CloudantArgumentError, CloudantException
 
@@ -225,15 +224,10 @@ class View(dict):
 
         :returns: View result data in JSON format
         """
-        params = python_to_couch(kwargs)
-        keys_list = params.pop('keys', None)
-        resp = None
-        if keys_list:
-            keys = json.dumps({'keys': keys_list})
-            resp = self._r_session.post(self.url, params=params, data=keys)
-        else:
-            resp = self._r_session.get(self.url, params=params)
-        resp.raise_for_status()
+        resp = get_docs(self._r_session,
+                        self.url,
+                        self.design_doc.encoder,
+                        **kwargs)
         return resp.json()
 
     @contextlib.contextmanager

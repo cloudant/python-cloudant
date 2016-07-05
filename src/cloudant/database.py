@@ -27,8 +27,7 @@ from ._common_util import (
     SEARCH_INDEX_ARGS,
     SPECIAL_INDEX_TYPE,
     TEXT_INDEX_TYPE,
-    python_to_couch
-)
+    get_docs)
 from .document import Document
 from .design_document import DesignDocument
 from .view import View
@@ -363,16 +362,10 @@ class CouchDatabase(dict):
         :returns: Raw JSON response content from ``_all_docs`` endpoint
 
         """
-        all_docs_url = posixpath.join(self.database_url, '_all_docs')
-        params = python_to_couch(kwargs)
-        keys_list = params.pop('keys', None)
-        resp = None
-        if keys_list:
-            keys = json.dumps({'keys': keys_list})
-            resp = self.r_session.post(all_docs_url, params=params, data=keys)
-        else:
-            resp = self.r_session.get(all_docs_url, params=params)
-        resp.raise_for_status()
+        resp = get_docs(self.r_session,
+                        '/'.join([self.database_url, '_all_docs']),
+                        self.client.encoder,
+                        **kwargs)
         return resp.json()
 
     @contextlib.contextmanager
