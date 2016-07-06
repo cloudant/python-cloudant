@@ -15,3 +15,4 @@ Modules
    replicator
    feed
    error
+   adapters
