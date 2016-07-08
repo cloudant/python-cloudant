@@ -44,7 +44,7 @@ class DesignDocument(Document):
         if document_id and not document_id.startswith('_design/'):
             document_id = '_design/{0}'.format(document_id)
         super(DesignDocument, self).__init__(database, document_id)
-        self._nested_object_names = frozenset(['views', 'indexes', 'lists'])
+        self._nested_object_names = frozenset(['views', 'indexes', 'lists', 'shows'])
         for prop in self._nested_object_names:
             self.setdefault(prop, dict())
 
@@ -97,6 +97,17 @@ class DesignDocument(Document):
         :returns: Dictionary containing list names and objects as key/value
         """
         return self.get('lists')
+
+    @property
+    def shows(self):
+        """
+        Provides an accessor property to the shows dictionary in the
+        locally cached DesignDocument.
+
+        :returns: Dictionary containing show names and functions
+            as key/value
+        """
+        return self.get('shows')
 
     @property
     def rewrites(self):
@@ -215,6 +226,21 @@ class DesignDocument(Document):
 
         self.lists.__setitem__(list_name, codify(list_func))
 
+    def add_show_function(self, show_name, show_func):
+        """
+        Appends a show function to the locally cached DesignDocument
+        shows dictionary.
+
+        :param show_name: Name used to identify the show function.
+        :param show_func: Javascript show function.
+        """
+        if self.get_show_function(show_name) is not None:
+            msg = ('A show function with name {0} already exists in this design doc'
+                   .format(show_name))
+            raise CloudantArgumentError(msg)
+
+        self.shows.__setitem__(show_name, show_func)
+
     def update_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
         Modifies/overwrites an existing MapReduce view definition in the
@@ -276,6 +302,21 @@ class DesignDocument(Document):
 
         self.lists.__setitem__(list_name, codify(list_func))
 
+    def update_show_function(self, show_name, show_func):
+        """
+        Modifies/overwrites an existing show function in the
+        locally cached DesignDocument shows dictionary.
+
+        :param show_name: Name used to identify the show function.
+        :param show_func: Javascript show function.
+        """
+        if self.get_show_function(show_name) is None:
+            msg = ('A show function with name {0} does not exist in this design doc'
+                   .format(show_name))
+            raise CloudantArgumentError(msg)
+
+        self.shows.__setitem__(show_name, show_func)
+
     def delete_view(self, view_name):
         """
         Removes an existing MapReduce view definition from the locally cached
@@ -317,6 +358,18 @@ class DesignDocument(Document):
         """
         self.lists.__delitem__(list_name)
 
+    def delete_show_function(self, show_name):
+        """
+        Removes an existing show function in the locally cached DesignDocument
+        shows dictionary.
+
+        :param show_name: Name used to identify the list.
+        """
+        if self.get_show_function(show_name) is None:
+            return
+
+        self.shows.__delitem__(show_name)
+
     def fetch(self):
         """
         Retrieves the remote design document content and populates the locally
@@ -346,7 +399,7 @@ class DesignDocument(Document):
                     )
 
         for prop in self._nested_object_names:
-            # Ensure views, indexes, and lists dict exist in locally cached DesignDocument.
+            # Ensure dict for each sub-object exists in locally cached DesignDocument.
             getattr(self, prop, self.setdefault(prop, dict()))
 
     # pylint: disable=too-many-branches
@@ -394,7 +447,7 @@ class DesignDocument(Document):
 
         for prop in self._nested_object_names:
             if not getattr(self, prop):
-                # Ensure empty views, indexes, or lists dict is not saved remotely.
+                # Ensure empty dict for each sub-object is not saved remotely.
                 self.__delitem__(prop)
 
         super(DesignDocument, self).save()
@@ -462,6 +515,17 @@ class DesignDocument(Document):
         for list_name, list_func in iteritems_(self.lists):
             yield list_name, list_func
 
+    def itershows(self):
+        """
+        Provides a way to iterate over the locally cached DesignDocument
+        shows dictionary.
+
+        :returns: Iterable containing show function name and associated
+            show function
+        """
+        for show_name, show_func in iteritems_(self.shows):
+            yield show_name, show_func
+
     def list_views(self):
         """
         Retrieves a list of available View objects in the locally cached
@@ -488,6 +552,15 @@ class DesignDocument(Document):
         :returns: List of list function names
         """
         return list(self.lists.keys())
+
+    def list_show_functions(self):
+        """
+        Retrieves a list of available show functions in the locally cached
+        DesignDocument shows dictionary.
+
+        :returns: List of show function names
+        """
+        return list(self.shows.keys())
 
     def get_view(self, view_name):
         """
@@ -518,9 +591,20 @@ class DesignDocument(Document):
 
         :param str list_name: Name used to identify the list function.
 
-        :returns: Index dictionary for the specified list function name
+        :returns: String form of the specified list function
         """
         return self.lists.get(list_name)
+
+    def get_show_function(self, show_name):
+        """
+        Retrieves a specific show function from the locally cached DesignDocument
+        shows dictionary by name.
+
+        :param str show_name: Name used to identify the show function.
+
+        :returns: String form of the specified show function
+        """
+        return self.shows.get(show_name)
 
     def info(self):
         """
