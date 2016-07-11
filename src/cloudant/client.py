@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2016 IBM. All rights reserved.
+# Copyright (C) 2015, 2016 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import json
 import posixpath
 import requests
 
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util import Retry
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
@@ -46,6 +44,7 @@ class CouchDB(dict):
         CouchDB.  Defaults to ``False``.
     :param str encoder: Optional json Encoder object used to encode
         documents for storage.  Defaults to json.JSONEncoder.
+    :param requests.HTTPAdapter adapter: Optional adapter to use for configuring requests.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -58,6 +57,7 @@ class CouchDB(dict):
         self._client_user_header = None
         self.admin_party = admin_party
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
+        self.adapter = kwargs.get('adapter')
         self.r_session = None
 
     def connect(self):
@@ -66,21 +66,9 @@ class CouchDB(dict):
         authentication.
         """
         self.r_session = requests.Session()
-        # Configure a Transport Adapter for custom retry behaviour
-        self.r_session.mount(self.server_url, HTTPAdapter(
-            max_retries=Retry(
-                # Allow 10 retries for status
-                total=10,
-                # No retries for connect|read errors
-                connect=0,
-                read=0,
-                # Allow retries for all the CouchDB HTTP method types
-                method_whitelist=frozenset(['GET', 'HEAD', 'PUT', 'POST',
-                                            'DELETE', 'COPY']),
-                # Only retry for a 429 too many requests status code
-                status_forcelist=[429],
-                # Configure the doubling backoff to start at 0.25 s
-                backoff_factor=0.25)))
+        # If a Transport Adapter was supplied add it to the session
+        if self.adapter is not None:
+            self.r_session.mount(self.server_url, self.adapter)
         if self._client_user_header is not None:
             self.r_session.headers.update(self._client_user_header)
         if not self.admin_party:
@@ -394,6 +382,7 @@ class Cloudant(CouchDB):
         the x_cloudant_user parameter setting is ignored.
     :param str encoder: Optional json Encoder object used to encode
         documents for storage. Defaults to json.JSONEncoder.
+    :param requests.HTTPAdapter adapter: Optional adapter to use for configuring requests.
     """
     _DATABASE_CLASS = CloudantDatabase
 

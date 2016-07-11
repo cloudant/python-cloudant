@@ -3,6 +3,12 @@
 - [NEW] Added support for Cloudant Search execution.
 - [NEW] Added support for Cloudant Search index management.
 - [NEW] Added ``rewrites`` accessor property for URL rewriting.
+- [NEW] Added support for a custom ``requests.HTTPAdapter`` to be configured using an optional ``adapter`` arg e.g.
+  ``Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME, adapter=Replay429Adapter())``.
+- [IMPROVED] Made the 429 response code backoff optional and configurable. To enable the backoff add
+  an ``adapter`` arg of a ``Replay429Adapter`` with the desired number of retries and initial backoff. To replicate
+  the 2.0.0 behaviour use: ``adapter=Replay429Adapter(retries=10, initialBackoff=0.25)``. If ``retries`` or
+  ``initialBackoff`` are not specified they will default to 3 retries and a 0.25 s initial backoff.
 
 2.0.3 (2016-06-03)
 ==================
