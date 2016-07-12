@@ -44,8 +44,19 @@ class DesignDocument(Document):
         if document_id and not document_id.startswith('_design/'):
             document_id = '_design/{0}'.format(document_id)
         super(DesignDocument, self).__init__(database, document_id)
-        self.setdefault('views', dict())
-        self.setdefault('indexes', dict())
+        self._nested_object_names = frozenset(['views', 'indexes', 'lists'])
+        for prop in self._nested_object_names:
+            self.setdefault(prop, dict())
+
+    @property
+    def lists(self):
+        """
+        Provides an accessor property to the lists dictionary in the locally
+        cached DesignDocument.
+
+        :returns: Dictionary containing list names and objects as key/value
+        """
+        return self.get('lists')
 
     @property
     def rewrites(self):
@@ -149,6 +160,21 @@ class DesignDocument(Document):
 
         self.indexes.__setitem__(index_name, search)
 
+    def add_list_function(self, list_name, list_func):
+        """
+        Appends a list function to the locally cached DesignDocument
+        indexes dictionary.
+
+        :param str list_name: Name used to identify the list function.
+        :param str list_func: Javascript list function.
+        """
+        if self.get_list_function(list_name) is not None:
+            msg = ('A list with name {0} already exists in this design doc'
+                   .format(list_name))
+            raise CloudantArgumentError(msg)
+
+        self.lists.__setitem__(list_name, codify(list_func))
+
     def update_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
         Modifies/overwrites an existing MapReduce view definition in the
@@ -195,6 +221,21 @@ class DesignDocument(Document):
 
         self.indexes.__setitem__(index_name, search)
 
+    def update_list_function(self, list_name, list_func):
+        """
+        Modifies/overwrites an existing list function in the
+        locally cached DesignDocument indexes dictionary.
+
+        :param str list_name: Name used to identify the list function.
+        :param str list_func: Javascript list function.
+        """
+        if self.get_list_function(list_name) is None:
+            msg = ('A list with name {0} does not exist in this design doc'
+                   .format(list_name))
+            raise CloudantArgumentError(msg)
+
+        self.lists.__setitem__(list_name, codify(list_func))
+
     def delete_view(self, view_name):
         """
         Removes an existing MapReduce view definition from the locally cached
@@ -227,6 +268,15 @@ class DesignDocument(Document):
 
         self.indexes.__delitem__(index_name)
 
+    def delete_list_function(self, list_name):
+        """
+        Removes an existing list function in the locally cached DesignDocument
+        lists dictionary.
+
+        :param str list_name: Name used to identify the list.
+        """
+        self.lists.__delitem__(list_name)
+
     def fetch(self):
         """
         Retrieves the remote design document content and populates the locally
@@ -236,10 +286,7 @@ class DesignDocument(Document):
         ``dict`` types.
         """
         super(DesignDocument, self).fetch()
-        if not self.views:
-            # Ensure views dict exists in locally cached DesignDocument.
-            self.setdefault('views', dict())
-        else:
+        if self.views:
             for view_name, view_def in iteritems_(self.get('views', dict())):
                 if self.get('language', None) != QUERY_LANGUAGE:
                     self['views'][view_name] = View(
@@ -258,11 +305,11 @@ class DesignDocument(Document):
                         **view_def
                     )
 
-        if not self.indexes:
-            # Ensure indexes dict exists in locally cached DesignDocument.
-            self.setdefault('indexes', dict())
+        for prop in self._nested_object_names:
+            # Ensure views, indexes, and lists dict exist in locally cached DesignDocument.
+            getattr(self, prop, self.setdefault(prop, dict()))
 
-    # pylint: disable-msg=too-many-branches
+    # pylint: disable=too-many-branches
     def save(self):
         """
         Saves changes made to the locally cached DesignDocument object's data
@@ -285,9 +332,6 @@ class DesignDocument(Document):
                             'View {0} must be of type QueryIndexView.'
                         ).format(view_name)
                         raise CloudantException(msg)
-        else:
-            # Ensure empty views dict is not saved remotely.
-            self.__delitem__('views')
 
         if self.indexes:
             if self.get('language', None) != QUERY_LANGUAGE:
@@ -307,18 +351,17 @@ class DesignDocument(Document):
                             'be of type dict.'
                         ).format(index_name)
                         raise CloudantException(msg)
-        else:
-            # Ensure empty indexes dict is not saved remotely.
-            self.__delitem__('indexes')
+
+        for prop in self._nested_object_names:
+            if not getattr(self, prop):
+                # Ensure empty views, indexes, or lists dict is not saved remotely.
+                self.__delitem__(prop)
 
         super(DesignDocument, self).save()
 
-        if not self.views:
-            # Ensure views dict exists in locally cached DesignDocument.
-            self.setdefault('views', dict())
-        if not self.indexes:
-            # Ensure indexes dict exists in locally cached DesignDocument.
-            self.setdefault('indexes', dict())
+        for prop in self._nested_object_names:
+            # Ensure views, indexes, and lists dict exist in locally cached DesignDocument.
+            getattr(self, prop, self.setdefault(prop, dict()))
 
     def __setitem__(self, key, value):
         """
@@ -368,6 +411,17 @@ class DesignDocument(Document):
         for index_name, search_func in iteritems_(self.indexes):
             yield index_name, search_func
 
+    def iterlists(self):
+        """
+        Provides a way to iterate over the locally cached DesignDocument
+        lists dictionary.
+
+        :returns: Iterable containing list function name and associated
+            list function
+        """
+        for list_name, list_func in iteritems_(self.lists):
+            yield list_name, list_func
+
     def list_views(self):
         """
         Retrieves a list of available View objects in the locally cached
@@ -385,6 +439,15 @@ class DesignDocument(Document):
         :returns: List of index names
         """
         return list(self.indexes.keys())
+
+    def list_list_functions(self):
+        """
+        Retrieves a list of available list functions in the locally cached
+        DesignDocument lists dictionary.
+
+        :returns: List of list function names
+        """
+        return list(self.lists.keys())
 
     def get_view(self, view_name):
         """
@@ -407,6 +470,17 @@ class DesignDocument(Document):
         :returns: Index dictionary for the specified index name
         """
         return self.indexes.get(index_name)
+
+    def get_list_function(self, list_name):
+        """
+        Retrieves a specific list function from the locally cached DesignDocument
+        lists dictionary by name.
+
+        :param str list_name: Name used to identify the list function.
+
+        :returns: Index dictionary for the specified list function name
+        """
+        return self.lists.get(list_name)
 
     def info(self):
         """
