@@ -4,6 +4,7 @@
 - [NEW] Added support for Cloudant Search index management.
 - [NEW] Added support for managing and querying list functions.
 - [NEW] Added ``rewrites`` accessor property for URL rewriting.
+- [NEW] Added ``st_indexes`` accessor property for Cloudant Geospatial indexes.
 - [NEW] Added support for DesignDocument ``_info`` and ``_search_info`` endpoints.
 - [NEW] Added support for a custom ``requests.HTTPAdapter`` to be configured using an optional ``adapter`` arg e.g.
   ``Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME, adapter=Replay429Adapter())``.

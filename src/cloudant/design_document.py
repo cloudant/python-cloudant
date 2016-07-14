@@ -49,6 +49,46 @@ class DesignDocument(Document):
             self.setdefault(prop, dict())
 
     @property
+    def st_indexes(self):
+        """
+        Provides an accessor property to the Cloudant Geospatial
+        (a.k.a. Cloudant Geo) indexes dictionary in the locally cached
+        DesignDocument.  Each Cloudant Geo index is a JSON object within the
+        ``st_indexes`` containing an index name and a javascript function.
+
+        Note: To make it easier to work with Cloudant Geo documents, it is best
+        practice to create a separate design document specifically for
+        Cloudant Geo indexes.
+
+        Geospatial index example:
+
+        .. code-block:: python
+
+            # Add the Cloudant Geo index to ``st_indexes`` and save the design document
+            ddoc = DesignDocument(self.db, '_design/ddoc001')
+            ddoc['st_indexes'] = {
+                'geoidx': {
+                    'index': 'function(doc) { '
+                             'if (doc.geometry && doc.geometry.coordinates) { '
+                             'st_index(doc.geometry);}} '
+                }
+            }
+            ddoc.save()
+
+        Once the Cloudant Geo index is saved to the remote database, you can
+        query the index with a GET request.  To issue a request against the
+        ``_geo`` endpoint, see the steps outlined in the `endpoint access
+        documentation <getting_started.html#endpoint-access>`_.
+
+        For more details, see the `Cloudant Geospatial
+        documentation <https://docs.cloudant.com/geo.html>`_.
+
+        :return: Dictionary containing Cloudant Geo names and index objects
+            as key/value
+        """
+        return self.get('st_indexes')
+
+    @property
     def lists(self):
         """
         Provides an accessor property to the lists dictionary in the locally
