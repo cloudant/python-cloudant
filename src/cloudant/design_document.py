@@ -488,4 +488,17 @@ class DesignDocument(Document):
 
         GET databasename/_design/{ddoc}/_info
         """
-        raise NotImplementedError("_info not yet implemented")
+        ddoc_info = self.r_session.get(
+            '/'.join([self.document_url, '_info']))
+        return ddoc_info.json()
+
+    def search_info(self, search_index):
+        """
+        Retrieves information about a specified search index within the design
+        document, returns dictionary
+
+        GET databasename/_design/{ddoc}/_search_info/{search_index}
+        """
+        ddoc_search_info = self.r_session.get(
+            '/'.join([self.document_url, '_search_info', search_index]))
+        return ddoc_search_info.json()
