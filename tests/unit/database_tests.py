@@ -692,6 +692,61 @@ class DatabaseTests(UnitTestDbBase):
             'Hello from doc001!'
         )
 
+    def test_create_doc_with_update_handler(self):
+        """
+        Test update_handler_result executes an update handler function
+        that creates a new document
+        """
+        self.populate_db_with_documents()
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc['updates'] = {
+            'update001': 'function(doc, req) { if (!doc) { var new_doc = req.form; '
+                         'new_doc._id = \'testDoc\'; return [new_doc, '
+                         '\'Created new doc: \' + JSON.stringify(new_doc)]; }} '
+        }
+
+        ddoc.save()
+        resp = self.db.update_handler_result('ddoc001', 'update001', data={'message': 'hello'})
+        self.assertEqual(
+            resp,
+            'Created new doc: {"message":"hello","_id":"testDoc"}'
+        )
+
+    def test_update_doc_with_update_handler(self):
+        """
+        Test update_handler_result executes an update handler function
+        that updates a document with query parameters
+        """
+        self.populate_db_with_documents()
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc['updates'] = {
+            'update001': 'function(doc, req) { '
+                         'var field = req.query.field; '
+                         'var value = req.query.value; '
+                         'var new_doc = doc; '
+                         'doc[field] = value; '
+                         'for(var key in req.form) doc[key]=req.form[key]; '
+                         'var message = \'set \'+field+\' to \'+value'
+                         '+\' and add data \'+ JSON.stringify(req.form); '
+                         'return [doc, message]; } '
+        }
+        ddoc.save()
+        resp = self.db.update_handler_result('ddoc001', 'update001', 'julia001',
+                                             field='new_field', value='new_value',
+                                             data={'message': 'hello'})
+        self.assertEqual(
+            resp,
+            'set new_field to new_value and add data {"message":"hello"}'
+        )
+        ddoc_remote = Document(self.db, 'julia001')
+        ddoc_remote.fetch()
+        self.assertEqual(
+            ddoc_remote,
+            {'age': 1, 'name': 'julia', 'new_field': 'new_value',
+             '_rev': ddoc_remote['_rev'], '_id': 'julia001',
+             'message': 'hello'}
+        )
+
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant specific Database tests'

@@ -49,6 +49,44 @@ class DesignDocument(Document):
             self.setdefault(prop, dict())
 
     @property
+    def updates(self):
+        """
+        Provides an accessor property to the updates dictionary in the locally
+        cached DesignDocument. Update handlers are custom functions stored on
+        Cloudant's server that will create or update a document.
+        To execute the update handler function, see
+        :func:`~cloudant.database.CouchDatabase.update_handler_result`.
+
+        Update handlers receive two arguments: ``doc`` and ``req``. If a document ID is
+        provided in the request to the update handler, then ``doc`` will be the
+        document corresponding with that ID.
+        If no ID was provided, ``doc`` will be null.
+
+        Update handler example:
+
+        .. code-block:: python
+
+            # Add the update handler to ``updates`` and save the design document
+            ddoc = DesignDocument(self.db, '_design/ddoc001')
+            ddoc001['updates'] = {
+                'update001': 'function(doc, req) { if (!doc) '
+                             '{ if ('id' in req && req.id){ return [{_id: req.id}, '
+                             '\"New World\"] } return [null, \"Empty World\"] } '
+                             'doc.world = \'hello\'; '
+                             'return [doc, \"Added world.hello!\"]} '
+            }
+            ddoc.save()
+
+        Note: Update handler functions must return an array of two elements,
+        the first being the document to save (or null, if you don't want to
+        save anything), and the second being the response body.
+
+        :returns: Dictionary containing update handler names and objects
+            as key/value
+        """
+        return self.get('updates')
+
+    @property
     def st_indexes(self):
         """
         Provides an accessor property to the Cloudant Geospatial

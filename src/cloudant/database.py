@@ -842,6 +842,57 @@ class CouchDatabase(dict):
                         headers)
         return resp.text
 
+    def update_handler_result(self, ddoc_id, handler_name, doc_id=None, data=None, **params):
+        """
+        Creates or updates a document from the specified database based on the
+        update handler function provided.  Update handlers are used, for
+        example, to provide server-side modification timestamps, and document
+        updates to individual fields without the latest revision. You can
+        provide query parameters needed by the update handler function using
+        the ``params`` argument.
+
+        Create a document with a generated ID:
+
+        .. code-block:: python
+
+            # Assuming that 'update001' update handler exists as part of the
+            # 'ddoc001' design document in the remote database...
+            # Execute 'update001' to create a new document
+            resp = db.update_handler_result('ddoc001', 'update001', data={'name': 'John',
+                                            'message': 'hello'})
+
+        Create or update a document with the specified ID:
+
+        .. code-block:: python
+
+            # Assuming that 'update001' update handler exists as part of the
+            # 'ddoc001' design document in the remote database...
+            # Execute 'update001' to update document 'doc001' in the database
+            resp = db.update_handler_result('ddoc001', 'update001', 'doc001',
+                                            data={'month': 'July'})
+
+        For more details, see the `update handlers documentation
+        <https://docs.cloudant.com/design_documents.html#update-handlers>`_.
+
+        :param str ddoc_id: Design document id used to get result.
+        :param str handler_name: Name used in part to identify the
+            update handler function.
+        :param str doc_id: Optional document id used to specify the
+            document to be handled.
+
+        :returns: Result of update handler function in text format
+        """
+        ddoc = DesignDocument(self, ddoc_id)
+        if doc_id:
+            resp = self.r_session.put(
+                '/'.join([ddoc.document_url, '_update', handler_name, doc_id]),
+                params=params, data=data)
+        else:
+            resp = self.r_session.post(
+                '/'.join([ddoc.document_url, '_update', handler_name]),
+                params=params, data=data)
+        return resp.text
+
 class CloudantDatabase(CouchDatabase):
     """
     Encapsulates a Cloudant database.  A CloudantDatabase object is
