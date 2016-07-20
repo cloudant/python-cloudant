@@ -21,6 +21,7 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
+import os
 import unittest
 
 from cloudant.document import Document 
@@ -681,15 +682,55 @@ class DesignDocumentTests(UnitTestDbBase):
 
     def test_get_info(self):
         """
-        Test that the appropriate "not implemented" exception is raised
-        when attempting to execute the .info() method
+        Test retrieval of info endpoint from the DesignDocument.
         """
         ddoc = DesignDocument(self.db, '_design/ddoc001')
-        try:
-            ddoc.info()
-            self.fail('Above statement should raise an Exception')
-        except NotImplementedError as err:
-            self.assertEqual(str(err), '_info not yet implemented')
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        ddoc_remote.fetch()
+        info = ddoc_remote.info()
+        info['view_index'].pop('signature')
+        info['view_index'].pop('disk_size')
+        # Remove Cloudant specific sizes object
+        if 'sizes' in info['view_index']:
+            info['view_index'].pop('sizes')
+            name = ddoc_remote['_id']
+        else:
+            name = 'ddoc001'
+        self.assertEqual(
+            info,
+            {'view_index': {'update_seq': 0, 'waiting_clients': 0,
+                            'language': 'javascript',
+                            'purge_seq': 0, 'compact_running': False,
+                            'waiting_commit': False, 'updater_running': False,
+                            'data_size': 0}, 'name': name})
+
+    @unittest.skipUnless(
+        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+        'Skipping Cloudant _search_info endpoint test'
+    )
+    def test_get_search_info(self):
+        """
+        Test retrieval of search_info endpoint from the DesignDocument.
+        """
+        self.populate_db_with_documents(100)
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_search_index(
+            'search001',
+            'function (doc) {\n  index("default", doc._id); '
+            'if (doc._id) {index("name", doc.name, {"store": true}); }\n}'
+        )
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        ddoc_remote.fetch()
+        search_info = ddoc_remote.search_info('search001')
+        search_info['search_index'].pop('disk_size')
+        self.assertEqual(
+            search_info,
+            {'name': '_design/ddoc001/search001',
+             'search_index': {'doc_del_count': 0, 'doc_count': 100,
+                              'pending_seq': 101, 'committed_seq': 0},
+             })
 
     def test_add_a_search_index(self):
         """
