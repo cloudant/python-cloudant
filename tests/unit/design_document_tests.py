@@ -1352,5 +1352,58 @@ class DesignDocumentTests(UnitTestDbBase):
             'html += \'</ol></body></html>\'; return html; }); }'
         )
 
+    @unittest.skipUnless(
+        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+        'Skipping Cloudant specific Cloudant Geo tests'
+    )
+    def test_geospatial_index(self):
+        """
+        Test retrieval and query of Cloudant Geo indexes from the DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc['st_indexes'] = {
+                'geoidx': {
+                    'index': 'function(doc) { '
+                             'if (doc.geometry && doc.geometry.coordinates) { '
+                             'st_index(doc.geometry);}} '
+                }
+        }
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        self.assertNotEqual(ddoc_remote, ddoc)
+        ddoc_remote.fetch()
+        self.assertEqual(ddoc_remote, {
+            '_id': '_design/ddoc001',
+            '_rev': ddoc['_rev'],
+            'st_indexes': ddoc['st_indexes'],
+            'indexes': {},
+            'views': {},
+            'lists': {}
+        })
+        # Document with geospatial point
+        geodoc = Document(self.db, 'doc001')
+        geodoc['type'] = 'Feature'
+        geodoc['geometry'] = {
+          "type": "Point",
+          "coordinates": [
+            -71.1,
+            42.3
+          ]
+        }
+        geodoc.save()
+        # Geospatial query for a well known point
+        geo_result = self.client.r_session.get('/'.join([ddoc_remote.document_url,
+                                            '_geo',
+                                            'geoidx?g=point(-71.1%2042.3)'])).json()
+        self.assertIsNotNone(geo_result['bookmark'])
+        geo_result.pop('bookmark')
+        self.assertEqual(geo_result,
+                         {'rows': [
+                             {'id': 'doc001',
+                              'geometry':
+                                  {'type': 'Point',
+                                   'coordinates': [-71.1, 42.3]}}]
+                         })
+
 if __name__ == '__main__':
     unittest.main()
