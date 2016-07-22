@@ -146,7 +146,8 @@ class IndexTests(UnitTestDbBase):
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
                                                     'w': 2}}},
-                 'lists': {}
+                 'lists': {},
+                 'shows': {}
                  }
             )
 
@@ -175,7 +176,8 @@ class IndexTests(UnitTestDbBase):
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
                                                     'w': 2}}},
-                 'lists': {}
+                 'lists': {},
+                 'shows': {}
                  }
             )
 
@@ -204,7 +206,8 @@ class IndexTests(UnitTestDbBase):
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
                                                     'w': 2}}},
-                 'lists': {}
+                 'lists': {},
+                 'shows': {}
                  }
             )
 
@@ -233,7 +236,8 @@ class IndexTests(UnitTestDbBase):
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
                                                     'w': 2}}},
-                 'lists': {}
+                 'lists': {},
+                 'shows': {}
                  }
             )
 
@@ -436,7 +440,8 @@ class TextIndexTests(UnitTestDbBase):
                       'analyzer': {'name': 'perfield',
                                    'default': 'keyword',
                                    'fields': {'$default': 'standard'}}}},
-                 'lists': {}
+                 'lists': {},
+                 'shows': {}
                  }
             )
 
@@ -475,7 +480,8 @@ class TextIndexTests(UnitTestDbBase):
                       'analyzer': {'name': 'perfield',
                                    'default': 'keyword',
                                    'fields': {'$default': 'german'}}}},
-                 'lists': {}
+                 'lists': {},
+                 'shows': {}
                  }
             )
 

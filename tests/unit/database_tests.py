@@ -254,7 +254,7 @@ class DatabaseTests(UnitTestDbBase):
         # Get an empty design document object that does not exist remotely
         local_ddoc = self.db.get_design_document('_design/ddoc01')
         self.assertEqual(local_ddoc, {'_id': '_design/ddoc01', 'indexes': {},
-                                      'views': {}, 'lists': {}})
+                                      'views': {}, 'lists': {}, 'shows': {}})
         # Add the design document to the database
         map_func = 'function(doc) {\n emit(doc._id, 1); \n}'
         local_ddoc.add_view('view01', map_func)
@@ -667,6 +667,31 @@ class DatabaseTests(UnitTestDbBase):
             '</ol></body></html>'
         )
 
+    def test_get_show_result(self):
+        """
+        Test get_show_result executes a show function against a document.
+        """
+        self.populate_db_with_documents()
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_show_function(
+            'show001',
+            'function(doc, req) { '
+            'if (doc) { return \'Hello from \' + doc._id + \'!\'; } '
+            'else { return \'Hello, world!\'; } }')
+        ddoc.save()
+        doc = Document(self.db, 'doc001')
+        doc.save()
+        # Execute show function
+        resp = self.db.get_show_function_result(
+            '_design/ddoc001',
+            'show001',
+            'doc001'
+        )
+        self.assertEqual(
+            resp,
+            'Hello from doc001!'
+        )
+
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant specific Database tests'
@@ -900,6 +925,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                  '_rev': ddoc['_rev'],
                  'indexes': {},
                  'lists': {},
+                 'shows': {},
                  'language': 'query',
                  'views': {index.name: {'map': {'fields': {'name': 'asc', 
                                                            'age': 'asc'}},
@@ -927,6 +953,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                  'language': 'query',
                  'views': {},
                  'lists': {},
+                 'shows': {},
                  'indexes': {index.name: {'index': {'index_array_lengths': True,
                                 'fields': [{'name': 'name', 'type': 'string'},
                                            {'name': 'age', 'type': 'number'}],
@@ -952,6 +979,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                  'language': 'query',
                  'views': {},
                  'lists': {},
+                 'shows': {},
                  'indexes': {index.name: {'index': {'index_array_lengths': True,
                                 'fields': 'all_fields',
                                 'default_field': {},
@@ -988,6 +1016,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                  '_rev': ddoc['_rev'],
                  'language': 'query',
                  'lists': {},
+                 'shows': {},
                  'views': {'json-index-001': {
                                 'map': {'fields': {'name': 'asc', 
                                                    'age': 'asc'}},

@@ -805,6 +805,43 @@ class CouchDatabase(dict):
                         **kwargs)
         return resp.text
 
+    def get_show_function_result(self, ddoc_id, show_name, doc_id):
+        """
+        Retrieves a formatted document from the specified database
+        based on the show function provided.  Show functions, for example,
+        are used when you want to access Cloudant directly from a browser,
+        and need data to be returned in a different format, such as HTML.
+
+        For example:
+
+        .. code-block:: python
+
+            # Assuming that 'view001' exists as part of the
+            # 'ddoc001' design document in the remote database...
+            # Retrieve a formatted 'doc001' document where the show function is 'show001'
+            resp = db.get_show_function_result('ddoc001', 'show001', 'doc001')
+            for row in resp['rows']:
+                # Process data (in text format).
+
+        For more detail on show functions, refer to the
+        `Cloudant documentation <https://docs.cloudant.com/
+        design_documents.html#show-functions>`_.
+
+        :param str ddoc_id: Design document id used to get the result.
+        :param str show_name: Name used in part to identify the
+            show function.
+        :param str doc_id: The ID of the document to show.
+
+        :return: Formatted document result data in text format
+        """
+        ddoc = DesignDocument(self, ddoc_id)
+        headers = {'Content-Type': 'application/json'}
+        resp = get_docs(self.r_session,
+                        '/'.join([ddoc.document_url, '_show', show_name, doc_id]),
+                        self.client.encoder,
+                        headers)
+        return resp.text
+
 class CloudantDatabase(CouchDatabase):
     """
     Encapsulates a Cloudant database.  A CloudantDatabase object is

@@ -311,6 +311,7 @@ class DesignDocumentTests(UnitTestDbBase):
             '_id': '_design/ddoc001',
             '_rev': ddoc['_rev'],
             'lists': {},
+            'shows': {},
             'indexes': {},
             'views': {
                 'view001': {'map': view_map, 'reduce': view_reduce},
@@ -333,7 +334,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views', 'lists'})
+                         {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -351,6 +352,7 @@ class DesignDocumentTests(UnitTestDbBase):
             '_id': '_design/ddoc001',
             'indexes': {},
             'lists': {},
+            'shows': {},
             'language': 'query',
             'views': {
                 'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
@@ -381,6 +383,7 @@ class DesignDocumentTests(UnitTestDbBase):
             '_id': '_design/ddoc001',
             'language': 'query',
             'lists': {},
+            'shows': {},
             'indexes': {'index001':
                      {'index': {'index_array_lengths': True,
                                 'fields': [{'name': 'name', 'type': 'string'},
@@ -414,6 +417,7 @@ class DesignDocumentTests(UnitTestDbBase):
             '_id': '_design/ddoc001',
             'language': 'query',
             'lists': {},
+            'shows': {},
             'views': {
                 'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
                             'reduce': '_count',
@@ -602,7 +606,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         # Ensure that locally cached DesignDocument contains an
         # empty views dict.
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views', 'lists'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         self.assertEqual(ddoc.views, {})
@@ -914,7 +918,8 @@ class DesignDocumentTests(UnitTestDbBase):
                 'search003': {'index': search_index, 'analyzer': 'standard'}
             },
             'views': {},
-            'lists': {}
+            'lists': {},
+            'shows': {}
         })
 
     def test_fetch_no_search_index(self):
@@ -931,7 +936,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views', 'lists'})
+                         {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -1014,7 +1019,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         # Ensure that locally cached DesignDocument contains an
         # empty search indexes and views dict.
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views', 'lists'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         # Ensure that remotely saved design document does not
@@ -1248,6 +1253,7 @@ class DesignDocumentTests(UnitTestDbBase):
                 'list002': list_func,
                 'list003': list_func
             },
+            'shows': {},
             'indexes': {},
             'views': {}
         })
@@ -1266,7 +1272,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views', 'lists'})
+                         {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -1281,7 +1287,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         ddoc.save()
         # Ensure that locally cached DesignDocument contains lists dict
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'lists', 'indexes', 'views'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'lists', 'shows', 'indexes', 'views'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         # Ensure that remotely saved design document does not
@@ -1378,7 +1384,8 @@ class DesignDocumentTests(UnitTestDbBase):
             'st_indexes': ddoc['st_indexes'],
             'indexes': {},
             'views': {},
-            'lists': {}
+            'lists': {},
+            'shows': {}
         })
         # Document with geospatial point
         geodoc = Document(self.db, 'doc001')
@@ -1404,6 +1411,252 @@ class DesignDocumentTests(UnitTestDbBase):
                                   {'type': 'Point',
                                    'coordinates': [-71.1, 42.3]}}]
                          })
+
+    def test_add_a_show_function(self):
+        """
+        Test that adding a show function adds a show object to
+        the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        self.assertEqual(ddoc.get('shows'), {})
+        ddoc.add_show_function(
+            'show001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        self.assertListEqual(list(ddoc.get('shows').keys()), ['show001'])
+        self.assertEqual(
+            ddoc.get('shows'),
+            {'show001': 'function(head, req) { provides(\'html\', function() '
+                        '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                        '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                        'html += \'</ol></body></html>\'; return html; }); }'}
+        )
+
+    def test_adding_existing_show_functions(self):
+        """
+        Test that adding an existing show function fails as expected.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_show_function(
+            'show001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        with self.assertRaises(CloudantArgumentError) as cm:
+            ddoc.add_show_function(
+                'show001',
+                'function (doc) { existing show function }'
+            )
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'A show function with name show001 already exists in this design doc'
+        )
+
+    def test_update_a_show_function(self):
+        """
+        Test that updating a show function updates the contents of the correct
+        show object in the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_show_function('show001', 'not-a-valid-show-function')
+        self.assertEqual(
+            ddoc.get('shows')['show001'],
+            'not-a-valid-show-function'
+        )
+        ddoc.update_show_function(
+            'show001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        self.assertEqual(
+            ddoc.get('shows')['show001'],
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+
+    def test_update_non_existing_show_function(self):
+        """
+        Test that updating a non-existing show function fails as expected.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        with self.assertRaises(CloudantArgumentError) as cm:
+            ddoc.update_show_function(
+                'show001',
+                'function(head, req) { provides(\'html\', function() '
+                '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                'html += \'</ol></body></html>\'; return html; }); }'
+            )
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'A show function with name show001 does not exist in this design doc'
+        )
+
+    def test_delete_a_show_function(self):
+        """
+        Test deleting a show function from the DesignDocument dictionary.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_show_function(
+            'show001',
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        self.assertEqual(
+            ddoc.get('shows')['show001'],
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
+        ddoc.delete_show_function('show001')
+        self.assertEqual(ddoc.get('shows'), {})
+
+    def test_fetch_show_functions(self):
+        """
+        Ensure that the document fetch from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing show functions.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        show_func = ('function(head, req) { provides(\'html\', function() '
+                     '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                     '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                     'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.add_show_function('show001', show_func)
+        ddoc.add_show_function('show002', show_func)
+        ddoc.add_show_function('show003', show_func)
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        self.assertNotEqual(ddoc_remote, ddoc)
+        ddoc_remote.fetch()
+        self.assertEqual(ddoc_remote, ddoc)
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote, {
+            '_id': '_design/ddoc001',
+            '_rev': ddoc['_rev'],
+            'lists': {},
+            'shows': {
+                'show001': show_func,
+                'show002': show_func,
+                'show003': show_func
+            },
+            'indexes': {},
+            'views': {}
+        })
+
+    def test_fetch_no_show_functions(self):
+        """
+        Ensure that the document fetched from the database returns the
+        DesignDocument format as expected when retrieving a design document
+        containing no show functions.
+        The :func:`~cloudant.design_document.DesignDocument.fetch` function
+        adds the ``shows`` key in the locally cached DesignDocument if
+        show functions do not exist in the remote design document.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        ddoc_remote.fetch()
+        self.assertEqual(set(ddoc_remote.keys()),
+                         {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
+        self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
+        self.assertEqual(ddoc_remote.shows, {})
+
+    def test_save_with_no_show_functions(self):
+        """
+        Tests the functionality when saving a design document without a show function.
+        Both the locally cached and remote DesignDocument should not
+        include the empty shows sub-document.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.save()
+        # Ensure that locally cached DesignDocument contains shows dict
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'lists', 'shows', 'indexes', 'views'})
+        self.assertEqual(ddoc['_id'], '_design/ddoc001')
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+        # Ensure that remotely saved design document does not
+        # include a shows sub-document.
+        resp = self.client.r_session.get(ddoc.document_url)
+        raw_ddoc = resp.json()
+        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
+        self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
+        self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
+
+    def test_iterating_over_show_functions(self):
+        """
+        Test iterating over show functions within the DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        show_func = ('function(head, req) { provides(\'html\', function() '
+                     '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                     '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                     'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.add_show_function('show001', show_func)
+        ddoc.add_show_function('show002', show_func)
+        ddoc.add_show_function('show003', show_func)
+        show_names = []
+        for show_name, show_func in ddoc.itershows():
+            show_names.append(show_name)
+        self.assertTrue(
+            all(x in show_names for
+                x in ['show001', 'show002', 'show003'])
+        )
+
+    def test_listing_show_functions(self):
+        """
+        Test the retrieval of show functions list from DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        show_func = ('function(head, req) { provides(\'html\', function() '
+                     '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                     '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                     'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.add_show_function('show001', show_func)
+        ddoc.add_show_function('show002', show_func)
+        ddoc.add_show_function('show003', show_func)
+        self.assertTrue(
+            all(x in ddoc.list_show_functions() for x in [
+                'show001',
+                'show002',
+                'show003'
+            ])
+        )
+
+    def test_get_show_function(self):
+        """
+        Test retrieval of a show function from the DesignDocument.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        show_func = ('function(head, req) { provides(\'html\', function() '
+                     '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+                     '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+                     'html += \'</ol></body></html>\'; return html; }); }')
+        ddoc.add_show_function('show001', show_func)
+        ddoc.add_show_function('show002', show_func)
+        ddoc.add_show_function('show003', show_func)
+        self.assertEqual(
+            ddoc.get_show_function('show002'),
+            'function(head, req) { provides(\'html\', function() '
+            '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
+            '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
+            'html += \'</ol></body></html>\'; return html; }); }'
+        )
 
 if __name__ == '__main__':
     unittest.main()
