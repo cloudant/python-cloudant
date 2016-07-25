@@ -21,6 +21,7 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
+import json
 import os
 import unittest
 
@@ -1656,6 +1657,27 @@ class DesignDocumentTests(UnitTestDbBase):
             '{var html = \'<html><body><ol>\\n\'; while (row = getRow()) '
             '{ html += \'<li>\' + row.key + \':\' + row.value + \'</li>\\n\';} '
             'html += \'</ol></body></html>\'; return html; }); }'
+        )
+
+    def test_update_validator(self):
+        """
+        Test that update validator requires an address key for a new document.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc['validate_doc_update'] = (
+            'function(newDoc, oldDoc, userCtx, secObj) { '
+            'if (newDoc.address === undefined) { '
+            'throw({forbidden: \'Document must have an address.\'}); }}')
+        ddoc.save()
+        headers = {'Content-Type': 'application/json'}
+        resp = self.client.r_session.post(
+            self.db.database_url,
+            headers=headers,
+            data=json.dumps({'_id': 'test001'})
+        )
+        self.assertEqual(
+            resp.json(),
+            {'reason': 'Document must have an address.', 'error': 'forbidden'}
         )
 
 if __name__ == '__main__':

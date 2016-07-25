@@ -49,6 +49,32 @@ class DesignDocument(Document):
             self.setdefault(prop, dict())
 
     @property
+    def validate_doc_update(self):
+        """
+        Provides an accessor property to the update validators dictionary in
+        the locally cached DesignDocument.  Update validators evaluate whether a
+        document should be written to disk when insertions and updates are attempted.
+
+        Update validator example:
+
+        .. code-block:: python
+
+            # Add the update validator to ``validate_doc_update`` and save the design document
+            ddoc = DesignDocument(self.db, '_design/ddoc001')
+            ddoc['validate_doc_update'] = (
+                'function(newDoc, oldDoc, userCtx, secObj) { '
+                'if (newDoc.address === undefined) { '
+                'throw({forbidden: \'Document must have an address.\'}); }}')
+            ddoc.save()
+
+        For more details, see the `Update Validators documentation
+        <https://docs.cloudant.com/design_documents.html#update-validators>`_.
+
+        :returns: Dictionary containing update validator functions
+        """
+        return self.get('validate_doc_update')
+
+    @property
     def updates(self):
         """
         Provides an accessor property to the updates dictionary in the locally

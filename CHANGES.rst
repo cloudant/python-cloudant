@@ -8,6 +8,7 @@
 - [NEW] Added ``rewrites`` accessor property for URL rewriting.
 - [NEW] Added ``st_indexes`` accessor property for Cloudant Geospatial indexes.
 - [NEW] Added support for DesignDocument ``_info`` and ``_search_info`` endpoints.
+- [NEW] Added ``validate_doc_update`` accessor property for update validators.
 - [NEW] Added support for a custom ``requests.HTTPAdapter`` to be configured using an optional ``adapter`` arg e.g.
   ``Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME, adapter=Replay429Adapter())``.
 - [IMPROVED] Made the 429 response code backoff optional and configurable. To enable the backoff add
