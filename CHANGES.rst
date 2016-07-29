@@ -4,6 +4,7 @@
 - [NEW] Added support for Cloudant Search index management.
 - [NEW] Added support for managing and querying list functions.
 - [NEW] Added support for managing and querying show functions.
+- [NEW] Added support for querying update handlers.
 - [NEW] Added ``rewrites`` accessor property for URL rewriting.
 - [NEW] Added ``st_indexes`` accessor property for Cloudant Geospatial indexes.
 - [NEW] Added support for DesignDocument ``_info`` and ``_search_info`` endpoints.
