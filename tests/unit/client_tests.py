@@ -26,7 +26,7 @@ import json
 import base64
 import sys
 import os
-from datetime import datetime
+import datetime
 
 from cloudant import cloudant, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
@@ -471,17 +471,19 @@ class CloudantClientTests(UnitTestDbBase):
         """
         try:
             self.client.connect()
+            now = datetime.datetime.now()
             expected = [
                 'data_volume',
                 'total',
                 'start',
                 'end',
                 'http_heavy',
-                'http_light'
+                'http_light',
+                'bill_type'
                 ]
             # Test using year and month
-            year = 2016
-            month = 1
+            year = now.year
+            month = now.month
             data = self.client.bill(year, month)
             self.assertTrue(all(x in expected for x in data.keys()))
             #Test without year and month arguments
@@ -563,6 +565,7 @@ class CloudantClientTests(UnitTestDbBase):
         """
         try:
             self.client.connect()
+            now = datetime.datetime.now()
             expected = [
                 'data_vol',
                 'granularity',
@@ -570,8 +573,8 @@ class CloudantClientTests(UnitTestDbBase):
                 'end'
                 ]
             # Test using year and month
-            year = 2016
-            month = 12
+            year = now.year
+            month = now.month
             data = self.client.volume_usage(year, month)
             self.assertTrue(all(x in expected for x in data.keys()))
             #Test without year and month arguments
@@ -653,6 +656,7 @@ class CloudantClientTests(UnitTestDbBase):
         """
         try:
             self.client.connect()
+            now = datetime.datetime.now()
             expected = [
                 'requests',
                 'granularity',
@@ -660,8 +664,8 @@ class CloudantClientTests(UnitTestDbBase):
                 'end'
                 ]
             # Test using year and month
-            year = 2016
-            month = 1
+            year = now.year
+            month = now.month
             data = self.client.requests_usage(year, month)
             self.assertTrue(all(x in expected for x in data.keys()))
             #Test without year and month arguments
