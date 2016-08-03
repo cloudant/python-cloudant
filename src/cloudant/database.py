@@ -447,7 +447,7 @@ class CouchDatabase(dict):
             changes = db.changes(feed='continuous', since='now', descending=True)
             for change in changes:
                 if some_condition:
-                    db_updates.stop()
+                    changes.stop()
                 print(change)
 
         :param bool raw_data: If set to True then the raw response data will be
