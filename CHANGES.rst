@@ -15,6 +15,7 @@
   an ``adapter`` arg of a ``Replay429Adapter`` with the desired number of retries and initial backoff. To replicate
   the 2.0.0 behaviour use: ``adapter=Replay429Adapter(retries=10, initialBackoff=0.25)``. If ``retries`` or
   ``initialBackoff`` are not specified they will default to 3 retries and a 0.25 s initial backoff.
+- [FIX] ``415 Client Error: Unsupported Media Type`` when using keys with ``db.all_docs``.
 
 2.0.3 (2016-06-03)
 ==================

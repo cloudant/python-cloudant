@@ -251,9 +251,12 @@ def get_docs(r_session, url, encoder=None, headers=None, **params):
     if keys_list:
         keys = json.dumps({'keys': keys_list}, cls=encoder)
     f_params = python_to_couch(params)
-
     resp = None
     if keys:
+        # If we're using POST we are sending JSON so add the header
+        if headers is None:
+            headers = {}
+        headers['Content-Type'] = 'application/json'
         resp = r_session.post(url, headers=headers, params=f_params, data=keys)
     else:
         resp = r_session.get(url, headers=headers, params=f_params)
