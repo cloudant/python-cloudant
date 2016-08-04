@@ -120,7 +120,7 @@ SEARCH_INDEX_ARGS = {
     'drilldown': list,
     'group_field': STRTYPE,
     'group_limit': (int, NONETYPE),
-    'group_sort': list,
+    'group_sort': (STRTYPE, list),
     'include_docs': bool,
     'limit': (int, NONETYPE),
     'query': (STRTYPE, int),

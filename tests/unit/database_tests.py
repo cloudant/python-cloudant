@@ -1217,7 +1217,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
             {'drilldown': 'blah'},              # Should be a list
             {'group_field': ['blah']},          # Should be a STRTYPE
             {'group_limit': 'int'},             # Should be an int
-            {'group_sort': 'blah'},             # Should be a list
+            {'group_sort': 3},                  # Should be a STRTYPE or list
             {'include_docs': 'blah'},           # Should be a boolean
             {'limit': 'blah'},                  # Should be an int
             {'ranges': 1},                      # Should be a dict
