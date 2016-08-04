@@ -1278,6 +1278,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
             'searchddoc001',
             'searchindex001',
             query='julia*',
+            sort='_id<string>',
             limit=5,
             include_docs=True
         )
@@ -1292,23 +1293,23 @@ class CloudantDatabaseTests(UnitTestDbBase):
             {'rows': [{'fields': {'name': 'julia'}, 'doc': {'_id': 'julia000',
                                                             'age': 0,
                                                             'name': 'julia'},
-                       'id': 'julia000', 'order': [1.0, 0]},
+                       'id': 'julia000', 'order': ['julia000', 0]},
                       {'fields': {'name': 'julia'}, 'doc': {'_id': 'julia001',
                                                             'age': 1,
                                                             'name': 'julia'},
-                       'id': 'julia001', 'order': [1.0, 0]},
+                       'id': 'julia001', 'order': ['julia001', 0]},
                       {'fields': {'name': 'julia'},'doc': {'_id': 'julia002',
                                                            'age': 2,
                                                            'name': 'julia'},
-                       'id': 'julia002', 'order': [1.0, 0]},
-                      {'fields': {'name': 'julia'}, 'doc': {'_id': 'julia004',
-                                                            'age': 4,
+                       'id': 'julia002', 'order': ['julia002', 0]},
+                      {'fields': {'name': 'julia'}, 'doc': {'_id': 'julia003',
+                                                            'age': 3,
                                                             'name': 'julia'},
-                       'id': 'julia004', 'order': [1.0, 1]},
+                       'id': 'julia003', 'order': ['julia003', 0]},
                       {'fields': {'name': 'julia'},
-                       'doc': {'_id': 'julia005', 'age': 5,
+                       'doc': {'_id': 'julia004', 'age': 4,
                                'name': 'julia'},
-                       'id': 'julia005', 'order': [1.0, 1]}], 'total_rows': 100}
+                       'id': 'julia004', 'order': ['julia004', 1]}], 'total_rows': 100}
         )
 
     def test_get_search_result_executes_search_query_with_group_option(self):
@@ -1322,7 +1323,8 @@ class CloudantDatabaseTests(UnitTestDbBase):
             'searchindex001',
             query='name:julia*',
             group_field='_id',
-            group_limit=5
+            group_limit=5,
+            group_sort='_id<string>'
         )
         # for group parameter options, 'rows' results are within 'groups' key
         self.assertEqual(len(resp['groups']), 5)
@@ -1332,18 +1334,18 @@ class CloudantDatabaseTests(UnitTestDbBase):
                 {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia000',
                            'order': [1.0, 0]}], 'total_rows': 1,
                  'by': 'julia000'},
+                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia001',
+                           'order': [1.0, 0]}], 'total_rows': 1,
+                 'by': 'julia001'},
+                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia002',
+                           'order': [1.0, 0]}], 'total_rows': 1,
+                 'by': 'julia002'},
+                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia003',
+                           'order': [1.0, 0]}], 'total_rows': 1,
+                 'by': 'julia003'},
                 {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia004',
                            'order': [1.0, 1]}], 'total_rows': 1,
-                 'by': 'julia004'},
-                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia008',
-                           'order': [1.0, 2]}], 'total_rows': 1,
-                 'by': 'julia008'},
-                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia010',
-                           'order': [1.0, 3]}], 'total_rows': 1,
-                 'by': 'julia010'},
-                {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia014',
-                           'order': [1.0, 4]}], 'total_rows': 1,
-                 'by': 'julia014'}
+                 'by': 'julia004'}
             ]}
         )
 
