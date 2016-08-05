@@ -75,6 +75,43 @@ class DesignDocument(Document):
         return self.get('validate_doc_update')
 
     @property
+    def filters(self):
+        """
+        Provides an accessor property to the filters dictionary in the locally cached
+        DesignDocument.  Filter functions enable you to add tests for filtering each
+        of the objects included in the changes feed.  If any of the function tests
+        fail, the object is filtered from the feed.  If the function returns a true
+        result when applied to a change, the change remains in the feed.
+
+        Filter functions require two arguments: ``doc`` and ``req``.  The ``doc`` argument
+        represents the document being tested for filtering.  The ``req`` argument contains
+        additional information about the HTTP request.
+
+        Filter function example:
+
+        .. code-block:: python
+
+            # Add the filter function to ``filters`` and save the design document
+            ddoc = DesignDocument(self.db, '_design/ddoc001')
+            # Filter and remove documents that are not of ``type`` mail
+            ddoc['filters'] = {
+                'filter001': 'function(doc, req){if (doc.type != \'mail\'){return false;} '
+                             'return true;} '
+            }
+            ddoc.save()
+
+        To execute filter functions on a changes feed, see the database API
+        :func:`~cloudant.database.CouchDatabase.changes`
+
+        For more details, see the `Filter functions documentation
+        <https://docs.cloudant.com/design_documents.html#filter-functions>`_.
+
+        :returns: Dictionary containing filter function names and functions
+            as key/value
+        """
+        return self.get('filters')
+
+    @property
     def updates(self):
         """
         Provides an accessor property to the updates dictionary in the locally
