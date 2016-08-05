@@ -145,7 +145,7 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                   }}},
                  'lists': {},
                  'shows': {}
                  }
@@ -175,7 +175,7 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                   }}},
                  'lists': {},
                  'shows': {}
                  }
@@ -205,7 +205,7 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                   }}},
                  'lists': {},
                  'shows': {}
                  }
@@ -235,7 +235,7 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                   }}},
                  'lists': {},
                  'shows': {}
                  }
