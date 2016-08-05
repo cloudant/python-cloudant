@@ -1175,7 +1175,8 @@ class CloudantDatabaseTests(UnitTestDbBase):
                          'default_field': {},
                          'default_analyzer': 'keyword',
                          'selector': {}}}
-            ]}
+            ],
+            'total_rows' : 3}
         )
 
     def test_get_query_indexes(self):
