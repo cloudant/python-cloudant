@@ -987,7 +987,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}}}
+                                                    }}}}
             )
 
     def test_create_text_index(self):
@@ -1078,7 +1078,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                    }}},
                  'indexes': {'text-index-001': {
                                 'index': {'index_array_lengths': True,
                                 'fields': [{'name': 'name', 'type': 'string'},
