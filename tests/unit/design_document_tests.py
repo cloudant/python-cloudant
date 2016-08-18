@@ -694,21 +694,26 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         info = ddoc_remote.info()
+        # Remove variable fields to make equality easier to check
         info['view_index'].pop('signature')
         info['view_index'].pop('disk_size')
-        # Remove Cloudant specific sizes object
+        # Remove Cloudant/Couch 2 fields if present to allow test to pass on Couch 1.6
         if 'sizes' in info['view_index']:
             info['view_index'].pop('sizes')
-            name = ddoc_remote['_id']
-        else:
-            name = 'ddoc001'
+        if 'updates_pending' in info['view_index']:
+            info['view_index'].pop('updates_pending')
+
+        name = 'ddoc001'
         self.assertEqual(
             info,
             {'view_index': {'update_seq': 0, 'waiting_clients': 0,
                             'language': 'javascript',
                             'purge_seq': 0, 'compact_running': False,
                             'waiting_commit': False, 'updater_running': False,
-                            'data_size': 0}, 'name': name})
+                            'data_size': 0
+                            },
+             'name': name
+            })
 
     @unittest.skipUnless(
         os.environ.get('RUN_CLOUDANT_TESTS') is not None,
@@ -1405,13 +1410,17 @@ class DesignDocumentTests(UnitTestDbBase):
                                             'geoidx?g=point(-71.1%2042.3)'])).json()
         self.assertIsNotNone(geo_result['bookmark'])
         geo_result.pop('bookmark')
-        self.assertEqual(geo_result,
-                         {'rows': [
+        rows = geo_result.pop('rows')
+        self.assertEqual(1, len(rows), "There should be 1 row.")
+        row = rows[0]
+        # Remove the rev before comparison
+        row.pop('rev')
+        self.assertEqual(row,
+
                              {'id': 'doc001',
                               'geometry':
                                   {'type': 'Point',
-                                   'coordinates': [-71.1, 42.3]}}]
-                         })
+                                   'coordinates': [-71.1, 42.3]}})
 
     def test_add_a_show_function(self):
         """

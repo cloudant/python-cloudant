@@ -463,22 +463,14 @@ class ResultTests(UnitTestDbBase):
     def test_get_item_key_slice_start_greater_than_stop(self):
         """
         Test getting a key slice by using start value greater than stop value.
-        The behavior when using CouchDB is to return an HTTP 400 Bad Request
-        error whereas with Cloudant an empty result collection is returned.
-        Unfortunately a 400 response cannot definitively be attributed to a
-        startkey value being greater than an endkey value so the decision to
-        leave this CouchDB/Cloudant behavior inconsistency as is.  We have an
-        "if-else" branch as part of the test to handle the two differing
-        behaviors.
+        The behavior when using CouchDB and newer versions of Cloudant
+        is to return an HTTP 400 Bad Request.
         """
         result = Result(self.view001)
-        if os.environ.get('RUN_CLOUDANT_TESTS') is None:
-            with self.assertRaises(HTTPError) as cm:
-                invalid_result = result['foo': 'bar']
-            self.assertTrue(
-                str(cm.exception).startswith('400 Client Error: Bad Request'))
-        else:
-            self.assertEqual(result['foo': 'bar'], [])
+        with self.assertRaises(HTTPError) as cm:
+            invalid_result = result['foo': 'bar']
+        self.assertTrue(
+            str(cm.exception).startswith('400 Client Error: Bad Request'))
 
     def test_get_item_key_slice_using_start_only(self):
         """

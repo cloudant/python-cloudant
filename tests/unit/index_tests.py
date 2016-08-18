@@ -145,7 +145,7 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                   }}},
                  'lists': {},
                  'shows': {}
                  }
@@ -175,7 +175,7 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                   }}},
                  'lists': {},
                  'shows': {}
                  }
@@ -205,7 +205,7 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                   }}},
                  'lists': {},
                  'shows': {}
                  }
@@ -235,7 +235,7 @@ class IndexTests(UnitTestDbBase):
                                         'reduce': '_count',
                                         'options': {'def': {'fields': ['name',
                                                                        'age']},
-                                                    'w': 2}}},
+                                                   }}},
                  'lists': {},
                  'shows': {}
                  }
@@ -351,20 +351,15 @@ class IndexTests(UnitTestDbBase):
 
     def test_index_usage_via_query(self):
         """
-        Test that a query will fail if the indexes that exist do not satisfy the
+        Test that a query will warn if the indexes that exist do not satisfy the
         query selector.
         """
         index = Index(self.db, 'ddoc001', 'index001', fields=['name'])
         index.create()
         self.populate_db_with_documents(100)
-        query = Query(self.db)
-        with self.assertRaises(requests.HTTPError) as cm:
-            resp = query(
-                fields=['name', 'age'],
-                selector={'age': {'$eq': 6}}
-            )
-        err = cm.exception
-        self.assertEqual(err.response.status_code, 400)
+        result = self.db.get_query_result(fields=['name', 'age'],
+                selector={'age': {'$eq': 6}}, raw_result=True)
+        self.assertTrue(str(result['warning']).startswith("no matching index found"))
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
