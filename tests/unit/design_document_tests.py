@@ -298,9 +298,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         view_map = 'function (doc) {\n  emit(doc._id, 1);\n}'
         view_reduce = '_count'
-        db_copy = '{0}-copy'.format(self.db.database_name)
         ddoc.add_view('view001', view_map, view_reduce)
-        ddoc.add_view('view002', view_map, view_reduce, dbcopy=db_copy)
         ddoc.add_view('view003', view_map)
         ddoc.save()
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
@@ -316,13 +314,54 @@ class DesignDocumentTests(UnitTestDbBase):
             'indexes': {},
             'views': {
                 'view001': {'map': view_map, 'reduce': view_reduce},
-                'view002': {'map': view_map, 'reduce': view_reduce, 'dbcopy': db_copy},
                 'view003': {'map': view_map}
             }
         })
         self.assertIsInstance(ddoc_remote['views']['view001'], View)
-        self.assertIsInstance(ddoc_remote['views']['view002'], View)
         self.assertIsInstance(ddoc_remote['views']['view003'], View)
+
+    @unittest.skipUnless(
+        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+        'Skipping Cloudant fetch dbcopy test'
+    )
+    def test_fetch_dbcopy(self):
+        """
+        Ensure that the document fetch from the database returns the
+        DesignDocument format as expected when retrieving a view
+        that has dbcopy.
+        Note: this asserts the expected dbcopy location from Cloudant
+        versions based on CouchDB >= 2.0
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        view_map = 'function (doc) {\n  emit(doc._id, 1);\n}'
+        view_reduce = '_count'
+        db_copy = '{0}-copy'.format(self.db.database_name)
+        ddoc.add_view('view002', view_map, view_reduce, dbcopy=db_copy)
+        ddoc.save()
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        self.assertNotEqual(ddoc_remote, ddoc)
+        ddoc_remote.fetch()
+        # The local ddoc will not contain the server plugin options
+        # so we need to manipulate the equalities by removing
+        # the options from remote. The remote ddoc won't contain
+        # the dbcopy entry in the view dict so that needs to be removed
+        # before comparison also. Compare the removed values with
+        # the expected content in each case.
+        self.assertEqual(db_copy, ddoc['views']['view002'].pop('dbcopy'))
+        self.assertEqual({'epi': {'dbcopy': {'view002': db_copy}}}, ddoc_remote.pop('options'))
+        self.assertEqual(ddoc_remote, ddoc)
+        self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
+        self.assertEqual(ddoc_remote, {
+            '_id': '_design/ddoc001',
+            '_rev': ddoc['_rev'],
+            'lists': {},
+            'shows': {},
+            'indexes': {},
+            'views': {
+                'view002': {'map': view_map, 'reduce': view_reduce}
+            }
+        })
+        self.assertIsInstance(ddoc_remote['views']['view002'], View)
 
     def test_fetch_no_views(self):
         """
@@ -515,7 +554,7 @@ class DesignDocumentTests(UnitTestDbBase):
         view_map = 'function (doc) {\n  emit(doc._id, 1);\n}'
         view_reduce = '_count'
         db_copy = '{0}-copy'.format(self.db.database_name)
-        ddoc.add_view('view001', view_map, view_reduce, dbcopy=db_copy)
+        ddoc.add_view('view001', view_map, view_reduce)
         ddoc['language'] = 'query'
         with self.assertRaises(CloudantException) as cm:
             ddoc.save()
@@ -534,7 +573,7 @@ class DesignDocumentTests(UnitTestDbBase):
         view_map = 'function (doc) {\n  emit(doc._id, 1);\n}'
         view_reduce = '_count'
         db_copy = '{0}-copy'.format(self.db.database_name)
-        ddoc.add_view('view001', view_map, view_reduce, dbcopy=db_copy)
+        ddoc.add_view('view001', view_map, view_reduce)
         ddoc.save()
         self.assertTrue(ddoc['_rev'].startswith('1-'))
 
