@@ -25,7 +25,8 @@ from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
 from .error import CloudantException, CloudantArgumentError
-from ._common_util import USER_AGENT
+from ._common_util import USER_AGENT, append_response_error_content
+
 
 class CouchDB(dict):
     """
@@ -75,6 +76,9 @@ class CouchDB(dict):
             self.r_session.auth = (self._user, self._auth_token)
             self.session_login(self._user, self._auth_token)
         self._client_session = self.session()
+        # Utilize an event hook to append to the response message
+        # using :func:`~cloudant.common_util.append_response_error_content`
+        self.r_session.hooks['response'].append(append_response_error_content)
 
     def disconnect(self):
         """

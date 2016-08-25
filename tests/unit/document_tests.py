@@ -196,11 +196,13 @@ class DocumentTests(UnitTestDbBase):
         """
         doc = Document(self.db, 'julia006')
         doc.create()
-        try:
+        with self.assertRaises(requests.HTTPError) as cm:
             doc.create()
-            self.fail('Above statement should raise an Exception')
-        except requests.HTTPError as err:
-            self.assertEqual(err.response.status_code, 409)
+        err = cm.exception
+        self.assertEqual(
+            err.response.status_code,
+            409
+        )
 
     def test_fetch_document_without_docid(self):
         """
@@ -239,6 +241,28 @@ class DocumentTests(UnitTestDbBase):
         new_doc = Document(self.db, 'julia006')
         new_doc.fetch()
         self.assertEqual(new_doc, doc)
+
+    def test_appended_error_message_using_save_with_invalid_key(self):
+        """
+        Test that saving a document with an invalid remote key will
+        throw an HTTPError with additional error details from util
+        method append_response_error_content.
+        """
+        # First create the document
+        doc = Document(self.db, 'julia006')
+        # Add an invalid key and try to save document
+        doc['_invalid_key'] = 'jules'
+        with self.assertRaises(requests.HTTPError) as cm:
+            doc.save()
+        err = cm.exception
+        self.assertEqual(
+            str(err.response.reason),
+            'Internal Server Error doc_validation Bad special document member: _invalid_key'
+        )
+        self.assertEqual(
+            err.response.status_code,
+            500
+        )
 
     def test_fetch_existing_document_with_docid_encoded_url(self):
         """
