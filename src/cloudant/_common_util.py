@@ -263,6 +263,20 @@ def get_docs(r_session, url, encoder=None, headers=None, **params):
     resp.raise_for_status()
     return resp
 
+#pylint: disable=unused-argument
+def append_response_error_content(response, **kwargs):
+    """
+    Provides a helper to add HTTP response error and reason messages.
+    """
+    try:
+        if response.status_code >= 400 and response.json():
+            reason = response.json().pop('reason', None)
+            error = response.json().pop('error', None)
+            response.reason += ' %s %s' % (error, reason)
+            return response
+    except ValueError:
+        return
+
 # Classes
 
 class _Code(str):
