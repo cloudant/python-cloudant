@@ -1207,6 +1207,20 @@ class CloudantDatabaseTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(str(err), 'Invalid argument: foo')
 
+    def test_get_search_result_with_both_q_and_query(self):
+        """
+        Test get_search_result by passing in both a q and query parameter
+        """
+        with self.assertRaises(CloudantArgumentError) as cm:
+            self.db.get_search_result('searchddoc001', 'searchindex001',
+                                      query='julia*', q='julia*')
+        err = cm.exception
+        self.assertEqual(
+            str(err),
+            'A single query/q parameter is required. '
+            'Found: {\'q\': \'julia*\', \'query\': \'julia*\'}'
+        )
+
     def test_get_search_result_with_invalid_value_types(self):
         """
         Test get_search_result by passing in invalid value types for
@@ -1252,8 +1266,8 @@ class CloudantDatabaseTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(
             str(err),
-            'No query parameter found.  Please add a query parameter '
-            'containing Lucene syntax and retry.'
+            'A single query/q parameter is required. '
+            'Found: {\'limit\': 10, \'include_docs\': True}'
         )
 
     def test_get_search_result_with_invalid_query_type(self):
@@ -1271,7 +1285,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
 
     def test_get_search_result_executes_search_query(self):
         """
-        Test get_search_result executes a search query
+        Test get_search_result executes a search with query parameter.
         """
         self.create_search_index()
         self.populate_db_with_documents(100)
@@ -1311,6 +1325,28 @@ class CloudantDatabaseTests(UnitTestDbBase):
                        'doc': {'_id': 'julia004', 'age': 4,
                                'name': 'julia'},
                        'id': 'julia004', 'order': ['julia004', 1]}], 'total_rows': 100}
+        )
+
+    def test_get_search_result_executes_search_q(self):
+        """
+        Test get_search_result executes a search query with q parameter.
+        """
+        self.create_search_index()
+        self.populate_db_with_documents(100)
+        resp = self.db.get_search_result(
+            'searchddoc001',
+            'searchindex001',
+            query='julia*',
+            sort='_id<string>',
+            limit=1
+        )
+        self.assertEqual(len(resp['rows']), 1)
+        self.assertTrue(resp['bookmark'])
+        resp.pop('bookmark')
+        self.assertEqual(
+            resp,
+            {'rows': [{'fields': {'name': 'julia'}, 'id': 'julia000',
+                       'order': ['julia000', 0]}], 'total_rows': 100}
         )
 
     def test_get_search_result_executes_search_query_with_group_option(self):
