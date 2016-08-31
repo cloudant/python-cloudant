@@ -786,7 +786,7 @@ class CouchDatabase(dict):
                 # Process data (in text format).
 
         For more detail on list functions, refer to the
-        `Cloudant documentation <https://docs.cloudant.com/
+        `Cloudant list documentation <https://docs.cloudant.com/
         design_documents.html#list-functions>`_.
 
         :param str ddoc_id: Design document id used to get result.
@@ -824,7 +824,7 @@ class CouchDatabase(dict):
                 # Process data (in text format).
 
         For more detail on show functions, refer to the
-        `Cloudant documentation <https://docs.cloudant.com/
+        `Cloudant show documentation <https://docs.cloudant.com/
         design_documents.html#show-functions>`_.
 
         :param str ddoc_id: Design document id used to get the result.
@@ -1277,7 +1277,7 @@ class CloudantDatabase(CouchDatabase):
             pair of a field name and a value. This field can be used several
             times.  The search will only match documents that have the given
             value in the field name. It differs from using
-            ``query=fieldname:value` only in that the values are not analyzed.
+            ``query=fieldname:value`` only in that the values are not analyzed.
         :param str group_field: Optional string field by which to group
             search matches.  Fields containing other data
             (numbers, objects, arrays) can not be used.
