@@ -1291,8 +1291,9 @@ class CloudantDatabase(CouchDatabase):
         :param int limit: Optional number to limit the maximum count of the
             returned documents. In case of a grouped search, this parameter
             limits the number of documents per group.
-        :param query: A Lucene query in the form of ``name:value``.
+        :param query/q: A Lucene query in the form of ``name:value``.
             If name is omitted, the special value ``default`` is used.
+            The ``query`` parameter can be abbreviated as ``q``.
         :param ranges: Optional JSON facet syntax that reuses the standard
             Lucene syntax to return counts of results which fit into each
             specified category. Inclusive range queries are denoted by brackets.
@@ -1325,10 +1326,13 @@ class CloudantDatabase(CouchDatabase):
 
         :returns: Search query result data in JSON format
         """
-        if not query_params.get('query'):
+        param_q = query_params.get('q')
+        param_query = query_params.get('query')
+        # Either q or query parameter is required
+        if bool(param_q) == bool(param_query):
             raise CloudantArgumentError(
-                'No query parameter found.  Please add a query parameter '
-                'containing Lucene syntax and retry.')
+                'A single query/q parameter is required. '
+                'Found: {0}'.format(query_params))
 
         # Validate query arguments and values
         for key, val in iteritems_(query_params):
