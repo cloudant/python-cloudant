@@ -1,4 +1,4 @@
-2.1.0 (Unreleased)
+2.1.0 (2016-08-31)
 ==================
 - [NEW] Added support for Cloudant Search execution.
 - [NEW] Added support for Cloudant Search index management.
