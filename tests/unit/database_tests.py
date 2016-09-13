@@ -596,6 +596,8 @@ class DatabaseTests(UnitTestDbBase):
         self.assertNotEqual(new_limit, limit)
         self.assertEqual(new_limit, 1234)
 
+    @unittest.skipIf(os.environ.get('RUN_CLOUDANT_TESTS'),
+        'Skipping since view cleanup is automatic in Cloudant.')
     def test_view_clean_up(self):
         """
         Test cleaning up old view files
