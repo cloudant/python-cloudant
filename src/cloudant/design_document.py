@@ -715,6 +715,7 @@ class DesignDocument(Document):
         """
         ddoc_info = self.r_session.get(
             '/'.join([self.document_url, '_info']))
+        ddoc_info.raise_for_status()
         return ddoc_info.json()
 
     def search_info(self, search_index):
@@ -726,4 +727,5 @@ class DesignDocument(Document):
         """
         ddoc_search_info = self.r_session.get(
             '/'.join([self.document_url, '_search_info', search_index]))
+        ddoc_search_info.raise_for_status()
         return ddoc_search_info.json()

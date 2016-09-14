@@ -101,7 +101,10 @@ class CouchDatabase(dict):
 
         :returns: Boolean True if the database exists, False otherwise
         """
-        resp = self.r_session.get(self.database_url)
+        resp = self.r_session.head(self.database_url)
+        if resp.status_code not in [200, 404]:
+            resp.raise_for_status()
+
         return resp.status_code == 200
 
     def metadata(self):
@@ -891,6 +894,7 @@ class CouchDatabase(dict):
             resp = self.r_session.post(
                 '/'.join([ddoc.document_url, '_update', handler_name]),
                 params=params, data=data)
+        resp.raise_for_status()
         return resp.text
 
 class CloudantDatabase(CouchDatabase):
