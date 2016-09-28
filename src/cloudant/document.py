@@ -60,11 +60,19 @@ class Document(dict):
         self._database = database
         self._database_host = self._client.server_url
         self._database_name = database.database_name
-        self.r_session = database.r_session
         self._document_id = document_id
         if self._document_id is not None:
             self['_id'] = self._document_id
         self.encoder = self._client.encoder
+
+    @property
+    def r_session(self):
+        """
+        Returns the database instance ``r_session`` used by the document.
+
+        :returns: Client ``r_session``
+        """
+        return self._client.r_session
 
     @property
     def document_url(self):
