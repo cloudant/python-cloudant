@@ -101,7 +101,11 @@ class Document(dict):
         """
         if self._document_id is None:
             return False
-        resp = self.r_session.get(self.document_url)
+        else:
+            resp = self.r_session.head(self.document_url)
+            if resp.status_code not in [200, 404]:
+                resp.raise_for_status()
+
         return resp.status_code == 200
 
     def json(self):

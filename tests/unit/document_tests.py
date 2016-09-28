@@ -23,6 +23,7 @@ module docstring.
 """
 
 import unittest
+import mock
 import posixpath
 import json
 import requests
@@ -128,7 +129,8 @@ class DocumentTests(UnitTestDbBase):
 
     def test_document_exists(self):
         """
-        Test whether a document exists remotely
+        Tests that the result of True is expected when the document exists,
+        and False is expected when the document is nonexistent remotely.
         """
         doc = Document(self.db)
         self.assertFalse(doc.exists())
@@ -136,6 +138,22 @@ class DocumentTests(UnitTestDbBase):
         self.assertFalse(doc.exists())
         doc.create()
         self.assertTrue(doc.exists())
+
+    def test_document_exists_raises_httperror(self):
+        """
+        Test document exists raises an HTTPError.
+        """
+        # Mock HTTPError when running against CouchDB and Cloudant
+        resp = requests.Response()
+        resp.status_code = 400
+        self.client.r_session.head = mock.Mock(return_value=resp)
+        doc = Document(self.db)
+        doc['_id'] = 'julia006'
+        with self.assertRaises(requests.HTTPError) as cm:
+            doc.exists()
+        err = cm.exception
+        self.assertEqual(err.response.status_code, 400)
+        self.client.r_session.head.assert_called_with(doc.document_url)
 
     def test_retrieve_document_json(self):
         """

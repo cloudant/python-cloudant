@@ -24,6 +24,8 @@ module docstring.
 import json
 import os
 import unittest
+import mock
+import requests
 
 from cloudant.document import Document 
 from cloudant.design_document import DesignDocument
@@ -754,6 +756,22 @@ class DesignDocumentTests(UnitTestDbBase):
              'name': name
             })
 
+    def test_get_info_raises_httperror(self):
+        """
+        Test get_info raises an HTTPError.
+        """
+        # Mock HTTPError when running against CouchDB and Cloudant
+        resp = requests.Response()
+        resp.status_code = 400
+        self.client.r_session.get = mock.Mock(return_value=resp)
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        with self.assertRaises(requests.HTTPError) as cm:
+            ddoc.info()
+        err = cm.exception
+        self.assertEqual(err.response.status_code, 400)
+        self.client.r_session.get.assert_called_with(
+            '/'.join([ddoc.document_url, '_info']))
+
     @unittest.skipUnless(
         os.environ.get('RUN_CLOUDANT_TESTS') is not None,
         'Skipping Cloudant _search_info endpoint test'
@@ -780,6 +798,27 @@ class DesignDocumentTests(UnitTestDbBase):
              'search_index': {'doc_del_count': 0, 'doc_count': 100,
                               'pending_seq': 101, 'committed_seq': 0},
              })
+
+    @unittest.skipUnless(
+        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+        'Skipping Cloudant _search_info raises HTTPError test'
+    )
+    def test_get_search_info_raises_httperror(self):
+        """
+        Test get_search_info raises an HTTPError.
+        """
+        # Mock HTTPError when running against Cloudant
+        search_index = 'search001'
+        resp = requests.Response()
+        resp.status_code = 400
+        self.client.r_session.get = mock.Mock(return_value=resp)
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        with self.assertRaises(requests.HTTPError) as cm:
+            ddoc.search_info(search_index)
+        err = cm.exception
+        self.assertEqual(err.response.status_code, 400)
+        self.client.r_session.get.assert_called_with(
+            '/'.join([ddoc.document_url, '_search_info', search_index]))
 
     def test_add_a_search_index(self):
         """

@@ -23,6 +23,7 @@ module docstring.
 """
 
 import unittest
+import mock
 import requests
 import posixpath
 import os
@@ -92,12 +93,27 @@ class DatabaseTests(UnitTestDbBase):
 
     def test_exists(self):
         """
-        Test database exists fucntionality
+        Tests that the result of True is expected when the database exists,
+        and False is expected when the database is nonexistent remotely.
         """
         self.assertTrue(self.db.exists())
         # Construct a database object that does not exist remotely
         fake_db = self.client._DATABASE_CLASS(self.client, 'no-such-db')
         self.assertFalse(fake_db.exists())
+
+    def test_exists_raises_httperror(self):
+        """
+        Test database exists raises an HTTPError.
+        """
+        # Mock HTTPError when running against CouchDB and Cloudant
+        resp = requests.Response()
+        resp.status_code = 400
+        self.client.r_session.head = mock.Mock(return_value=resp)
+        with self.assertRaises(requests.HTTPError) as cm:
+            self.db.exists()
+        err = cm.exception
+        self.assertEqual(err.response.status_code, 400)
+        self.client.r_session.head.assert_called_with(self.db.database_url)
 
     def test_create_db_delete_db(self):
         """
@@ -748,6 +764,26 @@ class DatabaseTests(UnitTestDbBase):
              '_rev': ddoc_remote['_rev'], '_id': 'julia001',
              'message': 'hello'}
         )
+
+    def test_update_handler_raises_httperror(self):
+        """
+        Test update_handler_result raises an HTTPError.
+        """
+        # Mock HTTPError when running against CouchDB or Cloudant
+        resp = requests.Response()
+        resp.status_code = 400
+        self.client.r_session.put = mock.Mock(return_value=resp)
+        with self.assertRaises(requests.HTTPError) as cm:
+            self.db.update_handler_result('ddoc001', 'update001', 'julia001',
+                                          field='new_field', value='new_value',
+                                          data={'message': 'hello'})
+        err = cm.exception
+        self.assertEqual(err.response.status_code, 400)
+        ddoc = DesignDocument(self.db, 'ddoc001')
+        self.client.r_session.put.assert_called_with(
+            '/'.join([ddoc.document_url, '_update', 'update001', 'julia001']),
+            data={'message': 'hello'},
+            params={'field': 'new_field', 'value': 'new_value'})
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
