@@ -1,3 +1,6 @@
+2.2.0 (Unreleased)
+==================
+
 2.1.1 (2016-10-03)
 ==================
 - [FIXED] HTTPError is now raised when 4xx or 5xx codes are encountered.
