@@ -29,7 +29,7 @@ setup_args = {
     'include_package_data': True,
     'install_requires': requirements,
     'name': 'cloudant',
-    'version': '2.2.0.dev',
+    'version': '2.1.1',
     'author': 'IBM',
     'author_email': 'alfinkel@us.ibm.com',
     'url': 'https://github.com/cloudant/python-cloudant',
