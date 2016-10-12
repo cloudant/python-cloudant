@@ -7,17 +7,17 @@ def test_python(pythonVersion)
     // Set up the environment and test
     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'clientlibs-test', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD']]) {
       try {
-        sh """virtualenv tmp -p /usr/local/lib/python${pythonVersion}/bin/${pythonVersion.startsWith('3') ? "python3" : "python"}
-. ./tmp/bin/activate
-echo \$DB_USER
-export ADMIN_PARTY=true
-export RUN_CLOUDANT_TESTS=1
-export CLOUDANT_ACCOUNT=\$DB_USER
-# Temporarily disable the _db_updates tests pending resolution of case 71610
-export SKIP_DB_UPDATES=1
-pip install -r requirements.txt
-pip install -r test-requirements.txt
-nosetests -w ./tests/unit --with-xunit"""
+        sh """  virtualenv tmp -p /usr/local/lib/python${pythonVersion}/bin/${pythonVersion.startsWith('3') ? "python3" : "python"}
+                . ./tmp/bin/activate
+                echo \$DB_USER
+                export ADMIN_PARTY=true
+                export RUN_CLOUDANT_TESTS=1
+                export CLOUDANT_ACCOUNT=\$DB_USER
+                # Temporarily disable the _db_updates tests pending resolution of case 71610
+                export SKIP_DB_UPDATES=1
+                pip install -r requirements.txt
+                pip install -r test-requirements.txt
+                nosetests -w ./tests/unit --with-xunit"""
       } finally {
         // Load the test results
         junit 'nosetests.xml'
