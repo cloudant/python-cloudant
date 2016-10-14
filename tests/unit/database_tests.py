@@ -1374,7 +1374,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         resp = self.db.get_search_result(
             'searchddoc001',
             'searchindex001',
-            query='julia*',
+            q='julia*',
             sort='_id<string>',
             limit=1
         )

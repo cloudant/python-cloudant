@@ -124,6 +124,7 @@ SEARCH_INDEX_ARGS = {
     'include_docs': bool,
     'limit': (int, NONETYPE),
     'query': (STRTYPE, int),
+    'q': (STRTYPE, int),
     'ranges': dict,
     'sort': (STRTYPE, list),
     'stale': STRTYPE,
