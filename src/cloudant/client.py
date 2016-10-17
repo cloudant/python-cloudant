@@ -40,12 +40,15 @@ class CouchDB(dict):
 
     :param str user: Username used to connect to CouchDB.
     :param str auth_token: Authentication token used to connect to CouchDB.
-    :param str url: URL for CouchDB server.
     :param bool admin_party: Setting to allow the use of Admin Party mode in
         CouchDB.  Defaults to ``False``.
+    :param str url: URL for CouchDB server.
     :param str encoder: Optional json Encoder object used to encode
         documents for storage.  Defaults to json.JSONEncoder.
-    :param requests.HTTPAdapter adapter: Optional adapter to use for configuring requests.
+    :param requests.HTTPAdapter adapter: Optional adapter to use for
+        configuring requests.
+    :param bool connect: Keyword argument, if set to True performs the call to
+        connect as part of client construction.  Default is False.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -60,12 +63,17 @@ class CouchDB(dict):
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
         self.adapter = kwargs.get('adapter')
         self.r_session = None
+        if kwargs.get('connect', False):
+            self.connect()
 
     def connect(self):
         """
         Starts up an authentication session for the client using cookie
-        authentication.
+        authentication if necessary.
         """
+        if self.r_session:
+            return
+
         self.r_session = requests.Session()
         # If a Transport Adapter was supplied add it to the session
         if self.adapter is not None:
