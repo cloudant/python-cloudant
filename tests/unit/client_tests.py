@@ -103,6 +103,44 @@ class ClientTests(UnitTestDbBase):
             self.client.disconnect()
             self.assertIsNone(self.client.r_session)
 
+    def test_auto_connect(self):
+        """
+        Test connect during client instantiation option.
+        """
+        try:
+            self.set_up_client(auto_connect=True)
+            self.assertIsInstance(self.client.r_session, requests.Session)
+            if self.client.admin_party:
+                self.assertIsNone(self.client.r_session.auth)
+            else:
+                self.assertEqual(
+                    self.client.r_session.auth, (self.user, self.pwd)
+                )
+        finally:
+            self.client.disconnect()
+            self.assertIsNone(self.client.r_session)
+
+    def test_multiple_connect(self):
+        """
+        Test that issuing a connect call to an already connected client does
+        not cause any issue.
+        """
+        try:
+            self.client.connect()
+            self.set_up_client(auto_connect=True)
+            self.client.connect()
+            self.assertIsInstance(self.client.r_session, requests.Session)
+            if self.client.admin_party:
+                self.assertIsNone(self.client.r_session.auth)
+            else:
+                self.assertEqual(
+                    self.client.r_session.auth, (self.user, self.pwd)
+                )
+        finally:
+            self.client.disconnect()
+            self.assertIsNone(self.client.r_session)
+
+
     def test_session(self):
         """
         Test getting session information.  

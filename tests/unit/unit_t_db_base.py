@@ -132,6 +132,9 @@ class UnitTestDbBase(unittest.TestCase):
         """
         Set up test attributes for unit tests targeting a database
         """
+        self.set_up_client()
+
+    def set_up_client(self, auto_connect=False):
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
             admin_party = False
             if (os.environ.get('ADMIN_PARTY') and
@@ -140,7 +143,13 @@ class UnitTestDbBase(unittest.TestCase):
             self.user = os.environ.get('DB_USER', None)
             self.pwd = os.environ.get('DB_PASSWORD', None)
             self.url = os.environ['DB_URL']
-            self.client = CouchDB(self.user, self.pwd, admin_party, url=self.url)
+            self.client = CouchDB(
+                self.user,
+                self.pwd,
+                admin_party,
+                url=self.url,
+                connect=auto_connect
+            )
         else:
             self.account = os.environ.get('CLOUDANT_ACCOUNT')
             self.user = os.environ.get('DB_USER')
@@ -152,7 +161,10 @@ class UnitTestDbBase(unittest.TestCase):
                 self.user,
                 self.pwd,
                 url=self.url,
-                x_cloudant_user=self.account)
+                x_cloudant_user=self.account,
+                connect=auto_connect
+            )
+
 
     def tearDown(self):
         """
