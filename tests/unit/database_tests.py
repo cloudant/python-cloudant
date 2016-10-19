@@ -785,6 +785,20 @@ class DatabaseTests(UnitTestDbBase):
             data={'message': 'hello'},
             params={'field': 'new_field', 'value': 'new_value'})
 
+    def test_database_request_fails_after_client_disconnects(self):
+        """
+        Test that after disconnecting from a client any objects created based
+        on that client are not able to make requests.
+        """
+        self.client.disconnect()
+
+        try:
+            with self.assertRaises(AttributeError):
+                self.db.metadata()
+            self.assertIsNone(self.db.r_session)
+        finally:
+            self.client.connect()
+
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant specific Database tests'

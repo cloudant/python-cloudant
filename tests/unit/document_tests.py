@@ -722,5 +722,22 @@ class DocumentTests(UnitTestDbBase):
         finally:
             attachment.close()
 
+    def test_document_request_fails_after_client_disconnects(self):
+        """
+        Test that after disconnecting from a client any objects created based
+        on that client are not able to make requests.
+        """
+        self.client.connect()
+        doc = Document(self.db, 'julia001')
+        doc.save()
+        self.client.disconnect()
+
+        try:
+            with self.assertRaises(AttributeError):
+                doc.fetch()
+            self.assertIsNone(doc.r_session)
+        finally:
+            self.client.connect()
+
 if __name__ == '__main__':
     unittest.main()

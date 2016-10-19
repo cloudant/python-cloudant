@@ -54,9 +54,17 @@ class CouchDatabase(dict):
         self.client = client
         self._database_host = client.server_url
         self.database_name = database_name
-        self.r_session = client.r_session
         self._fetch_limit = fetch_limit
         self.result = Result(self.all_docs)
+
+    @property
+    def r_session(self):
+        """
+        Returns the ``r_session`` from the client instance used by the database.
+
+        :returns: Client ``r_session``
+        """
+        return self.client.r_session
 
     @property
     def admin_party(self):

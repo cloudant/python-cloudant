@@ -26,7 +26,6 @@ import unittest
 import uuid
 import time
 import requests
-import os
 
 from cloudant.replicator import Replicator
 from cloudant.document import Document

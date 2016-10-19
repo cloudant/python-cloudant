@@ -1,5 +1,6 @@
-2.2.0 (Unreleased)
+2.1.2 (Unreleased)
 ==================
+- [FIXED] Requests session is no longer valid after disconnect.
 
 2.1.1 (2016-10-03)
 ==================

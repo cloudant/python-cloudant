@@ -54,7 +54,6 @@ class ClientTests(UnitTestDbBase):
             with couchdb(self.user, self.pwd, url=self.url) as c:
                 self.assertIsInstance(c, CouchDB)
                 self.assertIsInstance(c.r_session, requests.Session)
-                self.assertEqual(c.r_session.auth, (self.user, self.pwd))
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
 
@@ -88,17 +87,10 @@ class ClientTests(UnitTestDbBase):
     def test_connect(self):
         """
         Test connect and disconnect functionality.
-        Client r_session_auth is not set in CouchDB Admin Party mode.
         """
         try:
             self.client.connect()
             self.assertIsInstance(self.client.r_session, requests.Session)
-            if self.client.admin_party:
-                self.assertIsNone(self.client.r_session.auth)
-            else:
-                self.assertEqual(
-                    self.client.r_session.auth, (self.user, self.pwd)
-                )
         finally:
             self.client.disconnect()
             self.assertIsNone(self.client.r_session)
@@ -110,12 +102,6 @@ class ClientTests(UnitTestDbBase):
         try:
             self.set_up_client(auto_connect=True)
             self.assertIsInstance(self.client.r_session, requests.Session)
-            if self.client.admin_party:
-                self.assertIsNone(self.client.r_session.auth)
-            else:
-                self.assertEqual(
-                    self.client.r_session.auth, (self.user, self.pwd)
-                )
         finally:
             self.client.disconnect()
             self.assertIsNone(self.client.r_session)
@@ -130,12 +116,6 @@ class ClientTests(UnitTestDbBase):
             self.set_up_client(auto_connect=True)
             self.client.connect()
             self.assertIsInstance(self.client.r_session, requests.Session)
-            if self.client.admin_party:
-                self.assertIsNone(self.client.r_session.auth)
-            else:
-                self.assertEqual(
-                    self.client.r_session.auth, (self.user, self.pwd)
-                )
         finally:
             self.client.disconnect()
             self.assertIsNone(self.client.r_session)
@@ -447,7 +427,6 @@ class CloudantClientTests(UnitTestDbBase):
             with cloudant(self.user, self.pwd, account=self.account) as c:
                 self.assertIsInstance(c, Cloudant)
                 self.assertIsInstance(c.r_session, requests.Session)
-                self.assertEqual(c.r_session.auth, (self.user, self.pwd))
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
     
