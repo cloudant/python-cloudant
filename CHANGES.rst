@@ -1,5 +1,6 @@
-2.1.2 (Unreleased)
+2.2.0 (2016-10-20)
 ==================
+- [NEW] Added auto connect feature to the client constructor. 
 - [FIXED] Requests session is no longer valid after disconnect.
 
 2.1.1 (2016-10-03)
