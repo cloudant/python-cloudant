@@ -1,3 +1,6 @@
+2.3.0 (Unreleased)
+==================
+
 2.2.0 (2016-10-20)
 ==================
 - [NEW] Added auto connect feature to the client constructor. 
