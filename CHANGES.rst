@@ -1,5 +1,7 @@
 2.3.0 (Unreleased)
 ==================
+- [FIXED] Issue where the custom JSON encoder was not used when transforming
+   data.
 
 2.2.0 (2016-10-20)
 ==================

@@ -241,6 +241,17 @@ class IndexTests(UnitTestDbBase):
                  }
             )
 
+    def test_create_uses_custom_encoder(self):
+        """
+        Test that the create method uses the custom encoder
+        """
+        self.set_up_client(auto_connect=True, encoder="AEncoder")
+        database = self.client[self.test_dbname]
+        index = Index(database, '_design/ddoc001', 'index001', fields=['name', 'age'])
+        with self.assertRaises(TypeError):
+            index.create()
+
+
     def test_create_fails_due_to_ddocid_validation(self):
         """
         Ensure that if the design doc id is not a string the create call fails.

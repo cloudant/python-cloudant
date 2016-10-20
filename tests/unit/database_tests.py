@@ -67,6 +67,41 @@ class DatabaseTests(UnitTestDbBase):
         self.assertEqual(self.db.r_session, self.client.r_session)
         self.assertIsInstance(self.db.result, Result)
 
+    def test_bulk_docs_uses_custom_encoder(self):
+        """
+        Test that the bulk_docs method uses the custom encoder
+        """
+        self.set_up_client(auto_connect=True, encoder="AEncoder")
+        docs = [
+            {'_id': 'julia{0:03d}'.format(i), 'name': 'julia', 'age': i}
+            for i in range(3)
+        ]
+        database = self.client[self.test_dbname]
+        with self.assertRaises(TypeError):
+            # since the encoder is a str a type error should be thrown.
+            database.bulk_docs(docs)
+
+    def test_missing_revisions_uses_custom_encoder(self):
+        """
+        Test that missing_revisions uses the custom encoder.
+        """
+        revs = ['1-1', '2-1', '3-1']
+        self.set_up_client(auto_connect=True, encoder="AEncoder")
+        database = self.client[self.test_dbname]
+        with self.assertRaises(TypeError):
+            # since the encoder is a str a type error should be thrown.
+            database.missing_revisions('no-such-doc', *revs)
+
+    def test_revs_diff_uses_custom_encoder(self):
+        """
+        Test that revisions_diff uses the custom encoder.
+        """
+        revs = ['1-1', '2-1', '3-1']
+        self.set_up_client(auto_connect=True, encoder="AEncoder")
+        database = self.client[self.test_dbname]
+        with self.assertRaises(TypeError):
+            database.revisions_diff('no-such-doc', *revs)
+
     def test_retrieve_db_url(self):
         """
         Test retrieving the database URL
@@ -821,6 +856,27 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         self.db_tear_down()
         super(CloudantDatabaseTests, self).tearDown()
+
+    def test_share_database_uses_custom_encoder(self):
+        """
+        Test that share_database uses custom encoder
+        """
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
+        self.set_up_client(auto_connect=True, encoder="AEncoder")
+        database = self.client[self.test_dbname]
+        with self.assertRaises(TypeError):
+            database.share_database(share)
+
+
+    def test_unshare_database_uses_custom_encoder(self):
+        """
+        Test that unshare_database uses custom encoder
+        """
+        share = 'user-{0}'.format(unicode_(uuid.uuid4()))
+        self.set_up_client(auto_connect=True, encoder="AEncoder")
+        database = self.client[self.test_dbname]
+        with self.assertRaises(TypeError):
+            database.unshare_database(share)
 
     def test_get_security_document(self):
         """

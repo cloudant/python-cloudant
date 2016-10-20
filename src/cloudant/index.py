@@ -144,7 +144,7 @@ class Index(object):
         headers = {'Content-Type': 'application/json'}
         resp = self._r_session.post(
             self.index_url,
-            data=json.dumps(payload),
+            data=json.dumps(payload, cls=self._database.client.encoder),
             headers=headers
         )
         resp.raise_for_status()
