@@ -727,7 +727,7 @@ class Cloudant(CouchDB):
         )
         resp = self.r_session.put(
             endpoint,
-            data=json.dumps(config),
+            data=json.dumps(config, cls=self.encoder),
             headers={'Content-Type': 'application/json'}
         )
         resp.raise_for_status()

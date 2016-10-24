@@ -660,7 +660,7 @@ class CouchDatabase(dict):
         headers = {'Content-Type': 'application/json'}
         resp = self.r_session.post(
             url,
-            data=json.dumps(data),
+            data=json.dumps(data, cls=self.client.encoder),
             headers=headers
         )
         resp.raise_for_status()
@@ -684,7 +684,7 @@ class CouchDatabase(dict):
         resp = self.r_session.post(
             url,
             headers={'Content-Type': 'application/json'},
-            data=json.dumps(data)
+            data=json.dumps(data, cls=self.client.encoder)
         )
         resp.raise_for_status()
 
@@ -713,7 +713,7 @@ class CouchDatabase(dict):
         resp = self.r_session.post(
             url,
             headers={'Content-Type': 'application/json'},
-            data=json.dumps(data)
+            data=json.dumps(data, cls=self.client.encoder)
         )
         resp.raise_for_status()
 
@@ -752,7 +752,7 @@ class CouchDatabase(dict):
         """
         url = posixpath.join(self.database_url, '_revs_limit')
 
-        resp = self.r_session.put(url, data=json.dumps(limit))
+        resp = self.r_session.put(url, data=json.dumps(limit, self.client.encoder))
         resp.raise_for_status()
 
         return resp.json()
@@ -991,7 +991,7 @@ class CloudantDatabase(CouchDatabase):
         doc['cloudant'] = data
         resp = self.r_session.put(
             self.security_url,
-            data=json.dumps(doc),
+            data=json.dumps(doc, cls=self.client.encoder),
             headers={'Content-Type': 'application/json'}
         )
         resp.raise_for_status()
@@ -1016,7 +1016,7 @@ class CloudantDatabase(CouchDatabase):
         doc['cloudant'] = data
         resp = self.r_session.put(
             self.security_url,
-            data=json.dumps(doc),
+            data=json.dumps(doc, cls=self.client.encoder),
             headers={'Content-Type': 'application/json'}
         )
         resp.raise_for_status()
