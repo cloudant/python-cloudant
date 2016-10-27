@@ -61,6 +61,7 @@ import unittest
 import requests
 import os
 import uuid
+import json
 
 from cloudant.client import CouchDB, Cloudant
 from cloudant.design_document import DesignDocument
@@ -256,3 +257,44 @@ class UnitTestDbBase(unittest.TestCase):
             }
         }
         self.search_ddoc.save()
+
+    def load_security_document_data(self):
+        """
+        Create a security document in the specified database and assign
+        attributes to be used during unit tests
+        """
+        self.sdoc = {
+            'admins': {'names': ['foo'], 'roles': ['admins']},
+            'members': {'names': ['foo1', 'foo2'], 'roles': ['developers']}
+        }
+        self.mod_sdoc = {
+            'admins': {'names': ['bar'], 'roles': ['admins']},
+            'members': {'names': ['bar1', 'bar2'], 'roles': ['developers']}
+        }
+        if os.environ.get('RUN_CLOUDANT_TESTS') is not None:
+            self.sdoc = {
+                'cloudant': {
+                    'foo1': ['_reader', '_writer'],
+                    'foo2': ['_reader']
+                }
+            }
+            self.mod_sdoc = {
+                'cloudant': {
+                    'bar1': ['_reader', '_writer'],
+                    'bar2': ['_reader']
+                }
+            }
+        if os.environ.get('ADMIN_PARTY') == 'true':
+            resp = requests.put(
+                '/'.join([self.db.database_url, '_security']),
+                data=json.dumps(self.sdoc),
+                headers={'Content-Type': 'application/json'}
+            )
+        else:
+            resp = requests.put(
+                '/'.join([self.db.database_url, '_security']),
+                auth=(self.user, self.pwd),
+                data=json.dumps(self.sdoc),
+                headers={'Content-Type': 'application/json'}
+            )
+        self.assertEqual(resp.status_code, 200)
