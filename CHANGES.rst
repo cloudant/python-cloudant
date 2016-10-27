@@ -1,7 +1,7 @@
 2.3.0 (Unreleased)
 ==================
-- [FIXED] Issue where the custom JSON encoder was not used when transforming
-   data.
+- [FIXED] Resolved issue where the custom JSON encoder was not used when transforming data.
+- [NEW] Added support for managing the database security document through the SecurityDocument class and CouchDatabase convenience method ``get_security_document``.
 
 2.2.0 (2016-10-20)
 ==================
