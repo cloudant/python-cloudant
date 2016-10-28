@@ -30,6 +30,7 @@ from ._common_util import (
     get_docs)
 from .document import Document
 from .design_document import DesignDocument
+from .security_document import SecurityDocument
 from .view import View
 from .index import Index, TextIndex, SpecialIndex
 from .query import Query
@@ -225,6 +226,19 @@ class CouchDatabase(dict):
                 raise
 
         return ddoc
+
+    def get_security_document(self):
+        """
+        Retrieves the database security document as a SecurityDocument object.
+        The returned object is useful for viewing as well as updating the
+        the database's security document.
+
+        :returns: A SecurityDocument instance representing the database
+            security document
+        """
+        sdoc = SecurityDocument(self)
+        sdoc.fetch()
+        return sdoc
 
     def get_view_result(self, ddoc_id, view_name, raw_result=False, **kwargs):
         """
@@ -930,11 +944,9 @@ class CloudantDatabase(CouchDatabase):
         containing information about the users that the database
         is shared with.
 
-        :returns: Security document in JSON format
+        :returns: Security document as a ``dict``
         """
-        resp = self.r_session.get(self.security_url)
-        resp.raise_for_status()
-        return resp.json()
+        return dict(self.get_security_document())
 
     @property
     def security_url(self):

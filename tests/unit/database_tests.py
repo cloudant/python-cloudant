@@ -33,6 +33,7 @@ from cloudant.result import Result, QueryResult
 from cloudant.error import CloudantException, CloudantArgumentError
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
+from cloudant.security_document import SecurityDocument
 from cloudant.index import Index, TextIndex, SpecialIndex
 from cloudant.feed import Feed, InfiniteFeed
 
@@ -314,6 +315,15 @@ class DatabaseTests(UnitTestDbBase):
         # Get the recently created design document that now exists remotely
         ddoc = self.db.get_design_document('_design/ddoc01')
         self.assertEqual(ddoc, local_ddoc)
+
+    def test_get_security_document(self):
+        """
+        Test retrieving the database security document
+        """
+        self.load_security_document_data()
+        sdoc = self.db.get_security_document()
+        self.assertIsInstance(sdoc, SecurityDocument)
+        self.assertDictEqual(sdoc, self.sdoc)
 
     def test_retrieve_view_results(self):
         """
@@ -878,7 +888,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         with self.assertRaises(TypeError):
             database.unshare_database(share)
 
-    def test_get_security_document(self):
+    def test_security_document(self):
         """
         Test the retrieval of the security document.
         """

@@ -8,6 +8,7 @@ Modules
    database
    document
    design_document
+   security_document
    view
    query
    module_index
