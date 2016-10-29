@@ -35,6 +35,15 @@ if PY2:
     from urllib import quote as url_quote, quote_plus as url_quote_plus
     from ConfigParser import RawConfigParser
 
+    def im_self(func):
+        """
+        Retrieve the class object reference of a given function object.
+
+        :param func: function object
+        :return: class instance object
+        """
+        return func.im_self
+
     def iteritems_(adict):
         """
         iterate dict key, value tuples in a py2 and 3 compatible way
@@ -55,6 +64,15 @@ if PY2:
 else:
     from urllib.parse import quote as url_quote, quote_plus as url_quote_plus  # pylint: disable=wrong-import-position,no-name-in-module,import-error,ungrouped-imports
     from configparser import RawConfigParser  # pylint: disable=wrong-import-position,no-name-in-module,import-error
+
+    def im_self(func):
+        """
+        Retrieve the class object reference of a given function object.
+
+        :param func: function object
+        :return: class instance object
+        """
+        return func.__self__
 
     def iteritems_(adict):
         """
