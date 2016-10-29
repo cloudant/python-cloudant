@@ -128,7 +128,7 @@ class ClientTests(UnitTestDbBase):
         """
         try:
             self.client.connect()
-            session = self.client.session()
+            session = self.client.r_session.get_session_info()
             if self.client.admin_party:
                 self.assertIsNone(session)
             else:
@@ -144,9 +144,9 @@ class ClientTests(UnitTestDbBase):
         try:
             self.client.connect()
             if self.client.admin_party:
-                self.assertIsNone(self.client.session_cookie())
+                self.assertIsNone(self.client.r_session.cookie)
             else:
-                self.assertIsNotNone(self.client.session_cookie())
+                self.assertIsNotNone(self.client.r_session.cookie)
         finally:
             self.client.disconnect()
 
@@ -158,14 +158,14 @@ class ClientTests(UnitTestDbBase):
         try:
             self.client.connect()
             if self.client.admin_party:
-                self.assertIsNone(self.client.basic_auth_str())
+                self.assertIsNone(self.client.r_session.basic_auth_str)
             else:
                 expected = 'Basic {0}'.format(
                     str_(base64.urlsafe_b64encode(bytes_("{0}:{1}".format(
                         self.user, self.pwd
                     ))))
                 )
-                self.assertEqual(self.client.basic_auth_str(), expected)
+                self.assertEqual(expected, self.client.r_session.basic_auth_str)
         finally:
             self.client.disconnect()
 
