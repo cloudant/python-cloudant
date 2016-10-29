@@ -16,16 +16,14 @@
 Top level API module that maps to a Cloudant or CouchDB client connection
 instance.
 """
-import base64
 import json
 import posixpath
-import requests
 
-from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
 from .error import CloudantException, CloudantArgumentError
-from ._common_util import USER_AGENT, append_response_error_content
+from .sessions import CouchSession
+from ._common_util import USER_AGENT
 
 
 class CouchDB(dict):
@@ -38,8 +36,8 @@ class CouchDB(dict):
 
     Parameters can be passed in to control behavior:
 
-    :param str user: Username used to connect to CouchDB.
-    :param str auth_token: Authentication token used to connect to CouchDB.
+    :param str username: Username used to connect to CouchDB.
+    :param str password: Authentication token used to connect to CouchDB.
     :param bool admin_party: Setting to allow the use of Admin Party mode in
         CouchDB.  Defaults to ``False``.
     :param str url: URL for CouchDB server.
@@ -52,16 +50,19 @@ class CouchDB(dict):
     """
     _DATABASE_CLASS = CouchDatabase
 
-    def __init__(self, user, auth_token, admin_party=False, **kwargs):
+    def __init__(self, username, password, admin_party=False, **kwargs):
         super(CouchDB, self).__init__()
-        self._user = user
-        self._auth_token = auth_token
-        self._client_session = None
-        self.server_url = kwargs.get('url')
-        self._client_user_header = None
+
+        self._username = username
+        self._password = password
+
+        self.adapter = kwargs.get('adapter')
         self.admin_party = admin_party
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
-        self.adapter = kwargs.get('adapter')
+        self.server_url = kwargs.get('url')
+
+        self._headers = None  # holds default headers for session
+
         self.r_session = None
         if kwargs.get('connect', False):
             self.connect()
@@ -71,100 +72,25 @@ class CouchDB(dict):
         Starts up an authentication session for the client using cookie
         authentication if necessary.
         """
-        if self.r_session:
-            return
-
-        self.r_session = requests.Session()
-        # If a Transport Adapter was supplied add it to the session
-        if self.adapter is not None:
-            self.r_session.mount(self.server_url, self.adapter)
-        if self._client_user_header is not None:
-            self.r_session.headers.update(self._client_user_header)
-        self.session_login(self._user, self._auth_token)
-        self._client_session = self.session()
-        # Utilize an event hook to append to the response message
-        # using :func:`~cloudant.common_util.append_response_error_content`
-        self.r_session.hooks['response'].append(append_response_error_content)
+        if not self.r_session:
+            self.r_session = CouchSession(
+                self._username,
+                self._password,
+                self.server_url,
+                adapter=self.adapter,
+                admin_party=self.admin_party,
+                headers=self._headers
+            )
+        self.r_session.login()
 
     def disconnect(self):
         """
         Ends a client authentication session, performs a logout and a clean up.
         """
-        self.session_logout()
-        self.r_session = None
-        self.clear()
-
-    def session(self):
-        """
-        Retrieves information about the current login session
-        to verify data related to sign in.
-
-        :returns: Dictionary of session info for the current session.
-        """
-        if self.admin_party:
-            return None
-        sess_url = posixpath.join(self.server_url, '_session')
-        resp = self.r_session.get(sess_url)
-        resp.raise_for_status()
-        sess_data = resp.json()
-        return sess_data
-
-    def session_cookie(self):
-        """
-        Retrieves the current session cookie.
-
-        :returns: Session cookie for the current session
-        """
-        if self.admin_party:
-            return None
-        return self.r_session.cookies.get('AuthSession')
-
-    def session_login(self, user, passwd):
-        """
-        Performs a session login by posting the auth information
-        to the _session endpoint.
-
-        :param str user: Username used to connect.
-        :param str passwd: Passcode used to connect.
-        """
-        if self.admin_party:
-            return
-        sess_url = posixpath.join(self.server_url, '_session')
-        resp = self.r_session.post(
-            sess_url,
-            data={
-                'name': user,
-                'password': passwd
-            },
-            headers={'Content-Type': 'application/x-www-form-urlencoded'}
-        )
-        resp.raise_for_status()
-
-    def session_logout(self):
-        """
-        Performs a session logout and clears the current session by
-        sending a delete request to the _session endpoint.
-        """
-        if self.admin_party:
-            return
-        sess_url = posixpath.join(self.server_url, '_session')
-        resp = self.r_session.delete(sess_url)
-        resp.raise_for_status()
-
-    def basic_auth_str(self):
-        """
-        Composes a basic http auth string, suitable for use with the
-        _replicator database, and other places that need it.
-
-        :returns: Basic http authentication string
-        """
-        if self.admin_party:
-            return None
-        hash_ = base64.urlsafe_b64encode(bytes_("{username}:{password}".format(
-            username=self._user,
-            password=self._auth_token
-        )))
-        return "Basic {0}".format(unicode_(hash_))
+        if self.r_session:
+            self.r_session.logout()
+            self.r_session = None
+            self.clear()
 
     def all_dbs(self):
         """
@@ -399,7 +325,7 @@ class Cloudant(CouchDB):
     def __init__(self, cloudant_user, auth_token, **kwargs):
         super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
 
-        self._client_user_header = {'User-Agent': USER_AGENT}
+        self._headers = {'User-Agent': USER_AGENT}
         account = kwargs.get('account')
         url = kwargs.get('url')
         x_cloudant_user = kwargs.get('x_cloudant_user')
@@ -408,7 +334,7 @@ class Cloudant(CouchDB):
         elif kwargs.get('url') is not None:
             self.server_url = url
             if x_cloudant_user is not None:
-                self._client_user_header['X-Cloudant-User'] = x_cloudant_user
+                self._headers['X-Cloudant-User'] = x_cloudant_user
 
         if self.server_url is None:
             raise CloudantException('You must provide a url or an account.')

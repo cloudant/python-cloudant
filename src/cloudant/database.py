@@ -100,8 +100,8 @@ class CouchDatabase(dict):
         if self.admin_party:
             return None
         return {
-            "basic_auth": self.client.basic_auth_str(),
-            "user_ctx": self.client.session()['userCtx']
+            "basic_auth": self.client.r_session.basic_auth_str,
+            "user_ctx": self.client.r_session.get_session_info()['userCtx']
         }
 
     def exists(self):
