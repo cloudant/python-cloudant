@@ -17,10 +17,10 @@ This module provides a Session object to manage and persist settings across
 database requests.
 """
 import base64
+import posixpath
 
 from functools import wraps
 from requests import Session
-from urlparse import urljoin
 
 from ._2to3 import bytes_, im_self, unicode_
 from ._common_util import append_response_error_content
@@ -67,7 +67,7 @@ class CouchSession(Session):
         self.password = password
 
         self.admin_party = admin_party
-        self.session_url = urljoin(server_url, '_session')
+        self.session_url = posixpath.join(server_url, '_session')
 
         if headers:
             self.headers.update(headers)
