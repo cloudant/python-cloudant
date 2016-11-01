@@ -135,7 +135,7 @@ class UnitTestDbBase(unittest.TestCase):
         """
         self.set_up_client()
 
-    def set_up_client(self, auto_connect=False, encoder=None):
+    def set_up_client(self, auto_connect=False, auto_renew=False, encoder=None):
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
             admin_party = False
             if (os.environ.get('ADMIN_PARTY') and
@@ -150,6 +150,7 @@ class UnitTestDbBase(unittest.TestCase):
                 admin_party,
                 url=self.url,
                 connect=auto_connect,
+                auto_renew=auto_renew,
                 encoder=encoder
             )
         else:
@@ -165,6 +166,7 @@ class UnitTestDbBase(unittest.TestCase):
                 url=self.url,
                 x_cloudant_user=self.account,
                 connect=auto_connect,
+                auto_renew=auto_renew,
                 encoder=encoder
             )
 
