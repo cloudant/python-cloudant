@@ -1,7 +1,8 @@
-2.3.0 (Unreleased)
+2.3.0 (2016-11-02)
 ==================
-- [FIXED] Resolved issue where the custom JSON encoder was not used when transforming data.
+- [FIXED] Resolved issue where the custom JSON encoder was at times not used when transforming data.
 - [NEW] Added support for managing the database security document through the SecurityDocument class and CouchDatabase convenience method ``get_security_document``.
+- [NEW] Added ``auto_renewal`` option to the client constructor to handle the automatic renewal of an expired session cookie auth.
 
 2.2.0 (2016-10-20)
 ==================
