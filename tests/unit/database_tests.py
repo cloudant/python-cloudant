@@ -1333,11 +1333,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
             self.db.get_search_result('searchddoc001', 'searchindex001',
                                       query='julia*', q='julia*')
         err = cm.exception
-        self.assertEqual(
-            str(err),
-            'A single query/q parameter is required. '
-            'Found: {\'q\': \'julia*\', \'query\': \'julia*\'}'
-        )
+        self.assertTrue(str(err).startswith('A single query/q parameter is required.'))
 
     def test_get_search_result_with_invalid_value_types(self):
         """

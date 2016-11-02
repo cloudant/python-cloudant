@@ -33,6 +33,7 @@ UNITYPE = unicode if PY2 else str
 if PY2:
     # pylint: disable=wrong-import-position,no-name-in-module,import-error,unused-import
     from urllib import quote as url_quote, quote_plus as url_quote_plus
+    from urlparse import urlparse as url_parse
     from ConfigParser import RawConfigParser
 
     def iteritems_(adict):
@@ -53,7 +54,9 @@ if PY2:
         """
         return itr.next()
 else:
-    from urllib.parse import quote as url_quote, quote_plus as url_quote_plus  # pylint: disable=wrong-import-position,no-name-in-module,import-error,ungrouped-imports
+    from urllib.parse import urlparse as url_parse  # pylint: disable=wrong-import-position,no-name-in-module,import-error,ungrouped-imports
+    from urllib.parse import quote as url_quote  # pylint: disable=wrong-import-position,no-name-in-module,import-error,ungrouped-imports
+    from urllib.parse import quote_plus as url_quote_plus  # pylint: disable=wrong-import-position,no-name-in-module,import-error,ungrouped-imports
     from configparser import RawConfigParser  # pylint: disable=wrong-import-position,no-name-in-module,import-error
 
     def iteritems_(adict):

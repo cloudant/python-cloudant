@@ -21,8 +21,9 @@ import sys
 import platform
 from collections import Sequence
 import json
+from requests import Session
 
-from ._2to3 import STRTYPE, NONETYPE, UNITYPE, iteritems_
+from ._2to3 import STRTYPE, NONETYPE, UNITYPE, iteritems_, url_parse
 from .error import CloudantArgumentError
 
 # Library Constants
@@ -288,3 +289,40 @@ class _Code(str):
     """
     def __new__(cls, code):
         return str.__new__(cls, code)
+
+class InfiniteSession(Session):
+    """
+    This class provides for the ability to automatically renew session login
+    information in the event of expired session authentication.
+    """
+
+    def __init__(self, username, password, server_url):
+        super(InfiniteSession, self).__init__()
+        self._username = username
+        self._password = password
+        self._server_url = server_url
+
+    def request(self, method, url, **kwargs):
+        """
+        Overrides ``requests.Session.request`` to perform a POST to the
+        _session endpoint to renew Session cookie authentication settings and
+        then retry the original request, if necessary.
+        """
+        resp = super(InfiniteSession, self).request(method, url, **kwargs)
+        path = url_parse(url).path.lower()
+        post_to_session = method.upper() == 'POST' and path == '/_session'
+        is_expired = any((
+            resp.status_code == 403 and
+            resp.json().get('error') == 'credentials_expired',
+            resp.status_code == 401
+        ))
+        if not post_to_session and is_expired:
+            super(InfiniteSession, self).request(
+                'POST',
+                '/'.join([self._server_url, '_session']),
+                data={'name': self._username, 'password': self._password},
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            )
+            resp = super(InfiniteSession, self).request(method, url, **kwargs)
+
+        return resp

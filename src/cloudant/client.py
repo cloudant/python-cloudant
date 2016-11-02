@@ -25,7 +25,11 @@ from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
 from .error import CloudantException, CloudantArgumentError
-from ._common_util import USER_AGENT, append_response_error_content
+from ._common_util import (
+    USER_AGENT,
+    append_response_error_content,
+    InfiniteSession
+)
 
 
 class CouchDB(dict):
@@ -49,6 +53,9 @@ class CouchDB(dict):
         configuring requests.
     :param bool connect: Keyword argument, if set to True performs the call to
         connect as part of client construction.  Default is False.
+    :param bool auto_renew: Keyword argument, if set to True performs
+        automatic renewal of expired session authentication settings.
+        Default is False.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -63,7 +70,9 @@ class CouchDB(dict):
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
         self.adapter = kwargs.get('adapter')
         self.r_session = None
-        if kwargs.get('connect', False):
+        self._auto_renew = kwargs.get('auto_renew', False)
+        connect_to_couch = kwargs.get('connect', False)
+        if connect_to_couch and self._DATABASE_CLASS == CouchDatabase:
             self.connect()
 
     def connect(self):
@@ -74,7 +83,14 @@ class CouchDB(dict):
         if self.r_session:
             return
 
-        self.r_session = requests.Session()
+        if self._auto_renew and not self.admin_party:
+            self.r_session = InfiniteSession(
+                self._user,
+                self._auth_token,
+                self.server_url
+            )
+        else:
+            self.r_session = requests.Session()
         # If a Transport Adapter was supplied add it to the session
         if self.adapter is not None:
             self.r_session.mount(self.server_url, self.adapter)
@@ -398,7 +414,6 @@ class Cloudant(CouchDB):
 
     def __init__(self, cloudant_user, auth_token, **kwargs):
         super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
-
         self._client_user_header = {'User-Agent': USER_AGENT}
         account = kwargs.get('account')
         url = kwargs.get('url')
@@ -412,6 +427,9 @@ class Cloudant(CouchDB):
 
         if self.server_url is None:
             raise CloudantException('You must provide a url or an account.')
+
+        if kwargs.get('connect', False):
+            self.connect()
 
     def db_updates(self, raw_data=False, **kwargs):
         """
