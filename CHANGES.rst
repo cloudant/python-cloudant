@@ -1,3 +1,7 @@
+2.4.0 (Unreleased)
+==================
+
+
 2.3.0 (2016-11-02)
 ==================
 - [FIXED] Resolved issue where the custom JSON encoder was at times not used when transforming data.
