@@ -98,6 +98,10 @@ class ReplicatorTests(UnitTestDbBase):
             self.assertIsNone(repl)
             self.client.connect()
 
+    def test_replication_with_generated_id(self):
+        clone = Replicator(self.client)
+        clone.create_replication(self.db, self.target_db)
+
     def test_create_replication(self):
         """
         Test that the replication document gets created and that the
