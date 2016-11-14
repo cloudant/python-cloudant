@@ -2,6 +2,7 @@
 ==================
 - [FIXED] Resolved issue where generated UUIDs for replication documents would
   not be converted to strings.
+- [FIXED] Resolved issue where database.infinite_changes() method can cause a stack overflow.
 
 2.3.0 (2016-11-02)
 ==================

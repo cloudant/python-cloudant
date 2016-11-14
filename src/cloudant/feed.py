@@ -155,13 +155,14 @@ class Feed(object):
 
         :returns: Data representing what was seen in the feed
         """
-        if not self._resp:
-            self._start()
-        if self._stop:
-            raise StopIteration
-        skip, data = self._process_data(next_(self._lines))
-        if skip:
-            return self.next()
+        while True:
+            if not self._resp:
+                self._start()
+            if self._stop:
+                raise StopIteration
+            skip, data = self._process_data(next_(self._lines))
+            if not skip:
+                break
         return data
 
     def _process_data(self, line):
@@ -249,11 +250,19 @@ class InfiniteFeed(Feed):
 
         :returns: Data representing what was seen in the feed
         """
-        if self._source == 'CouchDB':
-            raise CloudantException(
-                'Infinite _db_updates feed not supported for CouchDB.')
-        if self._last_seq:
-            self._options.update({'since': self._last_seq})
-            self._resp = None
-            self._last_seq = None
-        return super(InfiniteFeed, self).next()
+        while True:
+            if self._source == 'CouchDB':
+                raise CloudantException(
+                    'Infinite _db_updates feed not supported for CouchDB.')
+            if self._last_seq:
+                self._options.update({'since': self._last_seq})
+                self._resp = None
+                self._last_seq = None
+            if not self._resp:
+                self._start()
+            if self._stop:
+                raise StopIteration
+            skip, data = self._process_data(next_(self._lines))
+            if not skip:
+                break
+        return data
