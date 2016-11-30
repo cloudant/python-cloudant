@@ -1,3 +1,7 @@
+2.4.0 (Unreleased)
+==================
+
+
 2.3.1 (2016-11-30)
 ==================
 - [FIXED] Resolved issue where generated UUIDs for replication documents would not be converted to strings.
