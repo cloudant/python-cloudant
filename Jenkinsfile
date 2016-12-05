@@ -12,8 +12,6 @@ def test_python(pythonVersion)
                 echo \$DB_USER
                 export RUN_CLOUDANT_TESTS=1
                 export CLOUDANT_ACCOUNT=\$DB_USER
-                # Temporarily disable the _db_updates tests pending resolution of case 71610
-                export SKIP_DB_UPDATES=1
                 pip install -r requirements.txt
                 pip install -r test-requirements.txt
                 nosetests -w ./tests/unit --with-xunit"""
