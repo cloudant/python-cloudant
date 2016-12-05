@@ -273,14 +273,28 @@ class DocumentTests(UnitTestDbBase):
         with self.assertRaises(requests.HTTPError) as cm:
             doc.save()
         err = cm.exception
-        self.assertEqual(
-            str(err.response.reason),
-            'Internal Server Error doc_validation Bad special document member: _invalid_key'
-        )
-        self.assertEqual(
-            err.response.status_code,
-            500
-        )
+        # Should be a 400 error code, but CouchDB 1.6 issues a 500
+        if err.response.status_code == 500:
+            #Check this is CouchDB 1.6
+            self.assertTrue(self.client.r_session.head(self.url).headers['Server'].find('CouchDB/1.6.') >= 0,
+                            '500 returned but was not CouchDB 1.6.x')
+            self.assertEqual(
+                str(err.response.reason),
+                'Internal Server Error doc_validation Bad special document member: _invalid_key'
+            )
+            self.assertEqual(
+                err.response.status_code,
+                500
+            )
+        else:
+            self.assertEqual(
+                str(err.response.reason),
+                'Bad Request doc_validation Bad special document member: _invalid_key'
+            )
+            self.assertEqual(
+                err.response.status_code,
+                400
+            )
 
     def test_fetch_existing_document_with_docid_encoded_url(self):
         """
