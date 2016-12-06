@@ -17,6 +17,7 @@ Module containing miscellaneous classes, functions, and constants used
 throughout the library.
 """
 
+import os
 import sys
 import platform
 from collections import Sequence
@@ -24,7 +25,7 @@ import json
 from requests import Session
 
 from ._2to3 import STRTYPE, NONETYPE, UNITYPE, iteritems_, url_parse
-from .error import CloudantArgumentError
+from .error import CloudantArgumentError, CloudantException
 
 # Library Constants
 
@@ -334,3 +335,69 @@ class InfiniteSession(Session):
             resp = super(InfiniteSession, self).request(method, url, **kwargs)
 
         return resp
+
+
+class CloudFoundryService(object):
+    """ Manages Cloud Foundry service configuration. """
+
+    def __init__(self, name=None):
+        try:
+            services = json.loads(os.getenv('VCAP_SERVICES', '{}'))
+            cloudant_services = services.get('cloudantNoSQLDB', [])
+
+            # use first service if no name given and only one service present
+            use_first = name is None and len(cloudant_services) == 1
+            for service in cloudant_services:
+                if use_first or service.get('name') == name:
+                    credentials = service['credentials']
+                    self._host = credentials['host']
+                    self._name = service.get('name')
+                    self._password = credentials['password']
+                    self._port = credentials.get('port', 443)
+                    self._username = credentials['username']
+                    break
+            else:
+                raise CloudantException('Missing service in VCAP_SERVICES')
+
+        except KeyError as ex:
+            raise CloudantException(
+                "Invalid service: '{0}' missing".format(ex.args[0])
+            )
+
+        except TypeError:
+            raise CloudantException(
+                'Failed to decode VCAP_SERVICES service credentials'
+            )
+
+        except ValueError:
+            raise CloudantException('Failed to decode VCAP_SERVICES JSON')
+
+    @property
+    def host(self):
+        """ Return service host. """
+        return self._host
+
+    @property
+    def name(self):
+        """ Return service name. """
+        return self._name
+
+    @property
+    def password(self):
+        """ Return service password. """
+        return self._password
+
+    @property
+    def port(self):
+        """ Return service port. """
+        return str(self._port)
+
+    @property
+    def url(self):
+        """ Return service url. """
+        return 'https://{0}:{1}'.format(self._host, self._port)
+
+    @property
+    def username(self):
+        """ Return service username. """
+        return self._username
