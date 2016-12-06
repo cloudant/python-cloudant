@@ -282,10 +282,6 @@ class DocumentTests(UnitTestDbBase):
                 str(err.response.reason),
                 'Internal Server Error doc_validation Bad special document member: _invalid_key'
             )
-            self.assertEqual(
-                err.response.status_code,
-                500
-            )
         else:
             self.assertEqual(
                 str(err.response.reason),
