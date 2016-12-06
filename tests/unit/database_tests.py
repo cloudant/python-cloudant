@@ -1378,11 +1378,11 @@ class CloudantDatabaseTests(UnitTestDbBase):
             self.db.get_search_result('searchddoc001', 'searchindex001',
                                       limit=10, include_docs=True)
         err = cm.exception
-        self.assertEqual(
-            str(err),
-            'A single query/q parameter is required. '
-            'Found: {\'limit\': 10, \'include_docs\': True}'
-        )
+        # Validate that the error message starts as expected
+        self.assertTrue(str(err).startswith('A single query/q parameter is required.'))
+        # Validate that the error message includes the supplied parameters (in an order independent way)
+        self.assertTrue(str(err).find("'limit': 10") >= 0)
+        self.assertTrue(str(err).find("'include_docs': True") >= 0)
 
     def test_get_search_result_with_invalid_query_type(self):
         """
