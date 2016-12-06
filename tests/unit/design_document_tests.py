@@ -790,14 +790,18 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
+
         search_info = ddoc_remote.search_info('search001')
-        search_info['search_index'].pop('disk_size')
-        self.assertEqual(
-            search_info,
-            {'name': '_design/ddoc001/search001',
-             'search_index': {'doc_del_count': 0, 'doc_count': 100,
-                              'pending_seq': 101, 'committed_seq': 0},
-             })
+        # Check the search index name
+        self.assertEqual(search_info['name'], '_design/ddoc001/search001', 'The search index name should be correct.')
+        # Validate the metadata
+        search_index_metadata = search_info['search_index']
+        self.assertIsNotNone(search_index_metadata)
+        self.assertEquals(search_index_metadata['doc_del_count'], 0, 'There should be no deleted docs.')
+        self.assertTrue(search_index_metadata['doc_count'] <= 100, 'There should be 100 or fewer docs.')
+        self.assertEquals(search_index_metadata['committed_seq'], 0, 'The committed_seq should be 0.')
+        self.assertTrue(search_index_metadata['pending_seq'] <= 101, 'The pending_seq should be 101 or fewer.')
+        self.assertTrue(search_index_metadata['disk_size'] >0, 'The disk_size should be greater than 0.')
 
     @unittest.skipUnless(
         os.environ.get('RUN_CLOUDANT_TESTS') is not None,
