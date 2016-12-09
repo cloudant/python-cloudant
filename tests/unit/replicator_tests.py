@@ -61,8 +61,22 @@ class ReplicatorTests(UnitTestDbBase):
         self.target_db.delete()
         del self.test_target_dbname
         del self.target_db
-        while self.replication_ids:
-            self.replicator.stop_replication(self.replication_ids.pop())
+
+        for rep_id in self.replication_ids:
+            max_retry = 5
+            while True:
+                try:
+                    self.replicator.stop_replication(rep_id)
+                    break
+
+                except requests.HTTPError as ex:
+                    # Retry failed attempt to delete replication document. It's
+                    # likely in an error state and receiving constant updates
+                    # via the replicator.
+                    max_retry -= 1
+                    if ex.response.status_code != 409 or max_retry == 0:
+                        raise
+
         del self.replicator
         self.db_tear_down()
         super(ReplicatorTests, self).tearDown()
