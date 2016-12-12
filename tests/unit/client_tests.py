@@ -264,14 +264,21 @@ class ClientTests(UnitTestDbBase):
         """
         Test retrieving the list of database names
         """
+        dbs = []
         try:
             self.client.connect()
             self.assertEqual(list(self.client.keys()), [])
-            self.assertEqual(
-                self.client.keys(remote=True),
-                self.client.all_dbs()
-                )
+
+            # create 10 new test dbs
+            for _ in range(10):
+                dbs.append(self.client.create_database(self.dbname()).database_name)
+
+            self.assertTrue(set(dbs).issubset(set(self.client.keys(remote=True))))
+            self.assertTrue(set(dbs).issubset(set(self.client.all_dbs())))
+
         finally:
+            for db in dbs:
+                self.client.delete_database(db)  # remove test db
             self.client.disconnect()
 
     def test_get_non_existing_db_via_getitem(self):
