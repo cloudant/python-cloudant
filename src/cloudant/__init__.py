@@ -21,6 +21,7 @@ __version__ = '2.4.0.dev'
 import contextlib
 # pylint: disable=wrong-import-position
 from .client import Cloudant, CouchDB
+from ._common_util import CloudFoundryService
 
 @contextlib.contextmanager
 def cloudant(user, passwd, **kwargs):
@@ -57,6 +58,58 @@ def cloudant(user, passwd, **kwargs):
             # ...
     """
     cloudant_session = Cloudant(user, passwd, **kwargs)
+    cloudant_session.connect()
+    yield cloudant_session
+    cloudant_session.disconnect()
+
+@contextlib.contextmanager
+def cloudant_bluemix(bm_service_name=None, **kwargs):
+    """
+    Provides a context manager to create a Cloudant session and provide access
+    to databases, docs etc.
+
+    :param str bm_service_name: Optional Bluemix service instance name. Only
+        required if multiple Cloudant services are available.
+    :param str encoder: Optional json Encoder object used to encode
+        documents for storage. Defaults to json.JSONEncoder.
+
+    Loads all configuration from the VCAP_SERVICES Cloud Foundry environment
+    variable. The VCAP_SERVICES variable contains connection information to
+    access a service instance. For example:
+
+    .. code-block:: json
+
+        {
+            "VCAP_SERVICES": {
+                "cloudantNoSQLDB": [
+                    {
+                        "credentials": {
+                            "username": "example",
+                            "password": "xxxxxxx",
+                            "host": "example.cloudant.com",
+                            "port": 443,
+                            "url": "https://example:xxxxxxx@example.cloudant.com"
+                        },
+                        "syslog_drain_url": null,
+                        "label": "cloudantNoSQLDB",
+                        "provider": null,
+                        "plan": "Lite",
+                        "name": "Cloudant NoSQL DB"
+                    }
+                ]
+            }
+        }
+
+    See `Cloud Foundry Environment Variables <http://docs.cloudfoundry.org/
+    devguide/deploy-apps/environment-variable.html#VCAP-SERVICES>`_.
+    """
+    service = CloudFoundryService(bm_service_name)
+    cloudant_session = Cloudant(
+        username=service.username,
+        password=service.password,
+        url=service.url,
+        **kwargs
+    )
     cloudant_session.connect()
     yield cloudant_session
     cloudant_session.disconnect()
