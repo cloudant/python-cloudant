@@ -268,16 +268,24 @@ def get_docs(r_session, url, encoder=None, headers=None, **params):
 #pylint: disable=unused-argument
 def append_response_error_content(response, **kwargs):
     """
-    Provides a helper to add HTTP response error and reason messages.
+    Provides a helper to act as callback function for the response event hook
+    and add a HTTP response error with reason message to ``response.reason``.
+    The ``response`` and ``**kwargs`` are necessary for this function to
+    properly operate as the callback.
+
+    :param response: HTTP response object
+    :param kwargs: HTTP request parameters
     """
-    try:
-        if response.status_code >= 400 and response.json():
-            reason = response.json().pop('reason', None)
-            error = response.json().pop('error', None)
-            response.reason += ' %s %s' % (error, reason)
-            return response
-    except ValueError:
-        return
+    if response.status_code >= 400:
+        try:
+            resp_dict = response.json()
+            error = resp_dict.get('error', '')
+            reason = resp_dict.get('reason', '')
+            # Append to the existing response's reason
+            response.reason += ' {0} {1}'.format(error, reason)
+        except ValueError:
+            pass
+    return response
 
 # Classes
 
