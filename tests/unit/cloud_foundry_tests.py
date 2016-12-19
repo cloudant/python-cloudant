@@ -19,7 +19,6 @@ Unit tests for the CloudFoundryService class.
 """
 
 import json
-import mock
 import unittest
 
 from cloudant._common_util import CloudFoundryService
@@ -93,94 +92,101 @@ class CloudFoundryServiceTests(unittest.TestCase):
             }
         ]})
 
-    @mock.patch('os.getenv')
-    def test_get_vcap_service_default_success(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_single
-        service = CloudFoundryService()
+    def test_get_vcap_service_default_success(self):
+        service = CloudFoundryService(self._test_vcap_services_single)
         self.assertEqual('Cloudant NoSQL DB 1', service.name)
 
-    @mock.patch('os.getenv')
-    def test_get_vcap_service_default_failure_multiple_services(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
+    def test_get_vcap_service_default_success_as_dict(self):
+        service = CloudFoundryService(
+            json.loads(self._test_vcap_services_single)
+        )
+        self.assertEqual('Cloudant NoSQL DB 1', service.name)
+
+    def test_get_vcap_service_default_failure_multiple_services(self):
         with self.assertRaises(CloudantException) as cm:
-            CloudFoundryService()
+            CloudFoundryService(self._test_vcap_services_multiple)
         self.assertEqual('Missing service in VCAP_SERVICES', str(cm.exception))
 
-    @mock.patch('os.getenv')
-    def test_get_vcap_service_instance_host(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
-        service = CloudFoundryService('Cloudant NoSQL DB 1')
+    def test_get_vcap_service_instance_host(self):
+        service = CloudFoundryService(
+            self._test_vcap_services_multiple, 'Cloudant NoSQL DB 1'
+        )
         self.assertEqual('example.cloudant.com', service.host)
 
-    @mock.patch('os.getenv')
-    def test_get_vcap_service_instance_password(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
-        service = CloudFoundryService('Cloudant NoSQL DB 1')
+    def test_get_vcap_service_instance_password(self):
+        service = CloudFoundryService(
+            self._test_vcap_services_multiple, 'Cloudant NoSQL DB 1'
+        )
         self.assertEqual('pa$$w0rd01', service.password)
 
-    @mock.patch('os.getenv')
-    def test_get_vcap_service_instance_port(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
-        service = CloudFoundryService('Cloudant NoSQL DB 1')
+    def test_get_vcap_service_instance_port(self):
+        service = CloudFoundryService(
+            self._test_vcap_services_multiple, 'Cloudant NoSQL DB 1'
+        )
         self.assertEqual('1234', service.port)
 
-    @mock.patch('os.getenv')
-    def test_get_vcap_service_instance_port_default(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
-        service = CloudFoundryService('Cloudant NoSQL DB 2')
+    def test_get_vcap_service_instance_port_default(self):
+        service = CloudFoundryService(
+            self._test_vcap_services_multiple, 'Cloudant NoSQL DB 2'
+        )
         self.assertEqual('443', service.port)
 
-    @mock.patch('os.getenv')
-    def test_get_vcap_service_instance_url(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
-        service = CloudFoundryService('Cloudant NoSQL DB 1')
+    def test_get_vcap_service_instance_url(self):
+        service = CloudFoundryService(
+            self._test_vcap_services_multiple, 'Cloudant NoSQL DB 1'
+        )
         self.assertEqual('https://example.cloudant.com:1234', service.url)
 
-    @mock.patch('os.getenv')
-    def test_get_vcap_service_instance_username(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
-        service = CloudFoundryService('Cloudant NoSQL DB 1')
+    def test_get_vcap_service_instance_username(self):
+        service = CloudFoundryService(
+            self._test_vcap_services_multiple, 'Cloudant NoSQL DB 1'
+        )
         self.assertEqual('example', service.username)
 
-    @mock.patch('os.getenv')
-    def test_raise_error_for_missing_host(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
+    def test_raise_error_for_missing_host(self):
         with self.assertRaises(CloudantException):
-            CloudFoundryService('Cloudant NoSQL DB 3')
+            CloudFoundryService(
+                self._test_vcap_services_multiple, 'Cloudant NoSQL DB 3'
+            )
 
-    @mock.patch('os.getenv')
-    def test_raise_error_for_missing_password(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
+    def test_raise_error_for_missing_password(self):
         with self.assertRaises(CloudantException) as cm:
-            CloudFoundryService('Cloudant NoSQL DB 4')
+            CloudFoundryService(
+                self._test_vcap_services_multiple, 'Cloudant NoSQL DB 4'
+            )
         self.assertEqual(
             "Invalid service: 'password' missing",
             str(cm.exception)
         )
 
-    @mock.patch('os.getenv')
-    def test_raise_error_for_missing_username(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
+    def test_raise_error_for_missing_username(self):
         with self.assertRaises(CloudantException) as cm:
-            CloudFoundryService('Cloudant NoSQL DB 5')
+            CloudFoundryService(
+                self._test_vcap_services_multiple, 'Cloudant NoSQL DB 5'
+            )
         self.assertEqual(
             "Invalid service: 'username' missing",
             str(cm.exception)
         )
 
-    @mock.patch('os.getenv')
-    def test_raise_error_for_invalid_credentials_type(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
+    def test_raise_error_for_invalid_credentials_type(self):
         with self.assertRaises(CloudantException) as cm:
-            CloudFoundryService('Cloudant NoSQL DB 6')
+            CloudFoundryService(
+                self._test_vcap_services_multiple, 'Cloudant NoSQL DB 6'
+            )
         self.assertEqual(
             'Failed to decode VCAP_SERVICES service credentials',
             str(cm.exception)
         )
 
-    @mock.patch('os.getenv')
-    def test_raise_error_for_missing_service(self, m_getenv):
-        m_getenv.return_value = self._test_vcap_services_multiple
+    def test_raise_error_for_missing_service(self):
         with self.assertRaises(CloudantException) as cm:
-            CloudFoundryService('Cloudant NoSQL DB 7')
+            CloudFoundryService(
+                self._test_vcap_services_multiple, 'Cloudant NoSQL DB 7'
+            )
         self.assertEqual('Missing service in VCAP_SERVICES', str(cm.exception))
+
+    def test_raise_error_for_invalid_vcap(self):
+        with self.assertRaises(CloudantException) as cm:
+            CloudFoundryService('{', 'Cloudant NoSQL DB 1')  # invalid JSON
+        self.assertEqual('Failed to decode VCAP_SERVICES JSON', str(cm.exception))

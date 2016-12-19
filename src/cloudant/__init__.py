@@ -63,19 +63,21 @@ def cloudant(user, passwd, **kwargs):
     cloudant_session.disconnect()
 
 @contextlib.contextmanager
-def cloudant_bluemix(bm_service_name=None, **kwargs):
+def cloudant_bluemix(vcap_services, instance_name=None, **kwargs):
     """
     Provides a context manager to create a Cloudant session and provide access
     to databases, docs etc.
 
-    :param str bm_service_name: Optional Bluemix service instance name. Only
-        required if multiple Cloudant services are available.
+    :param vcap_services: VCAP_SERVICES environment variable
+    :type vcap_services: dict or str
+    :param str instance_name: Optional Bluemix instance name. Only required if
+        multiple Cloudant instances are available.
     :param str encoder: Optional json Encoder object used to encode
         documents for storage. Defaults to json.JSONEncoder.
 
-    Loads all configuration from the VCAP_SERVICES Cloud Foundry environment
-    variable. The VCAP_SERVICES variable contains connection information to
-    access a service instance. For example:
+    Loads all configuration from the specified VCAP_SERVICES Cloud Foundry
+    environment variable. The VCAP_SERVICES variable contains connection
+    information to access a service instance. For example:
 
     .. code-block:: json
 
@@ -102,8 +104,23 @@ def cloudant_bluemix(bm_service_name=None, **kwargs):
 
     See `Cloud Foundry Environment Variables <http://docs.cloudfoundry.org/
     devguide/deploy-apps/environment-variable.html#VCAP-SERVICES>`_.
+
+    Example usage:
+
+    .. code-block:: python
+
+        import os
+
+        # cloudant_bluemix context manager
+        from cloudant import cloudant_bluemix
+
+        with cloudant_bluemix(os.getenv('VCAP_SERVICES'), 'Cloudant NoSQL DB') as client:
+            # Context handles connect() and disconnect() for you.
+            # Perform library operations within this context.  Such as:
+            print client.all_dbs()
+            # ...
     """
-    service = CloudFoundryService(bm_service_name)
+    service = CloudFoundryService(vcap_services, instance_name)
     cloudant_session = Cloudant(
         username=service.username,
         password=service.password,

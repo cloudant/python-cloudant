@@ -17,7 +17,6 @@ Module containing miscellaneous classes, functions, and constants used
 throughout the library.
 """
 
-import os
 import sys
 import platform
 from collections import Sequence
@@ -340,9 +339,12 @@ class InfiniteSession(Session):
 class CloudFoundryService(object):
     """ Manages Cloud Foundry service configuration. """
 
-    def __init__(self, name=None):
+    def __init__(self, vcap_services, name=None):
         try:
-            services = json.loads(os.getenv('VCAP_SERVICES', '{}'))
+            services = vcap_services
+            if not isinstance(vcap_services, dict):
+                services = json.loads(vcap_services)
+
             cloudant_services = services.get('cloudantNoSQLDB', [])
 
             # use first service if no name given and only one service present
