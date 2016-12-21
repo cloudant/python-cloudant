@@ -196,7 +196,7 @@ class UnitTestDbBase(unittest.TestCase):
         del self.db
 
     def dbname(self, database_name='db'):
-        return '{0}-{1}'.format(database_name, unicode_(uuid.uuid4()))
+        return '{0}-{1}-{2}'.format(database_name, self._testMethodName, unicode_(uuid.uuid4()))
 
     def populate_db_with_documents(self, doc_count=100, **kwargs):
         off_set = kwargs.get('off_set', 0)
