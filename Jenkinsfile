@@ -16,6 +16,7 @@ def test_python(pythonVersion)
                 export SKIP_DB_UPDATES=1
                 pip install -r requirements.txt
                 pip install -r test-requirements.txt
+                pylint ./src/cloudant
                 nosetests -w ./tests/unit --with-xunit"""
       } finally {
         // Load the test results
