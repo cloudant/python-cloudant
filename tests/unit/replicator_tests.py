@@ -27,6 +27,8 @@ import uuid
 import time
 import requests
 
+from flaky import flaky
+
 from cloudant.replicator import Replicator
 from cloudant.document import Document
 from cloudant.error import CloudantException
@@ -116,6 +118,7 @@ class ReplicatorTests(UnitTestDbBase):
         clone = Replicator(self.client)
         clone.create_replication(self.db, self.target_db)
 
+    @flaky(max_runs=3)
     def test_create_replication(self):
         """
         Test that the replication document gets created and that the
