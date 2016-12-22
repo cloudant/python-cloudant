@@ -29,10 +29,48 @@ import requests
 
 from cloudant.replicator import Replicator
 from cloudant.document import Document
-from cloudant.error import CloudantException
+from cloudant.error import CloudantReplicatorException, CloudantClientException
 
 from .unit_t_db_base import UnitTestDbBase
 from .. import unicode_
+
+class CloudantReplicatorExceptionTests(unittest.TestCase):
+    """
+    Ensure CloudantReplicatorException functions as expected.
+    """
+
+    def test_raise_without_code(self):
+        """
+        Ensure that a default exception/code is used if none is provided.
+        """
+        with self.assertRaises(CloudantReplicatorException) as cm:
+            raise CloudantReplicatorException()
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_using_invalid_code(self):
+        """
+        Ensure that a default exception/code is used if invalid code is provided.
+        """
+        with self.assertRaises(CloudantReplicatorException) as cm:
+            raise CloudantReplicatorException('foo')
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_without_args(self):
+        """
+        Ensure that a default exception/code is used if the message requested
+        by the code provided requires an argument list and none is provided.
+        """
+        with self.assertRaises(CloudantReplicatorException) as cm:
+            raise CloudantReplicatorException(404)
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_with_proper_code_and_args(self):
+        """
+        Ensure that the requested exception is raised.
+        """
+        with self.assertRaises(CloudantReplicatorException) as cm:
+            raise CloudantReplicatorException(404, 'foo')
+        self.assertEqual(cm.exception.status_code, 404)
 
 class ReplicatorTests(UnitTestDbBase):
     """
@@ -102,10 +140,10 @@ class ReplicatorTests(UnitTestDbBase):
             self.client.disconnect()
             repl = Replicator(self.client)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException as err:
+        except CloudantClientException as err:
             self.assertEqual(
                 str(err),
-                'Unable to acquire _replicator database.  '
+                'Database _replicator does not exist. '
                 'Verify that the client is valid and try again.'
             )
         finally:
@@ -177,7 +215,7 @@ class ReplicatorTests(UnitTestDbBase):
         try:
             repl_doc = self.replicator.create_replication()
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException as err:
+        except CloudantReplicatorException as err:
             self.assertEqual(
                 str(err),
                 'You must specify either a source_db Database '
@@ -192,7 +230,7 @@ class ReplicatorTests(UnitTestDbBase):
         try:
             repl_doc = self.replicator.create_replication(self.db)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException as err:
+        except CloudantReplicatorException as err:
             self.assertEqual(
                 str(err),
                 'You must specify either a target_db Database '
@@ -252,10 +290,10 @@ class ReplicatorTests(UnitTestDbBase):
         try:
             self.replicator.replication_state(repl_id)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException as err:
+        except CloudantReplicatorException as err:
             self.assertEqual(
                 str(err),
-                'Replication {} not found'.format(repl_id)
+                'Replication with id {} not found.'.format(repl_id)
             )
             self.assertIsNone(repl_state)
 
@@ -288,10 +326,10 @@ class ReplicatorTests(UnitTestDbBase):
         try:
             self.replicator.stop_replication(repl_id)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException as err:
+        except CloudantReplicatorException as err:
             self.assertEqual(
                 str(err),
-                'Could not find replication with id {}'.format(repl_id)
+                'Replication with id {} not found.'.format(repl_id)
             )
 
     def test_follow_replication(self):

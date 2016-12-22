@@ -33,10 +33,39 @@ from cloudant.query import Query
 from cloudant.view import QueryIndexView
 from cloudant.design_document import DesignDocument
 from cloudant.document import Document
-from cloudant.error import CloudantArgumentError, CloudantException
+from cloudant.error import CloudantArgumentError, CloudantIndexException
 
 from .. import PY2
 from .unit_t_db_base import UnitTestDbBase
+
+class CloudantIndexExceptionTests(unittest.TestCase):
+    """
+    Ensure CloudantIndexException functions as expected.
+    """
+
+    def test_raise_without_code(self):
+        """
+        Ensure that a default exception/code is used if none is provided.
+        """
+        with self.assertRaises(CloudantIndexException) as cm:
+            raise CloudantIndexException()
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_using_invalid_code(self):
+        """
+        Ensure that a default exception/code is used if invalid code is provided.
+        """
+        with self.assertRaises(CloudantIndexException) as cm:
+            raise CloudantIndexException('foo')
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_with_proper_code_and_args(self):
+        """
+        Ensure that the requested exception is raised.
+        """
+        with self.assertRaises(CloudantIndexException) as cm:
+            raise CloudantIndexException(101)
+        self.assertEqual(cm.exception.status_code, 101)
 
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
@@ -591,7 +620,7 @@ class SpecialIndexTests(unittest.TestCase):
         Test that the SpecialIndex create method is disabled.
         """
         index = SpecialIndex(self.db, fields=[{'_id': 'asc'}])
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantIndexException) as cm:
             index.create()
         err = cm.exception
         self.assertEqual(
@@ -604,7 +633,7 @@ class SpecialIndexTests(unittest.TestCase):
         Test that the SpecialIndex delete method is disabled.
         """
         index = SpecialIndex(self.db, fields=[{'_id': 'asc'}])
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantIndexException) as cm:
             index.delete()
         err = cm.exception
         self.assertEqual(

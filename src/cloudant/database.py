@@ -34,7 +34,7 @@ from .security_document import SecurityDocument
 from .view import View
 from .index import Index, TextIndex, SpecialIndex
 from .query import Query
-from .error import CloudantException, CloudantArgumentError
+from .error import CloudantArgumentError, CloudantDatabaseException
 from .result import Result, QueryResult
 from .feed import Feed, InfiniteFeed
 
@@ -158,9 +158,7 @@ class CouchDatabase(dict):
         else:
             doc = Document(self, docid)
         if throw_on_exists and doc.exists():
-            raise CloudantException(
-                'Error - Document with id {0} already exists.'.format(docid)
-            )
+            raise CloudantDatabaseException(409, docid)
         doc.update(data)
         doc.create()
         super(CouchDatabase, self).__setitem__(doc['_id'], doc)
@@ -346,11 +344,8 @@ class CouchDatabase(dict):
         if resp.status_code == 201 or resp.status_code == 202:
             return self
 
-        raise CloudantException(
-            "Unable to create database {0}: Reason: {1}".format(
-                self.database_url, resp.text
-            ),
-            code=resp.status_code
+        raise CloudantDatabaseException(
+            resp.status_code, self.database_url, resp.text
         )
 
     def delete(self):
@@ -747,10 +742,7 @@ class CouchDatabase(dict):
         try:
             ret = int(resp.text)
         except ValueError:
-            resp.status_code = 400
-            raise CloudantException(
-                'Error - Invalid Response Value: {}'.format(resp.json())
-            )
+            raise CloudantDatabaseException(400, resp.json())
 
         return ret
 
@@ -1090,7 +1082,7 @@ class CloudantDatabase(CouchDatabase):
                     **data.get('def', {})
                 ))
             else:
-                raise CloudantException('Unexpected index content: {0} found.')
+                raise CloudantDatabaseException(101, data.get('type'))
         return indexes
 
     def create_query_index(

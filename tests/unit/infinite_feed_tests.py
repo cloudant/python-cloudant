@@ -24,7 +24,7 @@ from time import sleep
 
 from cloudant.feed import InfiniteFeed, Feed
 from cloudant.client import CouchDB
-from cloudant.error import CloudantException, CloudantArgumentError
+from cloudant.error import CloudantArgumentError, CloudantFeedException
 
 from .unit_t_db_base import UnitTestDbBase
 
@@ -41,6 +41,35 @@ class MethodCallCount(object):
     def __call__(self):
         self.called_count += 1
         self._ref()
+
+class CloudantFeedExceptionTests(unittest.TestCase):
+    """
+    Ensure CloudantFeedException functions as expected.
+    """
+
+    def test_raise_without_code(self):
+        """
+        Ensure that a default exception/code is used if none is provided.
+        """
+        with self.assertRaises(CloudantFeedException) as cm:
+            raise CloudantFeedException()
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_using_invalid_code(self):
+        """
+        Ensure that a default exception/code is used if invalid code is provided.
+        """
+        with self.assertRaises(CloudantFeedException) as cm:
+            raise CloudantFeedException('foo')
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_with_proper_code_and_args(self):
+        """
+        Ensure that the requested exception is raised.
+        """
+        with self.assertRaises(CloudantFeedException) as cm:
+            raise CloudantFeedException(101)
+        self.assertEqual(cm.exception.status_code, 101)
 
 class InfiniteFeedTests(UnitTestDbBase):
     """
@@ -101,7 +130,7 @@ class InfiniteFeedTests(UnitTestDbBase):
         """
         Ensure that a CouchDB client cannot be used with an infinite feed.
         """
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantFeedException) as cm:
             invalid_feed = [x for x in InfiniteFeed(self.client)]
         self.assertEqual(str(cm.exception),
             'Infinite _db_updates feed not supported for CouchDB.')

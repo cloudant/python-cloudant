@@ -19,7 +19,7 @@ from ._2to3 import iteritems_, STRTYPE
 from ._common_util import QUERY_LANGUAGE, codify
 from .document import Document
 from .view import View, QueryIndexView
-from .error import CloudantArgumentError, CloudantException
+from .error import CloudantArgumentError, CloudantDesignDocumentException
 
 class DesignDocument(Document):
     """
@@ -285,9 +285,7 @@ class DesignDocument(Document):
             msg = "View {0} already exists in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
         if self.get('language', None) == QUERY_LANGUAGE:
-            msg = ('Cannot add a MapReduce view to a '
-                   'design document for query indexes.')
-            raise CloudantException(msg)
+            raise CloudantDesignDocumentException(101)
 
         view = View(self, view_name, map_func, reduce_func, **kwargs)
         self.views.__setitem__(view_name, view)
@@ -361,8 +359,7 @@ class DesignDocument(Document):
             msg = "View {0} does not exist in this design doc".format(view_name)
             raise CloudantArgumentError(msg)
         if isinstance(view, QueryIndexView):
-            msg = 'Cannot update a query index view using this method.'
-            raise CloudantException(msg)
+            raise CloudantDesignDocumentException(102)
 
         view = View(self, view_name, map_func, reduce_func, **kwargs)
         self.views.__setitem__(view_name, view)
@@ -432,8 +429,7 @@ class DesignDocument(Document):
         if view is None:
             return
         if isinstance(view, QueryIndexView):
-            msg = 'Cannot delete a query index view using this method.'
-            raise CloudantException(msg)
+            raise CloudantDesignDocumentException(103)
 
         self.views.__delitem__(view_name)
 
@@ -517,34 +513,22 @@ class DesignDocument(Document):
             if self.get('language', None) != QUERY_LANGUAGE:
                 for view_name, view in self.iterviews():
                     if isinstance(view, QueryIndexView):
-                        msg = 'View {0} must be of type View.'.format(view_name)
-                        raise CloudantException(msg)
+                        raise CloudantDesignDocumentException(104, view_name)
             else:
                 for view_name, view in self.iterviews():
                     if not isinstance(view, QueryIndexView):
-                        msg = (
-                            'View {0} must be of type QueryIndexView.'
-                        ).format(view_name)
-                        raise CloudantException(msg)
+                        raise CloudantDesignDocumentException(105, view_name)
 
         if self.indexes:
             if self.get('language', None) != QUERY_LANGUAGE:
                 for index_name, search in self.iterindexes():
                     # Check the instance of the javascript search function
                     if not isinstance(search['index'], STRTYPE):
-                        msg = (
-                            'Function for search index {0} must '
-                            'be of type string.'
-                        ).format(index_name)
-                        raise CloudantException(msg)
+                        raise CloudantDesignDocumentException(106, index_name)
             else:
                 for index_name, index in self.iterindexes():
                     if not isinstance(index['index'], dict):
-                        msg = (
-                            'Definition for query text index {0} must '
-                            'be of type dict.'
-                        ).format(index_name)
-                        raise CloudantException(msg)
+                        raise CloudantDesignDocumentException(107, index_name)
 
         for prop in self._nested_object_names:
             if not getattr(self, prop):
