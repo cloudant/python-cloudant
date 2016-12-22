@@ -19,6 +19,8 @@ import unittest
 
 from cloudant.error import CloudantArgumentError
 from cloudant._common_util import python_to_couch
+from tests.unit._test_util import LONG_NUMBER
+
 
 class PythonToCouchTests(unittest.TestCase):
     """
@@ -43,6 +45,8 @@ class PythonToCouchTests(unittest.TestCase):
         Test endkey translation is successful.
         """
         self.assertEqual(python_to_couch({'endkey': 10}), {'endkey': 10})
+        # Test with long type
+        self.assertEqual(python_to_couch({'endkey': LONG_NUMBER}), {'endkey': LONG_NUMBER})
         self.assertEqual(
             python_to_couch({'endkey': 'foo'}),
             {'endkey': '"foo"'}
@@ -75,6 +79,11 @@ class PythonToCouchTests(unittest.TestCase):
         self.assertEqual(
             python_to_couch({'group_level': 100}),
             {'group_level': 100}
+        )
+        # Test with long type
+        self.assertEqual(
+            python_to_couch({'group_level': LONG_NUMBER}),
+            {'group_level': LONG_NUMBER}
         )
         self.assertEqual(
             python_to_couch({'group_level': None}),
@@ -112,6 +121,8 @@ class PythonToCouchTests(unittest.TestCase):
         Test key translation is successful.
         """
         self.assertEqual(python_to_couch({'key': 10}), {'key': 10})
+        # Test with long type
+        self.assertEqual(python_to_couch({'key': LONG_NUMBER}), {'key': LONG_NUMBER})
         self.assertEqual(python_to_couch({'key': 'foo'}), {'key': '"foo"'})
         self.assertEqual(
             python_to_couch({'key': ['foo', 10]}),
@@ -125,6 +136,12 @@ class PythonToCouchTests(unittest.TestCase):
         self.assertEqual(
             python_to_couch({'keys': [100, 200]}),
             {'keys': [100, 200]}
+        )
+        # Test with long type
+        LONG_NUM_KEY = 92233720368547758071
+        self.assertEqual(
+            python_to_couch({'keys': [LONG_NUMBER, LONG_NUM_KEY]}),
+            {'keys': [LONG_NUMBER, LONG_NUM_KEY]}
         )
         self.assertEqual(
             python_to_couch({'keys': ['foo', 'bar']}),
@@ -140,6 +157,8 @@ class PythonToCouchTests(unittest.TestCase):
         Test limit translation is successful.
         """
         self.assertEqual(python_to_couch({'limit': 100}), {'limit': 100})
+        # Test with long type
+        self.assertEqual(python_to_couch({'limit': LONG_NUMBER}), {'limit': LONG_NUMBER})
         self.assertEqual(python_to_couch({'limit': None}), {'limit': None})
 
     def test_valid_reduce(self):
@@ -157,6 +176,8 @@ class PythonToCouchTests(unittest.TestCase):
         Test skip translation is successful.
         """
         self.assertEqual(python_to_couch({'skip': 100}), {'skip': 100})
+        # Test with long type
+        self.assertEqual(python_to_couch({'skip': LONG_NUMBER}), {'skip': LONG_NUMBER})
         self.assertEqual(python_to_couch({'skip': None}), {'skip': None})
 
     def test_valid_stale(self):
@@ -174,6 +195,8 @@ class PythonToCouchTests(unittest.TestCase):
         Test startkey translation is successful.
         """
         self.assertEqual(python_to_couch({'startkey': 10}), {'startkey': 10})
+        # Test with long type
+        self.assertEqual(python_to_couch({'startkey': LONG_NUMBER}), {'startkey': LONG_NUMBER})
         self.assertEqual(
             python_to_couch({'startkey': 'foo'}),
             {'startkey': '"foo"'}

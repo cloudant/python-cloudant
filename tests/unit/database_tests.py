@@ -36,6 +36,7 @@ from cloudant.design_document import DesignDocument
 from cloudant.security_document import SecurityDocument
 from cloudant.index import Index, TextIndex, SpecialIndex
 from cloudant.feed import Feed, InfiniteFeed
+from tests.unit._test_util import LONG_NUMBER
 
 from .unit_t_db_base import UnitTestDbBase
 from .. import unicode_
@@ -441,6 +442,17 @@ class DatabaseTests(UnitTestDbBase):
         self.assertEqual(data['rows'][0]['key'], 'julia010')
         self.assertEqual(data['rows'][1]['key'], 'julia011')
         self.assertEqual(data['rows'][2]['key'], 'julia012')
+
+    def test_all_docs_get_with_long_type(self):
+        """
+        Test the all_docs GET request functionality
+        """
+        self.populate_db_with_documents()
+        data = self.db.all_docs(limit=LONG_NUMBER, skip=10)
+        self.assertEqual(len(data.get('rows')), 1)
+        self.assertEqual(data['rows'][0]['key'], 'julia010')
+        data = self.db.all_docs(limit=1, skip=LONG_NUMBER)
+        self.assertEqual(len(data.get('rows')), 1)
 
     def test_custom_result_context_manager(self):
         """
