@@ -18,7 +18,7 @@ API module/class for handling database replications
 
 import uuid
 
-from .error import CloudantException
+from .error import CloudantReplicatorException, CloudantClientException
 from .document import Document
 
 class Replicator(object):
@@ -33,13 +33,11 @@ class Replicator(object):
     """
 
     def __init__(self, client):
+        repl_db = '_replicator'
         try:
-            self.database = client['_replicator']
+            self.database = client[repl_db]
         except Exception:
-            raise CloudantException(
-                'Unable to acquire _replicator database.  '
-                'Verify that the client is valid and try again.'
-            )
+            raise CloudantClientException(404, repl_db)
 
     def create_replication(self, source_db=None, target_db=None,
                            repl_id=None, **kwargs):
@@ -78,10 +76,7 @@ class Replicator(object):
 
         if not data.get('source'):
             if source_db is None:
-                raise CloudantException(
-                    'You must specify either a source_db Database '
-                    'object or a manually composed \'source\' string/dict.'
-                )
+                raise CloudantReplicatorException(101)
             data['source'] = {'url': source_db.database_url}
             if not source_db.admin_party:
                 data['source'].update(
@@ -90,10 +85,7 @@ class Replicator(object):
 
         if not data.get('target'):
             if target_db is None:
-                raise CloudantException(
-                    'You must specify either a target_db Database '
-                    'object or a manually composed \'target\' string/dict.'
-                )
+                raise CloudantReplicatorException(102)
             data['target'] = {'url': target_db.database_url}
             if not target_db.admin_party:
                 data['target'].update(
@@ -136,9 +128,7 @@ class Replicator(object):
         try:
             repl_doc = self.database[repl_id]
         except KeyError:
-            raise CloudantException(
-                "Replication {} not found".format(repl_id)
-            )
+            raise CloudantReplicatorException(404, repl_id)
         repl_doc.fetch()
         return repl_doc.get('_replication_state')
 
@@ -203,8 +193,7 @@ class Replicator(object):
         try:
             repl_doc = self.database[repl_id]
         except KeyError:
-            raise CloudantException(
-                "Could not find replication with id {}".format(repl_id))
+            raise CloudantReplicatorException(404, repl_id)
 
         repl_doc.fetch()
         repl_doc.delete()

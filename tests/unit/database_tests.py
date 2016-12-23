@@ -30,7 +30,7 @@ import os
 import uuid
 
 from cloudant.result import Result, QueryResult
-from cloudant.error import CloudantException, CloudantArgumentError
+from cloudant.error import CloudantArgumentError, CloudantDatabaseException
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
 from cloudant.security_document import SecurityDocument
@@ -39,6 +39,44 @@ from cloudant.feed import Feed, InfiniteFeed
 
 from .unit_t_db_base import UnitTestDbBase
 from .. import unicode_
+
+class CloudantDatabaseExceptionTests(unittest.TestCase):
+    """
+    Ensure CloudantDatabaseException functions as expected.
+    """
+
+    def test_raise_without_code(self):
+        """
+        Ensure that a default exception/code is used if none is provided.
+        """
+        with self.assertRaises(CloudantDatabaseException) as cm:
+            raise CloudantDatabaseException()
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_using_invalid_code(self):
+        """
+        Ensure that a default exception/code is used if invalid code is provided.
+        """
+        with self.assertRaises(CloudantDatabaseException) as cm:
+            raise CloudantDatabaseException('foo')
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_without_args(self):
+        """
+        Ensure that a default exception/code is used if the message requested
+        by the code provided requires an argument list and none is provided.
+        """
+        with self.assertRaises(CloudantDatabaseException) as cm:
+            raise CloudantDatabaseException(400)
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_with_proper_code_and_args(self):
+        """
+        Ensure that the requested exception is raised.
+        """
+        with self.assertRaises(CloudantDatabaseException) as cm:
+            raise CloudantDatabaseException(400, 'foo')
+        self.assertEqual(cm.exception.status_code, 400)
 
 class DatabaseTests(UnitTestDbBase):
     """
@@ -217,10 +255,10 @@ class DatabaseTests(UnitTestDbBase):
         try:
             self.db.create_document(data, throw_on_exists=True)
             self.fail('Above statement should raise a CloudantException')
-        except CloudantException as err:
+        except CloudantDatabaseException as err:
             self.assertEqual(
                 str(err),
-                'Error - Document with id julia06 already exists.'
+                'Document with id julia06 already exists.'
                 )
 
     def test_create_document_without_id(self):

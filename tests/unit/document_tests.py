@@ -32,7 +32,7 @@ import uuid
 import inspect
 
 from cloudant.document import Document
-from cloudant.error import CloudantException
+from cloudant.error import CloudantDocumentException
 
 from .. import StringIO, unicode_
 from .unit_t_db_base import UnitTestDbBase
@@ -42,6 +42,44 @@ def find_fixture(name):
     dirname = os.path.dirname(inspect.getsourcefile(fixtures))
     filename = os.path.join(dirname, name)
     return filename
+
+class CloudantDocumentExceptionTests(unittest.TestCase):
+    """
+    Ensure CloudantDocumentException functions as expected.
+    """
+
+    def test_raise_without_code(self):
+        """
+        Ensure that a default exception/code is used if none is provided.
+        """
+        with self.assertRaises(CloudantDocumentException) as cm:
+            raise CloudantDocumentException()
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_using_invalid_code(self):
+        """
+        Ensure that a default exception/code is used if invalid code is provided.
+        """
+        with self.assertRaises(CloudantDocumentException) as cm:
+            raise CloudantDocumentException('foo')
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_without_args(self):
+        """
+        Ensure that a default exception/code is used if the message requested
+        by the code provided requires an argument list and none is provided.
+        """
+        with self.assertRaises(CloudantDocumentException) as cm:
+            raise CloudantDocumentException(102)
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_with_proper_code_and_args(self):
+        """
+        Ensure that the requested exception is raised.
+        """
+        with self.assertRaises(CloudantDocumentException) as cm:
+            raise CloudantDocumentException(102, 'foo')
+        self.assertEqual(cm.exception.status_code, 102)
 
 class DocumentTests(UnitTestDbBase):
     """
@@ -230,10 +268,10 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.fetch()
             self.fail('Above statement should raise an Exception')
-        except CloudantException as err:
+        except CloudantDocumentException as err:
             self.assertEqual(
                 str(err),
-                'A document id is required to fetch document contents.  '
+                'A document id is required to fetch document contents. '
                 'Add an _id key and value to the document and re-try.'
             )
 
@@ -382,7 +420,7 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.list_field_append(doc, 'name', 'isabel')
             self.fail('Above statement should raise an Exception')
-        except CloudantException as err:
+        except CloudantDocumentException as err:
             self.assertEqual(str(err), 'The field name is not a list.')
         self.assertEqual(doc, {'name': 'julia'})
 
@@ -408,7 +446,7 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.list_field_remove(doc, 'name', 'julia')
             self.fail('Above statement should raise an Exception')
-        except CloudantException as err:
+        except CloudantDocumentException as err:
             self.assertEqual(str(err), 'The field name is not a list.')
         self.assertEqual(doc, {'name': 'julia'})
 
@@ -455,11 +493,11 @@ class DocumentTests(UnitTestDbBase):
         try:
             doc.delete()
             self.fail('Above statement should raise an Exception')
-        except CloudantException as err:
+        except CloudantDocumentException as err:
             self.assertEqual(
                 str(err), 
                 'Attempting to delete a doc with no _rev. '
-                'Try running .fetch first!'
+                'Try running .fetch and re-try.'
             )
 
     def test_delete_document_success(self):

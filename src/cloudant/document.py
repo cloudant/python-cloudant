@@ -21,7 +21,8 @@ import requests
 from requests.exceptions import HTTPError
 
 from ._2to3 import url_quote, url_quote_plus
-from .error import CloudantException
+from .error import CloudantDocumentException
+
 
 class Document(dict):
     """
@@ -161,10 +162,7 @@ class Document(dict):
         the locally cached Document object.
         """
         if self.document_url is None:
-            raise CloudantException(
-                'A document id is required to fetch document contents.  '
-                'Add an _id key and value to the document and re-try.'
-            )
+            raise CloudantDocumentException(101)
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
         self.clear()
@@ -210,9 +208,7 @@ class Document(dict):
         if doc.get(field) is None:
             doc[field] = []
         if not isinstance(doc[field], list):
-            raise CloudantException(
-                'The field {0} is not a list.'.format(field)
-            )
+            raise CloudantDocumentException(102, field)
         if value is not None:
             doc[field].append(value)
 
@@ -227,9 +223,7 @@ class Document(dict):
         :param value: Value to remove from the field list.
         """
         if not isinstance(doc[field], list):
-            raise CloudantException(
-                'The field {0} is not a list.'.format(field)
-            )
+            raise CloudantDocumentException(102, field)
         doc[field].remove(value)
 
     @staticmethod
@@ -314,10 +308,7 @@ class Document(dict):
         object.
         """
         if not self.get("_rev"):
-            raise CloudantException(
-                "Attempting to delete a doc with no _rev. Try running "
-                ".fetch first!"
-            )
+            raise CloudantDocumentException(103)
 
         del_resp = self.r_session.delete(
             self.document_url,

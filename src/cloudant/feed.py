@@ -20,7 +20,7 @@ continuous and non-continuous feeds like ``_changes`` and ``_db_updates``.
 import json
 
 from ._2to3 import iteritems_, next_, unicode_, STRTYPE, NONETYPE
-from .error import CloudantArgumentError, CloudantException
+from .error import CloudantArgumentError, CloudantFeedException
 from ._common_util import feed_arg_types, TYPE_CONVERTERS
 
 class Feed(object):
@@ -252,8 +252,7 @@ class InfiniteFeed(Feed):
         """
         while True:
             if self._source == 'CouchDB':
-                raise CloudantException(
-                    'Infinite _db_updates feed not supported for CouchDB.')
+                raise CloudantFeedException(101)
             if self._last_seq:
                 self._options.update({'since': self._last_seq})
                 self._resp = None

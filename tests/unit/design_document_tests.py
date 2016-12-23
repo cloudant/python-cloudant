@@ -30,9 +30,47 @@ import requests
 from cloudant.document import Document 
 from cloudant.design_document import DesignDocument
 from cloudant.view import View, QueryIndexView
-from cloudant.error import CloudantArgumentError, CloudantException
+from cloudant.error import CloudantArgumentError, CloudantDesignDocumentException
 
 from .unit_t_db_base import UnitTestDbBase
+
+class CloudantDesignDocumentExceptionTests(unittest.TestCase):
+    """
+    Ensure CloudantDesignDocumentException functions as expected.
+    """
+
+    def test_raise_without_code(self):
+        """
+        Ensure that a default exception/code is used if none is provided.
+        """
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
+            raise CloudantDesignDocumentException()
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_using_invalid_code(self):
+        """
+        Ensure that a default exception/code is used if invalid code is provided.
+        """
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
+            raise CloudantDesignDocumentException('foo')
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_without_args(self):
+        """
+        Ensure that a default exception/code is used if the message requested
+        by the code provided requires an argument list and none is provided.
+        """
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
+            raise CloudantDesignDocumentException(104)
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_with_proper_code_and_args(self):
+        """
+        Ensure that the requested exception is raised.
+        """
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
+            raise CloudantDesignDocumentException(104, 'foo')
+        self.assertEqual(cm.exception.status_code, 104)
 
 class DesignDocumentTests(UnitTestDbBase):
     """
@@ -173,7 +211,7 @@ class DesignDocumentTests(UnitTestDbBase):
         """
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         ddoc['language'] = 'query'
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc.add_view('view001', {'foo': 'bar'})
         err = cm.exception
         self.assertEqual(
@@ -239,7 +277,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.db.create_document(data)
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         ddoc.fetch()
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc.update_view(
                 'view001',
                 'function (doc) {\n  emit(doc._id, 1);\n}'
@@ -283,7 +321,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.db.create_document(data)
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         ddoc.fetch()
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc.delete_view('view001')
         err = cm.exception
         self.assertEqual(
@@ -504,7 +542,7 @@ class DesignDocumentTests(UnitTestDbBase):
             'analyzer': {'name': 'perfield','default': 'keyword',
                          'fields': {'$default': 'german'}}}
         self.assertIsInstance(ddoc['indexes']['index001']['index'], dict)
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc.save()
         err = cm.exception
         self.assertEqual(
@@ -539,7 +577,7 @@ class DesignDocumentTests(UnitTestDbBase):
             'analyzer': {'name': 'perfield','default': 'keyword',
                          'fields': {'$default': 'german'}}}
         self.assertIsInstance(ddoc_remote['indexes']['index001']['index'], dict)
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc_remote.save()
         err = cm.exception
         self.assertEqual(
@@ -558,7 +596,7 @@ class DesignDocumentTests(UnitTestDbBase):
         db_copy = '{0}-copy'.format(self.db.database_name)
         ddoc.add_view('view001', view_map, view_reduce)
         ddoc['language'] = 'query'
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc.save()
         err = cm.exception
         self.assertEqual(
@@ -600,13 +638,13 @@ class DesignDocumentTests(UnitTestDbBase):
         self.db.create_document(data)
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         ddoc.fetch()
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc['language'] = 'not-query'
             ddoc.save()
         err = cm.exception
         self.assertEqual(str(err), 'View view001 must be of type View.')
 
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             del ddoc['language']
             ddoc.save()
         err = cm.exception
@@ -1043,7 +1081,7 @@ class DesignDocumentTests(UnitTestDbBase):
                      '{"store": true}); }\n}',
             'analyzer': 'standard'}
         self.assertIsInstance(ddoc['indexes']['search001']['index'], str)
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc.save()
         err = cm.exception
         self.assertEqual(
@@ -1076,7 +1114,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertIsInstance(
             ddoc['indexes']['search001']['index'], str
         )
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantDesignDocumentException) as cm:
             ddoc.save()
         err = cm.exception
         self.assertEqual(

@@ -24,7 +24,7 @@ import requests
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
-from .error import CloudantException, CloudantArgumentError
+from .error import CloudantArgumentError, CloudantClientException
 from ._common_util import (
     USER_AGENT,
     append_response_error_content,
@@ -198,37 +198,34 @@ class CouchDB(dict):
         Creates a new database on the remote server with the name provided
         and adds the new database object to the client's locally cached
         dictionary before returning it to the caller.  The method will
-        optionally throw a CloudantException if the database exists remotely.
+        optionally throw a CloudantClientException if the database
+        exists remotely.
 
         :param str dbname: Name used to create the database.
         :param bool throw_on_exists: Boolean flag dictating whether or
-            not to throw a CloudantException when attempting to create a
-            database that already exists.
+            not to throw a CloudantClientException when attempting to
+            create a database that already exists.
 
         :returns: The newly created database object
         """
         new_db = self._DATABASE_CLASS(self, dbname)
         if new_db.exists():
             if kwargs.get('throw_on_exists', True):
-                raise CloudantException(
-                    "Database {0} already exists".format(dbname)
-                )
+                raise CloudantClientException(409, dbname)
         new_db.create()
         super(CouchDB, self).__setitem__(dbname, new_db)
         return new_db
 
     def delete_database(self, dbname):
         """
-        Removes the named database remotely and locally. The method will throw a
-        CloudantException if the database does not exist.
+        Removes the named database remotely and locally. The method will throw
+        a CloudantClientException if the database does not exist.
 
         :param str dbname: Name of the database to delete.
         """
         db = self._DATABASE_CLASS(self, dbname)
         if not db.exists():
-            raise CloudantException(
-                "Database {0} does not exist".format(dbname)
-            )
+            raise CloudantClientException(404, dbname)
         db.delete()
         if dbname in list(self.keys()):
             super(CouchDB, self).__delitem__(dbname)
@@ -378,8 +375,7 @@ class CouchDB(dict):
             create the database remotely or not.  Defaults to False.
         """
         if not isinstance(value, self._DATABASE_CLASS):
-            msg = "Value must be set to a Database object"
-            raise CloudantException(msg)
+            raise CloudantClientException(101, type(value).__name__)
         if remote and not value.exists():
             value.create()
         super(CouchDB, self).__setitem__(key, value)
@@ -426,7 +422,7 @@ class Cloudant(CouchDB):
                 self._client_user_header['X-Cloudant-User'] = x_cloudant_user
 
         if self.server_url is None:
-            raise CloudantException('You must provide a url or an account.')
+            raise CloudantClientException(102)
 
         if kwargs.get('connect', False):
             self.connect()
@@ -537,7 +533,7 @@ class Cloudant(CouchDB):
             between 1 and 12. Optional parameter. Defaults to None.
             If used, it must be accompanied by ``year``.
         """
-        err = None
+        err = False
         if year is None and month is None:
             resp = self.r_session.get(endpoint)
         else:
@@ -548,14 +544,14 @@ class Cloudant(CouchDB):
                             endpoint, str(int(year)), str(int(month)))
                     )
                 else:
-                    err = ('Invalid year and/or month supplied.  '
-                           'Found: year - {0}, month - {1}').format(year, month)
+                    err = True
             except (ValueError, TypeError):
-                err = ('Invalid year and/or month supplied.  '
-                       'Found: year - {0}, month - {1}').format(year, month)
+                err = True
 
         if err:
-            raise CloudantArgumentError(err)
+            msg = ('Invalid year and/or month supplied.  '
+                   'Found: year - {0}, month - {1}').format(year, month)
+            raise CloudantArgumentError(msg)
         else:
             resp.raise_for_status()
             return resp.json()

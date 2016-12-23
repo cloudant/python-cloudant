@@ -24,7 +24,7 @@ from ._common_util import JSON_INDEX_TYPE
 from ._common_util import TEXT_INDEX_TYPE
 from ._common_util import SPECIAL_INDEX_TYPE
 from ._common_util import TEXT_INDEX_ARGS
-from .error import CloudantArgumentError, CloudantException
+from .error import CloudantArgumentError, CloudantIndexException
 
 class Index(object):
     """
@@ -252,13 +252,11 @@ class SpecialIndex(Index):
         A "special" index cannot be created.  This method is disabled for a
         SpecialIndex object.
         """
-        msg = 'Creating the \"special\" index is not allowed.'
-        raise CloudantException(msg)
+        raise CloudantIndexException(101)
 
     def delete(self):
         """
         A "special" index cannot be deleted.  This method is disabled for a
         SpecialIndex object.
         """
-        msg = 'Deleting the \"special\" index is not allowed.'
-        raise CloudantException(msg)
+        raise CloudantIndexException(102)
