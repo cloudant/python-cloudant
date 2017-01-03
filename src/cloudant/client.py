@@ -549,9 +549,7 @@ class Cloudant(CouchDB):
                 err = True
 
         if err:
-            msg = ('Invalid year and/or month supplied.  '
-                   'Found: year - {0}, month - {1}').format(year, month)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(101, year, month)
         else:
             resp.raise_for_status()
             return resp.json()

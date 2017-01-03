@@ -159,19 +159,11 @@ class Query(dict):
         # Validate query arguments and values
         for key, val in iteritems_(data):
             if key not in list(QUERY_ARG_TYPES.keys()):
-                msg = 'Invalid argument: {0}'.format(key)
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(129, key)
             if not isinstance(val, QUERY_ARG_TYPES[key]):
-                msg = (
-                    'Argument {0} is not an instance of expected type: {1}'
-                ).format(key, QUERY_ARG_TYPES[key])
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(130, key, QUERY_ARG_TYPES[key])
         if data.get('selector', None) is None or data.get('selector') == {}:
-            msg = (
-                'No selector in the query or the selector was empty.  '
-                'Add a selector to define the query and retry.'
-            )
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(131)
 
         # Execute query find
         headers = {'Content-Type': 'application/json'}

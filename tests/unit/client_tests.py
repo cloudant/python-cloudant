@@ -433,7 +433,7 @@ class ClientTests(UnitTestDbBase):
         except CloudantClientException as err:
             self.assertEqual(
                 str(err),
-                'Value must be set to a Database object. Found type: str.')
+                'Value must be set to a Database object. Found type: str')
         finally:
             self.client.disconnect()
 

@@ -17,6 +17,7 @@ Module that contains common exception classes for the Cloudant Python client
 library.
 """
 from cloudant._messages import (
+    ARGUMENT_ERROR,
     CLIENT,
     DATABASE,
     DESIGN_DOCUMENT,
@@ -24,8 +25,8 @@ from cloudant._messages import (
     FEED,
     INDEX,
     REPLICATOR,
-    RESULT
-)
+    RESULT,
+    VIEW)
 
 class CloudantException(Exception):
     """
@@ -46,18 +47,21 @@ class CloudantException(Exception):
 class CloudantArgumentError(CloudantException):
     """
     Provides a way to issue Cloudant Python client library specific exceptions
-    that pertain to invalid argument errors.  A CloudantArgumentError object is
-    instantiated with a message and optional code where the code defaults to
-    400.
+    that pertain to invalid argument errors.
 
     Note:  The intended use for this class is internal to the Cloudant Python
     client library.
 
-    :param str msg: A message that describes the exception.
     :param int code: An optional code value used to identify the exception.
-        Defaults to 400.
+        Defaults to 100.
+    :param args: A list of arguments used to format the exception message.
     """
-    def __init__(self, msg, code=400):
+    def __init__(self, code=100, *args):
+        try:
+            msg = ARGUMENT_ERROR[code].format(*args)
+        except (KeyError, IndexError):
+            code = 100
+            msg = ARGUMENT_ERROR[code]
         super(CloudantArgumentError, self).__init__(msg, code)
 
 class ResultException(CloudantException):
@@ -183,3 +187,18 @@ class CloudantReplicatorException(CloudantException):
             code = 100
             msg = REPLICATOR[code]
         super(CloudantReplicatorException, self).__init__(msg, code)
+
+class CloudantViewException(CloudantException):
+    """
+    Provides a way to issue Cloudant library view specific exceptions.
+
+    :param int code: A code value used to identify the view exception.
+    :param args: A list of arguments used to format the exception message.
+    """
+    def __init__(self, code=100, *args):
+        try:
+            msg = VIEW[code].format(*args)
+        except (KeyError, IndexError):
+            code = 100
+            msg = VIEW[code]
+        super(CloudantViewException, self).__init__(msg, code)

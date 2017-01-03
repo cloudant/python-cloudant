@@ -121,8 +121,10 @@ class InfiniteFeedTests(UnitTestDbBase):
         feed = InfiniteFeed(self.db, feed='longpoll')
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
-        self.assertEqual(str(cm.exception), 
-            'Invalid infinite feed option: longpoll.  Must be set to continuous.')
+        self.assertEqual(
+            str(cm.exception),
+            'Invalid infinite feed option: longpoll.  Must be set to continuous.'
+        )
 
     @unittest.skipIf(os.environ.get('RUN_CLOUDANT_TESTS'), 
         'Skipping since test is possible only when testing against CouchDB.')

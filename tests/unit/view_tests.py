@@ -32,7 +32,7 @@ from cloudant.design_document import DesignDocument
 from cloudant.view import View, QueryIndexView
 from cloudant._common_util import _Code
 from cloudant.result import Result
-from cloudant.error import CloudantArgumentError, CloudantException
+from cloudant.error import CloudantArgumentError, CloudantViewException
 
 from .unit_t_db_base import UnitTestDbBase
 
@@ -49,6 +49,35 @@ class CodeTests(unittest.TestCase):
         code = _Code('this is code.')
         self.assertIsInstance(code, _Code)
         self.assertEqual(code, 'this is code.')
+
+class CloudantViewExceptionTests(unittest.TestCase):
+    """
+    Ensure CloudantReplicatorException functions as expected.
+    """
+
+    def test_raise_without_code(self):
+        """
+        Ensure that a default exception/code is used if none is provided.
+        """
+        with self.assertRaises(CloudantViewException) as cm:
+            raise CloudantViewException()
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_using_invalid_code(self):
+        """
+        Ensure that a default exception/code is used if invalid code is provided.
+        """
+        with self.assertRaises(CloudantViewException) as cm:
+            raise CloudantViewException('foo')
+        self.assertEqual(cm.exception.status_code, 100)
+
+    def test_raise_with_proper_code(self):
+        """
+        Ensure that the requested exception is raised.
+        """
+        with self.assertRaises(CloudantViewException) as cm:
+            raise CloudantViewException(101)
+        self.assertEqual(cm.exception.status_code, 101)
 
 class ViewTests(UnitTestDbBase):
     """
@@ -387,7 +416,7 @@ class QueryIndexViewTests(unittest.TestCase):
         except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
-                'The map property must be a dictionary'
+                'The map property must be a dictionary.'
             )
 
     def test_reduce_getter(self):
@@ -412,13 +441,13 @@ class QueryIndexViewTests(unittest.TestCase):
         with self.assertRaises(CloudantArgumentError) as cm:
             self.view.reduce = {'_count'}
         err = cm.exception
-        self.assertEqual(str(err), 'The reduce property must be a string')
+        self.assertEqual(str(err), 'The reduce property must be a string.')
 
     def test_callable_disabled(self):
         """
         Test that the callable for QueryIndexView does not execute.
         """
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantViewException) as cm:
             self.view()
         err = cm.exception
         self.assertEqual(
@@ -433,7 +462,7 @@ class QueryIndexViewTests(unittest.TestCase):
         Test that the custom_result context manager for QueryIndexView does not
         execute.
         """
-        with self.assertRaises(CloudantException) as cm:
+        with self.assertRaises(CloudantViewException) as cm:
             with self.view.custom_result() as result:
                 pass
         err = cm.exception

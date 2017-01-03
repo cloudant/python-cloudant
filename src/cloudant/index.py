@@ -128,16 +128,12 @@ class Index(object):
                 else:
                     payload['ddoc'] = self._ddoc_id
             else:
-                msg = (
-                    'The design document id: {0} is not a string.'
-                ).format(self._ddoc_id)
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(122, self._ddoc_id)
         if self._name and self._name != '':
             if isinstance(self._name, STRTYPE):
                 payload['name'] = self._name
             else:
-                msg = 'The index name: {0} is not a string.'.format(self._name)
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(123, self._name)
         self._def_check()
         payload['index'] = self._def
 
@@ -157,22 +153,16 @@ class Index(object):
         Checks that the only definition provided is a "fields" definition.
         """
         if list(self._def.keys()) != ['fields']:
-            msg = (
-                '{0} provided as argument(s).  A JSON index requires that '
-                'only a \'fields\' argument is provided.'
-            ).format(self._def)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(124, self._def)
 
     def delete(self):
         """
         Removes the current index from the remote database.
         """
         if not self._ddoc_id:
-            msg = 'Deleting an index requires a design document id be provided.'
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(125)
         if not self._name:
-            msg = 'Deleting an index requires an index name be provided.'
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(126)
         ddoc_id = self._ddoc_id
         if ddoc_id.startswith('_design/'):
             ddoc_id = ddoc_id[8:]
@@ -216,13 +206,9 @@ class TextIndex(Index):
         if self._def != dict():
             for key, val in iteritems_(self._def):
                 if key not in list(TEXT_INDEX_ARGS.keys()):
-                    msg = 'Invalid argument: {0}'.format(key)
-                    raise CloudantArgumentError(msg)
+                    raise CloudantArgumentError(127, key)
                 if not isinstance(val, TEXT_INDEX_ARGS[key]):
-                    msg = (
-                        'Argument {0} is not an instance of expected type: {1}'
-                    ).format(key, TEXT_INDEX_ARGS[key])
-                    raise CloudantArgumentError(msg)
+                    raise CloudantArgumentError(128, key, TEXT_INDEX_ARGS[key])
 
 class SpecialIndex(Index):
     """
