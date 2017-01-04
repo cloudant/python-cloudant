@@ -34,12 +34,9 @@ Connecting with a client
 
     # Use Cloudant to create a Cloudant client using account
     from cloudant.client import Cloudant
-    client = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME)
+    client = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME, connect=True)
     # or using url
     # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
-    
-    # Connect to the server
-    client.connect()
 
     # Perform client tasks...
     session = client.session()
@@ -307,7 +304,7 @@ Cloudant/CouchDB server.  This example assumes that either a ``Cloudant`` or a
 .. code-block:: python
 
     # Define the end point and parameters
-    end_point = '{0}/{1}'.format(client.cloudant_url, 'my_database/_all_docs')
+    end_point = '{0}/{1}'.format(client.server_url, 'my_database/_all_docs')
     params = {'include_docs': 'true'}
 
     # Issue the request
