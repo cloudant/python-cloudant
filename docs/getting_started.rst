@@ -62,6 +62,101 @@ Connecting with a client
     # Disconnect from the server
     client.disconnect()
 
+**************
+Authentication
+**************
+
+When constructing a ``Cloudant`` client, you can authenticate using the
+[cookie authentication](http://guide.couchdb.org/editions/1/en/security.html#cookies) functionality.
+The server will always attempt to automatically renew the cookie
+shortly before its expiry. However, if the client does not send a
+request to the server during this renewal window and
+``auto_renew=False`` then the cookie is not renewed.
+
+Using ``auto_renew=True`` will attempt to renew the cookie at
+any point during the lifetime of the session when either of the
+following statements hold true:
+
+- The server returns a ``credentials_expired`` error message.
+- The server returns a ``401 Unauthorized`` status code.
+- The server returns a ``403 Forbidden`` status code.
+
+.. code-block:: python
+
+    # Create client using auto_renew to automatically renew expired cookie auth
+    client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com',
+                     connect=True,
+                     auto_renew=True)
+
+****************
+Resource sharing
+****************
+
+The ``Cloudant`` or ``CouchDB`` client objects make HTTP calls using the ``requests`` library.
+``requests`` uses the [urllib3](https://pypi.python.org/pypi/urllib3) library which features
+connection pooling and thread safety.
+
+Connection pools can be managed by using the ``requests`` library's
+[HTTPAdapter](https://github.com/kennethreitz/requests/blob/master/requests/adapters.py#L78)
+when constructing a ``Cloudant`` or ``ClouchDB`` client instance.
+The default number set by the ``urllib3`` library for cached connection pools is 10.
+Use the ``HTTPAdapter`` argument ``pool_connections`` to set the number of
+urllib3 connection pools to cache, and the ``pool_maxsize`` argument to set the
+maximum number of connections to save in the pool.
+
+Although the ``client`` session is documented as thread safe and it's possible for a
+static ``client`` to be accessible by multiple threads, there are still cases that do not
+guarantee thread safe execution.  It's recommended to use one ``client`` object per thread.
+
+.. code-block:: python
+
+    # Create client with 15 cached pool connections and a max pool size of 100
+    httpAdapter = HTTPAdapter(pool_connections=15, pool_maxsize=100)
+    client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com'
+                     connect=True,
+                     adapter=httpAdapter)
+
+Note: Idle connections within the pool may be terminated by the server, so will not remain open
+indefinitely meaning that this will not completely remove the overhead of creating new connections.
+
+Using library in app server environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This library can be used in an app server, and the example
+below shows how to use ``client`` in a ``flask`` app server.
+
+.. code-block:: python
+
+   from flask import Flask
+   import atexit
+
+   app = Flask(__name__)
+
+   @app.route('/')
+   def hello_world():
+      # Cookie authentication can be renewed automatically using ``auto_renew=True``
+      # which is typically what you would require when running in an application
+      # server where the connection may stay open for a long period of time
+
+      # Note: Each time you instantiate an instance of the Cloudant client, an
+      # authentication request will be made to Cloudant to retrieve the session cookie.
+      # If the performance overhead of this call is a concern for you, consider
+      # using vanilla python requests with a custom subclass of HTTPAdapter that
+      # performs the authentication call to Cloudant when it establishes the http
+      # connection during the creation of the connection pool.
+      client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com',
+                        connect=True,
+                        auto_renew=True)
+
+      # do something with client
+      return 'Hello World!'
+
+   # When shutting down the app server, use ``client.disconnect()`` to properly
+   # logout and end the ``client`` session
+   @atexit.register
+   def shutdown():
+      client.disconnect()
+
 *********
 Databases
 *********
