@@ -77,10 +77,6 @@ class UnitTestDbBase(unittest.TestCase):
     def setUpClass(cls):
         """
         If targeting CouchDB, Set up a CouchDB instance otherwise do nothing.
-          
-        Note: Admin Party is currently unsupported so we must create a 
-          CouchDB user for tests to function with a CouchDB instance if one is
-          not provided.
         """
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
             if os.environ.get('DB_URL') is None:
