@@ -979,7 +979,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
             'Invalid role(s) provided: '
             '[\'_writer\', \'_invalid_role\'].  Valid roles are: '
             '[\'_reader\', \'_writer\', \'_admin\', \'_replicator\', '
-            '\'_db_updates\', \'_design\', \'_shards\', \'_security\'].'
+            '\'_db_updates\', \'_design\', \'_shards\', \'_security\']'
         )
 
     def test_share_database_empty_role_list(self):
@@ -994,7 +994,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
             str(err),
             'Invalid role(s) provided: [].  Valid roles are: '
             '[\'_reader\', \'_writer\', \'_admin\', \'_replicator\', '
-            '\'_db_updates\', \'_design\', \'_shards\', \'_security\'].'
+            '\'_db_updates\', \'_design\', \'_shards\', \'_security\']'
         )
 
     def test_unshare_database(self):
@@ -1263,7 +1263,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         self.assertEqual(
             str(err),
             'Invalid index type: special.  '
-            'Index type must be either \"json\" or \"text\"'
+            'Index type must be either \"json\" or \"text\".'
         )
 
     def test_delete_json_index(self):
@@ -1302,7 +1302,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         self.assertEqual(
             str(err),
             'Invalid index type: special.  '
-            'Index type must be either \"json\" or \"text\"'
+            'Index type must be either \"json\" or \"text\".'
         )
 
     def test_get_query_indexes_raw(self):

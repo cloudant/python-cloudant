@@ -986,10 +986,7 @@ class CloudantDatabase(CouchDatabase):
             perms = list(set(roles))
 
         if not perms:
-            msg = (
-                'Invalid role(s) provided: {0}.  Valid roles are: {1}.'
-            ).format(roles, valid_roles)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(102, roles, valid_roles)
 
         data[username] = perms
         doc['cloudant'] = data
@@ -1131,11 +1128,7 @@ class CloudantDatabase(CouchDatabase):
         elif index_type == TEXT_INDEX_TYPE:
             index = TextIndex(self, design_document_id, index_name, **kwargs)
         else:
-            msg = (
-                'Invalid index type: {0}.  '
-                'Index type must be either \"json\" or \"text\"'
-            ).format(index_type)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(103, index_type)
         index.create()
         return index
 
@@ -1155,11 +1148,7 @@ class CloudantDatabase(CouchDatabase):
         elif index_type == TEXT_INDEX_TYPE:
             index = TextIndex(self, design_document_id, index_name)
         else:
-            msg = (
-                'Invalid index type: {0}.  '
-                'Index type must be either \"json\" or \"text\"'
-            ).format(index_type)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(103, index_type)
         index.delete()
 
     def get_query_result(self, selector, fields=None, raw_result=False,
@@ -1346,20 +1335,14 @@ class CloudantDatabase(CouchDatabase):
         param_query = query_params.get('query')
         # Either q or query parameter is required
         if bool(param_q) == bool(param_query):
-            raise CloudantArgumentError(
-                'A single query/q parameter is required. '
-                'Found: {0}'.format(query_params))
+            raise CloudantArgumentError(104, query_params)
 
         # Validate query arguments and values
         for key, val in iteritems_(query_params):
             if key not in list(SEARCH_INDEX_ARGS.keys()):
-                msg = 'Invalid argument: {0}'.format(key)
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(105, key)
             if not isinstance(val, SEARCH_INDEX_ARGS[key]):
-                msg = (
-                    'Argument {0} is not an instance of expected type: {1}'
-                ).format(key, SEARCH_INDEX_ARGS[key])
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(106, key, SEARCH_INDEX_ARGS[key])
         # Execute query search
         headers = {'Content-Type': 'application/json'}
         ddoc = DesignDocument(self, ddoc_id)

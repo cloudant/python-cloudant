@@ -202,7 +202,7 @@ class DesignDocumentTests(UnitTestDbBase):
         except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
-                'View view001 already exists in this design doc'
+                'View view001 already exists in this design doc.'
             )
 
     def test_adding_query_index_view(self):
@@ -254,7 +254,7 @@ class DesignDocumentTests(UnitTestDbBase):
         except CloudantArgumentError as err:
             self.assertEqual(
                 str(err),
-                'View view001 does not exist in this design doc'
+                'View view001 does not exist in this design doc.'
             )
 
     def test_update_query_index_view(self):
@@ -924,7 +924,7 @@ class DesignDocumentTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(
             str(err),
-            'An index with name search001 already exists in this design doc'
+            'An index with name search001 already exists in this design doc.'
         )
 
     def test_update_a_search_index(self):
@@ -993,7 +993,7 @@ class DesignDocumentTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(
             str(err),
-            'An index with name search001 does not exist in this design doc'
+            'An index with name search001 does not exist in this design doc.'
         )
 
     def test_delete_a_search_index(self):
@@ -1281,7 +1281,7 @@ class DesignDocumentTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(
             str(err),
-            'A list with name list001 already exists in this design doc'
+            'A list with name list001 already exists in this design doc.'
         )
 
     def test_update_a_list_function(self):
@@ -1326,7 +1326,7 @@ class DesignDocumentTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(
             str(err),
-            'A list with name list001 does not exist in this design doc'
+            'A list with name list001 does not exist in this design doc.'
         )
 
     def test_delete_a_list_function(self):
@@ -1585,7 +1585,7 @@ class DesignDocumentTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(
             str(err),
-            'A show function with name show001 already exists in this design doc'
+            'A show function with name show001 already exists in this design doc.'
         )
 
     def test_update_a_show_function(self):
@@ -1630,7 +1630,7 @@ class DesignDocumentTests(UnitTestDbBase):
         err = cm.exception
         self.assertEqual(
             str(err),
-            'A show function with name show001 does not exist in this design doc'
+            'A show function with name show001 does not exist in this design doc.'
         )
 
     def test_delete_a_show_function(self):

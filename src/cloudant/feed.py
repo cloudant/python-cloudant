@@ -103,8 +103,7 @@ class Feed(object):
                     arg_converter = TYPE_CONVERTERS.get(type(val))
                     translation[key] = arg_converter(val)
             except Exception as ex:
-                msg = 'Error converting argument {0}: {1}'.format(key, ex)
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(115, key, ex)
         return translation
 
     def _validate(self, key, val, arg_types):
@@ -113,28 +112,20 @@ class Feed(object):
         the feed.
         """
         if key not in arg_types:
-            raise CloudantArgumentError('Invalid argument {0}'.format(key))
+            raise CloudantArgumentError(116, key)
         if (not isinstance(val, arg_types[key]) or
                 (isinstance(val, bool) and int in arg_types[key])):
-            msg = 'Argument {0} not instance of expected type: {1}'.format(
-                key, arg_types[key])
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(117, key, arg_types[key])
         if isinstance(val, int) and val <= 0 and not isinstance(val, bool):
-            msg = 'Argument {0} must be > 0.  Found: {1}'.format(key, val)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(118, key, val)
         if key == 'feed':
             valid_vals = ('continuous', 'normal', 'longpoll')
             if self._source == 'CouchDB':
                 valid_vals = ('continuous', 'longpoll')
             if val not in valid_vals:
-                msg = (
-                    'Invalid value ({0}) for feed option.  Must be one of {1}.'
-                ).format(val, valid_vals)
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(119, val, valid_vals)
         if key == 'style' and val not in ('main_only', 'all_docs'):
-            msg = ('Invalid value ({0}) for style option.  Must be main_only, '
-                   'or all_docs.').format(val)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(120, val)
 
     def __iter__(self):
         """
@@ -237,10 +228,7 @@ class InfiniteFeed(Feed):
         the feed.
         """
         if key == 'feed' and val != 'continuous':
-            msg = (
-                'Invalid infinite feed option: {0}.  Must be set to continuous.'
-            ).format(val)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(121, val)
         super(InfiniteFeed, self)._validate(key, val, arg_types)
 
     def next(self):

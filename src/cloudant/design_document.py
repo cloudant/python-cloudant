@@ -282,8 +282,7 @@ class DesignDocument(Document):
         :param str reduce_func: Optional Javascript reduce function.
         """
         if self.get_view(view_name) is not None:
-            msg = "View {0} already exists in this design doc".format(view_name)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(107, view_name)
         if self.get('language', None) == QUERY_LANGUAGE:
             raise CloudantDesignDocumentException(101)
 
@@ -300,9 +299,7 @@ class DesignDocument(Document):
         :param analyzer: Optional analyzer for this search index.
         """
         if self.get_index(index_name) is not None:
-            msg = ('An index with name {0} already exists in this design doc'
-                   .format(index_name))
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(108, index_name)
         if analyzer is not None:
             search = {'index': codify(search_func), 'analyzer': analyzer}
         else:
@@ -319,9 +316,7 @@ class DesignDocument(Document):
         :param str list_func: Javascript list function.
         """
         if self.get_list_function(list_name) is not None:
-            msg = ('A list with name {0} already exists in this design doc'
-                   .format(list_name))
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(109, list_name)
 
         self.lists.__setitem__(list_name, codify(list_func))
 
@@ -334,9 +329,7 @@ class DesignDocument(Document):
         :param show_func: Javascript show function.
         """
         if self.get_show_function(show_name) is not None:
-            msg = ('A show function with name {0} already exists in this design doc'
-                   .format(show_name))
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(110, show_name)
 
         self.shows.__setitem__(show_name, show_func)
 
@@ -356,8 +349,7 @@ class DesignDocument(Document):
         """
         view = self.get_view(view_name)
         if view is None:
-            msg = "View {0} does not exist in this design doc".format(view_name)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(111, view_name)
         if isinstance(view, QueryIndexView):
             raise CloudantDesignDocumentException(102)
 
@@ -375,9 +367,7 @@ class DesignDocument(Document):
         """
         search = self.get_index(index_name)
         if search is None:
-            msg = ('An index with name {0} does not exist in this design doc'
-                   .format(index_name))
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(112, index_name)
         if analyzer is not None:
             search = {'index': codify(search_func), 'analyzer': analyzer}
         else:
@@ -394,9 +384,7 @@ class DesignDocument(Document):
         :param str list_func: Javascript list function.
         """
         if self.get_list_function(list_name) is None:
-            msg = ('A list with name {0} does not exist in this design doc'
-                   .format(list_name))
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(113, list_name)
 
         self.lists.__setitem__(list_name, codify(list_func))
 
@@ -409,9 +397,7 @@ class DesignDocument(Document):
         :param show_func: Javascript show function.
         """
         if self.get_show_function(show_name) is None:
-            msg = ('A show function with name {0} does not exist in this design doc'
-                   .format(show_name))
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(114, show_name)
 
         self.shows.__setitem__(show_name, show_func)
 

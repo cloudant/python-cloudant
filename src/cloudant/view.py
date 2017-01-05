@@ -21,7 +21,7 @@ import posixpath
 from ._2to3 import STRTYPE
 from ._common_util import codify, get_docs
 from .result import Result
-from .error import CloudantArgumentError, CloudantException
+from .error import CloudantArgumentError, CloudantViewException
 
 class View(dict):
     """
@@ -301,9 +301,9 @@ class QueryIndexView(View):
     """
     def __init__(self, ddoc, view_name, map_fields, reduce_func, **kwargs):
         if not isinstance(map_fields, dict):
-            raise CloudantArgumentError('The map property must be a dictionary')
+            raise CloudantArgumentError(132)
         if not isinstance(reduce_func, STRTYPE):
-            raise CloudantArgumentError('The reduce property must be a string.')
+            raise CloudantArgumentError(133)
         super(QueryIndexView, self).__init__(
             ddoc,
             view_name,
@@ -334,7 +334,7 @@ class QueryIndexView(View):
         if isinstance(map_func, dict):
             self['map'] = map_func
         else:
-            raise CloudantArgumentError('The map property must be a dictionary')
+            raise CloudantArgumentError(132)
 
     @property
     def reduce(self):
@@ -356,7 +356,7 @@ class QueryIndexView(View):
         if isinstance(reduce_func, STRTYPE):
             self['reduce'] = reduce_func
         else:
-            raise CloudantArgumentError('The reduce property must be a string')
+            raise CloudantArgumentError(133)
 
     def __call__(self, **kwargs):
         """
@@ -364,10 +364,7 @@ class QueryIndexView(View):
         using a query index, use
         :func:`~cloudant.database.CloudantDatabase.get_query_result` instead.
         """
-        raise CloudantException(
-            'A QueryIndexView is not callable.  If you wish to execute a query '
-            'use the database \'get_query_result\' convenience method.'
-        )
+        raise CloudantViewException(101)
 
     def custom_result(self, **options):
         """
@@ -378,8 +375,4 @@ class QueryIndexView(View):
         query using a query index, use
         :func:`~cloudant.database.CloudantDatabase.get_query_result` instead.
         """
-        raise CloudantException(
-            'Cannot create a custom result context manager using a '
-            'QueryIndexView.  If you wish to execute a query use the '
-            'database \'get_query_result\' convenience method instead.'
-        )
+        raise CloudantViewException(102)

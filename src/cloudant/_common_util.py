@@ -174,33 +174,21 @@ def py_to_couch_validate(key, val):
     Validates the individual parameter key and value.
     """
     if key not in RESULT_ARG_TYPES:
-        msg = 'Invalid argument {0}'.format(key)
-        raise CloudantArgumentError(msg)
+        raise CloudantArgumentError(116, key)
     # pylint: disable=unidiomatic-typecheck
     # Validate argument values and ensure that a boolean is not passed in
     # if an integer is expected
     if (not isinstance(val, RESULT_ARG_TYPES[key]) or
             (type(val) is bool and int in RESULT_ARG_TYPES[key])):
-        msg = 'Argument {0} not instance of expected type: {1}'.format(
-            key,
-            RESULT_ARG_TYPES[key]
-        )
-        raise CloudantArgumentError(msg)
+        raise CloudantArgumentError(117, key, RESULT_ARG_TYPES[key])
     if key == 'keys':
         for key_list_val in val:
             if (not isinstance(key_list_val, RESULT_ARG_TYPES['key']) or
                     type(key_list_val) is bool):
-                msg = 'Key list element not of expected type: {0}'.format(
-                    RESULT_ARG_TYPES['key']
-                )
-                raise CloudantArgumentError(msg)
+                raise CloudantArgumentError(134, RESULT_ARG_TYPES['key'])
     if key == 'stale':
         if val not in ('ok', 'update_after'):
-            msg = (
-                'Invalid value for stale option {0} '
-                'must be ok or update_after'
-            ).format(val)
-            raise CloudantArgumentError(msg)
+            raise CloudantArgumentError(135, val)
 
 def _py_to_couch_translate(key, val):
     """
@@ -216,8 +204,7 @@ def _py_to_couch_translate(key, val):
             arg_converter = TYPE_CONVERTERS.get(type(val))
             return {key: arg_converter(val)}
     except Exception as ex:
-        msg = 'Error converting argument {0}: {1}'.format(key, ex)
-        raise CloudantArgumentError(msg)
+        raise CloudantArgumentError(136, key, ex)
 
 def type_or_none(typerefs, value):
     """
