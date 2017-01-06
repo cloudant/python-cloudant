@@ -29,6 +29,8 @@ STRTYPE = basestring if PY2 else str
 # pylint: disable=undefined-variable
 UNITYPE = unicode if PY2 else str
 
+# pylint: disable=undefined-variable
+LONGTYPE = long if PY2 else int
 
 if PY2:
     # pylint: disable=wrong-import-position,no-name-in-module,import-error,unused-import
