@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2016 IBM. All rights reserved.
+# Copyright (c) 2015, 2016, 2017 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -292,11 +292,12 @@ class InfiniteSession(Session):
     information in the event of expired session authentication.
     """
 
-    def __init__(self, username, password, server_url):
+    def __init__(self, username, password, server_url, **kwargs):
         super(InfiniteSession, self).__init__()
         self._username = username
         self._password = password
         self._server_url = server_url
+        self._timeout = kwargs.get('timeout', None)
 
     def request(self, method, url, **kwargs):
         """
@@ -304,7 +305,8 @@ class InfiniteSession(Session):
         _session endpoint to renew Session cookie authentication settings and
         then retry the original request, if necessary.
         """
-        resp = super(InfiniteSession, self).request(method, url, **kwargs)
+        resp = super(InfiniteSession, self).request(
+            method, url, timeout=self._timeout, **kwargs)
         path = url_parse(url).path.lower()
         post_to_session = method.upper() == 'POST' and path == '/_session'
         is_expired = any((
@@ -319,10 +321,30 @@ class InfiniteSession(Session):
                 data={'name': self._username, 'password': self._password},
                 headers={'Content-Type': 'application/x-www-form-urlencoded'}
             )
-            resp = super(InfiniteSession, self).request(method, url, **kwargs)
+            resp = super(InfiniteSession, self).request(
+                method, url, timeout=self._timeout, **kwargs)
 
         return resp
 
+class ClientSession(Session):
+    """
+    This class extends Session and provides a default timeout.
+    """
+
+    def __init__(self, username, password, server_url, **kwargs):
+        super(ClientSession, self).__init__()
+        self._username = username
+        self._password = password
+        self._server_url = server_url
+        self._timeout = kwargs.get('timeout', None)
+
+    def request(self, method, url, **kwargs):
+        """
+        Overrides ``requests.Session.request`` to set the timeout.
+        """
+        resp = super(ClientSession, self).request(
+            method, url, timeout=self._timeout, **kwargs)
+        return resp
 
 class CloudFoundryService(object):
     """ Manages Cloud Foundry service configuration. """

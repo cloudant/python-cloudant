@@ -27,6 +27,10 @@ Note: If you require retrying requests after an HTTP 429 error, the
 ``Replay429Adapter`` can be added when constructing a ``Cloudant``
 client and configured with an initial back off and retry count.
 
+Note: Currently, the connect and read timeout will wait forever for
+a HTTP connection or a response on all requests.  A timeout can be
+set using the ``timeout`` argument when constructing a client.
+
 Connecting with a client
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -45,6 +49,10 @@ Connecting with a client
     # or with a 429 replay adapter that includes configured retries and initial backoff
     # client = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME,
     #                   adapter=Replay429Adapter(retries=10, initialBackoff=0.01))
+
+    # or with a connect and read timeout of 5 minutes
+    # client = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME,
+    #                   timeout=300)
 
     # Perform client tasks...
     session = client.session()

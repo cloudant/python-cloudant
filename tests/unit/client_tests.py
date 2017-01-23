@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2016 IBM. All rights reserved.
+# Copyright (c) 2015, 2016, 2017 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import base64
 import sys
 import os
 import datetime
+
+from requests import ConnectTimeout
 
 from cloudant import cloudant, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
@@ -535,6 +537,15 @@ class CloudantClientTests(UnitTestDbBase):
             self.assertEqual(ua_parts[5], os.uname()[4])
         finally:
             self.client.disconnect()
+
+    def test_connect_timeout(self):
+        """
+        Test that a connect timeout occurs when instantiating
+        a client object with a timeout of 10 ms.
+        """
+        with self.assertRaises(ConnectTimeout) as cm:
+            self.set_up_client(auto_connect=True, timeout=.01)
+        self.assertTrue(str(cm.exception).find('timed out.'))
 
     def test_db_updates_infinite_feed_call(self):
         """
