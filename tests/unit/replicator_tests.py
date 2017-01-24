@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (c) 2015, 2016, 2017 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ module docstring.
 import unittest
 import uuid
 import time
-import requests
 
 from flaky import flaky
+import requests
+from requests import ConnectionError
 
 from cloudant.replicator import Replicator
 from cloudant.document import Document
@@ -210,6 +211,46 @@ class ReplicatorTests(UnitTestDbBase):
             ])
         )
 
+    def test_timeout_in_create_replication(self):
+        """
+        Test that a read timeout exception is thrown when creating a
+        replicator with a timeout value of 500 ms.
+        """
+        # Setup client with a timeout
+        self.set_up_client(auto_connect=True, timeout=.5)
+        self.db = self.client[self.test_target_dbname]
+        self.target_db = self.client[self.test_dbname]
+        # Construct a replicator with the updated client
+        self.replicator = Replicator(self.client)
+
+        repl_id = 'test-repl-{}'.format(unicode_(uuid.uuid4()))
+        repl_doc = self.replicator.create_replication(
+            self.db,
+            self.target_db,
+            repl_id
+        )
+        self.replication_ids.append(repl_id)
+        # Test that the replication document was created
+        expected_keys = ['_id', '_rev', 'source', 'target', 'user_ctx']
+        # If Admin Party mode then user_ctx will not be in the key list
+        if self.client.admin_party:
+            expected_keys.pop()
+        self.assertTrue(all(x in list(repl_doc.keys()) for x in expected_keys))
+        self.assertEqual(repl_doc['_id'], repl_id)
+        self.assertTrue(repl_doc['_rev'].startswith('1-'))
+        # Now that we know that the replication document was created,
+        # check that the replication timed out.
+        repl_doc = Document(self.replicator.database, repl_id)
+        repl_doc.fetch()
+        if repl_doc.get('_replication_state') not in ('completed', 'error'):
+            # assert that a connection error is thrown because the read timed out
+            with self.assertRaises(ConnectionError) as cm:
+                changes = self.replicator.database.changes(
+                    feed='continuous')
+                for change in changes:
+                    continue
+            self.assertTrue(str(cm.exception).endswith('Read timed out.'))
+
     def test_create_replication_without_a_source(self):
         """
         Test that the replication document is not created and fails as expected
@@ -356,6 +397,7 @@ class ReplicatorTests(UnitTestDbBase):
         self.assertTrue(len(repl_states) > 0)
         self.assertEqual(repl_states[-1], 'completed')
         self.assertNotIn('error', repl_states)
+
 
 if __name__ == '__main__':
     unittest.main()

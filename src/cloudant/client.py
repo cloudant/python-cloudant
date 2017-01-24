@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2016 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2016, 2017 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ instance.
 import base64
 import json
 import posixpath
-import requests
 
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
@@ -28,8 +27,8 @@ from .error import CloudantArgumentError, CloudantClientException
 from ._common_util import (
     USER_AGENT,
     append_response_error_content,
-    InfiniteSession
-)
+    InfiniteSession,
+    ClientSession)
 
 
 class CouchDB(dict):
@@ -56,6 +55,15 @@ class CouchDB(dict):
     :param bool auto_renew: Keyword argument, if set to True performs
         automatic renewal of expired session authentication settings.
         Default is False.
+    :param float timeout: Timeout in seconds (use float for milliseconds, for
+        example 0.1 for 100 ms) for connecting to and reading bytes from the
+        server.  If a single value is provided it will be applied to both the
+        connect and read timeouts.  To specify different values for each timeout
+        use a tuple.  For example, a 10 second connect timeout and a 1 minute
+        read timeout would be (10, 60).  This follows the same behaviour as the
+        `Requests library timeout argument
+        <http://docs.python-requests.org/en/master/user/quickstart/#timeouts>`_.
+        but will apply to every request made using this client.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -69,6 +77,7 @@ class CouchDB(dict):
         self.admin_party = admin_party
         self.encoder = kwargs.get('encoder') or json.JSONEncoder
         self.adapter = kwargs.get('adapter')
+        self._timeout = kwargs.get('timeout', None)
         self.r_session = None
         self._auto_renew = kwargs.get('auto_renew', False)
         connect_to_couch = kwargs.get('connect', False)
@@ -87,10 +96,16 @@ class CouchDB(dict):
             self.r_session = InfiniteSession(
                 self._user,
                 self._auth_token,
-                self.server_url
+                self.server_url,
+                timeout=self._timeout
             )
         else:
-            self.r_session = requests.Session()
+            self.r_session = ClientSession(
+                self._user,
+                self._auth_token,
+                self.server_url,
+                timeout=self._timeout
+            )
         # If a Transport Adapter was supplied add it to the session
         if self.adapter is not None:
             self.r_session.mount(self.server_url, self.adapter)

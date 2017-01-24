@@ -1,6 +1,6 @@
 2.4.0 (Unreleased)
 ==================
-
+- [NEW] Added ``timeout`` option to the client constructor for setting a timeout on a HTTP connection or a response.
 
 2.3.1 (2016-11-30)
 ==================

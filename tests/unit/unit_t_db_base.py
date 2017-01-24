@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (c) 2015, 2016, 2017 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -131,7 +131,8 @@ class UnitTestDbBase(unittest.TestCase):
         """
         self.set_up_client()
 
-    def set_up_client(self, auto_connect=False, auto_renew=False, encoder=None):
+    def set_up_client(self, auto_connect=False, auto_renew=False, encoder=None,
+                      timeout=(30,300)):
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
             admin_party = False
             if (os.environ.get('ADMIN_PARTY') and
@@ -147,7 +148,8 @@ class UnitTestDbBase(unittest.TestCase):
                 url=self.url,
                 connect=auto_connect,
                 auto_renew=auto_renew,
-                encoder=encoder
+                encoder=encoder,
+                timeout=timeout
             )
         else:
             self.account = os.environ.get('CLOUDANT_ACCOUNT')
@@ -163,7 +165,8 @@ class UnitTestDbBase(unittest.TestCase):
                 x_cloudant_user=self.account,
                 connect=auto_connect,
                 auto_renew=auto_renew,
-                encoder=encoder
+                encoder=encoder,
+                timeout=timeout
             )
 
 
