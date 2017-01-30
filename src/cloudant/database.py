@@ -61,6 +61,24 @@ class CouchDatabase(LRUDict):
         self._fetch_limit = fetch_limit
         self.result = Result(self.all_docs)
 
+    def __eq__(self, other):
+        """
+        Compare the equality of this database to another.
+
+        For two databases to be considered equal both the database host and
+        database name must match.
+
+        :param other: other database
+        :return: True if databases are equal, else False
+        """
+        if (hasattr(other, '_database_host') and
+                self._database_host == other._database_host):  # pylint: disable=protected-access
+
+            return hasattr(other, 'database_name') and \
+                   self.database_name == other.database_name
+
+        return False
+
     @property
     def r_session(self):
         """
