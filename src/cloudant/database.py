@@ -30,6 +30,7 @@ from ._common_util import (
     get_docs)
 from .document import Document
 from .design_document import DesignDocument
+from .lru_dict import LRUDict
 from .security_document import SecurityDocument
 from .view import View
 from .index import Index, TextIndex, SpecialIndex
@@ -38,7 +39,7 @@ from .error import CloudantArgumentError, CloudantDatabaseException
 from .result import Result, QueryResult
 from .feed import Feed, InfiniteFeed
 
-class CouchDatabase(dict):
+class CouchDatabase(LRUDict):
     """
     Encapsulates a CouchDB database.  A CouchDatabase object is
     instantiated with a reference to a client/session.
@@ -49,9 +50,11 @@ class CouchDatabase(dict):
     :param str database_name: Database name used to reference the database.
     :param int fetch_limit: Optional fetch limit used to set the max number of
         documents to fetch per query during iteration cycles.  Defaults to 100.
+    :param int cache_size: Maximum number of documents to cache locally (uses an
+        LRU caching policy). A negative value implies the capacity is unbounded.
     """
-    def __init__(self, client, database_name, fetch_limit=100):
-        super(CouchDatabase, self).__init__()
+    def __init__(self, client, database_name, fetch_limit=100, cache_size=-1):
+        super(CouchDatabase, self).__init__(max_size=cache_size)
         self.client = client
         self._database_host = client.server_url
         self.database_name = database_name
@@ -427,7 +430,7 @@ class CouchDatabase(dict):
         yield rslt
         del rslt
 
-    def keys(self, remote=False):
+    def keys(self, remote=False):  # pylint: disable=arguments-differ
         """
         Retrieves the list of document ids in the database.  Default is
         to return only the locally cached document ids, specify remote=True
@@ -600,7 +603,7 @@ class CouchDatabase(dict):
         else:
             raise KeyError(key)
 
-    def __iter__(self, remote=True):
+    def __iter__(self, remote=True):  # pylint: disable=arguments-differ
         """
         Overrides dictionary __iter__ behavior to provide iterable Document
         results.  By default, Documents are fetched from the remote database,
