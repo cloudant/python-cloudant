@@ -64,6 +64,9 @@ class CouchDB(dict):
         `Requests library timeout argument
         <http://docs.python-requests.org/en/master/user/quickstart/#timeouts>`_.
         but will apply to every request made using this client.
+    :param int db_cache_size: Maximum number of documents a database should
+        cache locally (uses an LRU caching policy). A negative value implies the
+        capacity is unbounded.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -80,6 +83,7 @@ class CouchDB(dict):
         self._timeout = kwargs.get('timeout', None)
         self.r_session = None
         self._auto_renew = kwargs.get('auto_renew', False)
+        self.db_cache_size = kwargs.get('db_cache_size', -1)
         connect_to_couch = kwargs.get('connect', False)
         if connect_to_couch and self._DATABASE_CLASS == CouchDatabase:
             self.connect()

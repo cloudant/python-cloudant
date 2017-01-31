@@ -50,11 +50,9 @@ class CouchDatabase(LRUDict):
     :param str database_name: Database name used to reference the database.
     :param int fetch_limit: Optional fetch limit used to set the max number of
         documents to fetch per query during iteration cycles.  Defaults to 100.
-    :param int cache_size: Maximum number of documents to cache locally (uses an
-        LRU caching policy). A negative value implies the capacity is unbounded.
     """
-    def __init__(self, client, database_name, fetch_limit=100, cache_size=-1):
-        super(CouchDatabase, self).__init__(max_size=cache_size)
+    def __init__(self, client, database_name, fetch_limit=100):
+        super(CouchDatabase, self).__init__(max_size=client.db_cache_size)
         self.client = client
         self._database_host = client.server_url
         self.database_name = database_name

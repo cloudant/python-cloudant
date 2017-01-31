@@ -285,17 +285,20 @@ Delete a document
     # Delete the document
     my_document.delete()
 
-*************
-Local Caching
-*************
+**********************
+Local Document Caching
+**********************
+
+Databases use a Least Recently Used (LRU) caching policy. The least recently
+accessed document is discarded first once the cache size limit is reached.
 
 Documents are cached locally as they are requested by the client. You can limit
 the cache to a fixed number of documents or choose to suppress this behaviour
 entirely. Note that by default the cache is not bound to a limit and can
 therefore grow indefinitely.
 
-The client uses a Least Recently Used (LRU) caching policy. The least recently
-accessed document is discarded first once the cache size limit is reached.
+The maximum cache size for any database is defined during the construction of
+its associated client:
 
 .. code-block:: python
 
@@ -305,10 +308,10 @@ accessed document is discarded first once the cache size limit is reached.
     client1 = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME)
 
     # limit the local cache to 100 documents
-    client2 = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME, cache_size=100)
+    client2 = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME, db_cache_size=100)
 
     # don't cache documents locally. always fetch from the remote server.
-    client3 = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME, cache_size=0)
+    client3 = Cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME, db_cache_size=0)
 
 ********************
 Dealing with results
