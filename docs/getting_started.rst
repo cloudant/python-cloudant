@@ -67,7 +67,7 @@ Authentication
 **************
 
 When constructing a ``Cloudant`` client, you can authenticate using the
-[cookie authentication](http://guide.couchdb.org/editions/1/en/security.html#cookies) functionality.
+`cookie authentication <http://guide.couchdb.org/editions/1/en/security.html#cookies>`_ functionality.
 The server will always attempt to automatically renew the cookie
 shortly before its expiry. However, if the client does not send a
 request to the server during this renewal window and
@@ -93,11 +93,11 @@ Resource sharing
 ****************
 
 The ``Cloudant`` or ``CouchDB`` client objects make HTTP calls using the ``requests`` library.
-``requests`` uses the [urllib3](https://pypi.python.org/pypi/urllib3) library which features
+``requests`` uses the `urllib3 <https://pypi.python.org/pypi/urllib3>`_ library which features
 connection pooling and thread safety.
 
 Connection pools can be managed by using the ``requests`` library's
-[HTTPAdapter](https://github.com/kennethreitz/requests/blob/master/requests/adapters.py#L78)
+`HTTPAdapter <https://github.com/kennethreitz/requests/blob/master/requests/adapters.py#L78>`_
 when constructing a ``Cloudant`` or ``ClouchDB`` client instance.
 The default number set by the ``urllib3`` library for cached connection pools is 10.
 Use the ``HTTPAdapter`` argument ``pool_connections`` to set the number of
