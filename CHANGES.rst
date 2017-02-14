@@ -1,3 +1,6 @@
+2.5.0 (Unreleased)
+==================
+
 2.4.0 (2017-02-14)
 ==================
 - [NEW] Added ``timeout`` option to the client constructor for setting a timeout on a HTTP connection or a response.
@@ -5,7 +8,6 @@
 - [IMPROVED] Updated non-response related errors with additional status code and improved error message for easier debugging.
   All non-response error are handled using either CloudantException or CloudantArgumentError.
 - [FIXED] Support ``long`` type argument when executing in Python 2.
-
 
 2.3.1 (2016-11-30)
 ==================
