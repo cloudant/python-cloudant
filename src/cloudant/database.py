@@ -758,7 +758,7 @@ class CouchDatabase(dict):
         """
         url = posixpath.join(self.database_url, '_revs_limit')
 
-        resp = self.r_session.put(url, data=json.dumps(limit, self.client.encoder))
+        resp = self.r_session.put(url, data=json.dumps(limit, cls=self.client.encoder))
         resp.raise_for_status()
 
         return resp.json()
