@@ -1,5 +1,6 @@
 2.5.0 (Unreleased)
 ==================
+- [FIXED] Fixed ``TypeError`` when setting revision limits on Python>=3.6.
 
 2.4.0 (2017-02-14)
 ==================
