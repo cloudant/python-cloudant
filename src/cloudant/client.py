@@ -224,10 +224,8 @@ class CouchDB(dict):
         :returns: The newly created database object
         """
         new_db = self._DATABASE_CLASS(self, dbname)
-        if new_db.exists():
-            if kwargs.get('throw_on_exists', True):
-                raise CloudantClientException(409, dbname)
-        new_db.create()
+        if new_db.create(none_on_exists=kwargs.get('throw_on_exists', True)) is None:
+            raise CloudantClientException(409, dbname)
         super(CouchDB, self).__setitem__(dbname, new_db)
         return new_db
 
