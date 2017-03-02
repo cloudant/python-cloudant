@@ -336,7 +336,7 @@ class CouchDatabase(dict):
         fails.  If the database already exists then this method call is a no-op.
 
         :param bool none_on_exists: Boolean flag dictating whether or
-            not to return None object when the database already exists.
+            not to return none object when the database already exists.
         :returns: The database object
         """
         if self.exists():
