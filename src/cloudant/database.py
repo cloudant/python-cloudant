@@ -329,7 +329,7 @@ class CouchDatabase(dict):
         else:
             return view.result
 
-    def create(self):
+    def create(self, **kwargs):
         """
         Creates a database defined by the current database object, if it
         does not already exist and raises a CloudantException if the operation
@@ -338,7 +338,10 @@ class CouchDatabase(dict):
         :returns: The database object
         """
         if self.exists():
-            return self
+            if kwargs.get('none_on_exists', True):
+                return None
+            else:
+                return self
 
         resp = self.r_session.put(self.database_url)
         if resp.status_code == 201 or resp.status_code == 202:
