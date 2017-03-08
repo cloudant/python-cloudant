@@ -1,3 +1,8 @@
+2.5.0 (Unreleased)
+==================
+- [FIXED] Fixed ``TypeError`` when setting revision limits on Python>=3.6.
+- [FIXED] Fixed the ``exists()`` double check on ``client.py`` and ``database.py``.
+
 2.4.0 (2017-02-14)
 ==================
 - [NEW] Added ``timeout`` option to the client constructor for setting a timeout on a HTTP connection or a response.
