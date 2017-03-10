@@ -226,7 +226,7 @@ class CouchDB(dict):
         new_db = self._DATABASE_CLASS(self, dbname)
         if new_db.exists():
             if kwargs.get('throw_on_exists', True):
-                raise CloudantClientException(409, dbname)
+                raise CloudantClientException(412, dbname)
         new_db.create()
         super(CouchDB, self).__setitem__(dbname, new_db)
         return new_db
