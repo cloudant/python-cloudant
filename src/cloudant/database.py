@@ -329,15 +329,19 @@ class CouchDatabase(dict):
         else:
             return view.result
 
-    def create(self):
+    def create(self, throw_on_exists=False):
         """
         Creates a database defined by the current database object, if it
         does not already exist and raises a CloudantException if the operation
         fails.  If the database already exists then this method call is a no-op.
 
+        :param bool throw_on_exists: Boolean flag dictating whether or
+            not to throw a CloudantDatabaseException when attempting to
+            create a database that already exists.
+
         :returns: The database object
         """
-        if self.exists():
+        if not throw_on_exists and self.exists():
             return self
 
         resp = self.r_session.put(self.database_url)

@@ -23,7 +23,10 @@ import posixpath
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
-from .error import CloudantArgumentError, CloudantClientException
+from .error import (
+    CloudantArgumentError,
+    CloudantClientException,
+    CloudantDatabaseException)
 from ._common_util import (
     USER_AGENT,
     append_response_error_content,
@@ -224,10 +227,11 @@ class CouchDB(dict):
         :returns: The newly created database object
         """
         new_db = self._DATABASE_CLASS(self, dbname)
-        if new_db.exists():
-            if kwargs.get('throw_on_exists', True):
+        try:
+            new_db.create(kwargs.get('throw_on_exists', False))
+        except CloudantDatabaseException as ex:
+            if ex.status_code == 412:
                 raise CloudantClientException(412, dbname)
-        new_db.create()
         super(CouchDB, self).__setitem__(dbname, new_db)
         return new_db
 
