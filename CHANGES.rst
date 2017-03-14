@@ -2,6 +2,7 @@
 ==================
 - [FIXED] Fixed ``TypeError`` when setting revision limits on Python>=3.6.
 - [FIXED] Fixed the ``exists()`` double check on ``client.py`` and ``database.py``.
+- [FIXED] Fixed Cloudant exception code 409 with 412 when creating a database that already exists.
 
 2.4.0 (2017-02-14)
 ==================
@@ -10,7 +11,6 @@
 - [IMPROVED] Updated non-response related errors with additional status code and improved error message for easier debugging.
   All non-response error are handled using either CloudantException or CloudantArgumentError.
 - [FIXED] Support ``long`` type argument when executing in Python 2.
-
 
 2.3.1 (2016-11-30)
 ==================

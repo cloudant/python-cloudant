@@ -277,7 +277,7 @@ class ClientTests(UnitTestDbBase):
         self.client.create_database(dbname)
         with self.assertRaises(CloudantClientException) as cm:
             self.client.create_database(dbname, throw_on_exists=True)
-        self.assertEqual(cm.exception.status_code, 409)
+        self.assertEqual(cm.exception.status_code, 412)
 
         self.client.delete_database(dbname)
         self.client.disconnect()

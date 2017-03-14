@@ -229,9 +229,9 @@ class CouchDB(dict):
         new_db = self._DATABASE_CLASS(self, dbname)
         try:
             new_db.create(kwargs.get('throw_on_exists', False))
-        except CloudantDatabaseException:
-            raise CloudantClientException(409, dbname)
-
+        except CloudantDatabaseException as ex:
+            if ex.status_code == 412:
+                raise CloudantClientException(412, dbname)
         super(CouchDB, self).__setitem__(dbname, new_db)
         return new_db
 
