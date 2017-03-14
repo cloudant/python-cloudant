@@ -206,7 +206,7 @@ class DatabaseTests(UnitTestDbBase):
             # CloudantDatabaseException if the database already exists.
             with self.assertRaises(CloudantDatabaseException) as cm:
                 db.create(throw_on_exists=True)
-            self.assertEqual(cm.exception.status_code, 100)
+            self.assertEqual(cm.exception.status_code, 412)
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
         finally:
