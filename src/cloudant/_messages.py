@@ -104,6 +104,12 @@ DOCUMENT = {
     103: 'Attempting to delete a doc with no _rev. Try running .fetch and re-try.'
 }
 
+LOCAL_DOCUMENT = {
+    100: 'A general Cloudant local document exception was raised.',
+    101: 'The _id is a required field for LocalDocument. '
+         'Add an _id key and value to the local document and re-try.'
+}
+
 FEED = {
     100: 'A general Cloudant feed exception was raised.',
     101: 'Infinite _db_updates feed not supported for CouchDB.'

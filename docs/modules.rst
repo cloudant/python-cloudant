@@ -9,6 +9,7 @@ Modules
    document
    design_document
    security_document
+   local_document
    view
    query
    module_index
