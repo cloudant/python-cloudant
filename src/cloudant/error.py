@@ -22,6 +22,7 @@ from cloudant._messages import (
     DATABASE,
     DESIGN_DOCUMENT,
     DOCUMENT,
+    LOCAL_DOCUMENT,
     FEED,
     INDEX,
     REPLICATOR,
@@ -142,6 +143,23 @@ class CloudantDocumentException(CloudantException):
             code = 100
             msg = DOCUMENT[code]
         super(CloudantDocumentException, self).__init__(msg, code)
+
+class CloudantLocalDocumentException(CloudantException):
+    """
+    Provides a way to issue Cloudant library local document specific
+    exceptions.
+
+    :param int code: A code value used to identify the local document
+        exception.
+    :param args: A list of arguments used to format the exception message.
+    """
+    def __init__(self, code=100, *args):
+        try:
+            msg = LOCAL_DOCUMENT[code].format(*args)
+        except (KeyError, IndexError):
+            code = 100
+            msg = LOCAL_DOCUMENT[code]
+        super(CloudantLocalDocumentException, self).__init__(msg, code)
 
 class CloudantFeedException(CloudantException):
     """
