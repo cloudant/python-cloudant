@@ -267,6 +267,17 @@ class DatabaseTests(UnitTestDbBase):
                 'Document with id julia06 already exists.'
                 )
 
+    def test_create_document_that_already_exists(self):
+        """
+        Test creating a document that already exists
+        """
+        data = {'_id': 'julia'}
+        doc = self.db.create_document(data)
+        self.assertEqual(self.db['julia'], doc)
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        # attempt to recreate document
+        self.db.create_document(data, throw_on_exists=False)
+
     def test_create_document_without_id(self):
         """
         Test creating a document without supplying a document id

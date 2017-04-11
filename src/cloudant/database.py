@@ -157,10 +157,15 @@ class CouchDatabase(dict):
             doc = DesignDocument(self, docid)
         else:
             doc = Document(self, docid)
-        if throw_on_exists and doc.exists():
-            raise CloudantDatabaseException(409, docid)
         doc.update(data)
-        doc.create()
+        try:
+            doc.create()
+        except HTTPError as error:
+            if error.response.status_code == 409:
+                if throw_on_exists:
+                    raise CloudantDatabaseException(409, docid)
+            else:
+                raise
         super(CouchDatabase, self).__setitem__(doc['_id'], doc)
         return doc
 
