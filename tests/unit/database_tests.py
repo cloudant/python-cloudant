@@ -432,6 +432,15 @@ class DatabaseTests(UnitTestDbBase):
         keys_returned = [row['key'] for row in rows]
         self.assertTrue(all(x in keys_returned for x in keys_list))
 
+    def test_all_docs_post_empty_key_list(self):
+        """
+        Test the all_docs POST request functionality using empty keys param
+        """
+        self.populate_db_with_documents()
+        # Request all_docs using an empty key list
+        rows = self.db.all_docs(keys=[]).get('rows')
+        self.assertEqual(len(rows), 0)
+
     def test_all_docs_post_multiple_params(self):
         """
         Test the all_docs POST request functionality using keys and other params

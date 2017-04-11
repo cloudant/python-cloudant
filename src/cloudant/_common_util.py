@@ -237,11 +237,11 @@ def get_docs(r_session, url, encoder=None, headers=None, **params):
     """
     keys_list = params.pop('keys', None)
     keys = None
-    if keys_list:
+    if keys_list is not None:
         keys = json.dumps({'keys': keys_list}, cls=encoder)
     f_params = python_to_couch(params)
     resp = None
-    if keys:
+    if keys is not None:
         # If we're using POST we are sending JSON so add the header
         if headers is None:
             headers = {}
