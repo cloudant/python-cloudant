@@ -331,8 +331,8 @@ class CouchDatabase(dict):
             return view(**kwargs)
         elif kwargs:
             return Result(view, **kwargs)
-        else:
-            return view.result
+
+        return view.result
 
     def create(self, throw_on_exists=False):
         """
@@ -1237,8 +1237,8 @@ class CloudantDatabase(CouchDatabase):
             return query(**kwargs)
         if kwargs:
             return QueryResult(query, **kwargs)
-        else:
-            return query.result
+
+        return query.result
 
     def get_search_result(self, ddoc_id, index_name, **query_params):
         """

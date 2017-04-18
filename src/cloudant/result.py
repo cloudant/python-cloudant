@@ -201,7 +201,7 @@ class Result(object):
         data = None
         if isinstance(arg, int):
             data = self._handle_result_by_index(arg)
-        elif isinstance(arg, STRTYPE) or isinstance(arg, list):
+        elif isinstance(arg, (STRTYPE, list)):
             data = self._handle_result_by_key(arg)
         elif isinstance(arg, ResultByKey):
             data = self._handle_result_by_key(arg())
@@ -345,7 +345,7 @@ class Result(object):
             )
             result = self._parse_data(response)
             skip += int(self._page_size)
-            if len(result) > 0:
+            if result:
                 for row in result:
                     yield row
                 del result
