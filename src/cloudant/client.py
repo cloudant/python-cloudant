@@ -371,8 +371,8 @@ class CouchDB(dict):
         if db.exists():
             super(CouchDB, self).__setitem__(key, db)
             return db
-        else:
-            return default
+
+        return default
 
     def __setitem__(self, key, value, remote=False):
         """

@@ -201,9 +201,8 @@ def _py_to_couch_translate(key, val):
             return {key: val}
         elif val is None:
             return {key: None}
-        else:
-            arg_converter = TYPE_CONVERTERS.get(type(val))
-            return {key: arg_converter(val)}
+        arg_converter = TYPE_CONVERTERS.get(type(val))
+        return {key: arg_converter(val)}
     except Exception as ex:
         raise CloudantArgumentError(136, key, ex)
 
@@ -299,7 +298,7 @@ class InfiniteSession(Session):
         self._server_url = server_url
         self._timeout = kwargs.get('timeout', None)
 
-    def request(self, method, url, **kwargs):
+    def request(self, method, url, **kwargs):  # pylint: disable=W0221
         """
         Overrides ``requests.Session.request`` to perform a POST to the
         _session endpoint to renew Session cookie authentication settings and
@@ -338,7 +337,7 @@ class ClientSession(Session):
         self._server_url = server_url
         self._timeout = kwargs.get('timeout', None)
 
-    def request(self, method, url, **kwargs):
+    def request(self, method, url, **kwargs):  # pylint: disable=W0221
         """
         Overrides ``requests.Session.request`` to set the timeout.
         """
