@@ -283,7 +283,7 @@ class _Code(str):
     codifying map and reduce Javascript content.
     """
     def __new__(cls, code):
-        return str.__new__(cls, code)
+        return str.__new__(cls, code.encode('utf8'))
 
 class InfiniteSession(Session):
     """
