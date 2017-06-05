@@ -18,7 +18,7 @@ Module that contains default transport adapters for use with requests.
 """
 from requests.adapters import HTTPAdapter
 
-from requests.packages.urllib3.util import Retry
+from urllib3.util import Retry
 
 class Replay429Adapter(HTTPAdapter):
     """
