@@ -18,7 +18,7 @@ Module that contains default transport adapters for use with requests.
 """
 from requests.adapters import HTTPAdapter
 
-from urllib3.util import Retry
+from requests.packages import urllib3
 
 class Replay429Adapter(HTTPAdapter):
     """
@@ -33,7 +33,7 @@ class Replay429Adapter(HTTPAdapter):
     :param float initialBackoff: time in seconds for the first backoff.
     """
     def __init__(self, retries=3, initialBackoff=0.25):
-        super(Replay429Adapter, self).__init__(max_retries=Retry(
+        super(Replay429Adapter, self).__init__(max_retries=urllib3.util.Retry(
             # Configure the number of retries for status codes
             total=retries,
             # No retries for connect|read errors
