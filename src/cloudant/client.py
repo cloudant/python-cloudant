@@ -31,8 +31,9 @@ from ._common_util import (
     append_response_error_content,
     InfiniteSession,
     ClientSession,
-    CloudFoundryService)
-
+    CloudFoundryService,
+    CookieSession,
+    IAMSession)
 
 class CouchDB(dict):
     """
@@ -83,6 +84,7 @@ class CouchDB(dict):
         self._timeout = kwargs.get('timeout', None)
         self.r_session = None
         self._auto_renew = kwargs.get('auto_renew', False)
+        self._use_iam = kwargs.get('use_iam', False)
         connect_to_couch = kwargs.get('connect', False)
         if connect_to_couch and self._DATABASE_CLASS == CouchDatabase:
             self.connect()
@@ -95,26 +97,32 @@ class CouchDB(dict):
         if self.r_session:
             return
 
-        if self._auto_renew and not self.admin_party:
-            self.r_session = InfiniteSession(
-                self._user,
+        if self.admin_party:
+            self.r_session = ClientSession(timeout=self._timeout)
+        elif self._use_iam:
+            self.r_session = IAMSession(
                 self._auth_token,
                 self.server_url,
+                auto_renew=self._auto_renew,
                 timeout=self._timeout
             )
         else:
-            self.r_session = ClientSession(
+            self.r_session = CookieSession(
                 self._user,
                 self._auth_token,
                 self.server_url,
+                auto_renew=self._auto_renew,
                 timeout=self._timeout
             )
+
         # If a Transport Adapter was supplied add it to the session
         if self.adapter is not None:
             self.r_session.mount(self.server_url, self.adapter)
         if self._client_user_header is not None:
             self.r_session.headers.update(self._client_user_header)
-        self.session_login(self._user, self._auth_token)
+
+        self.session_login()
+
         self._client_session = self.session()
         # Utilize an event hook to append to the response message
         # using :func:`~cloudant.common_util.append_response_error_content`
@@ -137,11 +145,16 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return None
+<<<<<<< HEAD
         sess_url = '/'.join((self.server_url, '_session'))
         resp = self.r_session.get(sess_url)
         resp.raise_for_status()
         sess_data = resp.json()
         return sess_data
+=======
+
+        return self.r_session.info()
+>>>>>>> Add IAM authentication support
 
     def session_cookie(self):
         """
@@ -153,16 +166,14 @@ class CouchDB(dict):
             return None
         return self.r_session.cookies.get('AuthSession')
 
-    def session_login(self, user, passwd):
+    def session_login(self):
         """
         Performs a session login by posting the auth information
         to the _session endpoint.
-
-        :param str user: Username used to connect.
-        :param str passwd: Passcode used to connect.
         """
         if self.admin_party:
             return
+<<<<<<< HEAD
         sess_url = '/'.join((self.server_url, '_session'))
         resp = self.r_session.post(
             sess_url,
@@ -173,6 +184,10 @@ class CouchDB(dict):
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
         resp.raise_for_status()
+=======
+
+        self.r_session.login()
+>>>>>>> Add IAM authentication support
 
     def session_logout(self):
         """
@@ -181,9 +196,14 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return
+<<<<<<< HEAD
         sess_url = '/'.join((self.server_url, '_session'))
         resp = self.r_session.delete(sess_url)
         resp.raise_for_status()
+=======
+
+        self.r_session.logout()
+>>>>>>> Add IAM authentication support
 
     def basic_auth_str(self):
         """

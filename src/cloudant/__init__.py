@@ -63,6 +63,21 @@ def cloudant(user, passwd, **kwargs):
     cloudant_session.disconnect()
 
 @contextlib.contextmanager
+def cloudant_iam(api_key, account_name, **kwargs):
+    """
+    Provides a context manager to create a Cloudant session and provide access
+    to databases, docs etc.
+
+    :param api_key: IAM authentication API key.
+    :param account_name: Cloudant account name.
+    """
+    cloudant_session = Cloudant(account_name, api_key, use_iam=True, **kwargs)
+
+    cloudant_session.connect()
+    yield cloudant_session
+    cloudant_session.disconnect()
+
+@contextlib.contextmanager
 def cloudant_bluemix(vcap_services, instance_name=None, **kwargs):
     """
     Provides a context manager to create a Cloudant session and provide access
