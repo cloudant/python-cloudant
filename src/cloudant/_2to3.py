@@ -41,6 +41,7 @@ if PY2:
     from urlparse import urlparse as url_parse
     from urlparse import urljoin as url_join
     from ConfigParser import RawConfigParser
+    from cookielib import Cookie
 
     def iteritems_(adict):
         """
@@ -65,6 +66,7 @@ else:
     from urllib.parse import quote as url_quote  # pylint: disable=wrong-import-position,no-name-in-module,import-error,ungrouped-imports
     from urllib.parse import quote_plus as url_quote_plus  # pylint: disable=wrong-import-position,no-name-in-module,import-error,ungrouped-imports
     from configparser import RawConfigParser  # pylint: disable=wrong-import-position,no-name-in-module,import-error
+    from http.cookiejar import Cookie # pylint: disable=wrong-import-position,no-name-in-module,import-error
 
     def iteritems_(adict):
         """
