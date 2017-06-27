@@ -34,7 +34,7 @@ from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
 from cloudant.error import CloudantArgumentError, CloudantClientException
 from cloudant.feed import Feed, InfiniteFeed
-from cloudant._common_util import InfiniteSession
+from cloudant._common_util import CookieSession
 
 from .unit_t_db_base import UnitTestDbBase
 from .. import bytes_, str_
@@ -163,7 +163,7 @@ class ClientTests(UnitTestDbBase):
 
     def test_auto_renew_enabled(self):
         """
-        Test that InfiniteSession is used when auto_renew is enabled.
+        Test that CookieSession is used when auto_renew is enabled.
         """
         try:
             self.set_up_client(auto_renew=True)
@@ -171,13 +171,13 @@ class ClientTests(UnitTestDbBase):
             if os.environ.get('ADMIN_PARTY') == 'true':
                 self.assertIsInstance(self.client.r_session, requests.Session)
             else:
-                self.assertIsInstance(self.client.r_session, InfiniteSession)
+                self.assertIsInstance(self.client.r_session, CookieSession)
         finally:
             self.client.disconnect()
 
     def test_auto_renew_enabled_with_auto_connect(self):
         """
-        Test that InfiniteSession is used when auto_renew is enabled along with
+        Test that CookieSession is used when auto_renew is enabled along with
         an auto_connect.
         """
         try:
@@ -185,7 +185,7 @@ class ClientTests(UnitTestDbBase):
             if os.environ.get('ADMIN_PARTY') == 'true':
                 self.assertIsInstance(self.client.r_session, requests.Session)
             else:
-                self.assertIsInstance(self.client.r_session, InfiniteSession)
+                self.assertIsInstance(self.client.r_session, CookieSession)
         finally:
             self.client.disconnect()
 
