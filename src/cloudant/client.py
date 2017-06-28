@@ -95,7 +95,7 @@ class CouchDB(dict):
         authentication if necessary.
         """
         if self.r_session:
-            return
+            self.session_logout()
 
         if self.admin_party:
             self.r_session = ClientSession(timeout=self._timeout)
@@ -132,7 +132,9 @@ class CouchDB(dict):
         """
         Ends a client authentication session, performs a logout and a clean up.
         """
-        self.session_logout()
+        if self.r_session:
+            self.session_logout()
+
         self.r_session = None
         self.clear()
 
