@@ -29,6 +29,7 @@ import posixpath
 import os
 import uuid
 
+from cloudant._2to3 import UNICHR
 from cloudant.result import Result, QueryResult
 from cloudant.error import CloudantArgumentError, CloudantDatabaseException
 from cloudant.document import Document
@@ -604,6 +605,39 @@ class DatabaseTests(UnitTestDbBase):
             self.assertTrue(doc['_rev'].startswith('1-'))
             self.assertEqual(doc['name'], 'julia')
             self.assertEqual(doc['age'], int(id[len(id) - 3: len(id)]))
+
+    def test_document_iteration_completeness(self):
+        """
+        Test __iter__ works as expected, fetching all documents from the
+        database.
+        """
+        for _ in self.db:
+            self.fail('There should be no documents in the database yet!!')
+
+        # sample code point ranges
+        include_ranges = [
+            (0x0023, 0x0026),
+            (0x00A1, 0x00AC),
+            (0x0370, 0x0377),
+            (0x037A, 0x037E),
+            (0x0384, 0x038A),
+            (0x16A0, 0x16F0),
+            (0x2C60, 0x2C7F)
+        ]
+
+        all_docs = [{'_id': UNICHR(i) + UNICHR(j)} for a, b in include_ranges
+                                                   for i in range(a, b)
+                                                   for j in range(a, b)]
+        batch_size = 500
+        for i in range(0, len(all_docs), batch_size):
+            self.db.bulk_docs(all_docs[i:i+batch_size])
+
+        doc_count = 0
+        for i, doc in enumerate(self.db):
+            doc_count += 1
+            self.assertEqual(doc['_id'], all_docs[i]['_id'])
+
+        self.assertEqual(doc_count, len(all_docs))
 
     def test_document_iteration_returns_valid_documents(self):
         """
