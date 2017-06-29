@@ -6,6 +6,7 @@
 - [FIXED] Fixed Cloudant exception code 409 with 412 when creating a database that already exists.
 - [FIXED] Catch error if ``throw_on_exists`` flag is ``False`` for document create.
 - [FIXED] Fixed /_all_docs call where ``keys`` is an empty list.
+- [FIXED] Issue where docs with IDs that sorted lower than 0 were not returned when iterating through _all_docs.
 
 2.4.0 (2017-02-14)
 ==================
