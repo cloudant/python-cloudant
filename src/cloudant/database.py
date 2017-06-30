@@ -630,18 +630,20 @@ class CouchDatabase(dict):
         if not remote:
             super(CouchDatabase, self).__iter__()
         else:
-            next_startkey = '0'
+            # Use unicode Null U+0000 as the initial lower bound to ensure any
+            # document id could exist in the results set.
+            next_startkey = u'\u0000'
             while next_startkey is not None:
                 docs = self.all_docs(
-                    limit=self._fetch_limit + 1,  # Get one extra doc
-                                                  # to use as
-                                                  # next_startkey
+                    limit=self._fetch_limit,
                     include_docs=True,
                     startkey=next_startkey
                 ).get('rows', [])
 
-                if len(docs) > self._fetch_limit:
-                    next_startkey = docs.pop()['id']
+                if len(docs) >= self._fetch_limit:
+                    # Ensure the next document batch contains ids that sort
+                    # strictly higher than the previous document id fetched.
+                    next_startkey = docs[-1]['id'] + u'\u0000'
                 else:
                     # This is the last batch of docs, so we set
                     # ourselves up to break out of the while loop
