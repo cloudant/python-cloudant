@@ -1,3 +1,6 @@
+2.6.0 (Unreleased)
+==================
+
 2.5.0 (2017-07-06)
 ==================
 - [FIXED] Fixed crash caused by non-UTF8 chars in design documents.
