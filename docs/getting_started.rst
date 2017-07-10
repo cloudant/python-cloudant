@@ -56,8 +56,8 @@ Connecting with a client
 
     # Perform client tasks...
     session = client.session()
-    print 'Username: {0}'.format(session['userCtx']['name'])
-    print 'Databases: {0}'.format(client.all_dbs())
+    print('Username: {0}'.format(session['userCtx']['name']))
+    print('Databases: {0}'.format(client.all_dbs()))
 
     # Disconnect from the server
     client.disconnect()
@@ -176,7 +176,7 @@ Creating a database
 
     # You can check that the database exists
     if my_database.exists():
-        print 'SUCCESS!!'
+        print('SUCCESS!!')
 
 Opening a database
 ^^^^^^^^^^^^^^^^^^
@@ -228,7 +228,7 @@ Creating a document
 
     # Check that the document exists in the database
     if my_document.exists():
-        print 'SUCCESS!!'
+        print('SUCCESS!!')
 
 Retrieving a document
 ^^^^^^^^^^^^^^^^^^^^^
@@ -244,7 +244,7 @@ classes are sub-classes of ``dict``, this is accomplished through standard
     my_document = my_database['julia30']
 
     # Display the document
-    print my_document
+    print(my_document)
 
 Retrieve all documents
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -256,7 +256,7 @@ to retrieve all documents in a database.
 
     # Get all of the documents from my_database
     for document in my_database:
-        print document
+        print(document)
 
 Update a document
 ^^^^^^^^^^^^^^^^^
@@ -333,7 +333,7 @@ object already exists.
 
     # Iterate over the result collection
     for result in result_collection:
-        print result
+        print(result)
 
 ****************
 Context managers
@@ -367,13 +367,13 @@ and ``couchdb_admin_party`` context helpers.
     
         # Perform client tasks...
         session = client.session()
-        print 'Username: {0}'.format(session['userCtx']['name'])
-        print 'Databases: {0}'.format(client.all_dbs())
+        print('Username: {0}'.format(session['userCtx']['name']))
+        print('Databases: {0}'.format(client.all_dbs()))
 
         # Create a database
         my_database = client.create_database('my_database')
         if my_database.exists():
-            print 'SUCCESS!!'
+            print('SUCCESS!!')
 
         # You can open an existing database
         del my_database
@@ -387,12 +387,12 @@ and ``couchdb_admin_party`` context helpers.
             doc['pets'] = ['cat', 'dog', 'frog']
 
         # Display a Document
-        print my_database['julia30']
+        print(my_database['julia30'])
     
         # Delete the database
         client.delete_database('my_database')
 
-        print 'Databases: {0}'.format(client.all_dbs())
+        print('Databases: {0}'.format(client.all_dbs()))
 
 ****************
 Endpoint access
@@ -422,4 +422,4 @@ Cloudant/CouchDB server.  This example assumes that either a ``Cloudant`` or a
     response = client.r_session.get(end_point, params=params)
 
     # Display the response content
-    print response.json()
+    print(response.json())
