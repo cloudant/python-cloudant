@@ -790,4 +790,9 @@ class Cloudant(CouchDB):
         :param account_name: Cloudant account name.
         :param api_key: IAM authentication API key.
         """
-        return cls(None, api_key, account=account_name, use_iam=True, **kwargs)
+        return cls(None,
+                   api_key,
+                   account=account_name,
+                   auto_renew=kwargs.get('auto_renew', True),
+                   use_iam=True,
+                   **kwargs)
