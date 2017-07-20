@@ -63,15 +63,29 @@ def cloudant(user, passwd, **kwargs):
     cloudant_session.disconnect()
 
 @contextlib.contextmanager
-def cloudant_iam(api_key, account_name, **kwargs):
+def cloudant_iam(account_name, api_key, **kwargs):
     """
-    Provides a context manager to create a Cloudant session and provide access
-    to databases, docs etc.
+    Provides a context manager to create a Cloudant session using IAM
+    authentication and provide access to databases, docs etc.
 
-    :param api_key: IAM authentication API key.
     :param account_name: Cloudant account name.
+    :param api_key: IAM authentication API key.
+
+    For example:
+
+    .. code-block:: python
+
+        # cloudant context manager
+        from cloudant import cloudant_iam
+
+        with cloudant_iam(ACCOUNT_NAME, API_KEY) as client:
+            # Context handles connect() and disconnect() for you.
+            # Perform library operations within this context.  Such as:
+            print client.all_dbs()
+            # ...
+
     """
-    cloudant_session = Cloudant(account_name, api_key, use_iam=True, **kwargs)
+    cloudant_session = Cloudant.iam(account_name, api_key, **kwargs)
 
     cloudant_session.connect()
     yield cloudant_session

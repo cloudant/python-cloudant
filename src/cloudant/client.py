@@ -29,7 +29,6 @@ from .error import (
 from ._common_util import (
     USER_AGENT,
     append_response_error_content,
-    InfiniteSession,
     ClientSession,
     CloudFoundryService,
     CookieSession,
@@ -68,6 +67,10 @@ class CouchDB(dict):
         `Requests library timeout argument
         <http://docs.python-requests.org/en/master/user/quickstart/#timeouts>`_.
         but will apply to every request made using this client.
+    :param bool use_iam: Keyword argument, if set to True performs
+        IAM authentication with server. Default is False.
+        Use :func:`~cloudant.client.CouchDB.iam` to construct an IAM
+        authenticated client.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -147,16 +150,8 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return None
-<<<<<<< HEAD
-        sess_url = '/'.join((self.server_url, '_session'))
-        resp = self.r_session.get(sess_url)
-        resp.raise_for_status()
-        sess_data = resp.json()
-        return sess_data
-=======
 
         return self.r_session.info()
->>>>>>> Add IAM authentication support
 
     def session_cookie(self):
         """
@@ -175,21 +170,8 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return
-<<<<<<< HEAD
-        sess_url = '/'.join((self.server_url, '_session'))
-        resp = self.r_session.post(
-            sess_url,
-            data={
-                'name': user,
-                'password': passwd
-            },
-            headers={'Content-Type': 'application/x-www-form-urlencoded'}
-        )
-        resp.raise_for_status()
-=======
 
         self.r_session.login()
->>>>>>> Add IAM authentication support
 
     def session_logout(self):
         """
@@ -198,14 +180,8 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return
-<<<<<<< HEAD
-        sess_url = '/'.join((self.server_url, '_session'))
-        resp = self.r_session.delete(sess_url)
-        resp.raise_for_status()
-=======
 
         self.r_session.logout()
->>>>>>> Add IAM authentication support
 
     def basic_auth_str(self):
         """
@@ -805,3 +781,13 @@ class Cloudant(CouchDB):
                         service.password,
                         url=service.url,
                         **kwargs)
+
+    @classmethod
+    def iam(cls, account_name, api_key, **kwargs):
+        """
+        Create a Cloudant client that uses IAM authentication.
+
+        :param account_name: Cloudant account name.
+        :param api_key: IAM authentication API key.
+        """
+        return cls(None, api_key, account=account_name, use_iam=True, **kwargs)
