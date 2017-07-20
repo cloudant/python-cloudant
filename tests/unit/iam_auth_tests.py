@@ -234,29 +234,6 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_login.call_count, 2)
         self.assertEqual(m_req.call_count, 3)
 
-
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.ClientSession.request')
-    def test_iam_renew_cookie_on_403(self, m_req, m_login):
-        # mock 200
-        m_response_ok = mock.MagicMock()
-        type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
-        m_response_ok.json.return_value = {'ok': True}
-        # mock 403
-        m_response_bad = mock.MagicMock()
-        type(m_response_bad).status_code = mock.PropertyMock(return_value=403)
-        m_response_bad.json.return_value = {'error': 'credentials_expired'}
-
-        m_req.side_effect = [m_response_bad, m_response_ok]
-
-        iam = IAMSession('foo', 'http://127.0.0.1:5984', auto_renew=True)
-        iam.login()
-
-        resp = iam.request('GET', 'http://127.0.0.1:5984/mydb1')
-
-        self.assertEqual(m_login.call_count, 2)
-        self.assertTrue(resp.json()['ok'])
-
     @mock.patch('cloudant._common_util.IAMSession.login')
     @mock.patch('cloudant._common_util.ClientSession.request')
     def test_iam_renew_cookie_on_401_failure(self, m_req, m_login):

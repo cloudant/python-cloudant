@@ -425,18 +425,16 @@ class IAMSession(ClientSession):
         Overrides ``requests.Session.request`` to renew the IAM cookie
         and then retry the original request (if required).
         """
+        self.cookies.clear_expired_cookies()
+        if self._auto_renew and 'IAMSession' not in self.cookies.keys():
+            self.login()
+
         resp = super(IAMSession, self).request(method, url, **kwargs)
 
         if not self._auto_renew or url in [self._session_url, self._token_url]:
             return resp
 
-        is_expired = any((
-            resp.status_code == 403 and
-            resp.json().get('error') == 'credentials_expired',
-            resp.status_code == 401
-        ))
-
-        if is_expired:
+        if resp.status_code == 401:
             self.login()
             resp = super(IAMSession, self).request(method, url, **kwargs)
 
