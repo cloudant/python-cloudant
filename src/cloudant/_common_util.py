@@ -24,8 +24,7 @@ from collections import Sequence
 import json
 from requests import RequestException, Session
 
-from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_, url_parse, \
-    url_join
+from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_, url_join
 from .error import CloudantArgumentError, CloudantException
 
 # Library Constants
@@ -356,10 +355,7 @@ class CookieSession(ClientSession):
         """
         resp = super(CookieSession, self).request(method, url, **kwargs)
 
-        path = url_parse(url).path.lower()
-        post_to_session = method.upper() == 'POST' and path == '/_session'
-
-        if not self._auto_renew or post_to_session:
+        if not self._auto_renew:
             return resp
 
         is_expired = any((
@@ -431,7 +427,7 @@ class IAMSession(ClientSession):
 
         resp = super(IAMSession, self).request(method, url, **kwargs)
 
-        if not self._auto_renew or url in [self._session_url, self._token_url]:
+        if not self._auto_renew:
             return resp
 
         if resp.status_code == 401:
