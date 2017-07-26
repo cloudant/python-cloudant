@@ -78,7 +78,6 @@ class CouchDB(dict):
         super(CouchDB, self).__init__()
         self._user = user
         self._auth_token = auth_token
-        self._client_session = None
         self.server_url = kwargs.get('url')
         self._client_user_header = None
         self.admin_party = admin_party
@@ -126,7 +125,6 @@ class CouchDB(dict):
 
         self.session_login()
 
-        self._client_session = self.session()
         # Utilize an event hook to append to the response message
         # using :func:`~cloudant.common_util.append_response_error_content`
         self.r_session.hooks['response'].append(append_response_error_content)
