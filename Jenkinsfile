@@ -20,37 +20,99 @@ def hostIp(container) {
   readFile('hostIp').trim()
 }
 
-// Define the test routine for different python versions
-def test_python(pythonVersion)
-{
+hostIps = [:]
+
+def startTestContainer(name, args) {
+  def container
+  docker.withServer(env.DOCKER_SWARM_URL) {
+    container = docker.image("${name}").run(args)
+    hostIps[container] = hostIp(container)
+  }
+  return container
+}
+
+def stopTestContainer(container) {
+  docker.withServer(env.DOCKER_SWARM_URL) {
+    container.stop()
+  }
+}
+
+def getEnvForSuite(name, container) {
+  def envVars = [
+    'SKIP_DB_UPDATES=1' //Currently disabled
+  ]
+  switch(name) {
+    case 'couchdb:1.6.1':
+    case 'klaemo/couchdb:2.0.0':
+      envVars.add('ADMIN_PARTY=true')
+      envVars.add("DB_URL=http://${hostIps[container]}:5984")
+      break
+    case 'cloudant':
+      envVars.add("CLOUDANT_ACCOUNT=${env.DB_USER}")
+      envVars.add('RUN_CLOUDANT_TESTS=1')
+      break
+    case 'ibmcom/cloudant-developer':
+      envVars.add('RUN_CLOUDANT_TESTS=1')
+      envVars.add('DB_USER=admin')
+      envVars.add('DB_PASSWORD=pass')
+      envVars.add("DB_URL=http://${hostIps[container]}:8080")
+      break
+    default:
+      error("Unknown test suite environment ${suiteName}")
+  }
+  return envVars
+}
+
+def test_python(pythonVersion, name) {
   node {
-    def couch
-    def couchIP
-    docker.withRegistry(env.DOCKER_REGISTRY, 'artifactory') {
-      docker.withServer(env.DOCKER_SWARM_URL) {
-        couch = docker.image('couchdb:1.6.1').run('-p 5984:5984')
-        couchIP = hostIp(couch)
+    // Add test suite specific environment variables
+    if (name == 'cloudant') {
+      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'clientlibs-test', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD']]) {
+        test_python_exec(pythonVersion, getEnvForSuite(name, null))
+      }
+    } else {
+      def container
+      switch(name) {
+        case 'couchdb:1.6.1':
+        case 'klaemo/couchdb:2.0.0':
+          container = startTestContainer(name, '-p 5984:5984')
+          break
+        case 'ibmcom/cloudant-developer':
+          container = startTestContainer(name, '-p 8080:80')
+          break
+        default:
+          error("Unknown container ${suiteName}")
+      }
+      if (name == 'klaemo/couchdb:2.0.0') {
+        // Create _users and _repliator DBs for Couch 2.0.0
+        sh "curl -X PUT ${hostIps[container]}:5984/_users"
+        sh "curl -X PUT ${hostIps[container]}:5984/_replicator"
       }
       try {
-        docker.image("python:${pythonVersion}-alpine").inside('-u 0') {
-          // Set up the environment and test
-          withEnv(["DB_URL=http://${couchIP}:5984", 'SKIP_DB_UPDATES=1', 'ADMIN_PARTY=true']){
-            try {
-            // Unstash the source in this image
-            unstash name: 'source'
-            sh """pip install -r requirements.txt
-                  pip install -r test-requirements.txt
-                  pylint ./src/cloudant
-                  nosetests -w ./tests/unit --with-xunit"""
-            } finally {
-              // Load the test results
-              junit 'nosetests.xml'
-            }
-          }
-        }
+        test_python_exec(pythonVersion, getEnvForSuite(name, container))
       } finally {
-        docker.withServer(env.DOCKER_SWARM_URL) {
-          couch.stop()
+        stopTestContainer(container)
+      }
+    }
+  }
+}
+
+// Define the test routine for different python versions
+def test_python_exec(pythonVersion, envVars) {
+  docker.withRegistry("https://${env.DOCKER_REGISTRY}", 'artifactory') {
+    docker.image("${env.DOCKER_REGISTRY}python:${pythonVersion}-alpine").inside('-u 0') {
+      // Set up the environment and test
+      withEnv(envVars){
+        try {
+        // Unstash the source in this image
+        unstash name: 'source'
+        sh """pip install -r requirements.txt
+              pip install -r test-requirements.txt
+              pylint ./src/cloudant
+              nosetests -w ./tests/unit --with-xunit"""
+        } finally {
+          // Load the test results
+          junit 'nosetests.xml'
         }
       }
     }
@@ -67,8 +129,11 @@ stage('Checkout'){
 }
 stage('Test'){
   // Run tests in parallel for multiple python versions
-  parallel(
-    // Python2: {test_python('2.7')},
-    Python3: {test_python('3.6')}
-  )
+  def testAxes = [:]
+  ['2.7', '3.6'].each { v ->
+    ['couchdb:1.6.1','klaemo/couchdb:2.0.0','cloudant','ibmcom/cloudant-developer'].each { c ->
+      testAxes.put("Python${v}_${c}", {test_python(v, c)})
+    }
+  }
+  parallel(testAxes)
 }
