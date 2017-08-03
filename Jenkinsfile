@@ -61,7 +61,7 @@ def test_python(pythonVersion, name) {
           args = '-p 5984:5984'
           break
         case 'ibmcom/cloudant-developer':
-          args = '-p 5984:80'
+          args = '-p 8080:80'
           break
         default:
           error("Unknown container ${suiteName}")
@@ -71,9 +71,10 @@ def test_python(pythonVersion, name) {
         switch(name) {
           case 'klaemo/couchdb:2.0.0':
             sh 'curl -X PUT localhost:5984/_users'
-            // Fall through to create _replicator too
-          case 'ibmcom/cloudant-developer':
             sh 'curl -X PUT localhost:5984/_replicator'
+            break
+          case 'ibmcom/cloudant-developer':
+            sh 'curl -X PUT localhost:8080/_replicator'
             break
           default:
             break
