@@ -38,7 +38,7 @@ def getEnvForSuite(name, hostIp) {
       envVars.add('RUN_CLOUDANT_TESTS=1')
       envVars.add('DB_USER=admin')
       envVars.add('DB_PASSWORD=pass')
-      envVars.add("DB_URL=http://${hostIp}:8080")
+      envVars.add("DB_URL=http://${hostIp}:80")
       break
     default:
       error("Unknown test suite environment ${suiteName}")
@@ -61,17 +61,22 @@ def test_python(pythonVersion, name) {
           args = '-p 5984:5984'
           break
         case 'ibmcom/cloudant-developer':
-          args = '-p 8080:80'
+          args = '-p 5984:80'
           break
         default:
           error("Unknown container ${suiteName}")
       }
       docker.image(name).withRun(args) { container ->
         hostIp = hostIp(container)
-        if (name == 'klaemo/couchdb:2.0.0') {
-          // Create _users and _repliator DBs for Couch 2.0.0
-          sh "curl -X PUT ${hostIp}:5984/_users"
-          sh "curl -X PUT ${hostIp}:5984/_replicator"
+        switch(name) {
+          case 'klaemo/couchdb:2.0.0':
+            sh 'curl -X PUT localhost:5984/_users'
+            // Fall through to create _replicator too
+          case 'ibmcom/cloudant-developer':
+            sh 'curl -X PUT localhost:5984/_replicator'
+            break
+          default:
+            break
         }
         test_python_exec(pythonVersion, getEnvForSuite(name, hostIp))
       }
