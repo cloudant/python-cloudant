@@ -16,28 +16,11 @@
 
  // Get the IP of a docker container
 def hostIp(container) {
-  sh "docker inspect -f '{{.Node.IP}}' ${container.id} > hostIp"
+  sh "docker inspect -f '{{.NetworkSettings.IPAddress}}' ${container.id} > hostIp"
   readFile('hostIp').trim()
 }
 
-hostIps = [:]
-
-def startTestContainer(name, args) {
-  def container
-  docker.withServer(env.DOCKER_SWARM_URL) {
-    container = docker.image("${name}").run(args)
-    hostIps[container] = hostIp(container)
-  }
-  return container
-}
-
-def stopTestContainer(container) {
-  docker.withServer(env.DOCKER_SWARM_URL) {
-    container.stop()
-  }
-}
-
-def getEnvForSuite(name, container) {
+def getEnvForSuite(name, hostIp) {
   def envVars = [
     'SKIP_DB_UPDATES=1' //Currently disabled
   ]
@@ -45,7 +28,7 @@ def getEnvForSuite(name, container) {
     case 'couchdb:1.6.1':
     case 'klaemo/couchdb:2.0.0':
       envVars.add('ADMIN_PARTY=true')
-      envVars.add("DB_URL=http://${hostIps[container]}:5984")
+      envVars.add("DB_URL=http://${hostIp}:5984")
       break
     case 'cloudant':
       envVars.add("CLOUDANT_ACCOUNT=${env.DB_USER}")
@@ -55,7 +38,7 @@ def getEnvForSuite(name, container) {
       envVars.add('RUN_CLOUDANT_TESTS=1')
       envVars.add('DB_USER=admin')
       envVars.add('DB_PASSWORD=pass')
-      envVars.add("DB_URL=http://${hostIps[container]}:8080")
+      envVars.add("DB_URL=http://${hostIp}:8080")
       break
     default:
       error("Unknown test suite environment ${suiteName}")
@@ -71,27 +54,26 @@ def test_python(pythonVersion, name) {
         test_python_exec(pythonVersion, getEnvForSuite(name, null))
       }
     } else {
-      def container
+      def args
       switch(name) {
         case 'couchdb:1.6.1':
         case 'klaemo/couchdb:2.0.0':
-          container = startTestContainer(name, '-p 5984:5984')
+          args = '-p 5984:5984'
           break
         case 'ibmcom/cloudant-developer':
-          container = startTestContainer(name, '-p 8080:80')
+          args = '-p 8080:80'
           break
         default:
           error("Unknown container ${suiteName}")
       }
-      if (name == 'klaemo/couchdb:2.0.0') {
-        // Create _users and _repliator DBs for Couch 2.0.0
-        sh "curl -X PUT ${hostIps[container]}:5984/_users"
-        sh "curl -X PUT ${hostIps[container]}:5984/_replicator"
-      }
-      try {
-        test_python_exec(pythonVersion, getEnvForSuite(name, container))
-      } finally {
-        stopTestContainer(container)
+      docker.image(name).withRun(args) { container ->
+        hostIp = hostIp(container)
+        if (name == 'klaemo/couchdb:2.0.0') {
+          // Create _users and _repliator DBs for Couch 2.0.0
+          sh "curl -X PUT ${hostIp}:5984/_users"
+          sh "curl -X PUT ${hostIp}:5984/_replicator"
+        }
+        test_python_exec(pythonVersion, getEnvForSuite(name, hostIp))
       }
     }
   }
