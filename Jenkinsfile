@@ -113,7 +113,7 @@ stage('Test'){
   // Run tests in parallel for multiple python versions
   def testAxes = [:]
   ['2.7', '3.6'].each { v ->
-    ['couchdb:1.6.1','klaemo/couchdb:2.0.0','cloudant','ibmcom/cloudant-developer'].each { c ->
+    ['couchdb:1.6.1','klaemo/couchdb:2.0.0','ibmcom/cloudant-developer'].each { c ->
       testAxes.put("Python${v}_${c}", {test_python(v, c)})
     }
   }
