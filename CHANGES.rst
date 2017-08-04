@@ -1,5 +1,6 @@
 2.6.0 (Unreleased)
 ==================
+- [FIXED] Fixed client construction in ``cloudant_bluemix`` context manager.
 
 2.5.0 (2017-07-06)
 ==================
