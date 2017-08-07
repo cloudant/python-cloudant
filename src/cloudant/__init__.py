@@ -122,8 +122,8 @@ def cloudant_bluemix(vcap_services, instance_name=None, **kwargs):
     """
     service = CloudFoundryService(vcap_services, instance_name)
     cloudant_session = Cloudant(
-        username=service.username,
-        password=service.password,
+        service.username,
+        service.password,
         url=service.url,
         **kwargs
     )

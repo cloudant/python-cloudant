@@ -30,7 +30,7 @@ import datetime
 
 from requests import ConnectTimeout
 
-from cloudant import cloudant, couchdb, couchdb_admin_party
+from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
 from cloudant.error import CloudantArgumentError, CloudantClientException
 from cloudant.feed import Feed, InfiniteFeed
@@ -502,7 +502,31 @@ class CloudantClientTests(UnitTestDbBase):
                 self.assertIsInstance(c.r_session, requests.Session)
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
-    
+
+    def test_cloudant_bluemix_context_helper(self):
+        """
+        Test that the cloudant_bluemix context helper works as expected.
+        """
+        instance_name = 'Cloudant NoSQL DB-lv'
+        vcap_services = {'cloudantNoSQLDB': [{
+          'credentials': {
+            'username': self.user,
+            'password': self.pwd,
+            'host': '{0}.cloudant.com'.format(self.account),
+            'port': 443,
+            'url': self.url
+          },
+          'name': instance_name,
+        }]}
+
+        try:
+            with cloudant_bluemix(vcap_services, instance_name=instance_name) as c:
+                self.assertIsInstance(c, Cloudant)
+                self.assertIsInstance(c.r_session, requests.Session)
+                self.assertEquals(c.session()['userCtx']['name'], self.user)
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
+
     def test_constructor_with_account(self):
         """
         Test instantiating a client object using an account name
