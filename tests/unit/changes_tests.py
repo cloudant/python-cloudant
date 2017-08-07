@@ -353,6 +353,20 @@ class ChangesTests(UnitTestDbBase):
         expected = set(['julia003', 'julia004', 'julia005'])
         self.assertSetEqual(set([x['id'] for x in changes]), expected)
 
+    def test_get_feed_using_since_zero(self):
+        """
+        Test getting content back for a feed using since set to zero
+        """
+        self.populate_db_with_documents(3)
+        feed = Feed(self.db, since=0)
+        changes = list()
+        for change in feed:
+            self.assertSetEqual(set(change.keys()), {'seq', 'changes', 'id'})
+            changes.append(change)
+        expected = set(['julia{0:03d}'.format(i) for i in range(3)])
+        self.assertSetEqual(set([x['id'] for x in changes]), expected)
+        self.assertTrue(str(feed.last_seq).startswith('3'))
+
     def test_get_feed_using_timeout(self):
         """
         Test getting content back for a feed using timeout

@@ -116,7 +116,7 @@ class Feed(object):
         if (not isinstance(val, arg_types[key]) or
                 (isinstance(val, bool) and int in arg_types[key])):
             raise CloudantArgumentError(117, key, arg_types[key])
-        if isinstance(val, int) and val <= 0 and not isinstance(val, bool):
+        if isinstance(val, int) and val < 0 and not isinstance(val, bool):
             raise CloudantArgumentError(118, key, val)
         if key == 'feed':
             valid_vals = ('continuous', 'normal', 'longpoll')
