@@ -421,7 +421,14 @@ class IAMSession(ClientSession):
         Overrides ``requests.Session.request`` to renew the IAM cookie
         and then retry the original request (if required).
         """
+        # The CookieJar API prevents callers from getting an individual Cookie
+        # object by name.
+        # We are forced to use the only exposed method of discarding expired
+        # cookies from the CookieJar. Internally this involves iterating over
+        # the entire CookieJar and calling `.is_expired()` on each Cookie
+        # object.
         self.cookies.clear_expired_cookies()
+
         if self._auto_renew and 'IAMSession' not in self.cookies.keys():
             self.login()
 
