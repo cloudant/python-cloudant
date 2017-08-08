@@ -31,7 +31,8 @@ from ._common_util import (
     USER_AGENT,
     append_response_error_content,
     InfiniteSession,
-    ClientSession)
+    ClientSession,
+    CloudFoundryService)
 
 
 class CouchDB(dict):
@@ -764,3 +765,31 @@ class Cloudant(CouchDB):
         resp.raise_for_status()
 
         return resp.json()
+
+    @classmethod
+    def bluemix(cls, vcap_services, instance_name=None, **kwargs):
+        """
+        Create a Cloudant session using a VCAP_SERVICES environment variable.
+
+        :param vcap_services: VCAP_SERVICES environment variable
+        :type vcap_services: dict or str
+        :param str instance_name: Optional Bluemix instance name. Only required
+            if multiple Cloudant instances are available.
+
+        Example usage:
+
+        .. code-block:: python
+
+            import os
+            from cloudant.client import Cloudant
+
+            client = Cloudant.bluemix(os.getenv('VCAP_SERVICES'),
+                                      'Cloudant NoSQL DB')
+
+            print client.all_dbs()
+        """
+        service = CloudFoundryService(vcap_services, instance_name)
+        return Cloudant(service.username,
+                        service.password,
+                        url=service.url,
+                        **kwargs)
