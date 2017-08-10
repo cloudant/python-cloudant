@@ -1,4 +1,4 @@
-2.6.0 (Unreleased)
+2.6.0 (2017-08-10)
 ==================
 - [NEW] Added ``Cloudant.bluemix()`` class method to the Cloudant client allowing service credentials to be passed using the CloudFoundry VCAP_SERVICES environment variable.
 - [FIXED] Fixed client construction in ``cloudant_bluemix`` context manager.
