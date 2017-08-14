@@ -342,27 +342,27 @@ Context managers
 Now that we've gone through the basics, let's take a look at how to simplify 
 the process of connection, database acquisition, and document management 
 through the use of Python *with* blocks and this library's context managers.  
-Handling your business using *with* blocks saves you from having to connect and 
+
+Handling your business using *with* blocks saves you from having to connect and
 disconnect your client as well as saves you from having to perform a lot of 
 fetch and save operations as the context managers handle these operations for 
-you.  This example uses the ``cloudant`` context helper to illustrate the 
+you.
+
+This example uses the ``cloudant`` context helper to illustrate the
 process but identical functionality exists for CouchDB through the ``couchdb`` 
 and ``couchdb_admin_party`` context helpers.
 
 .. code-block:: python
 
-    # cloudant context helper
     from cloudant import cloudant
 
-    # couchdb context helper
+    # ...or use CouchDB variant
     # from cloudant import couchdb
-
-    from cloudant.document import Document
 
     # Perform a connect upon entry and a disconnect upon exit of the block
     with cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME) as client:
 
-    # CouchDB variant
+    # ...or use CouchDB variant
     # with couchdb(USERNAME, PASSWORD, url=COUCHDB_URL) as client:
     
         # Perform client tasks...
@@ -378,9 +378,22 @@ and ``couchdb_admin_party`` context helpers.
         # You can open an existing database
         del my_database
         my_database = client['my_database']
-    
+
+The following example uses the ``Document`` context manager. Here we make
+multiple updates to a single document. Note that we don't save to the server
+after each update. We only save once to the server upon exiting the ``Document``
+context manager.
+
+ .. code-block:: python
+
+    from cloudant import cloudant
+    from cloudant.document import Document
+
+    with cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME) as client:
+
+        my_database = client.create_database('my_database')
+
         # Performs a fetch upon entry and a save upon exit of this block
-        # Use this context manager to create or update a Document
         with Document(my_database, 'julia30') as doc:
             doc['name'] = 'Julia'
             doc['age'] = 30
@@ -393,6 +406,22 @@ and ``couchdb_admin_party`` context helpers.
         client.delete_database('my_database')
 
         print('Databases: {0}'.format(client.all_dbs()))
+
+Always use the ``_deleted`` document property to delete a document from within
+a ``Document`` context manager. For example:
+
+ .. code-block:: python
+
+    with Document(my_database, 'julia30') as doc:
+        doc['_deleted'] = True
+
+*You can also delete non underscore prefixed document keys to reduce the size of the request.*
+
+.. warning:: Don't use the ``doc.delete()`` method inside your ``Document``
+             context manager. This method immediately deletes the document on
+             the server and clears the local document dictionary. A new, empty
+             document is still saved to the server upon exiting the context
+             manager.
 
 ****************
 Endpoint access
