@@ -359,6 +359,18 @@ class Result(object):
         """
         return data.get('rows', [])
 
+    def all(self):
+        """
+        Retrieve all results.
+
+        Specifying a ``limit`` parameter in the ``Result`` constructor will
+        limit the number of documents returned. Be aware that the ``page_size``
+        parameter is not honoured.
+
+        :return: results data as list in JSON format.
+        """
+        return self[:]
+
 class QueryResult(Result):
     """
     Provides a index key accessible, sliceable and iterable interface to query

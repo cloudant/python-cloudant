@@ -1,5 +1,6 @@
 Unreleased
 ==========
+- [NEW] Added ``Result.all()`` convenience method.
 - [IMPROVED] Updated ``posixpath.join`` references to use ``'/'.join`` when concatenating URL parts.
 
 2.6.0 (2017-08-10)

@@ -248,6 +248,16 @@ class ResultTests(UnitTestDbBase):
                     {'key': 'julia002', 'id': 'julia002', 'value': 1}]
         self.assertEqual(result[:], expected)
 
+    def test_get_all_items(self):
+        """
+        Test that all results can be retrieved.
+        """
+        result = Result(self.view001, limit=3)
+        expected = [{'key': 'julia000', 'id': 'julia000', 'value': 1},
+                    {'key': 'julia001', 'id': 'julia001', 'value': 1},
+                    {'key': 'julia002', 'id': 'julia002', 'value': 1}]
+        self.assertEqual(result.all(), expected)
+
     def test_get_item_invalid_index_slice(self):
         """
         Test that when invalid start and stop values are provided in a slice
