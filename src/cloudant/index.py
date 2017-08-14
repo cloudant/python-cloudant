@@ -16,7 +16,6 @@
 API module for managing/viewing query indexes.
 """
 
-import posixpath
 import json
 
 from ._2to3 import STRTYPE, iteritems_
@@ -60,7 +59,7 @@ class Index(object):
 
         :returns: Index URL
         """
-        return posixpath.join(self._database.database_url, '_index')
+        return '/'.join((self._database.database_url, '_index'))
 
     @property
     def design_document_id(self):
@@ -166,7 +165,7 @@ class Index(object):
         ddoc_id = self._ddoc_id
         if ddoc_id.startswith('_design/'):
             ddoc_id = ddoc_id[8:]
-        url = posixpath.join(self.index_url, ddoc_id, self._type, self._name)
+        url = '/'.join((self.index_url, ddoc_id, self._type, self._name))
         resp = self._r_session.delete(url)
         resp.raise_for_status()
         return

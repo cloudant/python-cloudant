@@ -24,7 +24,6 @@ module docstring.
 
 import unittest
 import mock
-import posixpath
 import requests
 import os
 
@@ -182,7 +181,7 @@ class ViewTests(UnitTestDbBase):
         view = View(ddoc, 'view001')
         self.assertEqual(
             view.url,
-            posixpath.join(ddoc.document_url, '_view/view001')
+            '/'.join((ddoc.document_url, '_view/view001'))
         )
 
     def test_get_view_callable_raw_json(self):

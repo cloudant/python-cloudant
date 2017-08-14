@@ -16,7 +16,6 @@
 API module for composing and executing Cloudant queries.
 """
 
-import posixpath
 import json
 import contextlib
 
@@ -105,7 +104,7 @@ class Query(dict):
 
         :returns: Query URL
         """
-        return posixpath.join(self._database.database_url, '_find')
+        return '/'.join((self._database.database_url, '_find'))
 
     def __call__(self, **kwargs):
         """

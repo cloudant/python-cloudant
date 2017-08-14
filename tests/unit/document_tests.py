@@ -24,7 +24,6 @@ module docstring.
 
 import unittest
 import mock
-import posixpath
 import json
 import requests
 import os
@@ -115,7 +114,7 @@ class DocumentTests(UnitTestDbBase):
         """
         doc = Document(self.db, 'julia006')
         self.assertEqual(
-            doc.document_url, posixpath.join(self.db.database_url, 'julia006')
+            doc.document_url, '/'.join((self.db.database_url, 'julia006'))
         )
 
     def test_document_url_encodes_correctly(self):
@@ -124,10 +123,8 @@ class DocumentTests(UnitTestDbBase):
         """
         doc = Document(self.db, 'http://example.com')
         self.assertEqual(
-            doc.document_url, posixpath.join(
-                self.db.database_url,
-                'http%3A%2F%2Fexample.com'
-            )
+            doc.document_url,
+            '/'.join((self.db.database_url, 'http%3A%2F%2Fexample.com'))
         )
 
     def test_design_document_url(self):
@@ -137,10 +134,8 @@ class DocumentTests(UnitTestDbBase):
         """
         doc = Document(self.db, '_design/ddoc001')
         self.assertEqual(
-            doc.document_url, posixpath.join(
-                self.db.database_url,
-                '_design/ddoc001'
-            )
+            doc.document_url,
+            '/'.join((self.db.database_url, '_design/ddoc001'))
         )
 
     def test_design_document_url_encodes_correctly(self):
@@ -149,10 +144,8 @@ class DocumentTests(UnitTestDbBase):
         """
         doc = Document(self.db, '_design/http://example.com')
         self.assertEqual(
-            doc.document_url, posixpath.join(
-                self.db.database_url,
-                '_design/http%3A%2F%2Fexample.com'
-            )
+            doc.document_url,
+            '/'.join((self.db.database_url, '_design/http%3A%2F%2Fexample.com'))
         )
 
     def test_constructor_without_docid(self):
