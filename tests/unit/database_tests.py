@@ -25,7 +25,6 @@ module docstring.
 import unittest
 import mock
 import requests
-import posixpath
 import os
 import uuid
 
@@ -149,8 +148,8 @@ class DatabaseTests(UnitTestDbBase):
         """
         self.assertEqual(
             self.db.database_url,
-            posixpath.join(self.client.server_url, self.test_dbname)
-            )
+            '/'.join((self.client.server_url, self.test_dbname))
+        )
 
     def test_retrieve_creds(self):
         """
@@ -233,8 +232,7 @@ class DatabaseTests(UnitTestDbBase):
         same.  Therefore comparing keys is a valid test of this functionality.
         """
         resp = self.db.r_session.get(
-            posixpath.join(self.client.server_url, self.test_dbname)
-            )
+            '/'.join((self.client.server_url, self.test_dbname)))
         expected = resp.json()
         actual = self.db.metadata()
         self.assertListEqual(list(actual.keys()), list(expected.keys()))
@@ -656,7 +654,7 @@ class DatabaseTests(UnitTestDbBase):
             # A valid document must have a document_url
             self.assertEqual(
                 doc.document_url,
-                posixpath.join(self.db.database_url, doc['_id'])
+                '/'.join((self.db.database_url, doc['_id']))
             )
             if isinstance(doc, DesignDocument):
                 self.assertEqual(doc['_id'], '_design/ddoc001')

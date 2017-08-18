@@ -18,7 +18,6 @@ instance.
 """
 import base64
 import json
-import posixpath
 
 from ._2to3 import bytes_, unicode_
 from .database import CloudantDatabase, CouchDatabase
@@ -138,7 +137,7 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return None
-        sess_url = posixpath.join(self.server_url, '_session')
+        sess_url = '/'.join((self.server_url, '_session'))
         resp = self.r_session.get(sess_url)
         resp.raise_for_status()
         sess_data = resp.json()
@@ -164,7 +163,7 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return
-        sess_url = posixpath.join(self.server_url, '_session')
+        sess_url = '/'.join((self.server_url, '_session'))
         resp = self.r_session.post(
             sess_url,
             data={
@@ -182,7 +181,7 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return
-        sess_url = posixpath.join(self.server_url, '_session')
+        sess_url = '/'.join((self.server_url, '_session'))
         resp = self.r_session.delete(sess_url)
         resp.raise_for_status()
 
@@ -207,7 +206,7 @@ class CouchDB(dict):
 
         :returns: List of database names for the client
         """
-        url = posixpath.join(self.server_url, '_all_dbs')
+        url = '/'.join((self.server_url, '_all_dbs'))
         resp = self.r_session.get(url)
         resp.raise_for_status()
         return resp.json()
@@ -560,9 +559,7 @@ class Cloudant(CouchDB):
             try:
                 if int(year) > 0 and int(month) in range(1, 13):
                     resp = self.r_session.get(
-                        posixpath.join(
-                            endpoint, str(int(year)), str(int(month)))
-                    )
+                        '/'.join((endpoint, str(int(year)), str(int(month)))))
                 else:
                     err = True
             except (ValueError, TypeError):
@@ -587,7 +584,7 @@ class Cloudant(CouchDB):
 
         :returns: Billing data in JSON format
         """
-        endpoint = posixpath.join(self.server_url, '_api', 'v2', 'bill')
+        endpoint = '/'.join((self.server_url, '_api', 'v2', 'bill'))
         return self._usage_endpoint(endpoint, year, month)
 
     def volume_usage(self, year=None, month=None):
@@ -604,9 +601,8 @@ class Cloudant(CouchDB):
 
         :returns: Volume usage data in JSON format
         """
-        endpoint = posixpath.join(
-            self.server_url, '_api', 'v2', 'usage', 'data_volume'
-        )
+        endpoint = '/'.join((
+            self.server_url, '_api', 'v2', 'usage', 'data_volume'))
         return self._usage_endpoint(endpoint, year, month)
 
     def requests_usage(self, year=None, month=None):
@@ -623,9 +619,8 @@ class Cloudant(CouchDB):
 
         :returns: Requests usage data in JSON format
         """
-        endpoint = posixpath.join(
-            self.server_url, '_api', 'v2', 'usage', 'requests'
-        )
+        endpoint = '/'.join((
+            self.server_url, '_api', 'v2', 'usage', 'requests'))
         return self._usage_endpoint(endpoint, year, month)
 
     def shared_databases(self):
@@ -635,9 +630,8 @@ class Cloudant(CouchDB):
 
         :returns: List of database names
         """
-        endpoint = posixpath.join(
-            self.server_url, '_api', 'v2', 'user', 'shared_databases'
-        )
+        endpoint = '/'.join((
+            self.server_url, '_api', 'v2', 'user', 'shared_databases'))
         resp = self.r_session.get(endpoint)
         resp.raise_for_status()
         data = resp.json()
@@ -649,9 +643,7 @@ class Cloudant(CouchDB):
 
         :returns: API key/pass pair in JSON format
         """
-        endpoint = posixpath.join(
-            self.server_url, '_api', 'v2', 'api_keys'
-        )
+        endpoint = '/'.join((self.server_url, '_api', 'v2', 'api_keys'))
         resp = self.r_session.post(endpoint)
         resp.raise_for_status()
         return resp.json()
@@ -662,9 +654,8 @@ class Cloudant(CouchDB):
 
         :returns: CORS data in JSON format
         """
-        endpoint = posixpath.join(
-            self.server_url, '_api', 'v2', 'user', 'config', 'cors'
-        )
+        endpoint = '/'.join((
+            self.server_url, '_api', 'v2', 'user', 'config', 'cors'))
         resp = self.r_session.get(endpoint)
         resp.raise_for_status()
 
@@ -754,9 +745,8 @@ class Cloudant(CouchDB):
 
         :returns: CORS configuration update status in JSON format
         """
-        endpoint = posixpath.join(
-            self.server_url, '_api', 'v2', 'user', 'config', 'cors'
-        )
+        endpoint = '/'.join((
+            self.server_url, '_api', 'v2', 'user', 'config', 'cors'))
         resp = self.r_session.put(
             endpoint,
             data=json.dumps(config, cls=self.encoder),

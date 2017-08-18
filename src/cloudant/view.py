@@ -16,7 +16,6 @@
 API module for interacting with a view in a design document.
 """
 import contextlib
-import posixpath
 
 from ._2to3 import STRTYPE
 from ._common_util import codify, get_docs
@@ -168,11 +167,11 @@ class View(dict):
 
         :returns: View URL
         """
-        return posixpath.join(
+        return '/'.join((
             self.design_doc.document_url,
             '_view',
             self.view_name
-        )
+        ))
 
     def __call__(self, **kwargs):
         """

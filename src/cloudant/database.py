@@ -17,7 +17,6 @@ API module that maps to a Cloudant or CouchDB database instance.
 """
 import json
 import contextlib
-import posixpath
 
 from requests.exceptions import HTTPError
 
@@ -84,10 +83,8 @@ class CouchDatabase(dict):
 
         :returns: Database URL
         """
-        return posixpath.join(
-            self._database_host,
-            url_quote_plus(self.database_name)
-        )
+        return '/'.join((
+            self._database_host, url_quote_plus(self.database_name)))
 
     @property
     def creds(self):
@@ -189,7 +186,7 @@ class CouchDatabase(dict):
 
         :returns: All design documents found in this database in JSON format
         """
-        url = posixpath.join(self.database_url, '_all_docs')
+        url = '/'.join((self.database_url, '_all_docs'))
         query = "startkey=\"_design\"&endkey=\"_design0\"&include_docs=true"
         resp = self.r_session.get(url, params=query)
         resp.raise_for_status()
@@ -203,7 +200,7 @@ class CouchDatabase(dict):
 
         :returns: List of names for all design documents in this database
         """
-        url = posixpath.join(self.database_url, '_all_docs')
+        url = '/'.join((self.database_url, '_all_docs'))
         query = "startkey=\"_design\"&endkey=\"_design0\""
         resp = self.r_session.get(url, params=query)
         resp.raise_for_status()
@@ -675,7 +672,7 @@ class CouchDatabase(dict):
 
         :returns: Bulk document creation/update status in JSON format
         """
-        url = posixpath.join(self.database_url, '_bulk_docs')
+        url = '/'.join((self.database_url, '_bulk_docs'))
         data = {'docs': docs}
         headers = {'Content-Type': 'application/json'}
         resp = self.r_session.post(
@@ -698,7 +695,7 @@ class CouchDatabase(dict):
 
         :returns: List of missing document revision values
         """
-        url = posixpath.join(self.database_url, '_missing_revs')
+        url = '/'.join((self.database_url, '_missing_revs'))
         data = {doc_id: list(revisions)}
 
         resp = self.r_session.post(
@@ -727,7 +724,7 @@ class CouchDatabase(dict):
 
         :returns: The revision differences in JSON format
         """
-        url = posixpath.join(self.database_url, '_revs_diff')
+        url = '/'.join((self.database_url, '_revs_diff'))
         data = {doc_id: list(revisions)}
 
         resp = self.r_session.post(
@@ -746,7 +743,7 @@ class CouchDatabase(dict):
 
         :returns: Revision limit value for the current remote database
         """
-        url = posixpath.join(self.database_url, '_revs_limit')
+        url = '/'.join((self.database_url, '_revs_limit'))
         resp = self.r_session.get(url)
         resp.raise_for_status()
 
@@ -767,7 +764,7 @@ class CouchDatabase(dict):
 
         :returns: Revision limit set operation status in JSON format
         """
-        url = posixpath.join(self.database_url, '_revs_limit')
+        url = '/'.join((self.database_url, '_revs_limit'))
 
         resp = self.r_session.put(url, data=json.dumps(limit, cls=self.client.encoder))
         resp.raise_for_status()
@@ -781,7 +778,7 @@ class CouchDatabase(dict):
 
         :returns: View cleanup status in JSON format
         """
-        url = posixpath.join(self.database_url, '_view_cleanup')
+        url = '/'.join((self.database_url, '_view_cleanup'))
         resp = self.r_session.post(
             url,
             headers={'Content-Type': 'application/json'}
@@ -958,8 +955,8 @@ class CloudantDatabase(CouchDatabase):
 
         :returns: Security document URL
         """
-        parts = ['_api', 'v2', 'db', self.database_name, '_security']
-        url = posixpath.join(self._database_host, *parts)
+        url = '/'.join((self._database_host, '_api', 'v2', 'db',
+                        self.database_name, '_security'))
         return url
 
     def share_database(self, username, roles=None):
@@ -1040,7 +1037,7 @@ class CloudantDatabase(CouchDatabase):
 
         :returns: Shard information retrieval status in JSON format
         """
-        url = posixpath.join(self.database_url, '_shards')
+        url = '/'.join((self.database_url, '_shards'))
         resp = self.r_session.get(url)
         resp.raise_for_status()
 
@@ -1059,7 +1056,7 @@ class CloudantDatabase(CouchDatabase):
         :returns: The query indexes in the database
         """
 
-        url = posixpath.join(self.database_url, '_index')
+        url = '/'.join((self.database_url, '_index'))
         resp = self.r_session.get(url)
         resp.raise_for_status()
 

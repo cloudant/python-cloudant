@@ -25,7 +25,6 @@ from __future__ import absolute_import
 import unittest
 import mock
 import os
-import posixpath
 import requests
 
 from cloudant.index import Index, TextIndex, SpecialIndex
@@ -122,7 +121,7 @@ class IndexTests(UnitTestDbBase):
         index = Index(self.db)
         self.assertEqual(
             index.index_url,
-            posixpath.join(self.db.database_url, '_index')
+            '/'.join((self.db.database_url, '_index'))
         )
 
     def test_index_to_dictionary(self):

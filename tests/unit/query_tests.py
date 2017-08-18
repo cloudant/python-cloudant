@@ -22,7 +22,6 @@ module docstring.
 
 import unittest
 import os
-import posixpath
 
 from cloudant.query import Query
 from cloudant.result import QueryResult
@@ -78,7 +77,7 @@ class QueryTests(UnitTestDbBase):
         query = Query(self.db)
         self.assertEqual(
             query.url,
-            posixpath.join(self.db.database_url, '_find')
+            '/'.join((self.db.database_url, '_find'))
         )
 
     def test_callable_with_invalid_argument(self):
