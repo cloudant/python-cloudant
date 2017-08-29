@@ -370,6 +370,19 @@ class CookieSession(ClientSession):
 
         return resp
 
+    def set_credentials(self, username, password):
+        """
+        Set a new username and password.
+
+        :param str username: New username.
+        :param str password: New password.
+        """
+        if username is not None:
+            self._username = username
+
+        if password is not None:
+            self._password = password
+
 
 class IAMSession(ClientSession):
     """
@@ -442,6 +455,16 @@ class IAMSession(ClientSession):
             resp = super(IAMSession, self).request(method, url, **kwargs)
 
         return resp
+
+    def set_credentials(self, username, api_key):
+        """
+        Set a new IAM API key.
+
+        :param str username: Username parameter is unused.
+        :param str api_key: New IAM API key.
+        """
+        if api_key is not None:
+            self._api_key = api_key
 
     def _get_access_token(self):
         """

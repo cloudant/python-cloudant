@@ -88,6 +88,15 @@ class IAMAuthTests(unittest.TestCase):
             rest={'HttpOnly': None},
             rfc2109=True)
 
+    def test_iam_set_credentials(self):
+        iam = IAMSession(MOCK_API_KEY, 'http://127.0.0.1:5984')
+        self.assertEquals(iam._api_key, MOCK_API_KEY)
+
+        new_api_key = 'some_new_api_key'
+        iam.set_credentials(None, new_api_key)
+
+        self.assertEquals(iam._api_key, new_api_key)
+
     @mock.patch('cloudant._common_util.ClientSession.request')
     def test_iam_get_access_token(self, m_req):
         m_response = mock.MagicMock()
@@ -305,6 +314,38 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_login.call_count, 1)
         self.assertEqual(m_req.call_count, 1)
         self.assertEqual(dbs, ['animaldb'])
+
+    @mock.patch('cloudant._common_util.IAMSession.login')
+    @mock.patch('cloudant._common_util.IAMSession.set_credentials')
+    def test_iam_client_session_login(self, m_set, m_login):
+        # create IAM client
+        client = Cloudant.iam('foo', MOCK_API_KEY)
+        client.connect()
+
+        # add a valid cookie to jar
+        client.r_session.cookies.set_cookie(self._mock_cookie())
+
+        client.session_login()
+
+        m_set.assert_called_with(None, None)
+        self.assertEqual(m_login.call_count, 2)
+        self.assertEqual(m_set.call_count, 2)
+
+    @mock.patch('cloudant._common_util.IAMSession.login')
+    @mock.patch('cloudant._common_util.IAMSession.set_credentials')
+    def test_iam_client_session_login_with_new_credentials(self, m_set, m_login):
+        # create IAM client
+        client = Cloudant.iam('foo', MOCK_API_KEY)
+        client.connect()
+
+        # add a valid cookie to jar
+        client.r_session.cookies.set_cookie(self._mock_cookie())
+
+        client.session_login('bar', 'baz')  # new creds
+
+        m_set.assert_called_with('bar', 'baz')
+        self.assertEqual(m_login.call_count, 2)
+        self.assertEqual(m_set.call_count, 2)
 
 
 if __name__ == '__main__':

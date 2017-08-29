@@ -28,7 +28,8 @@ import sys
 import os
 import datetime
 
-from requests import ConnectTimeout
+from requests import ConnectTimeout, HTTPError
+from time import sleep
 
 from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
@@ -491,6 +492,30 @@ class CloudantClientTests(UnitTestDbBase):
     """
     Cloudant specific client unit tests
     """
+
+    def test_cloudant_session_login(self):
+        """
+        Test that the Cloudant client session successfully authenticates.
+        """
+        self.client.connect()
+        old_cookie = self.client.session_cookie()
+
+        sleep(5)  # ensure we get a different cookie back
+
+        self.client.session_login()
+        self.assertNotEqual(self.client.session_cookie(), old_cookie)
+
+    def test_cloudant_session_login_with_new_credentials(self):
+        """
+        Test that the Cloudant client session fails to authenticate when
+        passed incorrect credentials.
+        """
+        self.client.connect()
+
+        with self.assertRaises(HTTPError) as cm:
+            self.client.session_login('invalid-user-123', 'pa$$w0rd01')
+
+        self.assertTrue(str(cm.exception).find('Name or password is incorrect'))
 
     def test_cloudant_context_helper(self):
         """

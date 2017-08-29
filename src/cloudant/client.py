@@ -161,7 +161,7 @@ class CouchDB(dict):
             return None
         return self.r_session.cookies.get('AuthSession')
 
-    def session_login(self):
+    def session_login(self, user=None, passwd=None):
         """
         Performs a session login by posting the auth information
         to the _session endpoint.
@@ -169,6 +169,7 @@ class CouchDB(dict):
         if self.admin_party:
             return
 
+        self.r_session.set_credentials(user, passwd)
         self.r_session.login()
 
     def session_logout(self):
