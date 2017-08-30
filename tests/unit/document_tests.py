@@ -22,6 +22,11 @@ module docstring.
 
 """
 
+# W0212 is accessing _protected fields from outside the class.
+# We need to do this in the test_copy_document test.
+# pylint: disable=W0212
+
+import copy
 import unittest
 import mock
 import json
@@ -107,6 +112,47 @@ class DocumentTests(UnitTestDbBase):
         self.assertIsInstance(doc, Document)
         self.assertEqual(doc.r_session, self.db.r_session)
         self.assertEqual(doc.get('_id'), 'julia006')
+
+    def test_copy_document(self):
+        """
+        Test that copying maintains internal metadata fields. We want to
+        make sure that works for both override of the dict's copy method
+        as well as for copy.copy(). We don't support deepcopy().
+        """
+        contents = {
+            'hello': 'world',
+            'boolean': True,
+            'number': 3,
+            '_rev': '1-asdf'  # Document just stores rev in the JSON body
+        }
+        doc = Document(self.db, "clonable")
+        for k, v in contents.items():
+            doc[k] = v
+        for cpy in [doc.copy(), copy.copy(doc)]:
+            self.assertEqual(doc._client, cpy._client)
+            self.assertEqual(doc._database, cpy._database)
+            self.assertEqual(doc._database_host, cpy._database_host)
+            self.assertEqual(doc._database_name, cpy._database_name)
+            self.assertEqual(doc._document_id, cpy._document_id)
+            self.assertEqual(doc.encoder, cpy.encoder)
+            self.assertEqual(cpy['_id'], 'clonable')
+            for k, v in contents.items():
+                self.assertEqual(cpy[k], v)
+
+    def test_document_copy_independent(self):
+        """
+        Test that changes to an original or copy don't affect the other.
+        """
+        contents = {'number': 3}
+        doc = Document(self.db, "clonable")
+        for k, v in contents.items():
+            doc[k] = v
+        cpy = copy.copy(doc)
+        doc['number'] = 5
+        cpy['number'] = 7
+        self.assertEqual(doc['number'], 5)
+        self.assertEqual(cpy['number'], 7)
+
 
     def test_document_url(self):
         """

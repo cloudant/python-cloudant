@@ -65,6 +65,21 @@ class Document(dict):
             self['_id'] = self._document_id
         self.encoder = self._client.encoder
 
+    def copy(self):
+        """
+        Create a copy of the Document, including any locally cached content.
+        """
+        return self.__copy__()
+
+    def __copy__(self):
+        """
+        Copy the document, for use in copy.copy() calls. See `copy()`.
+        """
+        cpy = Document(self._database, document_id=self._document_id)
+        for k, v in self.items():
+            cpy[k] = v
+        return cpy
+
     @property
     def r_session(self):
         """
