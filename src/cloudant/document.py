@@ -15,6 +15,7 @@
 """
 API module/class for interacting with a document in a database.
 """
+import copy
 import json
 import requests
 from requests.exceptions import HTTPError
@@ -64,6 +65,24 @@ class Document(dict):
         if self._document_id is not None:
             self['_id'] = self._document_id
         self.encoder = self._client.encoder
+
+    def __copy__(self):
+        """
+        Shallow copy the document, for use in copy.copy() calls.
+        """
+        cpy = Document(self._database, document_id=self._document_id)
+        for k, v in self.items():
+            cpy[k] = v
+        return cpy
+
+    def __deepcopy__(self, memo):
+        """
+        Deep copy the document, for use in copy.deepcopy() calls.
+        """
+        cpy = Document(self._database, document_id=self._document_id)
+        for k, v in self.items():
+            cpy[k] = copy.deepcopy(v, memo)
+        return cpy
 
     @property
     def r_session(self):

@@ -1,6 +1,7 @@
 Unreleased
 ==========
 - [IMPROVED] Updated ``posixpath.join`` references to use ``'/'.join`` when concatenating URL parts.
+- [NEW] Add support for copying Document objects.
 
 2.6.0 (2017-08-10)
 ==================
