@@ -15,6 +15,7 @@
 """
 API module/class for interacting with a document in a database.
 """
+import copy
 import json
 import requests
 from requests.exceptions import HTTPError
@@ -65,19 +66,22 @@ class Document(dict):
             self['_id'] = self._document_id
         self.encoder = self._client.encoder
 
-    def copy(self):
-        """
-        Create a copy of the Document, including any locally cached content.
-        """
-        return self.__copy__()
-
     def __copy__(self):
         """
-        Copy the document, for use in copy.copy() calls. See `copy()`.
+        Shallow copy the document, for use in copy.copy() calls.
         """
         cpy = Document(self._database, document_id=self._document_id)
         for k, v in self.items():
             cpy[k] = v
+        return cpy
+
+    def __deepcopy__(self, memo):
+        """
+        Deep copy the document, for use in copy.deepcopy() calls.
+        """
+        cpy = Document(self._database, document_id=self._document_id)
+        for k, v in self.items():
+            cpy[k] = copy.deepcopy(v, memo)
         return cpy
 
     @property

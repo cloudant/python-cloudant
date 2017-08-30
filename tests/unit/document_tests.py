@@ -128,7 +128,7 @@ class DocumentTests(UnitTestDbBase):
         doc = Document(self.db, "clonable")
         for k, v in contents.items():
             doc[k] = v
-        for cpy in [doc.copy(), copy.copy(doc)]:
+        for cpy in [copy.deepcopy(doc), copy.copy(doc)]:
             self.assertEqual(doc._client, cpy._client)
             self.assertEqual(doc._database, cpy._database)
             self.assertEqual(doc._database_host, cpy._database_host)
@@ -141,17 +141,37 @@ class DocumentTests(UnitTestDbBase):
 
     def test_document_copy_independent(self):
         """
-        Test that changes to an original or copy don't affect the other.
+        Test that changes to an original or copy don't affect the other
+        at first level.
         """
-        contents = {'number': 3}
+        contents = {'number': 3, 'dict': {}}
         doc = Document(self.db, "clonable")
         for k, v in contents.items():
             doc[k] = v
         cpy = copy.copy(doc)
         doc['number'] = 5
         cpy['number'] = 7
+        cpy['dict']['h'] = 'w'
         self.assertEqual(doc['number'], 5)
         self.assertEqual(cpy['number'], 7)
+        self.assertEqual(cpy['dict']['h'], 'w')
+
+    def test_document_deepcopy_independent(self):
+        """
+        Test that changes to an original or copy don't affect the other
+        at all levels.
+        """
+        contents = {'number': 3, 'dict': {'h': 'm'}}
+        doc = Document(self.db, "clonable")
+        for k, v in contents.items():
+            doc[k] = v
+        cpy = copy.deepcopy(doc)
+        doc['number'] = 5
+        cpy['number'] = 7
+        doc['dict']['h'] = 'w'
+        self.assertEqual(doc['number'], 5)
+        self.assertEqual(cpy['number'], 7)
+        self.assertEqual(cpy['dict']['h'], 'm')
 
 
     def test_document_url(self):
