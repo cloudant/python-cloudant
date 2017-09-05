@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright (c) 2016, 2017 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@ import os
 import requests
 import time
 
-from cloudant._common_util import InfiniteSession
+from cloudant._common_util import CookieSession
 
 from .unit_t_db_base import UnitTestDbBase
 
 @unittest.skipIf(os.environ.get('ADMIN_PARTY') == 'true', 'Skipping - Admin Party mode')
 class AuthRenewalTests(UnitTestDbBase):
     """
-    Auto renewal tests primarily testing the InfiniteSession functionality
+    Auto renewal tests primarily testing the CookieSession functionality
     """
 
     def setUp(self):
@@ -62,10 +62,10 @@ class AuthRenewalTests(UnitTestDbBase):
             db_2_auth_session = db_2.r_session.cookies.get('AuthSession')
             doc_auth_session = doc.r_session.cookies.get('AuthSession')
             
-            self.assertIsInstance(self.client.r_session, InfiniteSession)
-            self.assertIsInstance(db.r_session, InfiniteSession)
-            self.assertIsInstance(db_2.r_session, InfiniteSession)
-            self.assertIsInstance(doc.r_session, InfiniteSession)
+            self.assertIsInstance(self.client.r_session, CookieSession)
+            self.assertIsInstance(db.r_session, CookieSession)
+            self.assertIsInstance(db_2.r_session, CookieSession)
+            self.assertIsInstance(doc.r_session, CookieSession)
             self.assertIsNotNone(auth_session)
             self.assertTrue(
                 auth_session ==

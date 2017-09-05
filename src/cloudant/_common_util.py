@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2016, 2017 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2017 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ Module containing miscellaneous classes, functions, and constants used
 throughout the library.
 """
 
+import os
 import sys
 import platform
 from collections import Sequence
 import json
-from requests import Session
+from requests import RequestException, Session
 
-from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_, url_parse
+from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_, url_join
 from .error import CloudantArgumentError, CloudantException
 
 # Library Constants
@@ -276,6 +277,7 @@ def append_response_error_content(response, **kwargs):
 
 # Classes
 
+
 class _Code(str):
     """
     Wraps a ``str`` object as a _Code object providing the means to handle
@@ -287,56 +289,14 @@ class _Code(str):
             return str.__new__(cls, code.encode('utf8'))
         return str.__new__(cls, code)
 
-class InfiniteSession(Session):
-    """
-    This class provides for the ability to automatically renew session login
-    information in the event of expired session authentication.
-    """
-
-    def __init__(self, username, password, server_url, **kwargs):
-        super(InfiniteSession, self).__init__()
-        self._username = username
-        self._password = password
-        self._server_url = server_url
-        self._timeout = kwargs.get('timeout', None)
-
-    def request(self, method, url, **kwargs):  # pylint: disable=W0221
-        """
-        Overrides ``requests.Session.request`` to perform a POST to the
-        _session endpoint to renew Session cookie authentication settings and
-        then retry the original request, if necessary.
-        """
-        resp = super(InfiniteSession, self).request(
-            method, url, timeout=self._timeout, **kwargs)
-        path = url_parse(url).path.lower()
-        post_to_session = method.upper() == 'POST' and path == '/_session'
-        is_expired = any((
-            resp.status_code == 403 and
-            resp.json().get('error') == 'credentials_expired',
-            resp.status_code == 401
-        ))
-        if not post_to_session and is_expired:
-            super(InfiniteSession, self).request(
-                'POST',
-                '/'.join([self._server_url, '_session']),
-                data={'name': self._username, 'password': self._password},
-                headers={'Content-Type': 'application/x-www-form-urlencoded'}
-            )
-            resp = super(InfiniteSession, self).request(
-                method, url, timeout=self._timeout, **kwargs)
-
-        return resp
 
 class ClientSession(Session):
     """
     This class extends Session and provides a default timeout.
     """
 
-    def __init__(self, username, password, server_url, **kwargs):
+    def __init__(self, **kwargs):
         super(ClientSession, self).__init__()
-        self._username = username
-        self._password = password
-        self._server_url = server_url
         self._timeout = kwargs.get('timeout', None)
 
     def request(self, method, url, **kwargs):  # pylint: disable=W0221
@@ -345,7 +305,195 @@ class ClientSession(Session):
         """
         resp = super(ClientSession, self).request(
             method, url, timeout=self._timeout, **kwargs)
+
         return resp
+
+
+class CookieSession(ClientSession):
+    """
+    This class extends ClientSession and provides cookie authentication.
+    """
+
+    def __init__(self, username, password, server_url, **kwargs):
+        super(CookieSession, self).__init__(**kwargs)
+        self._username = username
+        self._password = password
+        self._auto_renew = kwargs.get('auto_renew', False)
+        self._session_url = url_join(server_url, '_session')
+
+    def info(self):
+        """
+        Get cookie based login user information.
+        """
+        resp = self.get(self._session_url)
+        resp.raise_for_status()
+
+        return resp.json()
+
+    def login(self):
+        """
+        Perform cookie based user login.
+        """
+        resp = super(CookieSession, self).request(
+            'POST',
+            self._session_url,
+            data={'name': self._username, 'password': self._password},
+        )
+        resp.raise_for_status()
+
+    def logout(self):
+        """
+        Logout cookie based user.
+        """
+        resp = super(CookieSession, self).request('DELETE', self._session_url)
+        resp.raise_for_status()
+
+    def request(self, method, url, **kwargs):  # pylint: disable=W0221
+        """
+        Overrides ``requests.Session.request`` to renew the cookie and then
+        retry the original request (if required).
+        """
+        resp = super(CookieSession, self).request(method, url, **kwargs)
+
+        if not self._auto_renew:
+            return resp
+
+        is_expired = any((
+            resp.status_code == 403 and
+            resp.json().get('error') == 'credentials_expired',
+            resp.status_code == 401
+        ))
+
+        if is_expired:
+            self.login()
+            resp = super(CookieSession, self).request(method, url, **kwargs)
+
+        return resp
+
+    def set_credentials(self, username, password):
+        """
+        Set a new username and password.
+
+        :param str username: New username.
+        :param str password: New password.
+        """
+        if username is not None:
+            self._username = username
+
+        if password is not None:
+            self._password = password
+
+
+class IAMSession(ClientSession):
+    """
+    This class extends ClientSession and provides IAM authentication.
+    """
+
+    def __init__(self, api_key, server_url, **kwargs):
+        super(IAMSession, self).__init__(**kwargs)
+        self._api_key = api_key
+        self._auto_renew = kwargs.get('auto_renew', False)
+        self._session_url = url_join(server_url, '_iam_session')
+        self._token_url = os.environ.get(
+            'IAM_TOKEN_URL', 'https://iam.bluemix.net/oidc/token')
+
+    def info(self):
+        """
+        Get IAM cookie based login user information.
+        """
+        resp = self.get(self._session_url)
+        resp.raise_for_status()
+
+        return resp.json()
+
+    def login(self):
+        """
+        Perform IAM cookie based user login.
+        """
+        access_token = self._get_access_token()
+        try:
+            super(IAMSession, self).request(
+                'POST',
+                self._session_url,
+                headers={'Content-Type': 'application/json'},
+                data=json.dumps({'access_token': access_token})
+            ).raise_for_status()
+
+        except RequestException:
+            raise CloudantException(
+                'Failed to exchange IAM token with Cloudant')
+
+    def logout(self):
+        """
+        Logout IAM cookie based user.
+        """
+        self.cookies.clear()
+
+    def request(self, method, url, **kwargs):  # pylint: disable=W0221
+        """
+        Overrides ``requests.Session.request`` to renew the IAM cookie
+        and then retry the original request (if required).
+        """
+        # The CookieJar API prevents callers from getting an individual Cookie
+        # object by name.
+        # We are forced to use the only exposed method of discarding expired
+        # cookies from the CookieJar. Internally this involves iterating over
+        # the entire CookieJar and calling `.is_expired()` on each Cookie
+        # object.
+        self.cookies.clear_expired_cookies()
+
+        if self._auto_renew and 'IAMSession' not in self.cookies.keys():
+            self.login()
+
+        resp = super(IAMSession, self).request(method, url, **kwargs)
+
+        if not self._auto_renew:
+            return resp
+
+        if resp.status_code == 401:
+            self.login()
+            resp = super(IAMSession, self).request(method, url, **kwargs)
+
+        return resp
+
+    def set_credentials(self, username, api_key):
+        """
+        Set a new IAM API key.
+
+        :param str username: Username parameter is unused.
+        :param str api_key: New IAM API key.
+        """
+        if api_key is not None:
+            self._api_key = api_key
+
+    def _get_access_token(self):
+        """
+        Get IAM access token using API key.
+        """
+        err = 'Failed to contact IAM token service'
+        try:
+            resp = super(IAMSession, self).request(
+                'POST',
+                self._token_url,
+                auth=('bx', 'bx'),  # required for user API keys
+                headers={'Accepts': 'application/json'},
+                data={
+                    'grant_type': 'urn:ibm:params:oauth:grant-type:apikey',
+                    'response_type': 'cloud_iam',
+                    'apikey': self._api_key
+                }
+            )
+            err = resp.json().get('errorMessage', err)
+            resp.raise_for_status()
+
+            return resp.json()['access_token']
+
+        except KeyError:
+            raise CloudantException('Invalid response from IAM token service')
+
+        except RequestException:
+            raise CloudantException(err)
+
 
 class CloudFoundryService(object):
     """ Manages Cloud Foundry service configuration. """

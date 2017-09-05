@@ -88,6 +88,30 @@ following statements hold true:
                      connect=True,
                      auto_renew=True)
 
+
+************************************
+Identity and Access Management (IAM)
+************************************
+
+IBM Cloud Identity & Access Management enables you to securely authenticate
+users and control access to all cloud resources consistently in the IBM Bluemix
+Cloud Platform.
+
+See `IBM Cloud Identity and Access Management <https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management>`_
+for more information.
+
+The production IAM token service at *https://iam.bluemix.net/oidc/token* is used
+by default. You can set an ``IAM_TOKEN_URL`` environment variable to override
+this.
+
+You can easily connect to your Cloudant account using an IAM API key:
+
+.. code-block:: python
+
+    # Authenticate using an IAM API key
+    client = Cloudant.iam(ACCOUNT_NAME, API_KEY, connect=True)
+
+
 ****************
 Resource sharing
 ****************

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2016, 2017 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2017 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,13 +28,14 @@ import sys
 import os
 import datetime
 
-from requests import ConnectTimeout
+from requests import ConnectTimeout, HTTPError
+from time import sleep
 
 from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
 from cloudant.error import CloudantArgumentError, CloudantClientException
 from cloudant.feed import Feed, InfiniteFeed
-from cloudant._common_util import InfiniteSession
+from cloudant._common_util import CookieSession
 
 from .unit_t_db_base import UnitTestDbBase
 from .. import bytes_, str_
@@ -163,7 +164,7 @@ class ClientTests(UnitTestDbBase):
 
     def test_auto_renew_enabled(self):
         """
-        Test that InfiniteSession is used when auto_renew is enabled.
+        Test that CookieSession is used when auto_renew is enabled.
         """
         try:
             self.set_up_client(auto_renew=True)
@@ -171,13 +172,13 @@ class ClientTests(UnitTestDbBase):
             if os.environ.get('ADMIN_PARTY') == 'true':
                 self.assertIsInstance(self.client.r_session, requests.Session)
             else:
-                self.assertIsInstance(self.client.r_session, InfiniteSession)
+                self.assertIsInstance(self.client.r_session, CookieSession)
         finally:
             self.client.disconnect()
 
     def test_auto_renew_enabled_with_auto_connect(self):
         """
-        Test that InfiniteSession is used when auto_renew is enabled along with
+        Test that CookieSession is used when auto_renew is enabled along with
         an auto_connect.
         """
         try:
@@ -185,7 +186,7 @@ class ClientTests(UnitTestDbBase):
             if os.environ.get('ADMIN_PARTY') == 'true':
                 self.assertIsInstance(self.client.r_session, requests.Session)
             else:
-                self.assertIsInstance(self.client.r_session, InfiniteSession)
+                self.assertIsInstance(self.client.r_session, CookieSession)
         finally:
             self.client.disconnect()
 
@@ -491,6 +492,30 @@ class CloudantClientTests(UnitTestDbBase):
     """
     Cloudant specific client unit tests
     """
+
+    def test_cloudant_session_login(self):
+        """
+        Test that the Cloudant client session successfully authenticates.
+        """
+        self.client.connect()
+        old_cookie = self.client.session_cookie()
+
+        sleep(5)  # ensure we get a different cookie back
+
+        self.client.session_login()
+        self.assertNotEqual(self.client.session_cookie(), old_cookie)
+
+    def test_cloudant_session_login_with_new_credentials(self):
+        """
+        Test that the Cloudant client session fails to authenticate when
+        passed incorrect credentials.
+        """
+        self.client.connect()
+
+        with self.assertRaises(HTTPError) as cm:
+            self.client.session_login('invalid-user-123', 'pa$$w0rd01')
+
+        self.assertTrue(str(cm.exception).find('Name or password is incorrect'))
 
     def test_cloudant_context_helper(self):
         """

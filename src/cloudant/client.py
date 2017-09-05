@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2016, 2017 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2017 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ from .error import (
 from ._common_util import (
     USER_AGENT,
     append_response_error_content,
-    InfiniteSession,
     ClientSession,
-    CloudFoundryService)
-
+    CloudFoundryService,
+    CookieSession,
+    IAMSession)
 
 class CouchDB(dict):
     """
@@ -67,6 +67,10 @@ class CouchDB(dict):
         `Requests library timeout argument
         <http://docs.python-requests.org/en/master/user/quickstart/#timeouts>`_.
         but will apply to every request made using this client.
+    :param bool use_iam: Keyword argument, if set to True performs
+        IAM authentication with server. Default is False.
+        Use :func:`~cloudant.client.CouchDB.iam` to construct an IAM
+        authenticated client.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -74,7 +78,6 @@ class CouchDB(dict):
         super(CouchDB, self).__init__()
         self._user = user
         self._auth_token = auth_token
-        self._client_session = None
         self.server_url = kwargs.get('url')
         self._client_user_header = None
         self.admin_party = admin_party
@@ -83,6 +86,7 @@ class CouchDB(dict):
         self._timeout = kwargs.get('timeout', None)
         self.r_session = None
         self._auto_renew = kwargs.get('auto_renew', False)
+        self._use_iam = kwargs.get('use_iam', False)
         connect_to_couch = kwargs.get('connect', False)
         if connect_to_couch and self._DATABASE_CLASS == CouchDatabase:
             self.connect()
@@ -93,29 +97,34 @@ class CouchDB(dict):
         authentication if necessary.
         """
         if self.r_session:
-            return
+            self.session_logout()
 
-        if self._auto_renew and not self.admin_party:
-            self.r_session = InfiniteSession(
-                self._user,
+        if self.admin_party:
+            self.r_session = ClientSession(timeout=self._timeout)
+        elif self._use_iam:
+            self.r_session = IAMSession(
                 self._auth_token,
                 self.server_url,
+                auto_renew=self._auto_renew,
                 timeout=self._timeout
             )
         else:
-            self.r_session = ClientSession(
+            self.r_session = CookieSession(
                 self._user,
                 self._auth_token,
                 self.server_url,
+                auto_renew=self._auto_renew,
                 timeout=self._timeout
             )
+
         # If a Transport Adapter was supplied add it to the session
         if self.adapter is not None:
             self.r_session.mount(self.server_url, self.adapter)
         if self._client_user_header is not None:
             self.r_session.headers.update(self._client_user_header)
-        self.session_login(self._user, self._auth_token)
-        self._client_session = self.session()
+
+        self.session_login()
+
         # Utilize an event hook to append to the response message
         # using :func:`~cloudant.common_util.append_response_error_content`
         self.r_session.hooks['response'].append(append_response_error_content)
@@ -124,7 +133,9 @@ class CouchDB(dict):
         """
         Ends a client authentication session, performs a logout and a clean up.
         """
-        self.session_logout()
+        if self.r_session:
+            self.session_logout()
+
         self.r_session = None
         self.clear()
 
@@ -137,11 +148,8 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return None
-        sess_url = '/'.join((self.server_url, '_session'))
-        resp = self.r_session.get(sess_url)
-        resp.raise_for_status()
-        sess_data = resp.json()
-        return sess_data
+
+        return self.r_session.info()
 
     def session_cookie(self):
         """
@@ -153,26 +161,16 @@ class CouchDB(dict):
             return None
         return self.r_session.cookies.get('AuthSession')
 
-    def session_login(self, user, passwd):
+    def session_login(self, user=None, passwd=None):
         """
         Performs a session login by posting the auth information
         to the _session endpoint.
-
-        :param str user: Username used to connect.
-        :param str passwd: Passcode used to connect.
         """
         if self.admin_party:
             return
-        sess_url = '/'.join((self.server_url, '_session'))
-        resp = self.r_session.post(
-            sess_url,
-            data={
-                'name': user,
-                'password': passwd
-            },
-            headers={'Content-Type': 'application/x-www-form-urlencoded'}
-        )
-        resp.raise_for_status()
+
+        self.r_session.set_credentials(user, passwd)
+        self.r_session.login()
 
     def session_logout(self):
         """
@@ -181,9 +179,8 @@ class CouchDB(dict):
         """
         if self.admin_party:
             return
-        sess_url = '/'.join((self.server_url, '_session'))
-        resp = self.r_session.delete(sess_url)
-        resp.raise_for_status()
+
+        self.r_session.logout()
 
     def basic_auth_str(self):
         """
@@ -783,3 +780,18 @@ class Cloudant(CouchDB):
                         service.password,
                         url=service.url,
                         **kwargs)
+
+    @classmethod
+    def iam(cls, account_name, api_key, **kwargs):
+        """
+        Create a Cloudant client that uses IAM authentication.
+
+        :param account_name: Cloudant account name.
+        :param api_key: IAM authentication API key.
+        """
+        return cls(None,
+                   api_key,
+                   account=account_name,
+                   auto_renew=kwargs.get('auto_renew', True),
+                   use_iam=True,
+                   **kwargs)
