@@ -19,8 +19,8 @@ import json
 import mock
 
 from cloudant._2to3 import Cookie
-from cloudant._common_util import IAMSession
 from cloudant.client import Cloudant
+from cloudant.client_session import IAMSession
 
 MOCK_API_KEY = 'CqbrIYzdO3btWV-5t4teJLY_etfT_dkccq-vO-5vCXSo'
 
@@ -97,7 +97,7 @@ class IAMAuthTests(unittest.TestCase):
 
         self.assertEquals(iam._api_key, new_api_key)
 
-    @mock.patch('cloudant._common_util.ClientSession.request')
+    @mock.patch('cloudant.client_session.ClientSession.request')
     def test_iam_get_access_token(self, m_req):
         m_response = mock.MagicMock()
         m_response.json.return_value = MOCK_OIDC_TOKEN_RESPONSE
@@ -122,8 +122,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertTrue(m_response.raise_for_status.called)
         self.assertTrue(m_response.json.called)
 
-    @mock.patch('cloudant._common_util.ClientSession.request')
-    @mock.patch('cloudant._common_util.IAMSession._get_access_token')
+    @mock.patch('cloudant.client_session.ClientSession.request')
+    @mock.patch('cloudant.client_session.IAMSession._get_access_token')
     def test_iam_login(self, m_token, m_req):
         m_token.return_value = MOCK_ACCESS_TOKEN
         m_response = mock.MagicMock()
@@ -150,7 +150,7 @@ class IAMAuthTests(unittest.TestCase):
         iam.logout()
         self.assertEqual(len(iam.cookies.keys()), 0)
 
-    @mock.patch('cloudant._common_util.ClientSession.get')
+    @mock.patch('cloudant.client_session.ClientSession.get')
     def test_iam_get_session_info(self, m_get):
         m_info = {'ok': True, 'info': {'authentication_db': '_users'}}
 
@@ -166,8 +166,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(info, m_info)
         self.assertTrue(m_response.raise_for_status.called)
 
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.ClientSession.request')
+    @mock.patch('cloudant.client_session.IAMSession.login')
+    @mock.patch('cloudant.client_session.ClientSession.request')
     def test_iam_first_request(self, m_req, m_login):
         # mock 200
         m_response_ok = mock.MagicMock()
@@ -191,8 +191,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_req.call_count, 1)
         self.assertEqual(resp.status_code, 200)
 
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.ClientSession.request')
+    @mock.patch('cloudant.client_session.IAMSession.login')
+    @mock.patch('cloudant.client_session.ClientSession.request')
     def test_iam_renew_cookie_on_expiry(self, m_req, m_login):
         # mock 200
         m_response_ok = mock.MagicMock()
@@ -213,8 +213,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_req.call_count, 1)
         self.assertEqual(resp.status_code, 200)
 
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.ClientSession.request')
+    @mock.patch('cloudant.client_session.IAMSession.login')
+    @mock.patch('cloudant.client_session.ClientSession.request')
     def test_iam_renew_cookie_on_401_success(self, m_req, m_login):
         # mock 200
         m_response_ok = mock.MagicMock()
@@ -243,8 +243,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_login.call_count, 2)
         self.assertEqual(m_req.call_count, 3)
 
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.ClientSession.request')
+    @mock.patch('cloudant.client_session.IAMSession.login')
+    @mock.patch('cloudant.client_session.ClientSession.request')
     def test_iam_renew_cookie_on_401_failure(self, m_req, m_login):
         # mock 401
         m_response_bad = mock.MagicMock()
@@ -269,8 +269,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_login.call_count, 3)
         self.assertEqual(m_req.call_count, 4)
 
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.ClientSession.request')
+    @mock.patch('cloudant.client_session.IAMSession.login')
+    @mock.patch('cloudant.client_session.ClientSession.request')
     def test_iam_renew_cookie_disabled(self, m_req, m_login):
         # mock 401
         m_response_bad = mock.MagicMock()
@@ -292,8 +292,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_login.call_count, 1)  # no attempt to renew
         self.assertEqual(m_req.call_count, 2)
 
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.ClientSession.request')
+    @mock.patch('cloudant.client_session.IAMSession.login')
+    @mock.patch('cloudant.client_session.ClientSession.request')
     def test_iam_client_create(self, m_req, m_login):
         # mock 200
         m_response_ok = mock.MagicMock()
@@ -315,8 +315,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_req.call_count, 1)
         self.assertEqual(dbs, ['animaldb'])
 
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.IAMSession.set_credentials')
+    @mock.patch('cloudant.client_session.IAMSession.login')
+    @mock.patch('cloudant.client_session.IAMSession.set_credentials')
     def test_iam_client_session_login(self, m_set, m_login):
         # create IAM client
         client = Cloudant.iam('foo', MOCK_API_KEY)
@@ -331,8 +331,8 @@ class IAMAuthTests(unittest.TestCase):
         self.assertEqual(m_login.call_count, 2)
         self.assertEqual(m_set.call_count, 2)
 
-    @mock.patch('cloudant._common_util.IAMSession.login')
-    @mock.patch('cloudant._common_util.IAMSession.set_credentials')
+    @mock.patch('cloudant.client_session.IAMSession.login')
+    @mock.patch('cloudant.client_session.IAMSession.set_credentials')
     def test_iam_client_session_login_with_new_credentials(self, m_set, m_login):
         # create IAM client
         client = Cloudant.iam('foo', MOCK_API_KEY)

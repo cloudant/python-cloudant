@@ -33,9 +33,9 @@ from time import sleep
 
 from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
+from cloudant.client_session import CookieSession
 from cloudant.error import CloudantArgumentError, CloudantClientException
 from cloudant.feed import Feed, InfiniteFeed
-from cloudant._common_util import CookieSession
 
 from .unit_t_db_base import UnitTestDbBase
 from .. import bytes_, str_

@@ -29,10 +29,10 @@ from .error import (
 from ._common_util import (
     USER_AGENT,
     append_response_error_content,
-    ClientSession,
     CloudFoundryService,
-    CookieSession,
-    IAMSession)
+    )
+from client_session import ClientSession, CookieSession, IAMSession
+
 
 class CouchDB(dict):
     """
