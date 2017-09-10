@@ -94,11 +94,13 @@ class CouchDatabase(dict):
 
         :returns: Dictionary containing authentication information
         """
-        if self.admin_party:
+        session = self.client.session()
+        if session is None:
             return None
+
         return {
             "basic_auth": self.client.basic_auth_str(),
-            "user_ctx": self.client.session()['userCtx']
+            "user_ctx": session.get('userCtx')
         }
 
     def exists(self):

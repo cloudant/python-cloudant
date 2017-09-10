@@ -15,13 +15,13 @@
 """
 Module containing client session classes.
 """
-
+import base64
 import json
 import os
 
 from requests import RequestException, Session
 
-from ._2to3 import url_join
+from ._2to3 import bytes_, unicode_, url_join
 from .error import CloudantException
 
 
@@ -30,11 +30,34 @@ class ClientSession(Session):
     This class extends Session and provides a default timeout.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, username=None, password=None, session_url=None, **kwargs):
         super(ClientSession, self).__init__()
+
+        self._username = username
+        self._password = password
+        self._session_url = session_url
+
+        self._auto_renew = kwargs.get('auto_renew', False)
         self._timeout = kwargs.get('timeout', None)
 
-    def request(self, method, url, **kwargs):  # pylint: disable=W0221
+    def base64_user_pass(self):
+        """
+        Composes a basic http auth string, suitable for use with the
+        _replicator database, and other places that need it.
+
+        :returns: Basic http authentication string
+        """
+        if self._username is None or self._password is None:
+            return None
+
+        hash_ = base64.urlsafe_b64encode(bytes_("{username}:{password}".format(
+            username=self._username,
+            password=self._password
+        )))
+        return "Basic {0}".format(unicode_(hash_))
+
+    # pylint: disable=arguments-differ
+    def request(self, method, url, **kwargs):
         """
         Overrides ``requests.Session.request`` to set the timeout.
         """
@@ -43,6 +66,63 @@ class ClientSession(Session):
 
         return resp
 
+    def info(self):
+        """
+        Get session information.
+        """
+        if self._session_url is None:
+            return None
+
+        resp = self.get(self._session_url)
+        resp.raise_for_status()
+        return resp.json()
+
+    def set_credentials(self, username, password):
+        """
+        Set a new username and password.
+
+        :param str username: New username.
+        :param str password: New password.
+        """
+        if username is not None:
+            self._username = username
+
+        if password is not None:
+            self._password = password
+
+    def login(self):
+        """
+        No-op method - not implemented here.
+        """
+        pass
+
+    def logout(self):
+        """
+        No-op method - not implemented here.
+        """
+        pass
+
+
+class BasicSession(ClientSession):
+    """
+    This class extends ClientSession to provide basic access authentication.
+    """
+
+    def __init__(self, username, password, server_url, **kwargs):
+        super(BasicSession, self).__init__(
+            username=username,
+            password=password,
+            session_url=url_join(server_url, '_session'),
+            **kwargs)
+
+    def request(self, method, url, **kwargs):
+        """
+        Overrides ``requests.Session.request`` to provide basic access
+        authentication.
+        """
+        return super(BasicSession, self).request(
+            method, url, auth=(self._username, self._password), **kwargs)
+
 
 class CookieSession(ClientSession):
     """
@@ -50,20 +130,11 @@ class CookieSession(ClientSession):
     """
 
     def __init__(self, username, password, server_url, **kwargs):
-        super(CookieSession, self).__init__(**kwargs)
-        self._username = username
-        self._password = password
-        self._auto_renew = kwargs.get('auto_renew', False)
-        self._session_url = url_join(server_url, '_session')
-
-    def info(self):
-        """
-        Get cookie based login user information.
-        """
-        resp = self.get(self._session_url)
-        resp.raise_for_status()
-
-        return resp.json()
+        super(CookieSession, self).__init__(
+            username=username,
+            password=password,
+            session_url=url_join(server_url, '_session'),
+            **kwargs)
 
     def login(self):
         """
@@ -83,7 +154,7 @@ class CookieSession(ClientSession):
         resp = super(CookieSession, self).request('DELETE', self._session_url)
         resp.raise_for_status()
 
-    def request(self, method, url, **kwargs):  # pylint: disable=W0221
+    def request(self, method, url, **kwargs):
         """
         Overrides ``requests.Session.request`` to renew the cookie and then
         retry the original request (if required).
@@ -105,19 +176,6 @@ class CookieSession(ClientSession):
 
         return resp
 
-    def set_credentials(self, username, password):
-        """
-        Set a new username and password.
-
-        :param str username: New username.
-        :param str password: New password.
-        """
-        if username is not None:
-            self._username = username
-
-        if password is not None:
-            self._password = password
-
 
 class IAMSession(ClientSession):
     """
@@ -125,21 +183,13 @@ class IAMSession(ClientSession):
     """
 
     def __init__(self, api_key, server_url, **kwargs):
-        super(IAMSession, self).__init__(**kwargs)
+        super(IAMSession, self).__init__(
+            session_url=url_join(server_url, '_iam_session'),
+            **kwargs)
+
         self._api_key = api_key
-        self._auto_renew = kwargs.get('auto_renew', False)
-        self._session_url = url_join(server_url, '_iam_session')
         self._token_url = os.environ.get(
             'IAM_TOKEN_URL', 'https://iam.bluemix.net/oidc/token')
-
-    def info(self):
-        """
-        Get IAM cookie based login user information.
-        """
-        resp = self.get(self._session_url)
-        resp.raise_for_status()
-
-        return resp.json()
 
     def login(self):
         """
@@ -164,7 +214,7 @@ class IAMSession(ClientSession):
         """
         self.cookies.clear()
 
-    def request(self, method, url, **kwargs):  # pylint: disable=W0221
+    def request(self, method, url, **kwargs):
         """
         Overrides ``requests.Session.request`` to renew the IAM cookie
         and then retry the original request (if required).
@@ -191,7 +241,7 @@ class IAMSession(ClientSession):
 
         return resp
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ, unused-argument
     def set_credentials(self, username, api_key):
         """
         Set a new IAM API key.

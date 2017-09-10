@@ -16,10 +16,14 @@
 Top level API module that maps to a Cloudant or CouchDB client connection
 instance.
 """
-import base64
 import json
 
-from ._2to3 import bytes_, unicode_
+from .client_session import (
+    BasicSession,
+    ClientSession,
+    CookieSession,
+    IAMSession
+)
 from .database import CloudantDatabase, CouchDatabase
 from .feed import Feed, InfiniteFeed
 from .error import (
@@ -31,7 +35,6 @@ from ._common_util import (
     append_response_error_content,
     CloudFoundryService,
     )
-from client_session import ClientSession, CookieSession, IAMSession
 
 
 class CouchDB(dict):
@@ -67,6 +70,8 @@ class CouchDB(dict):
         `Requests library timeout argument
         <http://docs.python-requests.org/en/master/user/quickstart/#timeouts>`_.
         but will apply to every request made using this client.
+    :param bool use_basic_auth: Keyword argument, if set to True performs basic
+        access authentication with server. Default is False.
     :param bool use_iam: Keyword argument, if set to True performs
         IAM authentication with server. Default is False.
         Use :func:`~cloudant.client.CouchDB.iam` to construct an IAM
@@ -86,7 +91,9 @@ class CouchDB(dict):
         self._timeout = kwargs.get('timeout', None)
         self.r_session = None
         self._auto_renew = kwargs.get('auto_renew', False)
+        self._use_basic_auth = kwargs.get('use_basic_auth', False)
         self._use_iam = kwargs.get('use_iam', False)
+
         connect_to_couch = kwargs.get('connect', False)
         if connect_to_couch and self._DATABASE_CLASS == CouchDatabase:
             self.connect()
@@ -100,7 +107,16 @@ class CouchDB(dict):
             self.session_logout()
 
         if self.admin_party:
-            self.r_session = ClientSession(timeout=self._timeout)
+            self.r_session = ClientSession(
+                timeout=self._timeout
+            )
+        elif self._use_basic_auth:
+            self.r_session = BasicSession(
+                self._user,
+                self._auth_token,
+                self.server_url,
+                timeout=self._timeout
+            )
         elif self._use_iam:
             self.r_session = IAMSession(
                 self._auth_token,
@@ -146,9 +162,6 @@ class CouchDB(dict):
 
         :returns: Dictionary of session info for the current session.
         """
-        if self.admin_party:
-            return None
-
         return self.r_session.info()
 
     def session_cookie(self):
@@ -157,19 +170,26 @@ class CouchDB(dict):
 
         :returns: Session cookie for the current session
         """
-        if self.admin_party:
-            return None
         return self.r_session.cookies.get('AuthSession')
 
     def session_login(self, user=None, passwd=None):
         """
         Performs a session login by posting the auth information
         to the _session endpoint.
-        """
-        if self.admin_party:
-            return
 
-        self.r_session.set_credentials(user, passwd)
+        :param str user: Username used to connect to CouchDB.
+        :param str auth_token: Authentication token used to connect to CouchDB.
+        """
+        self.change_credentials(user=user, auth_token=passwd)
+
+    def change_credentials(self, user=None, auth_token=None):
+        """
+        Change login credentials.
+
+        :param str user: Username used to connect to CouchDB.
+        :param str auth_token: Authentication token used to connect to CouchDB.
+        """
+        self.r_session.set_credentials(user, auth_token)
         self.r_session.login()
 
     def session_logout(self):
@@ -177,9 +197,6 @@ class CouchDB(dict):
         Performs a session logout and clears the current session by
         sending a delete request to the _session endpoint.
         """
-        if self.admin_party:
-            return
-
         self.r_session.logout()
 
     def basic_auth_str(self):
@@ -189,13 +206,7 @@ class CouchDB(dict):
 
         :returns: Basic http authentication string
         """
-        if self.admin_party:
-            return None
-        hash_ = base64.urlsafe_b64encode(bytes_("{username}:{password}".format(
-            username=self._user,
-            password=self._auth_token
-        )))
-        return "Basic {0}".format(unicode_(hash_))
+        return self.r_session.base64_user_pass()
 
     def all_dbs(self):
         """
