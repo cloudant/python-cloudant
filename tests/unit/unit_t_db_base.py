@@ -169,7 +169,6 @@ class UnitTestDbBase(unittest.TestCase):
                 timeout=timeout
             )
 
-
     def tearDown(self):
         """
         Ensure the client is new for each test

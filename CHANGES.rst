@@ -1,5 +1,6 @@
 Unreleased
 ==========
+- [NEW] Added HTTP basic authentication support.
 - [NEW] Added ``Result.all()`` convenience method.
 - [IMPROVED] Updated ``posixpath.join`` references to use ``'/'.join`` when concatenating URL parts.
 
