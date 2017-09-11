@@ -38,7 +38,7 @@ from cloudant.index import Index, TextIndex, SpecialIndex
 from cloudant.feed import Feed, InfiniteFeed
 from tests.unit._test_util import LONG_NUMBER
 
-from .unit_t_db_base import skip_for_iam, UnitTestDbBase
+from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
 from .. import unicode_
 
 class CloudantDatabaseExceptionTests(unittest.TestCase):
@@ -151,7 +151,7 @@ class DatabaseTests(UnitTestDbBase):
             '/'.join((self.client.server_url, self.test_dbname))
         )
 
-    @skip_for_iam
+    @skip_if_not_cookie_auth
     def test_retrieve_creds(self):
         """
         Test retrieving client credentials. The client credentials are None if
@@ -371,7 +371,7 @@ class DatabaseTests(UnitTestDbBase):
         ddoc = self.db.get_design_document('_design/ddoc01')
         self.assertEqual(ddoc, local_ddoc)
 
-    @skip_for_iam
+    @skip_if_not_cookie_auth
     def test_get_security_document(self):
         """
         Test retrieving the database security document
@@ -997,7 +997,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         with self.assertRaises(TypeError):
             database.unshare_database(share)
 
-    @skip_for_iam
+    @skip_if_not_cookie_auth
     def test_security_document(self):
         """
         Test the retrieval of the security document.
@@ -1007,7 +1007,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         expected = {'cloudant': {share: ['_reader']}}
         self.assertDictEqual(self.db.security_document(), expected)
 
-    @skip_for_iam
+    @skip_if_not_cookie_auth
     def test_share_database_default_permissions(self):
         """
         Test the sharing of a database applying default permissions.
@@ -1018,7 +1018,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         expected = {'cloudant': {share: ['_reader']}}
         self.assertDictEqual(self.db.security_document(), expected)
 
-    @skip_for_iam
+    @skip_if_not_cookie_auth
     def test_share_database(self):
         """
         Test the sharing of a database.
@@ -1029,7 +1029,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
         expected = {'cloudant': {share: ['_writer']}}
         self.assertDictEqual(self.db.security_document(), expected)
 
-    @skip_for_iam
+    @skip_if_not_cookie_auth
     def test_share_database_with_redundant_role_entries(self):
         """
         Test the sharing of a database works when the list of roles contains
@@ -1072,7 +1072,7 @@ class CloudantDatabaseTests(UnitTestDbBase):
             '\'_db_updates\', \'_design\', \'_shards\', \'_security\']'
         )
 
-    @skip_for_iam
+    @skip_if_not_cookie_auth
     def test_unshare_database(self):
         """
         Test the un-sharing of a database from a specified user.
