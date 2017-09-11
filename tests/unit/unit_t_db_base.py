@@ -68,6 +68,15 @@ from cloudant.design_document import DesignDocument
 
 from .. import unicode_
 
+
+def skip_for_iam(f):
+    def wrapper(*args):
+        if args[0].use_iam:
+            raise unittest.SkipTest('Test does not support IAM clients')
+        return f(*args)
+    return wrapper
+
+
 class UnitTestDbBase(unittest.TestCase):
     """
     The base class for all unit tests targeting a database
@@ -133,14 +142,18 @@ class UnitTestDbBase(unittest.TestCase):
 
     def set_up_client(self, auto_connect=False, auto_renew=False, encoder=None,
                       timeout=(30,300)):
+        self.user = os.environ.get('DB_USER', None)
+        self.pwd = os.environ.get('DB_PASSWORD', None)
+        self.use_iam = False
+
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
-            admin_party = False
-            if (os.environ.get('ADMIN_PARTY') and
-                os.environ.get('ADMIN_PARTY') == 'true'):
-                admin_party = True
-            self.user = os.environ.get('DB_USER', None)
-            self.pwd = os.environ.get('DB_PASSWORD', None)
             self.url = os.environ['DB_URL']
+
+            admin_party = False
+            if os.environ.get('ADMIN_PARTY') == 'true':
+                admin_party = True
+
+            # construct Cloudant client (using admin party mode)
             self.client = CouchDB(
                 self.user,
                 self.pwd,
@@ -153,21 +166,36 @@ class UnitTestDbBase(unittest.TestCase):
             )
         else:
             self.account = os.environ.get('CLOUDANT_ACCOUNT')
-            self.user = os.environ.get('DB_USER')
-            self.pwd = os.environ.get('DB_PASSWORD')
             self.url = os.environ.get(
                 'DB_URL',
                 'https://{0}.cloudant.com'.format(self.account))
-            self.client = Cloudant(
-                self.user,
-                self.pwd,
-                url=self.url,
-                x_cloudant_user=self.account,
-                connect=auto_connect,
-                auto_renew=auto_renew,
-                encoder=encoder,
-                timeout=timeout
-            )
+
+            if os.environ.get('IAM_API_KEY') is None:
+                # construct Cloudant client (using cookie authentication)
+                self.client = Cloudant(
+                    self.user,
+                    self.pwd,
+                    url=self.url,
+                    x_cloudant_user=self.account,
+                    connect=auto_connect,
+                    auto_renew=auto_renew,
+                    encoder=encoder,
+                    timeout=timeout
+                )
+            else:
+                # construct Cloudant client (using IAM authentication)
+                self.use_iam = True
+                self.client = Cloudant(
+                    None,  # username is not required
+                    os.environ.get('IAM_API_KEY'),
+                    url=self.url,
+                    x_cloudant_user=self.account,
+                    connect=auto_connect,
+                    auto_renew=auto_renew,
+                    encoder=encoder,
+                    timeout=timeout,
+                    use_iam=True,
+                )
 
     def tearDown(self):
         """
@@ -284,17 +312,9 @@ class UnitTestDbBase(unittest.TestCase):
                     'bar2': ['_reader']
                 }
             }
-        if os.environ.get('ADMIN_PARTY') == 'true':
-            resp = requests.put(
-                '/'.join([self.db.database_url, '_security']),
-                data=json.dumps(self.sdoc),
-                headers={'Content-Type': 'application/json'}
-            )
-        else:
-            resp = requests.put(
-                '/'.join([self.db.database_url, '_security']),
-                auth=(self.user, self.pwd),
-                data=json.dumps(self.sdoc),
-                headers={'Content-Type': 'application/json'}
-            )
+        resp = self.client.r_session.put(
+            '/'.join([self.db.database_url, '_security']),
+            data=json.dumps(self.sdoc),
+            headers={'Content-Type': 'application/json'}
+        )
         self.assertEqual(resp.status_code, 200)
