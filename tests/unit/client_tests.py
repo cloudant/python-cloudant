@@ -39,7 +39,7 @@ from cloudant.database import CloudantDatabase
 from cloudant.error import CloudantArgumentError, CloudantClientException
 from cloudant.feed import Feed, InfiniteFeed
 
-from .unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import skip_for_iam, UnitTestDbBase
 from .. import bytes_, str_
 
 class CloudantClientExceptionTests(unittest.TestCase):
@@ -164,6 +164,7 @@ class ClientTests(UnitTestDbBase):
             self.client.disconnect()
             self.assertIsNone(self.client.r_session)
 
+    @skip_for_iam
     def test_auto_renew_enabled(self):
         """
         Test that CookieSession is used when auto_renew is enabled.
@@ -178,6 +179,7 @@ class ClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_auto_renew_enabled_with_auto_connect(self):
         """
         Test that CookieSession is used when auto_renew is enabled along with
@@ -192,6 +194,7 @@ class ClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_session(self):
         """
         Test getting session information.  
@@ -207,6 +210,7 @@ class ClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_session_cookie(self):
         """
         Test getting the session cookie.
@@ -315,6 +319,7 @@ class ClientTests(UnitTestDbBase):
         )
         self.assertEquals(all_dbs, ['animaldb'])
 
+    @skip_for_iam
     def test_basic_auth_str(self):
         """
         Test getting the basic authentication string.
@@ -589,6 +594,7 @@ class CloudantClientTests(UnitTestDbBase):
     Cloudant specific client unit tests
     """
 
+    @skip_for_iam
     def test_cloudant_session_login(self):
         """
         Test that the Cloudant client session successfully authenticates.
@@ -601,6 +607,7 @@ class CloudantClientTests(UnitTestDbBase):
         self.client.session_login()
         self.assertNotEqual(self.client.session_cookie(), old_cookie)
 
+    @skip_for_iam
     def test_cloudant_session_login_with_new_credentials(self):
         """
         Test that the Cloudant client session fails to authenticate when
@@ -613,6 +620,7 @@ class CloudantClientTests(UnitTestDbBase):
 
         self.assertTrue(str(cm.exception).find('Name or password is incorrect'))
 
+    @skip_for_iam
     def test_cloudant_context_helper(self):
         """
         Test that the cloudant context helper works as expected.
@@ -624,6 +632,7 @@ class CloudantClientTests(UnitTestDbBase):
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
 
+    @skip_for_iam
     def test_cloudant_bluemix_context_helper(self):
         """
         Test that the cloudant_bluemix context helper works as expected.
@@ -660,6 +669,7 @@ class CloudantClientTests(UnitTestDbBase):
             'https://{0}.cloudant.com'.format(self.account)
             )
 
+    @skip_for_iam
     def test_bluemix_constructor(self):
         """
         Test instantiating a client object using a VCAP_SERVICES environment
@@ -692,6 +702,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             c.disconnect()
 
+    @skip_for_iam
     def test_bluemix_constructor_specify_instance_name(self):
         """
         Test instantiating a client object using a VCAP_SERVICES environment
@@ -724,6 +735,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             c.disconnect()
 
+    @skip_for_iam
     def test_bluemix_constructor_with_multiple_services(self):
         """
         Test instantiating a client object using a VCAP_SERVICES environment
@@ -791,6 +803,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_connect_timeout(self):
         """
         Test that a connect timeout occurs when instantiating
@@ -817,6 +830,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_billing_data(self):
         """
         Test the retrieval of billing data
@@ -911,6 +925,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_volume_usage_data(self):
         """
         Test the retrieval of volume usage data
@@ -1002,6 +1017,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_requests_usage_data(self):
         """
         Test the retrieval of requests usage data
@@ -1093,6 +1109,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_shared_databases(self):
         """
         Test the retrieval of shared database list
@@ -1103,6 +1120,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_generate_api_key(self):
         """
         Test the generation of an API key for this client account
@@ -1116,6 +1134,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_cors_configuration(self):
         """
         Test the retrieval of the current CORS configuration for this client
@@ -1129,6 +1148,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_cors_origins(self):
         """
         Test the retrieval of the CORS origins list
@@ -1140,6 +1160,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_disable_cors(self):
         """
         Test disabling CORS (assuming CORS is enabled)
@@ -1160,6 +1181,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
+    @skip_for_iam
     def test_update_cors_configuration(self):
         """
         Test updating CORS configuration
