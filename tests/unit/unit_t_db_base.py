@@ -69,10 +69,10 @@ from cloudant.design_document import DesignDocument
 from .. import unicode_
 
 
-def skip_for_iam(f):
+def skip_if_not_cookie_auth(f):
     def wrapper(*args):
-        if args[0].use_iam:
-            raise unittest.SkipTest('Test does not support IAM clients')
+        if not args[0].use_cookie_auth:
+            raise unittest.SkipTest('Test only supports cookie authentication')
         return f(*args)
     return wrapper
 
@@ -144,7 +144,7 @@ class UnitTestDbBase(unittest.TestCase):
                       timeout=(30,300)):
         self.user = os.environ.get('DB_USER', None)
         self.pwd = os.environ.get('DB_PASSWORD', None)
-        self.use_iam = False
+        self.use_cookie_auth = True
 
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
             self.url = os.environ['DB_URL']
@@ -153,6 +153,7 @@ class UnitTestDbBase(unittest.TestCase):
             if os.environ.get('ADMIN_PARTY') == 'true':
                 admin_party = True
 
+            self.use_cookie_auth = False
             # construct Cloudant client (using admin party mode)
             self.client = CouchDB(
                 self.user,
@@ -170,8 +171,9 @@ class UnitTestDbBase(unittest.TestCase):
                 'DB_URL',
                 'https://{0}.cloudant.com'.format(self.account))
 
-            if os.environ.get('IAM_API_KEY') is None:
-                # construct Cloudant client (using cookie authentication)
+            if os.environ.get('RUN_BASIC_AUTH_TESTS'):
+                self.use_cookie_auth = False
+                # construct Cloudant client (using basic access authentication)
                 self.client = Cloudant(
                     self.user,
                     self.pwd,
@@ -180,11 +182,12 @@ class UnitTestDbBase(unittest.TestCase):
                     connect=auto_connect,
                     auto_renew=auto_renew,
                     encoder=encoder,
-                    timeout=timeout
+                    timeout=timeout,
+                    use_basic_auth=True,
                 )
-            else:
+            elif os.environ.get('IAM_API_KEY'):
+                self.use_cookie_auth = False
                 # construct Cloudant client (using IAM authentication)
-                self.use_iam = True
                 self.client = Cloudant(
                     None,  # username is not required
                     os.environ.get('IAM_API_KEY'),
@@ -195,6 +198,18 @@ class UnitTestDbBase(unittest.TestCase):
                     encoder=encoder,
                     timeout=timeout,
                     use_iam=True,
+                )
+            else:
+                # construct Cloudant client (using cookie authentication)
+                self.client = Cloudant(
+                    self.user,
+                    self.pwd,
+                    url=self.url,
+                    x_cloudant_user=self.account,
+                    connect=auto_connect,
+                    auto_renew=auto_renew,
+                    encoder=encoder,
+                    timeout=timeout
                 )
 
     def tearDown(self):
