@@ -120,8 +120,12 @@ class BasicSession(ClientSession):
         Overrides ``requests.Session.request`` to provide basic access
         authentication.
         """
+        auth = None
+        if self._username is not None and self._password is not None:
+            auth = (self._username, self._password)
+
         return super(BasicSession, self).request(
-            method, url, auth=(self._username, self._password), **kwargs)
+            method, url, auth=auth, **kwargs)
 
 
 class CookieSession(ClientSession):
