@@ -231,7 +231,7 @@ class ClientTests(UnitTestDbBase):
         m_response_ok.json.return_value = ['animaldb']
         m_req.return_value = m_response_ok
 
-        client = Cloudant(self.user, self.pwd, url=self.url, use_basic_auth=True)
+        client = Cloudant('foo', 'bar', url=self.url, use_basic_auth=True)
         client.connect()
         self.assertIsInstance(client.r_session, BasicSession)
 
@@ -241,7 +241,7 @@ class ClientTests(UnitTestDbBase):
             'GET',
             self.url + '/_all_dbs',
             allow_redirects=True,
-            auth=(self.user, self.pwd),  # uses HTTP Basic Auth
+            auth=('foo', 'bar'),  # uses HTTP Basic Auth
             timeout=None
         )
 
