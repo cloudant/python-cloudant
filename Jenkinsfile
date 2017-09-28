@@ -10,6 +10,7 @@ def test_python(pythonVersion)
         sh """  virtualenv tmp -p /usr/local/lib/python${pythonVersion}/bin/${pythonVersion.startsWith('3') ? "python3" : "python"}
                 . ./tmp/bin/activate
                 echo \$DB_USER
+                echo testing
                 export RUN_CLOUDANT_TESTS=1
                 export CLOUDANT_ACCOUNT=\$DB_USER
                 # Temporarily disable the _db_updates tests pending resolution of case 71610
