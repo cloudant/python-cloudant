@@ -55,8 +55,8 @@ Related Documentation
 =====================
 
 * `Cloudant Python client library docs (readthedocs.io) <http://python-cloudant.readthedocs.io>`_
-* `Cloudant documentation <http://docs.cloudant.com/>`_
-* `Cloudant for developers <https://cloudant.com/for-developers/>`_
+* `Cloudant documentation <https://console.bluemix.net/docs/services/Cloudant/cloudant.html#overview>`_
+* `Cloudant Learning Center <https://developer.ibm.com/clouddataservices/cloudant-learning-center/>`_
 
 ===========
 Development

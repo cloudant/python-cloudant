@@ -811,7 +811,7 @@ class CouchDatabase(dict):
                 # Process data (in text format).
 
         For more detail on list functions, refer to the
-        `Cloudant list documentation <https://docs.cloudant.com/
+        `Cloudant list documentation <https://console.bluemix.net/docs/services/Cloudant/api/
         design_documents.html#list-functions>`_.
 
         :param str ddoc_id: Design document id used to get result.
@@ -849,7 +849,7 @@ class CouchDatabase(dict):
                 # Process data (in text format).
 
         For more detail on show functions, refer to the
-        `Cloudant show documentation <https://docs.cloudant.com/
+        `Cloudant show documentation <https://console.bluemix.net/docs/services/Cloudant/api/
         design_documents.html#show-functions>`_.
 
         :param str ddoc_id: Design document id used to get the result.
@@ -897,7 +897,7 @@ class CouchDatabase(dict):
                                             data={'month': 'July'})
 
         For more details, see the `update handlers documentation
-        <https://docs.cloudant.com/design_documents.html#update-handlers>`_.
+        <https://console.bluemix.net/docs/services/Cloudant/api/design_documents.html#update-handlers>`_.
 
         :param str ddoc_id: Design document id used to get result.
         :param str handler_name: Name used in part to identify the
@@ -970,7 +970,8 @@ class CloudantDatabase(CouchDatabase):
 
         :param str username: Cloudant user to share the database with.
         :param list roles: A list of
-            `roles <https://docs.cloudant.com/authorization.html#roles>`_
+            `roles
+            <https://console.bluemix.net/docs/services/Cloudant/api/authorization.html#roles>`_
             to grant to the named user.
 
         :returns: Share database status in JSON format
