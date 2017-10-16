@@ -754,7 +754,7 @@ class Cloudant(CouchDB):
         return resp.json()
 
     @classmethod
-    def bluemix(cls, vcap_services, instance_name=None, **kwargs):
+    def bluemix(cls, vcap_services, instance_name=None, service_name=None, **kwargs):
         """
         Create a Cloudant session using a VCAP_SERVICES environment variable.
 
@@ -762,6 +762,7 @@ class Cloudant(CouchDB):
         :type vcap_services: dict or str
         :param str instance_name: Optional Bluemix instance name. Only required
             if multiple Cloudant instances are available.
+        :param str service_name: Optional Bluemix service name.
 
         Example usage:
 
@@ -775,7 +776,10 @@ class Cloudant(CouchDB):
 
             print client.all_dbs()
         """
-        service = CloudFoundryService(vcap_services, instance_name)
+        service_name = service_name or 'cloudantNoSQLDB'  # default service
+        service = CloudFoundryService(vcap_services,
+                                      instance_name=instance_name,
+                                      service_name=service_name)
         return Cloudant(service.username,
                         service.password,
                         url=service.url,

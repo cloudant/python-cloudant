@@ -1,6 +1,7 @@
 Unreleased
 ==========
 - [NEW] Added ``Result.all()`` convenience method.
+- [NEW] Allow ``service_name`` to be specified when instantiating from a Bluemix VCAP_SERVICES environment variable.
 - [IMPROVED] Updated ``posixpath.join`` references to use ``'/'.join`` when concatenating URL parts.
 - [IMPROVED] Updated documentation by replacing deprecated Cloudant links with the latest Bluemix links.
 
