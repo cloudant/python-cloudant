@@ -2,6 +2,7 @@ Unreleased
 ==========
 - [NEW] Added ``Result.all()`` convenience method.
 - [IMPROVED] Updated ``posixpath.join`` references to use ``'/'.join`` when concatenating URL parts.
+- [IMPROVED] Updated documentation by replacing deprecated Cloudant links with the latest Bluemix links.
 
 2.6.0 (2017-08-10)
 ==================

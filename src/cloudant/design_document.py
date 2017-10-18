@@ -68,7 +68,7 @@ class DesignDocument(Document):
             ddoc.save()
 
         For more details, see the `Update Validators documentation
-        <https://docs.cloudant.com/design_documents.html#update-validators>`_.
+        <https://console.bluemix.net/docs/services/Cloudant/api/design_documents.html#update-validators>`_.
 
         :returns: Dictionary containing update validator functions
         """
@@ -104,7 +104,7 @@ class DesignDocument(Document):
         :func:`~cloudant.database.CouchDatabase.changes`
 
         For more details, see the `Filter functions documentation
-        <https://docs.cloudant.com/design_documents.html#filter-functions>`_.
+        <https://console.bluemix.net/docs/services/Cloudant/api/design_documents.html#filter-functions>`_.
 
         :returns: Dictionary containing filter function names and functions
             as key/value
@@ -179,10 +179,10 @@ class DesignDocument(Document):
         Once the Cloudant Geo index is saved to the remote database, you can
         query the index with a GET request.  To issue a request against the
         ``_geo`` endpoint, see the steps outlined in the `endpoint access
-        documentation <getting_started.html#endpoint-access>`_.
+        <getting_started.html#endpoint-access>`_ section.
 
         For more details, see the `Cloudant Geospatial
-        documentation <https://docs.cloudant.com/geo.html>`_.
+        documentation <https://console.bluemix.net/docs/services/Cloudant/api/cloudant-geo.html>`_.
 
         :return: Dictionary containing Cloudant Geo names and index objects
             as key/value
@@ -241,7 +241,7 @@ class DesignDocument(Document):
         rewritten as ``/$DATABASE/_design/doc/_rewrite/new?k=v``.
 
         For more details on URL rewriting, see the `rewrite rules
-        documentation <https://docs.cloudant.com/design_documents.html
+        documentation <https://console.bluemix.net/docs/services/Cloudant/api/design_documents.html
         #rewrite-rules>`_.
 
         :returns: List of dictionaries containing rewrite rules as key/value
