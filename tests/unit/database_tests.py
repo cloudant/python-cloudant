@@ -1198,22 +1198,22 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         index = self.db.create_query_index(fields=['name', 'age'])
         self.assertIsInstance(index, Index)
+
         ddoc = self.db[index.design_document_id]
+
+        self.assertEquals(ddoc['_id'], index.design_document_id)
         self.assertTrue(ddoc['_rev'].startswith('1-'))
-        self.assertEqual(ddoc,
-                {'_id': index.design_document_id,
-                 '_rev': ddoc['_rev'],
-                 'indexes': {},
-                 'lists': {},
-                 'shows': {},
-                 'language': 'query',
-                 'views': {index.name: {'map': {'fields': {'name': 'asc',
-                                                           'age': 'asc'}},
-                                        'reduce': '_count',
-                                        'options': {'def': {'fields': ['name',
-                                                                       'age']},
-                                                    }}}}
-            )
+
+        self.assertEquals(ddoc['indexes'], {})
+        self.assertEquals(ddoc['language'], 'query')
+        self.assertEquals(ddoc['lists'], {})
+        self.assertEquals(ddoc['shows'], {})
+
+        index = ddoc['views'][index.name]
+        self.assertEquals(index['map']['fields']['age'], 'asc')
+        self.assertEquals(index['map']['fields']['name'], 'asc')
+        self.assertEquals(index['options']['def']['fields'], ['name', 'age'])
+        self.assertEquals(index['reduce'], '_count')
 
     def test_create_text_index(self):
         """
@@ -1225,25 +1225,26 @@ class CloudantDatabaseTests(UnitTestDbBase):
                     {'name': 'age', 'type':'number'}]
         )
         self.assertIsInstance(index, TextIndex)
+
         ddoc = self.db[index.design_document_id]
+
+        self.assertEquals(ddoc['_id'], index.design_document_id)
         self.assertTrue(ddoc['_rev'].startswith('1-'))
-        self.assertEqual(ddoc,
-                {'_id': index.design_document_id,
-                 '_rev': ddoc['_rev'],
-                 'language': 'query',
-                 'views': {},
-                 'lists': {},
-                 'shows': {},
-                 'indexes': {index.name: {'index': {'index_array_lengths': True,
-                                'fields': [{'name': 'name', 'type': 'string'},
-                                           {'name': 'age', 'type': 'number'}],
-                                'default_field': {},
-                                'default_analyzer': 'keyword',
-                                'selector': {}},
-                      'analyzer': {'name': 'perfield',
-                                   'default': 'keyword',
-                                   'fields': {'$default': 'standard'}}}}}
-            )
+
+        self.assertEquals(ddoc['language'], 'query')
+        self.assertEquals(ddoc['lists'], {})
+        self.assertEquals(ddoc['shows'], {})
+        self.assertEquals(ddoc['views'], {})
+
+        text_index = ddoc['indexes'][index.name]
+        self.assertEquals(text_index['analyzer']['default'], 'keyword')
+        self.assertEquals(text_index['analyzer']['fields']['$default'], 'standard')
+        self.assertEquals(text_index['analyzer']['name'], 'perfield')
+        self.assertEquals(text_index['index']['default_analyzer'], 'keyword')
+        self.assertEquals(text_index['index']['default_field'], {})
+        self.assertEquals(text_index['index']['fields'], [{'name': 'name', 'type': 'string'}, {'name': 'age', 'type': 'number'}])
+        self.assertEquals(text_index['index']['selector'], {})
+        self.assertTrue(text_index['index']['index_array_lengths'])
 
     def test_create_all_fields_text_index(self):
         """
@@ -1251,36 +1252,38 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         index = self.db.create_query_index(index_type='text')
         self.assertIsInstance(index, TextIndex)
+
         ddoc = self.db[index.design_document_id]
+
+        self.assertEquals(ddoc['_id'], index.design_document_id)
         self.assertTrue(ddoc['_rev'].startswith('1-'))
-        self.assertEqual(ddoc,
-                {'_id': index.design_document_id,
-                 '_rev': ddoc['_rev'],
-                 'language': 'query',
-                 'views': {},
-                 'lists': {},
-                 'shows': {},
-                 'indexes': {index.name: {'index': {'index_array_lengths': True,
-                                'fields': 'all_fields',
-                                'default_field': {},
-                                'default_analyzer': 'keyword',
-                                'selector': {}},
-                      'analyzer': {'name': 'perfield',
-                                   'default': 'keyword',
-                                   'fields': {'$default': 'standard'}}}}}
-            )
+
+        self.assertEquals(ddoc['language'], 'query')
+        self.assertEquals(ddoc['lists'], {})
+        self.assertEquals(ddoc['shows'], {})
+        self.assertEquals(ddoc['views'], {})
+
+        index = ddoc['indexes'][index.name]
+        self.assertEquals(index['analyzer']['default'], 'keyword')
+        self.assertEquals(index['analyzer']['fields'], {'$default': 'standard'})
+        self.assertEquals(index['analyzer']['name'], 'perfield')
+        self.assertEquals(index['index']['default_analyzer'], 'keyword')
+        self.assertEquals(index['index']['default_field'], {})
+        self.assertEquals(index['index']['fields'], 'all_fields')
+        self.assertEquals(index['index']['selector'], {})
+        self.assertTrue(index['index']['index_array_lengths'])
 
     def test_create_multiple_indexes_one_ddoc(self):
         """
         Tests that multiple indexes of different types can be stored in one
         design document.
         """
-        json_index = self.db.create_query_index(
+        index = self.db.create_query_index(
             'ddoc001',
             'json-index-001',
             fields=['name', 'age']
         )
-        self.assertIsInstance(json_index, Index)
+        self.assertIsInstance(index, Index)
         search_index = self.db.create_query_index(
             'ddoc001',
             'text-index-001',
@@ -1289,32 +1292,31 @@ class CloudantDatabaseTests(UnitTestDbBase):
                     {'name': 'age', 'type':'number'}]
         )
         self.assertIsInstance(search_index, TextIndex)
+
         ddoc = self.db['_design/ddoc001']
+
+        self.assertEquals(ddoc['_id'], index.design_document_id)
         self.assertTrue(ddoc['_rev'].startswith('2-'))
-        self.assertEqual(ddoc,
-                {'_id': '_design/ddoc001',
-                 '_rev': ddoc['_rev'],
-                 'language': 'query',
-                 'lists': {},
-                 'shows': {},
-                 'views': {'json-index-001': {
-                                'map': {'fields': {'name': 'asc',
-                                                   'age': 'asc'}},
-                                        'reduce': '_count',
-                                        'options': {'def': {'fields': ['name',
-                                                                       'age']},
-                                                    }}},
-                 'indexes': {'text-index-001': {
-                                'index': {'index_array_lengths': True,
-                                'fields': [{'name': 'name', 'type': 'string'},
-                                           {'name': 'age', 'type': 'number'}],
-                                'default_field': {},
-                                'default_analyzer': 'keyword',
-                                'selector': {}},
-                      'analyzer': {'name': 'perfield',
-                                   'default': 'keyword',
-                                   'fields': {'$default': 'standard'}}}}}
-            )
+
+        self.assertEquals(ddoc['language'], 'query')
+        self.assertEquals(ddoc['lists'], {})
+        self.assertEquals(ddoc['shows'], {})
+
+        json_index = ddoc['views']['json-index-001']
+        self.assertEquals(json_index['map']['fields']['age'], 'asc')
+        self.assertEquals(json_index['map']['fields']['name'], 'asc')
+        self.assertEquals(json_index['options']['def']['fields'], ['name', 'age'])
+        self.assertEquals(json_index['reduce'], '_count')
+
+        text_index = ddoc['indexes']['text-index-001']
+        self.assertEquals(text_index['analyzer']['default'], 'keyword')
+        self.assertEquals(text_index['analyzer']['fields']['$default'], 'standard')
+        self.assertEquals(text_index['analyzer']['name'], 'perfield')
+        self.assertEquals(text_index['index']['default_analyzer'], 'keyword')
+        self.assertEquals(text_index['index']['default_field'], {})
+        self.assertEquals(text_index['index']['fields'], [{'name': 'name', 'type': 'string'}, {'name': 'age', 'type': 'number'}])
+        self.assertEquals(text_index['index']['selector'], {})
+        self.assertTrue(text_index['index']['index_array_lengths'])
 
     def test_create_query_index_failure(self):
         """
@@ -1381,28 +1383,32 @@ class CloudantDatabaseTests(UnitTestDbBase):
         """
         self.db.create_query_index('ddoc001', 'json-idx-001', fields=['name', 'age'])
         self.db.create_query_index('ddoc001', 'text-idx-001', 'text')
-        self.assertEqual(
-            self.db.get_query_indexes(raw_result=True),
-            {'indexes': [
-                {'ddoc': None,
-                 'name': '_all_docs',
-                 'type': 'special',
-                 'def': {'fields': [{'_id': 'asc'}]}},
-                {'ddoc': '_design/ddoc001',
-                 'name': 'json-idx-001',
-                 'type': 'json',
-                 'def': {'fields': [{'name': 'asc'}, {'age': 'asc'}]}},
-                {'ddoc': '_design/ddoc001',
-                 'name': 'text-idx-001',
-                 'type': 'text',
-                 'def': {'index_array_lengths': True,
-                         'fields': [],
-                         'default_field': {},
-                         'default_analyzer': 'keyword',
-                         'selector': {}}}
-            ],
-            'total_rows' : 3}
-        )
+
+        indexes = self.db.get_query_indexes(raw_result=True)
+
+        self.assertEquals(indexes['total_rows'], 3)
+
+        all_docs_index = indexes['indexes'][0]
+        self.assertEquals(all_docs_index['ddoc'], None)
+        self.assertEquals(all_docs_index['def']['fields'], [{'_id': 'asc'}])
+        self.assertEquals(all_docs_index['name'], '_all_docs')
+        self.assertEquals(all_docs_index['type'], 'special')
+
+        json_index = indexes['indexes'][1]
+        self.assertEquals(json_index['ddoc'], '_design/ddoc001')
+        self.assertEquals(json_index['def']['fields'], [{'name': 'asc'}, {'age': 'asc'}])
+        self.assertEquals(json_index['name'], 'json-idx-001')
+        self.assertEquals(json_index['type'], 'json')
+
+        text_index = indexes['indexes'][2]
+        self.assertEquals(text_index['ddoc'], '_design/ddoc001')
+        self.assertEquals(text_index['def']['default_analyzer'], 'keyword')
+        self.assertEquals(text_index['def']['default_field'], {})
+        self.assertEquals(text_index['def']['fields'], [])
+        self.assertEquals(text_index['def']['selector'], {})
+        self.assertEquals(text_index['name'], 'text-idx-001')
+        self.assertEquals(text_index['type'], 'text')
+        self.assertTrue(text_index['def']['index_array_lengths'])
 
     def test_get_query_indexes(self):
         """
