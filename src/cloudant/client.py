@@ -177,8 +177,8 @@ class CouchDB(dict):
         Performs a session login by posting the auth information
         to the _session endpoint.
 
-        :param str user: Username used to connect to CouchDB.
-        :param str auth_token: Authentication token used to connect to CouchDB.
+        :param str user: Username used to connect to server.
+        :param str auth_token: Authentication token used to connect to server.
         """
         self.change_credentials(user=user, auth_token=passwd)
 
@@ -186,8 +186,8 @@ class CouchDB(dict):
         """
         Change login credentials.
 
-        :param str user: Username used to connect to CouchDB.
-        :param str auth_token: Authentication token used to connect to CouchDB.
+        :param str user: Username used to connect to server.
+        :param str auth_token: Authentication token used to connect to server.
         """
         self.r_session.set_credentials(user, auth_token)
         self.r_session.login()
