@@ -34,7 +34,7 @@ from time import sleep
 
 from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
 from cloudant.client import Cloudant, CouchDB
-from cloudant.client_session import BasicSession, CookieSession
+from cloudant._client_session import BasicSession, CookieSession
 from cloudant.database import CloudantDatabase
 from cloudant.error import CloudantArgumentError, CloudantClientException
 from cloudant.feed import Feed, InfiniteFeed
@@ -225,7 +225,7 @@ class ClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
-    @mock.patch('cloudant.client_session.Session.request')
+    @mock.patch('cloudant._client_session.Session.request')
     def test_session_basic(self, m_req):
         """
         Test using basic access authentication.
@@ -251,7 +251,7 @@ class ClientTests(UnitTestDbBase):
 
         self.assertEquals(all_dbs, ['animaldb'])
 
-    @mock.patch('cloudant.client_session.Session.request')
+    @mock.patch('cloudant._client_session.Session.request')
     def test_session_basic_with_no_credentials(self, m_req):
         """
         Test using basic access authentication with no credentials.
@@ -276,7 +276,7 @@ class ClientTests(UnitTestDbBase):
 
         self.assertIsInstance(db, CloudantDatabase)
 
-    @mock.patch('cloudant.client_session.Session.request')
+    @mock.patch('cloudant._client_session.Session.request')
     def test_change_credentials_basic(self, m_req):
         """
         Test changing credentials when using basic access authentication.

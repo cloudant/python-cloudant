@@ -23,7 +23,7 @@ import os
 import requests
 import time
 
-from cloudant.client_session import CookieSession
+from cloudant._client_session import CookieSession
 
 from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
 

@@ -18,7 +18,7 @@ instance.
 """
 import json
 
-from .client_session import (
+from ._client_session import (
     BasicSession,
     ClientSession,
     CookieSession,
