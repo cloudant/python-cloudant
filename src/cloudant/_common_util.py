@@ -498,18 +498,18 @@ class IAMSession(ClientSession):
 class CloudFoundryService(object):
     """ Manages Cloud Foundry service configuration. """
 
-    def __init__(self, vcap_services, name=None):
+    def __init__(self, vcap_services, instance_name=None, service_name=None):
         try:
             services = vcap_services
             if not isinstance(vcap_services, dict):
                 services = json.loads(vcap_services)
 
-            cloudant_services = services.get('cloudantNoSQLDB', [])
+            cloudant_services = services.get(service_name, [])
 
             # use first service if no name given and only one service present
-            use_first = name is None and len(cloudant_services) == 1
+            use_first = instance_name is None and len(cloudant_services) == 1
             for service in cloudant_services:
-                if use_first or service.get('name') == name:
+                if use_first or service.get('name') == instance_name:
                     credentials = service['credentials']
                     self._host = credentials['host']
                     self._name = service.get('name')

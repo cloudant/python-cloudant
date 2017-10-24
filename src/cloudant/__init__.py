@@ -92,7 +92,7 @@ def cloudant_iam(account_name, api_key, **kwargs):
     cloudant_session.disconnect()
 
 @contextlib.contextmanager
-def cloudant_bluemix(vcap_services, instance_name=None, **kwargs):
+def cloudant_bluemix(vcap_services, instance_name=None, service_name=None, **kwargs):
     """
     Provides a context manager to create a Cloudant session and provide access
     to databases, docs etc.
@@ -101,6 +101,7 @@ def cloudant_bluemix(vcap_services, instance_name=None, **kwargs):
     :type vcap_services: dict or str
     :param str instance_name: Optional Bluemix instance name. Only required if
         multiple Cloudant instances are available.
+    :param str service_name: Optional Bluemix service name.
     :param str encoder: Optional json Encoder object used to encode
         documents for storage. Defaults to json.JSONEncoder.
 
@@ -149,11 +150,10 @@ def cloudant_bluemix(vcap_services, instance_name=None, **kwargs):
             print client.all_dbs()
             # ...
     """
-    service = CloudFoundryService(vcap_services, instance_name)
-    cloudant_session = Cloudant(
-        service.username,
-        service.password,
-        url=service.url,
+    cloudant_session = Cloudant.bluemix(
+        vcap_services,
+        instance_name=instance_name,
+        service_name=service_name,
         **kwargs
     )
     cloudant_session.connect()

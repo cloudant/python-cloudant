@@ -552,6 +552,34 @@ class CloudantClientTests(UnitTestDbBase):
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
 
+    def test_cloudant_bluemix_dedicated_context_helper(self):
+        """
+        Test that the cloudant_bluemix context helper works as expected when
+        specifying a service name.
+        """
+        instance_name = 'Cloudant NoSQL DB-wq'
+        service_name = 'cloudantNoSQLDB Dedicated'
+        vcap_services = {service_name: [{
+          'credentials': {
+            'username': self.user,
+            'password': self.pwd,
+            'host': '{0}.cloudant.com'.format(self.account),
+            'port': 443,
+            'url': self.url
+          },
+          'name': instance_name,
+        }]}
+
+        try:
+            with cloudant_bluemix(vcap_services,
+                                  instance_name=instance_name,
+                                  service_name=service_name) as c:
+                self.assertIsInstance(c, Cloudant)
+                self.assertIsInstance(c.r_session, requests.Session)
+                self.assertEquals(c.session()['userCtx']['name'], self.user)
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
+
     def test_constructor_with_account(self):
         """
         Test instantiating a client object using an account name
