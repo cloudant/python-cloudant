@@ -23,9 +23,9 @@ import os
 import requests
 import time
 
-from cloudant._common_util import CookieSession
+from cloudant._client_session import CookieSession
 
-from .unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
 
 @unittest.skipIf(os.environ.get('ADMIN_PARTY') == 'true', 'Skipping - Admin Party mode')
 class AuthRenewalTests(UnitTestDbBase):
@@ -44,7 +44,8 @@ class AuthRenewalTests(UnitTestDbBase):
         Override UnitTestDbBase.tearDown() with no tear down
         """
         pass
-        
+
+    @skip_if_not_cookie_auth
     def test_client_db_doc_stack_success(self):
         """
         Ensure that auto renewal of cookie auth happens as expected and applies
@@ -109,6 +110,7 @@ class AuthRenewalTests(UnitTestDbBase):
             self.client.disconnect()
             del self.client
 
+    @skip_if_not_cookie_auth
     def test_client_db_doc_stack_failure(self):
         """
         Ensure that when the regular requests.Session is used that

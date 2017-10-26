@@ -1,5 +1,7 @@
 Unreleased
 ==========
+- [NEW] Added API for upcoming Bluemix Identity and Access Management support for Cloudant on Bluemix. Note: IAM API key support is not yet enabled in the service.
+- [NEW] Added HTTP basic authentication support.
 - [NEW] Added ``Result.all()`` convenience method.
 - [NEW] Allow ``service_name`` to be specified when instantiating from a Bluemix VCAP_SERVICES environment variable.
 - [IMPROVED] Updated ``posixpath.join`` references to use ``'/'.join`` when concatenating URL parts.

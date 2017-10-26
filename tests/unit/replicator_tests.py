@@ -34,7 +34,7 @@ from cloudant.replicator import Replicator
 from cloudant.document import Document
 from cloudant.error import CloudantReplicatorException, CloudantClientException
 
-from .unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
 from .. import unicode_
 
 class CloudantReplicatorExceptionTests(unittest.TestCase):
@@ -157,6 +157,7 @@ class ReplicatorTests(UnitTestDbBase):
         clone = Replicator(self.client)
         clone.create_replication(self.db, self.target_db)
 
+    @skip_if_not_cookie_auth
     @flaky(max_runs=3)
     def test_create_replication(self):
         """
@@ -300,6 +301,7 @@ class ReplicatorTests(UnitTestDbBase):
         match = [repl_id for repl_id in all_repl_ids if repl_id in repl_ids]
         self.assertEqual(set(repl_ids), set(match))
 
+    @skip_if_not_cookie_auth
     def test_retrieve_replication_state(self):
         """
         Test that the replication state can be retrieved for a replication
@@ -341,6 +343,7 @@ class ReplicatorTests(UnitTestDbBase):
             )
             self.assertIsNone(repl_state)
 
+    @skip_if_not_cookie_auth
     def test_stop_replication(self):
         """
         Test that a replication can be stopped.
@@ -376,6 +379,7 @@ class ReplicatorTests(UnitTestDbBase):
                 'Replication with id {} not found.'.format(repl_id)
             )
 
+    @skip_if_not_cookie_auth
     def test_follow_replication(self):
         """
         Test that follow_replication(...) properly iterates updated
