@@ -1,5 +1,5 @@
-Unreleased
-==========
+2.7.0 (2017-10-31)
+==================
 - [NEW] Added API for upcoming Bluemix Identity and Access Management support for Cloudant on Bluemix. Note: IAM API key support is not yet enabled in the service.
 - [NEW] Added HTTP basic authentication support.
 - [NEW] Added ``Result.all()`` convenience method.
