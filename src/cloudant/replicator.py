@@ -69,6 +69,10 @@ class Replicator(object):
         :returns: Replication document as a Document instance
         """
 
+        # WIP: Handle 'repl_id' when 'source' and 'target' parameters exist
+        if not repl_id and source_db and isinstance(source_db, str):
+            repl_id = source_db
+
         data = dict(
             _id=repl_id if repl_id else str(uuid.uuid4()),
             **kwargs
@@ -93,7 +97,8 @@ class Replicator(object):
                 )
 
         if not data.get('user_ctx'):
-            if not target_db.admin_party:
+            if (target_db and not target_db.admin_party or
+                    self.database.creds and self.database.creds.get('user_ctx')):
                 data['user_ctx'] = self.database.creds['user_ctx']
 
         return self.database.create_document(data, throw_on_exists=True)

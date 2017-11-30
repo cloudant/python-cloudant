@@ -21,7 +21,7 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 
 """
-
+import os
 import unittest
 import uuid
 import time
@@ -155,7 +155,11 @@ class ReplicatorTests(UnitTestDbBase):
 
     def test_replication_with_generated_id(self):
         clone = Replicator(self.client)
-        clone.create_replication(self.db, self.target_db)
+        repl_id = clone.create_replication(
+            self.db,
+            self.target_db
+        )
+        repl_id.delete()
 
     @skip_if_not_cookie_auth
     @flaky(max_runs=3)
@@ -178,6 +182,62 @@ class ReplicatorTests(UnitTestDbBase):
         # If Admin Party mode then user_ctx will not be in the key list
         if self.client.admin_party:
             expected_keys.pop()
+        self.assertTrue(all(x in list(repl_doc.keys()) for x in expected_keys))
+        self.assertEqual(repl_doc['_id'], repl_id)
+        self.assertTrue(repl_doc['_rev'].startswith('1-'))
+        # Now that we know that the replication document was created,
+        # check that the replication occurred.
+        repl_doc = Document(self.replicator.database, repl_id)
+        repl_doc.fetch()
+        if repl_doc.get('_replication_state') not in ('completed', 'error'):
+            changes = self.replicator.database.changes(
+                feed='continuous',
+                heartbeat=1000)
+            beats = 0
+            for change in changes:
+                if beats == 300:
+                    changes.stop()
+                if not change:
+                    beats += 1
+                    continue
+                elif change.get('id') == repl_id:
+                    beats = 0
+                    repl_doc = Document(self.replicator.database, repl_id)
+                    repl_doc.fetch()
+                    if repl_doc.get('_replication_state') in ('completed', 'error'):
+                        changes.stop()
+        self.assertEqual(repl_doc.get('_replication_state'), 'completed')
+        self.assertEqual(self.db.all_docs(), self.target_db.all_docs())
+        self.assertTrue(
+            all(x in self.target_db.keys(True) for x in [
+                'julia000',
+                'julia001',
+                'julia002'
+            ])
+        )
+
+    @unittest.skipUnless(
+        os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true',
+        'Skipping create replicator with source/target strings test'
+    )
+    @flaky(max_runs=3)
+    def test_create_repl_with_src_trg_as_strs(self):
+        """
+        Test that the replication document gets created and that the
+        replication is successful using source/target strings.
+        """
+        self.populate_db_with_documents(3)
+        repl_id = 'test-repl-{}'.format(unicode_(uuid.uuid4()))
+
+        repl_doc = self.replicator.create_replication(
+            repl_id,
+            source=self.db.database_url,
+            target=self.target_db.database_url
+        )
+        self.replication_ids.append(repl_id)
+        # Test that the replication document was created
+        # Note: removed 'user_ctx' as there's no way to check Admin Party mode on a source/target string
+        expected_keys = ['_id', '_rev', 'source', 'target']
         self.assertTrue(all(x in list(repl_doc.keys()) for x in expected_keys))
         self.assertEqual(repl_doc['_id'], repl_id)
         self.assertTrue(repl_doc['_rev'].startswith('1-'))
@@ -281,6 +341,32 @@ class ReplicatorTests(UnitTestDbBase):
                 'You must specify either a target_db Database '
                 'object or a manually composed \'target\' string/dict.'
             )
+
+    @unittest.skipIf(
+        os.environ.get('RUN_CLOUDANT_TESTS') is None,
+        'Skipping create replicator with source/target strings missing credentials test')
+    def test_create_repl_with_src_trg_as_strs_without_creds(self):
+        """
+        Test that the replication document is not created and fails as expected
+        when credentials are missing in source database string.
+        """
+        repl_id = 'test-repl-{}'.format(unicode_(uuid.uuid4()))
+        repl_doc = self.replicator.create_replication(
+            repl_id,
+            source=self.db.database_url,
+            target=self.target_db.database_url)
+        repl_doc = Document(self.replicator.database, repl_id)
+        repl_doc.fetch()
+        if repl_doc.get('_replication_state') not in ('completed', 'error'):
+            changes = self.replicator.database.changes()
+            for change in changes:
+                    repl_doc = Document(self.replicator.database, repl_id)
+                    repl_doc.fetch()
+                    if repl_doc.get('_replication_state') in ('completed', 'error'):
+                        changes.stop()
+        self.assertEqual(repl_doc.get('_replication_state'), 'error')
+        self.assertTrue(repl_doc.get('_replication_state_reason')
+                        .startswith('unauthorized: unauthorized to access or create database'))
 
     def test_list_replications(self):
         """
@@ -401,7 +487,6 @@ class ReplicatorTests(UnitTestDbBase):
         self.assertTrue(len(repl_states) > 0)
         self.assertEqual(repl_states[-1], 'completed')
         self.assertNotIn('error', repl_states)
-
 
 if __name__ == '__main__':
     unittest.main()
