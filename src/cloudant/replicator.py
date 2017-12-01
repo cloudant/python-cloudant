@@ -50,14 +50,6 @@ class Replicator(object):
             ``CouchDatabase`` or ``CloudantDatabase`` instance.
         :param str repl_id: Optional replication id.  Generated internally if
             not explicitly set.
-        :param source: Optional ``str`` or ``dict`` representing the source
-            database, along with authentication info, if any.  Composed
-            internally if not explicitly set and not in CouchDB Admin Party
-            mode.
-        :param target: Optional ``str`` or ``dict`` representing the
-            target database, possibly including authentication info.  Composed
-            internally if not explicitly set and not in CouchDB Admin Party
-            mode.
         :param dict user_ctx: Optional user to act as.  Composed internally
             if not explicitly set and not in CouchDB Admin Party
             mode.
@@ -74,26 +66,25 @@ class Replicator(object):
             **kwargs
         )
 
-        if not data.get('source'):
-            if source_db is None:
-                raise CloudantReplicatorException(101)
-            data['source'] = {'url': source_db.database_url}
-            if not source_db.admin_party:
-                data['source'].update(
-                    {'headers': {'Authorization': source_db.creds['basic_auth']}}
-                )
+        if source_db is None:
+            raise CloudantReplicatorException(101)
+        data['source'] = {'url': source_db.database_url}
+        if not source_db.admin_party:
+            data['source'].update(
+                {'headers': {'Authorization': source_db.creds['basic_auth']}}
+            )
 
-        if not data.get('target'):
-            if target_db is None:
-                raise CloudantReplicatorException(102)
-            data['target'] = {'url': target_db.database_url}
-            if not target_db.admin_party:
-                data['target'].update(
-                    {'headers': {'Authorization': target_db.creds['basic_auth']}}
-                )
+        if target_db is None:
+            raise CloudantReplicatorException(102)
+        data['target'] = {'url': target_db.database_url}
+        if not target_db.admin_party:
+            data['target'].update(
+                {'headers': {'Authorization': target_db.creds['basic_auth']}}
+            )
 
         if not data.get('user_ctx'):
-            if not target_db.admin_party:
+            if (target_db and not target_db.admin_party or
+                    self.database.creds):
                 data['user_ctx'] = self.database.creds['user_ctx']
 
         return self.database.create_document(data, throw_on_exists=True)
