@@ -155,7 +155,11 @@ class ReplicatorTests(UnitTestDbBase):
 
     def test_replication_with_generated_id(self):
         clone = Replicator(self.client)
-        clone.create_replication(self.db, self.target_db)
+        repl_id = clone.create_replication(
+            self.db,
+            self.target_db
+        )
+        self.replication_ids.append(repl_id['_id'])
 
     @skip_if_not_cookie_auth
     @flaky(max_runs=3)
