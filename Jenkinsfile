@@ -58,12 +58,11 @@ stage('Checkout'){
 }
 
 stage('Test'){
-  parallel(
-    'Python2-BASIC':  { setupPythonAndTest('2.7.12', 'basic')  },
-    'Python3-BASIC':  { setupPythonAndTest('3.5.2',  'basic')  },
-    'Python2-COOKIE': { setupPythonAndTest('2.7.12', 'cookie') },
-    'Python3-COOKIE': { setupPythonAndTest('3.5.2',  'cookie') },
-    'Python2-IAM':    { setupPythonAndTest('2.7.12', 'iam')    },
-    'Python3-IAM':    { setupPythonAndTest('3.5.2',  'iam')    }
-  )
+  axes = [:]
+  ['2.7.12','3.5.2'].each { version ->
+    ['basic','cookie','iam'].each { auth ->
+       axes.put("Python${version}-${auth}", {setupPythonAndTest(version, auth)})
+    }
+  }
+  parallel(axes)
 }
