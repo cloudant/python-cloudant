@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ class Replicator(object):
             if repl_doc:
                 yield repl_doc
             if state is not None and state in ['error', 'completed']:
-                raise StopIteration
+                return
 
             # Now listen on changes feed for the state
             for change in self.database.changes():
@@ -167,7 +167,7 @@ class Replicator(object):
                     if repl_doc is not None:
                         yield repl_doc
                     if state is not None and state in ['error', 'completed']:
-                        raise StopIteration
+                        return
 
     def stop_replication(self, repl_id):
         """
