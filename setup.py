@@ -23,13 +23,17 @@ from setuptools import setup, find_packages
 
 requirements_file = open('requirements.txt')
 requirements = requirements_file.read().strip().split('\n')
+requirements_file.close()
+version_file = open('VERSION')
+version = version_file.read().strip()
+version_file.close()
 
 setup_args = {
     'description': 'Cloudant / CouchDB Client Library',
     'include_package_data': True,
     'install_requires': requirements,
     'name': 'cloudant',
-    'version': '2.8.0-SNAPSHOT',
+    'version': version,
     'author': 'IBM',
     'author_email': 'alfinkel@us.ibm.com',
     'url': 'https://github.com/cloudant/python-cloudant',
