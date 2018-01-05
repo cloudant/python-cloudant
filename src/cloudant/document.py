@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -257,7 +257,7 @@ class Document(dict):
             self.save()
         except requests.HTTPError as ex:
             if tries < max_tries and ex.response.status_code == 409:
-                return self._update_field(
+                self._update_field(
                     action, field, value, max_tries, tries=tries+1)
             raise
 
