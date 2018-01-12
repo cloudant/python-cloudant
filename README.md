@@ -1,6 +1,6 @@
 # Cloudant Python Client
 
-[![Build Status](https://travis-ci.org/cloudant/python-cloudant.svg?branch=master)](https://travis-ci.org/cloudant/java-cloudant)
+[![Build Status](https://travis-ci.org/cloudant/python-cloudant.svg?branch=master)](https://travis-ci.org/cloudant/python-cloudant)
 [![Readthedocs](https://readthedocs.org/projects/pip/badge/)](http://python-cloudant.readthedocs.io)
 [![Compatibility](https://img.shields.io/badge/python-2.7%2C%203.5-blue.svg)](http://python-cloudant.readthedocs.io/en/latest/compatibility.html)
 [![pypi](https://img.shields.io/pypi/v/cloudant.svg)](https://pypi.python.org/pypi/cloudant)
@@ -9,7 +9,7 @@ This is the official Cloudant library for Python.
 
 * [Installation and Usage](#installation-and-usage)
 * [Getting Started](#getting-started)
-* [API Reference](http://www.javadoc.io/doc/com.cloudant/cloudant-client/)
+* [API Reference](http://python-cloudant.readthedocs.io/en/latest/cloudant.html)
 * [Related Documentation](#related-documentation)
 * [Development](#development)
     * [Contributing](CONTRIBUTING.rst)
@@ -50,7 +50,7 @@ See [CONTRIBUTING.rst](https://github.com/cloudant/python-cloudant/blob/master/C
 
 The preferred approach for using `python-cloudant` in other projects is to use the PyPI as described above.
 
-#### Examples in open source projects
+### Examples in open source projects
 
 [Movie Recommender Demo](https://github.com/snowch/movie-recommender-demo):
 - [Update and check if documents exist](https://github.com/snowch/movie-recommender-demo/blob/master/web_app/app/dao.py#L162-L168)
