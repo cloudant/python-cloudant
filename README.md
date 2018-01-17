@@ -29,7 +29,6 @@ In order to install the latest version, execute
 
 ## Getting started
 
-
 See [Getting started (readthedocs.io)](http://python-cloudant.readthedocs.io/en/latest/getting_started.html)
 
 ## API Reference
@@ -41,6 +40,7 @@ See [API reference docs (readthedocs.io)](http://python-cloudant.readthedocs.io/
 * [Cloudant Python client library docs (readthedocs.io)](http://python-cloudant.readthedocs.io)
 * [Cloudant documentation](https://console.bluemix.net/docs/services/Cloudant/cloudant.html#overview)
 * [Cloudant Learning Center](https://developer.ibm.com/clouddataservices/cloudant-learning-center/)
+* [Tutorial for creating and populating a database on IBM Cloud](https://console.bluemix.net/docs/services/Cloudant/tutorials/create_database.html#creating-and-populating-a-simple-cloudant-nosql-db-database-on-ibm-cloud)
 
 ## Development
 
@@ -51,6 +51,8 @@ See [CONTRIBUTING.rst](https://github.com/cloudant/python-cloudant/blob/master/C
 The preferred approach for using `python-cloudant` in other projects is to use the PyPI as described above.
 
 ### Examples in open source projects
+
+[Getting Started with Python Flask on IBM Cloud](https://github.com/IBM-Cloud/get-started-python)
 
 [Movie Recommender Demo](https://github.com/snowch/movie-recommender-demo):
 - [Update and check if documents exist](https://github.com/snowch/movie-recommender-demo/blob/master/web_app/app/dao.py#L162-L168)
