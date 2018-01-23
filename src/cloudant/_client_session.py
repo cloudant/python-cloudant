@@ -193,7 +193,7 @@ class IAMSession(ClientSession):
 
         self._api_key = api_key
         self._token_url = os.environ.get(
-            'IAM_TOKEN_URL', 'https://iam.bluemix.net/oidc/token')
+            'IAM_TOKEN_URL', 'https://iam.bluemix.net/identity/token')
 
     def login(self):
         """

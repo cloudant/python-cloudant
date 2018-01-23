@@ -43,7 +43,7 @@ MOCK_ACCESS_TOKEN = ('eyJraWQiOiIyMDE3MDQwMi0wMDowMDowMCIsImFsZyI6IlJTMjU2In0.e'
                      '2PTo4Exa17V-R_73Nq8VPCwpOvZcwKRA2sPTVgTMzU34max8b5kpTzVGJ'
                      '6SXSItTVOUdAygZBng')
 
-MOCK_OIDC_TOKEN_RESPONSE = {
+MOCK_IAM_TOKEN_RESPONSE = {
     'access_token':  MOCK_ACCESS_TOKEN,
     'refresh_token': ('MO61FKNvVRWkSa4vmBZqYv_Jt1kkGMUc-XzTcNnR-GnIhVKXHUWxJVV3'
                       'RddE8Kqh3X_TZRmyK8UySIWKxoJ2t6obUSUalPm90SBpTdoXtaljpNyo'
@@ -100,7 +100,7 @@ class IAMAuthTests(unittest.TestCase):
     @mock.patch('cloudant._client_session.ClientSession.request')
     def test_iam_get_access_token(self, m_req):
         m_response = mock.MagicMock()
-        m_response.json.return_value = MOCK_OIDC_TOKEN_RESPONSE
+        m_response.json.return_value = MOCK_IAM_TOKEN_RESPONSE
         m_req.return_value = m_response
 
         iam = IAMSession(MOCK_API_KEY, 'http://127.0.0.1:5984')

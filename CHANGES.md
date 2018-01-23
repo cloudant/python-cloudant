@@ -1,5 +1,6 @@
 # 2.8.0 (Unreleased)
 
+- [FIXED] Updated default IBM Cloud Identity and Access Management token URL.
 - [REMOVED] Removed broken source and target parameters that constantly threw `AttributeError` when creating a replication document.
 
 # 2.7.0 (2017-10-31)
