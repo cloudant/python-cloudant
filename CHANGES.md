@@ -1,5 +1,5 @@
 # 2.8.0 (Unreleased)
-
+- [NEW] Added support for `/_search_disk_size` endpoint which retrieves disk size information for a specific search index.
 - [FIXED] Updated default IBM Cloud Identity and Access Management token URL.
 - [REMOVED] Removed broken source and target parameters that constantly threw `AttributeError` when creating a replication document.
 
