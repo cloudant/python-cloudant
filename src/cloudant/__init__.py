@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2017 IBM. All rights reserved.
+# Copyright (c) 2015, 2018 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 """
 Cloudant / CouchDB Python client library API package
 """
-__version__ = '2.8.0-SNAPSHOT'
+__version__ = '2.8.0'
 
 # pylint: disable=wrong-import-position
 import contextlib
