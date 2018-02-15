@@ -699,3 +699,15 @@ class DesignDocument(Document):
             '/'.join([self.document_url, '_search_info', search_index]))
         ddoc_search_info.raise_for_status()
         return ddoc_search_info.json()
+
+    def search_disk_size(self, search_index):
+        """
+        Retrieves disk size information about a specified search index within
+        the design document, returns dictionary
+
+        GET databasename/_design/{ddoc}/_search_disk_size/{search_index}
+        """
+        ddoc_search_disk_size = self.r_session.get(
+            '/'.join([self.document_url, '_search_disk_size', search_index]))
+        ddoc_search_disk_size.raise_for_status()
+        return ddoc_search_disk_size.json()

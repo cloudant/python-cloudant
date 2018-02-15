@@ -843,6 +843,46 @@ class DesignDocumentTests(UnitTestDbBase):
 
     @unittest.skipUnless(
         os.environ.get('RUN_CLOUDANT_TESTS') is not None,
+        'Skipping Cloudant _search_disk_size endpoint test'
+    )
+    def test_get_search_disk_size(self):
+        """
+        Test retrieval of search_disk_size endpoint from the DesignDocument.
+        """
+        self.populate_db_with_documents(100)
+        ddoc = DesignDocument(self.db, '_design/ddoc001')
+        ddoc.add_search_index(
+            'search001',
+            'function (doc) {\n  index("default", doc._id); '
+            'if (doc._id) {index("name", doc.name, {"store": true}); }\n}'
+        )
+        ddoc.save()
+
+        ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
+        ddoc_remote.fetch()
+
+        ddoc_remote.search_info('search001')  # trigger index build
+
+        search_disk_size = ddoc_remote.search_disk_size('search001')
+
+        self.assertEqual(
+            sorted(search_disk_size.keys()), ['name', 'search_index'],
+            'The search disk size should contain only keys "name" and "search_index"')
+        self.assertEqual(
+            search_disk_size['name'], '_design/ddoc001/search001',
+            'The search index "name" should be correct.')
+        self.assertEqual(
+            sorted(search_disk_size['search_index'].keys()), ['disk_size'],
+            'The search index should contain only key "disk_size"')
+        self.assertTrue(
+            isinstance(search_disk_size['search_index']['disk_size'], int),
+            'The "disk_size" value should be an integer.')
+        self.assertTrue(
+            search_disk_size['search_index']['disk_size'] > 0,
+            'The "disk_size" should be greater than 0.')
+
+    @unittest.skipUnless(
+        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
         'Skipping Cloudant _search_info raises HTTPError test'
     )
     def test_get_search_info_raises_httperror(self):
