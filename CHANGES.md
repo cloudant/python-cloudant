@@ -1,3 +1,7 @@
+# 2.8.1 (2018-02-16)
+
+- [FIXED] Installation failures of 2.8.0 caused by missing VERSION file in distribution.
+
 # 2.8.0 (2018-02-15)
 
 - [NEW] Added support for `/_search_disk_size` endpoint which retrieves disk size information for a specific search index.
