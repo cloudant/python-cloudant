@@ -476,3 +476,15 @@ Cloudant/CouchDB server.  This example assumes that either a ``Cloudant`` or a
 
     # Display the response content
     print(response.json())
+
+***************
+TLS 1.2 Support
+***************
+
+The TLS protocol is used to encrypt communications across a network to ensure
+that transmitted data remains private. There are three released versions of TLS:
+1.0, 1.1, and 1.2. All HTTPS connections use TLS.
+
+If your server enforces the use of TLS 1.2 then the python-cloudant client will
+continue to work as expected (assuming you're running a version of
+Python/OpenSSL that supports TLS 1.2).
