@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2016, 2017 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -161,7 +161,6 @@ class ReplicatorTests(UnitTestDbBase):
         )
         self.replication_ids.append(repl_id['_id'])
 
-    @skip_if_not_cookie_auth
     @flaky(max_runs=3)
     def test_create_replication(self):
         """
@@ -180,7 +179,7 @@ class ReplicatorTests(UnitTestDbBase):
         # Test that the replication document was created
         expected_keys = ['_id', '_rev', 'source', 'target', 'user_ctx']
         # If Admin Party mode then user_ctx will not be in the key list
-        if self.client.admin_party:
+        if self.client.admin_party or self.client.is_iam_authenticated:
             expected_keys.pop()
         self.assertTrue(all(x in list(repl_doc.keys()) for x in expected_keys))
         self.assertEqual(repl_doc['_id'], repl_id)
@@ -238,7 +237,7 @@ class ReplicatorTests(UnitTestDbBase):
         # Test that the replication document was created
         expected_keys = ['_id', '_rev', 'source', 'target', 'user_ctx']
         # If Admin Party mode then user_ctx will not be in the key list
-        if self.client.admin_party:
+        if self.client.admin_party or self.client.is_iam_authenticated:
             expected_keys.pop()
         self.assertTrue(all(x in list(repl_doc.keys()) for x in expected_keys))
         self.assertEqual(repl_doc['_id'], repl_id)
@@ -305,7 +304,6 @@ class ReplicatorTests(UnitTestDbBase):
         match = [repl_id for repl_id in all_repl_ids if repl_id in repl_ids]
         self.assertEqual(set(repl_ids), set(match))
 
-    @skip_if_not_cookie_auth
     def test_retrieve_replication_state(self):
         """
         Test that the replication state can be retrieved for a replication
@@ -347,7 +345,6 @@ class ReplicatorTests(UnitTestDbBase):
             )
             self.assertIsNone(repl_state)
 
-    @skip_if_not_cookie_auth
     def test_stop_replication(self):
         """
         Test that a replication can be stopped.
@@ -383,7 +380,6 @@ class ReplicatorTests(UnitTestDbBase):
                 'Replication with id {} not found.'.format(repl_id)
             )
 
-    @skip_if_not_cookie_auth
     def test_follow_replication(self):
         """
         Test that follow_replication(...) properly iterates updated
