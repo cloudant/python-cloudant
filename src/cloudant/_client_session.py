@@ -113,7 +113,7 @@ class ClientSession(Session):
         server_url_parts = self._session_url.split('/')[:-1]  # Without the session path
         server_url = '/'.join(server_url_parts)
         users_db_url = url_join(server_url, '_users')
-        return url in users_db_url
+        return users_db_url in url
 
 
 class BasicSession(ClientSession):
