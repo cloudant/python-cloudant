@@ -1,7 +1,5 @@
 # Unreleased
 
-# 2.8.2 (2018-04-05)
-
 - [FIXED] Added special handling for requesting the `_users` database, as it can send `404` errors when a session expires.
 
 # 2.8.1 (2018-02-16)
