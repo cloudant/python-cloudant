@@ -102,6 +102,20 @@ class ClientSession(Session):
         """
         pass
 
+    def is_users_db_url(self, url):
+        """
+        Check if a requested url is for the users database, to be used
+        with auto_renew=True as this database could return a 404 error
+        while the problem could actually be an expired session.
+        Reference: http://docs.couchdb.org/en/2.1.1/intro/security.html#users-public-information
+
+        :param str url: Requested URL to check.
+        """
+        server_url_parts = self._session_url.split('/')[:-1]  # Without the session path
+        server_url = '/'.join(server_url_parts)
+        users_db_url = url_join(server_url, '_users')
+        return users_db_url in url
+
 
 class BasicSession(ClientSession):
     """
@@ -174,7 +188,12 @@ class CookieSession(ClientSession):
             resp.status_code == 401
         ))
 
-        if is_expired:
+        can_be_user_db_expired = (
+            resp.status_code == 404 and
+            self.is_users_db_url(url)
+        )
+
+        if is_expired or can_be_user_db_expired:
             self.login()
             resp = super(CookieSession, self).request(method, url, **kwargs)
 
