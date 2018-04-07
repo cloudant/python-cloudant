@@ -104,8 +104,9 @@ class ClientSession(Session):
 
     def is_users_db_url(self, url):
         """
-        Check if a requested url is for the users database, to be used with auto_renew=True
-        as this database could return a 404 error while the problem could actually be an expired session.
+        Check if a requested url is for the users database, to be used
+        with auto_renew=True as this database could return a 404 error
+        while the problem could actually be an expired session.
         Reference: http://docs.couchdb.org/en/2.1.1/intro/security.html#users-public-information
 
         :param str url: Requested URL to check.
