@@ -4,7 +4,7 @@
 - [NEW] Moved `create_query_index` and other query related methods to `CouchDatabase` as the `_index`/`_find` API is available in CouchDB 2.x.
 - [NEW] Support IAM authentication in replication documents.
 - [IMPROVED] Added support for IAM API key in `cloudant_bluemix` method.
-- [IMPROVED] Updated Travis CI and unit tests to run against CouchDB 2.1.1.
+- [IMPROVED] Verified library operation on Python 3.6.3.
 - [IMPROVED] Shortened length of client URLs by removing username and password.
 
 # 2.8.1 (2018-02-16)

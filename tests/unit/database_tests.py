@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -968,6 +968,10 @@ class DatabaseTests(UnitTestDbBase):
         finally:
             self.client.connect()
 
+    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
+                     (os.environ.get('COUCHDB_VERSION') and
+                     os.environ.get('COUCHDB_VERSION').startswith('1')),
+                     'Skipping test_create_json_index test')
     def test_create_json_index(self):
         """
         Ensure that a JSON index is created as expected.
@@ -991,6 +995,10 @@ class DatabaseTests(UnitTestDbBase):
         self.assertEquals(index['options']['def']['fields'], ['name', 'age'])
         self.assertEquals(index['reduce'], '_count')
 
+    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
+                     (os.environ.get('COUCHDB_VERSION') and
+                      os.environ.get('COUCHDB_VERSION').startswith('1')),
+                     'Skipping test_create_json_index test')
     def test_delete_json_index(self):
         """
         Ensure that a JSON index is deleted as expected.

@@ -293,30 +293,6 @@ class ViewTests(UnitTestDbBase):
         except requests.HTTPError as err:
             self.assertEqual(err.response.status_code, 404)
 
-    @unittest.skipUnless(
-    os.environ.get('RUN_CLOUDANT_TESTS') is None,
-            'Only execute as part of CouchDB tests')
-    def test_view_callable_with_invalid_javascript(self):
-        """
-        Test error condition when Javascript errors exist.  This test is only
-        valid for CouchDB because the map function Javascript is validated on
-        the Cloudant server when attempting to save a design document so invalid
-        Javascript is not possible there.
-        """
-        self.populate_db_with_documents()
-        ddoc = DesignDocument(self.db, 'ddoc001')
-        ddoc.add_view(
-            'view001',
-            'This is not valid Javascript'
-        )
-        with self.assertRaises(requests.HTTPError) as cm:
-            ddoc.save()
-        err = cm.exception
-        self.assertTrue(str(err).startswith(
-            '400 Client Error: Bad Request compilation_error Compilation of the map function '
-            'in the \'view001\' view failed: Expression does not eval to a function.'
-        ))
-
     def test_custom_result_context_manager(self):
         """
         Test that the context manager for custom results returns

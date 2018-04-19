@@ -100,7 +100,11 @@ class ChangesTests(UnitTestDbBase):
             self.assertIsInstance(raw_line, BYTETYPE)
             raw_content.append(raw_line)
         changes = json.loads(''.join([unicode_(x) for x in raw_content]))
-        self.assertSetEqual(set(changes.keys()), set(['results', 'last_seq', 'pending']))
+        if self.is_couchdb_1x_version() is True:
+            self.assertSetEqual(
+                set(changes.keys()), set(['results', 'last_seq']))
+        else:
+            self.assertSetEqual(set(changes.keys()), set(['results', 'last_seq', 'pending']))
         results = list()
         for result in changes['results']:
             self.assertSetEqual(set(result.keys()), set(['seq', 'changes', 'id']))
@@ -230,13 +234,16 @@ class ChangesTests(UnitTestDbBase):
         last_seq = None
         for change in feed:
             if last_seq:
-                current = int(change['seq'][0: change['seq'].find('-')])
-                last = int(last_seq[0:last_seq.find('-')])
-                try:
-                    self.assertTrue(current < last)
-                except AssertionError:
-                    self.assertEqual(current, last)
-                    self.assertTrue(len(change['seq']) > len(last_seq))
+                if self.is_couchdb_1x_version() is True:
+                    self.assertTrue(change['seq'] < last_seq)
+                else:
+                    current = int(change['seq'][0: change['seq'].find('-')])
+                    last = int(last_seq[0:last_seq.find('-')])
+                    try:
+                        self.assertTrue(current < last)
+                    except AssertionError:
+                        self.assertEqual(current, last)
+                        self.assertTrue(len(change['seq']) > len(last_seq))
             seq_list.append(change['seq'])
             last_seq = change['seq']
         self.assertEqual(len(seq_list), 50)

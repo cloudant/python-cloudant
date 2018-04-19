@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -306,9 +306,9 @@ class DocumentTests(UnitTestDbBase):
         err = cm.exception
         # Should be a 400 error code, but CouchDB 1.6 issues a 500
         if err.response.status_code == 500:
-            #Check this is CouchDB 1.6
-            self.assertTrue(self.client.r_session.head(self.url).headers['Server'].find('CouchDB/1.6.') >= 0,
-                            '500 returned but was not CouchDB 1.6.x')
+            # Check this is CouchDB 1.x
+            self.assertTrue(self.client.r_session.head(self.url).headers['Server'].find('CouchDB/1.') >= 0,
+                            '500 returned but was not CouchDB 1.x')
             self.assertEqual(
                 str(err.response.reason),
                 'Internal Server Error doc_validation Bad special document member: _invalid_key'
