@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -309,19 +309,13 @@ class ViewTests(UnitTestDbBase):
             'view001',
             'This is not valid Javascript'
         )
-        ddoc.save()
-        # Verify that the ddoc and view were saved remotely 
-        # along with the invalid Javascript
-        del ddoc
-        ddoc = DesignDocument(self.db, 'ddoc001')
-        ddoc.fetch()
-        view = ddoc.get_view('view001')
-        self.assertEqual(view.map, 'This is not valid Javascript')
-        try:
-            for row in view.result:
-                self.fail('Above statement should raise an Exception')
-        except requests.HTTPError as err:
-            self.assertEqual(err.response.status_code, 500)
+        with self.assertRaises(requests.HTTPError) as cm:
+            ddoc.save()
+        err = cm.exception
+        self.assertTrue(str(err).startswith(
+            '400 Client Error: Bad Request compilation_error Compilation of the map function '
+            'in the \'view001\' view failed: Expression does not eval to a function.'
+        ))
 
     def test_custom_result_context_manager(self):
         """

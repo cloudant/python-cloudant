@@ -1,5 +1,7 @@
 # Unreleased
 
+- [IMPROVED] Updated Travis CI and unit tests to run against CouchDB 2.1.1.
+
 # 2.8.1 (2018-02-16)
 
 - [FIXED] Installation failures of 2.8.0 caused by missing VERSION file in distribution.

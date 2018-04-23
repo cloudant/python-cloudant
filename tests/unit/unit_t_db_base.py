@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2016, 2017 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ import json
 
 from cloudant.client import CouchDB, Cloudant
 from cloudant.design_document import DesignDocument
+from cloudant.error import CloudantClientException
 
 from .. import unicode_
 
@@ -100,14 +101,18 @@ class UnitTestDbBase(unittest.TestCase):
                 return
 
             if os.environ.get('DB_USER') is None:
+                # Get couchdb docker node name
+                os.environ['NODENAME'] = requests.get(
+                    '{0}/_membership'.format(os.environ['DB_URL'])).json()['all_nodes'][0]
                 os.environ['DB_USER_CREATED'] = '1'
                 os.environ['DB_USER'] = 'user-{0}'.format(
                     unicode_(uuid.uuid4())
                     )
                 os.environ['DB_PASSWORD'] = 'password'
                 resp = requests.put(
-                    '{0}/_config/admins/{1}'.format(
+                    '{0}/_node/{1}/_config/admins/{2}'.format(
                         os.environ['DB_URL'],
+                        os.environ['NODENAME'],
                         os.environ['DB_USER']
                         ),
                     data='"{0}"'.format(os.environ['DB_PASSWORD'])
@@ -122,11 +127,12 @@ class UnitTestDbBase(unittest.TestCase):
         if (os.environ.get('RUN_CLOUDANT_TESTS') is None and
             os.environ.get('DB_USER_CREATED') is not None):
             resp = requests.delete(
-                '{0}://{1}:{2}@{3}/_config/admins/{4}'.format(
+                '{0}://{1}:{2}@{3}/_node/{4}/_config/admins/{5}'.format(
                     os.environ['DB_URL'].split('://', 1)[0],
                     os.environ['DB_USER'],
                     os.environ['DB_PASSWORD'],
                     os.environ['DB_URL'].split('://', 1)[1],
+                    os.environ['NODENAME'],
                     os.environ['DB_USER']
                     )
                 )
@@ -333,3 +339,24 @@ class UnitTestDbBase(unittest.TestCase):
             headers={'Content-Type': 'application/json'}
         )
         self.assertEqual(resp.status_code, 200)
+
+    def create_db_updates(self):
+        """
+        Create '_global_changes' system database required for testing against _db_updates
+        """
+        self.DB_UPDATES = '_global_changes'
+        try:
+            self.client.create_database(self.DB_UPDATES, throw_on_exists=True)
+        except CloudantClientException:
+            self.delete_db_updates()
+            self.create_db_updates()
+
+    def delete_db_updates(self):
+        """
+        Delete '_global_changes' system database used for _db_updates testing
+        """
+        try:
+            self.client.delete_database(self.DB_UPDATES)
+        except CloudantClientException:
+            pass
+
