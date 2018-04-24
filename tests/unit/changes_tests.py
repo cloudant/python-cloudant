@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright (C) 2016, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import os
 from cloudant.feed import Feed
 from cloudant.document import Document
 from cloudant.design_document import DesignDocument
-from cloudant.error import CloudantArgumentError, CloudantException
+from cloudant.error import CloudantArgumentError
 from cloudant._2to3 import unicode_
 
 from .unit_t_db_base import UnitTestDbBase
@@ -100,12 +100,7 @@ class ChangesTests(UnitTestDbBase):
             self.assertIsInstance(raw_line, BYTETYPE)
             raw_content.append(raw_line)
         changes = json.loads(''.join([unicode_(x) for x in raw_content]))
-        if self.cloudant_test:
-            self.assertSetEqual(
-                set(changes.keys()), set(['results', 'last_seq', 'pending']))
-        else:
-            self.assertSetEqual(
-                set(changes.keys()), set(['results', 'last_seq']))
+        self.assertSetEqual(set(changes.keys()), set(['results', 'last_seq', 'pending']))
         results = list()
         for result in changes['results']:
             self.assertSetEqual(set(result.keys()), set(['seq', 'changes', 'id']))
@@ -223,12 +218,11 @@ class ChangesTests(UnitTestDbBase):
 
     def test_get_feed_descending(self):
         """
-        Test getting content back for a descending feed.  When testing with
-        Cloudant the sequence identifier is in the form of 
-        <number prefix>-<random char seq>.  Often times the number prefix sorts
-        as expected when using descending but sometimes the number prefix is
-        repeated.  In these cases the check is to see if the following random
-        character sequence suffix is longer than its predecessor.
+        Test getting content back for a descending feed.  When testing, the sequence
+        identifier is in the form of <number prefix>-<random char seq>.  Often times
+        the number prefix sorts as expected when using descending but sometimes the
+        number prefix is repeated.  In these cases the check is to see if the following
+        random character sequence suffix is longer than its predecessor.
         """
         self.populate_db_with_documents(50)
         feed = Feed(self.db, descending=True)
@@ -236,16 +230,13 @@ class ChangesTests(UnitTestDbBase):
         last_seq = None
         for change in feed:
             if last_seq:
-                if self.cloudant_test:
-                    current = int(change['seq'][0: change['seq'].find('-')])
-                    last = int(last_seq[0:last_seq.find('-')])
-                    try:
-                        self.assertTrue(current < last)
-                    except AssertionError:
-                        self.assertEqual(current, last)
-                        self.assertTrue(len(change['seq']) > len(last_seq))
-                else:
-                    self.assertTrue(change['seq'] < last_seq)
+                current = int(change['seq'][0: change['seq'].find('-')])
+                last = int(last_seq[0:last_seq.find('-')])
+                try:
+                    self.assertTrue(current < last)
+                except AssertionError:
+                    self.assertEqual(current, last)
+                    self.assertTrue(len(change['seq']) > len(last_seq))
             seq_list.append(change['seq'])
             last_seq = change['seq']
         self.assertEqual(len(seq_list), 50)
@@ -303,8 +294,6 @@ class ChangesTests(UnitTestDbBase):
         changes = list()
         for change in feed:
             self.assertSetEqual(set(change.keys()), set(['seq', 'changes', 'id']))
-            if not self.cloudant_test:
-                self.assertEqual(len(change['changes']), 2)
             changes.append(change)
         expected = set(['julia000', 'julia001', 'julia002'])
         self.assertSetEqual(set([x['id'] for x in changes]), expected)
