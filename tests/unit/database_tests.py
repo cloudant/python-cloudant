@@ -38,7 +38,7 @@ from cloudant.index import Index, TextIndex, SpecialIndex
 from cloudant.feed import Feed, InfiniteFeed
 from tests.unit._test_util import LONG_NUMBER
 
-from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
+from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase, skip_if_iam
 from .. import unicode_
 
 class CloudantDatabaseExceptionTests(unittest.TestCase):
@@ -863,7 +863,7 @@ class DatabaseTests(UnitTestDbBase):
             resp,
             'Hello from doc001!'
         )
-
+    @skip_if_iam
     def test_create_doc_with_update_handler(self):
         """
         Test update_handler_result executes an update handler function
@@ -884,6 +884,7 @@ class DatabaseTests(UnitTestDbBase):
             'Created new doc: {"message":"hello","_id":"testDoc"}'
         )
 
+    @skip_if_iam
     def test_update_doc_with_update_handler(self):
         """
         Test update_handler_result executes an update handler function

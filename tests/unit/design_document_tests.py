@@ -32,7 +32,7 @@ from cloudant.design_document import DesignDocument
 from cloudant.view import View, QueryIndexView
 from cloudant.error import CloudantArgumentError, CloudantDesignDocumentException
 
-from .unit_t_db_base import UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase, skip_if_iam
 
 class CloudantDesignDocumentExceptionTests(unittest.TestCase):
     """
@@ -1252,6 +1252,7 @@ class DesignDocumentTests(UnitTestDbBase):
                 '{"store": true}); }\n}'}
         )
 
+    @skip_if_iam
     def test_rewrite_rule(self):
         """
         Test that design document URL is rewritten to the expected test document.

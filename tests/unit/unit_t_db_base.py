@@ -78,6 +78,13 @@ def skip_if_not_cookie_auth(f):
     return wrapper
 
 
+def skip_if_iam(f):
+    def wrapper(*args):
+        if os.environ.get('IAM_API_KEY'):
+            raise unittest.SkipTest('Test only supports non-IAM authentication')
+        return f(*args)
+    return wrapper
+
 class UnitTestDbBase(unittest.TestCase):
     """
     The base class for all unit tests targeting a database
