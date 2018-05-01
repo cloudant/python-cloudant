@@ -51,8 +51,7 @@ class Replicator(object):
         :param str repl_id: Optional replication id.  Generated internally if
             not explicitly set.
         :param dict user_ctx: Optional user to act as.  Composed internally
-            if not explicitly set and not in CouchDB Admin Party
-            mode.
+            if not explicitly set.
         :param bool create_target: Specifies whether or not to
             create the target, if it does not already exist.
         :param bool continuous: If set to True then the replication will be
@@ -101,11 +100,9 @@ class Replicator(object):
 
         # add user context delegation
 
-        if not data.get('user_ctx'):
-            if target_db and target_db.admin_party:
-                pass  # noop - not required for admin party mode
-            elif self.database.creds and self.database.creds.get('user_ctx'):
-                data['user_ctx'] = self.database.creds['user_ctx']
+        if not data.get('user_ctx') and self.database.creds and \
+            self.database.creds.get('user_ctx'):
+            data['user_ctx'] = self.database.creds['user_ctx']
 
         return self.database.create_document(data, throw_on_exists=True)
 
