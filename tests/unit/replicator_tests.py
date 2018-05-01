@@ -356,7 +356,16 @@ class ReplicatorTests(UnitTestDbBase):
             self.target_db,
             repl_id
         )
-        self.replicator.stop_replication(repl_id)
+        max_retry = 3
+        while True:
+            try:
+                max_retry -= 1
+                self.replicator.stop_replication(repl_id)
+                break
+            except requests.HTTPError as err:
+                self.assertEqual(err.response.status_code, 409)
+                if max_retry == 0:
+                    self.fail('Failed to stop replication: {0}'.format(err))
         try:
             # The .fetch() will fail since the replication has been stopped
             # and the replication document has been removed from the db.
