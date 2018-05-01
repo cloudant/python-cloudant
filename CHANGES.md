@@ -1,5 +1,6 @@
 # Unreleased
 
+- [IMPROVED] Added support for IAM API key in `cloudant_bluemix` method.
 - [IMPROVED] Updated Travis CI and unit tests to run against CouchDB 2.1.1.
 
 # 2.8.1 (2018-02-16)

@@ -633,9 +633,9 @@ class CloudantClientTests(UnitTestDbBase):
             self.fail('Exception {0} was raised.'.format(str(err)))
 
     @skip_if_not_cookie_auth
-    def test_cloudant_bluemix_context_helper(self):
+    def test_cloudant_bluemix_context_helper_with_legacy_creds(self):
         """
-        Test that the cloudant_bluemix context helper works as expected.
+        Test that the cloudant_bluemix context helper with legacy creds works as expected.
         """
         instance_name = 'Cloudant NoSQL DB-lv'
         vcap_services = {'cloudantNoSQLDB': [{
@@ -656,6 +656,56 @@ class CloudantClientTests(UnitTestDbBase):
                 self.assertEquals(c.session()['userCtx']['name'], self.user)
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
+
+    @unittest.skipUnless(os.environ.get('IAM_API_KEY'),
+                     'Skipping Cloudant Bluemix context helper with IAM test')
+    def test_cloudant_bluemix_context_helper_with_iam(self):
+        """
+        Test that the cloudant_bluemix context helper with IAM works as expected.
+        """
+        instance_name = 'Cloudant NoSQL DB-lv'
+        vcap_services = {'cloudantNoSQLDB': [{
+          'credentials': {
+            'apikey': self.iam_api_key,
+            'username': self.user,
+            'host': '{0}.cloudant.com'.format(self.account),
+            'port': 443,
+            'url': self.url
+          },
+          'name': instance_name,
+        }]}
+
+        try:
+            with cloudant_bluemix(vcap_services, instance_name=instance_name) as c:
+                self.assertIsInstance(c, Cloudant)
+                self.assertIsInstance(c.r_session, requests.Session)
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
+
+    def test_cloudant_bluemix_context_helper_raise_error_for_missing_iam_and_creds(self):
+        """
+        Test that the cloudant_bluemix context helper raises a CloudantClientException
+        when the IAM key, username, and password are missing in the VCAP_SERVICES env variable.
+        """
+        instance_name = 'Cloudant NoSQL DB-lv'
+        vcap_services = {'cloudantNoSQLDB': [{
+          'credentials': {
+            'host': '{0}.cloudant.com'.format(self.account),
+            'port': 443,
+            'url': self.url
+          },
+          'name': instance_name,
+        }]}
+
+        try:
+            with cloudant_bluemix(vcap_services, instance_name=instance_name) as c:
+                self.assertIsInstance(c, Cloudant)
+                self.assertIsInstance(c.r_session, requests.Session)
+        except CloudantClientException as err:
+            self.assertEqual(
+                'Invalid service: IAM API key or username/password credentials are required.',
+                str(err)
+            )
 
     def test_cloudant_bluemix_dedicated_context_helper(self):
         """
@@ -698,7 +748,7 @@ class CloudantClientTests(UnitTestDbBase):
             )
 
     @skip_if_not_cookie_auth
-    def test_bluemix_constructor(self):
+    def test_bluemix_constructor_with_legacy_creds(self):
         """
         Test instantiating a client object using a VCAP_SERVICES environment
         variable.
@@ -730,7 +780,39 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             c.disconnect()
 
-    @skip_if_not_cookie_auth
+
+    @unittest.skipUnless(os.environ.get('IAM_API_KEY'),
+                     'Skipping Cloudant Bluemix constructor with IAM test')
+    def test_bluemix_constructor_with_iam(self):
+        """
+        Test instantiating a client object using a VCAP_SERVICES environment
+        variable.
+        """
+        instance_name = 'Cloudant NoSQL DB-lv'
+        vcap_services = {'cloudantNoSQLDB': [{
+            'credentials': {
+                'apikey': self.iam_api_key,
+                'username': self.user,
+                'host': '{0}.cloudant.com'.format(self.account),
+                'port': 443
+            },
+            'name': instance_name
+        }]}
+
+        # create Cloudant Bluemix client
+        c = Cloudant.bluemix(vcap_services)
+
+        try:
+            c.connect()
+            self.assertIsInstance(c, Cloudant)
+            self.assertIsInstance(c.r_session, requests.Session)
+
+        except Exception as err:
+            self.fail('Exception {0} was raised.'.format(str(err)))
+
+        finally:
+            c.disconnect()
+
     def test_bluemix_constructor_specify_instance_name(self):
         """
         Test instantiating a client object using a VCAP_SERVICES environment
@@ -773,8 +855,7 @@ class CloudantClientTests(UnitTestDbBase):
         vcap_services = {'cloudantNoSQLDB': [
             {
                 'credentials': {
-                    'username': self.user,
-                    'password': self.pwd,
+                    'apikey': '1234api',
                     'host': '{0}.cloudant.com'.format(self.account),
                     'port': 443,
                     'url': self.url

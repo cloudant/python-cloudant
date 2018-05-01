@@ -116,6 +116,7 @@ def cloudant_bluemix(vcap_services, instance_name=None, service_name=None, **kwa
                 "cloudantNoSQLDB": [
                     {
                         "credentials": {
+                            "apikey": "some123api456key"
                             "username": "example",
                             "password": "xxxxxxx",
                             "host": "example.cloudant.com",

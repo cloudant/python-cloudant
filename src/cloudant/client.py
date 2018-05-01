@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2017 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ from .feed import Feed, InfiniteFeed
 from .error import (
     CloudantArgumentError,
     CloudantClientException,
-    CloudantDatabaseException)
+    CloudantDatabaseException, CloudantException)
 from ._common_util import (
     USER_AGENT,
     append_response_error_content,
@@ -788,9 +788,17 @@ class Cloudant(CouchDB):
             print client.all_dbs()
         """
         service_name = service_name or 'cloudantNoSQLDB'  # default service
-        service = CloudFoundryService(vcap_services,
-                                      instance_name=instance_name,
-                                      service_name=service_name)
+        try:
+            service = CloudFoundryService(vcap_services,
+                                          instance_name=instance_name,
+                                          service_name=service_name)
+        except CloudantException:
+            raise CloudantClientException(103)
+
+        if hasattr(service, 'iam_api_key'):
+            return Cloudant.iam(service.username,
+                                service.iam_api_key,
+                                url=service.url)
         return Cloudant(service.username,
                         service.password,
                         url=service.url,

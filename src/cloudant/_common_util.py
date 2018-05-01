@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2017 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ from collections import Sequence
 import json
 
 from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_
-from .error import CloudantArgumentError, CloudantException
+from .error import CloudantArgumentError, CloudantException, CloudantClientException
 
 # Library Constants
 
@@ -306,9 +306,14 @@ class CloudFoundryService(object):
                     credentials = service['credentials']
                     self._host = credentials['host']
                     self._name = service.get('name')
-                    self._password = credentials['password']
                     self._port = credentials.get('port', 443)
                     self._username = credentials['username']
+                    if 'apikey' in credentials:
+                        self._iam_api_key = credentials['apikey']
+                    elif 'username' in credentials and 'password' in credentials:
+                        self._password = credentials['password']
+                    else:
+                        raise CloudantClientException(103)
                     break
             else:
                 raise CloudantException('Missing service in VCAP_SERVICES')
@@ -355,3 +360,8 @@ class CloudFoundryService(object):
     def username(self):
         """ Return service username. """
         return self._username
+
+    @property
+    def iam_api_key(self):
+        """ Return service IAM API key. """
+        return self._iam_api_key
