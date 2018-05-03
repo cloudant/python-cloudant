@@ -37,8 +37,17 @@ class Scheduler(object):
             params["skip"] = skip
         resp = self._r_session.get('/'.join([self._scheduler, 'docs']), params=params)
         resp.raise_for_status()
-        return resp
+        return resp.json()
 
+    def get_doc(self, doc_id):
+        """
+        TODO
+        """
+        resp = self._r_session.get('/'.join([self._scheduler, 'docs',  '_replicator', doc_id]))
+        resp.raise_for_status()
+        return resp.json()
+
+    
     def list_jobs(self, limit=None, skip=None):
         """
         TODO
@@ -50,4 +59,4 @@ class Scheduler(object):
             params["skip"] = skip
         resp = self._r_session.get('/'.join([self._scheduler, 'jobs']), params=params)
         resp.raise_for_status()
-        return resp
+        return resp.json()
