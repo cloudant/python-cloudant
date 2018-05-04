@@ -43,11 +43,11 @@ class Scheduler(object):
         """
         TODO
         """
-        resp = self._r_session.get('/'.join([self._scheduler, 'docs',  '_replicator', doc_id]))
+        resp = self._r_session.get('/'.join([self._scheduler, 'docs', '_replicator', doc_id]))
         resp.raise_for_status()
         return resp.json()
 
-    
+
     def list_jobs(self, limit=None, skip=None):
         """
         TODO

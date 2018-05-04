@@ -18,8 +18,11 @@ API module/class for handling database replications
 
 import uuid
 
+from requests.exceptions import HTTPError
+
 from .error import CloudantReplicatorException, CloudantClientException
 from .document import Document
+from .scheduler import Scheduler
 
 class Replicator(object):
     """
@@ -34,6 +37,7 @@ class Replicator(object):
 
     def __init__(self, client):
         repl_db = '_replicator'
+        self.client = client
         try:
             self.database = client[repl_db]
         except Exception:
@@ -133,12 +137,20 @@ class Replicator(object):
 
         :returns: Replication state as a ``str``
         """
-        try:
-            repl_doc = self.database[repl_id]
-        except KeyError:
-            raise CloudantReplicatorException(404, repl_id)
-        repl_doc.fetch()
-        return repl_doc.get('_replication_state')
+        if "scheduler" in self.client.features():
+            try:
+                repl_doc = Scheduler(self.client).get_doc(repl_id)
+            except HTTPError as err:
+                raise CloudantReplicatorException(err.response.status_code, repl_id)
+            state = repl_doc['state']
+        else:
+            try:
+                repl_doc = self.database[repl_id]
+            except KeyError:
+                raise CloudantReplicatorException(404, repl_id)
+            repl_doc.fetch()
+            state = repl_doc.get('_replication_state')
+        return state
 
     def follow_replication(self, repl_id):
         """
@@ -161,12 +173,19 @@ class Replicator(object):
             """
             Retrieves the replication state.
             """
-            try:
-                arepl_doc = self.database[repl_id]
-                arepl_doc.fetch()
-                return arepl_doc, arepl_doc.get('_replication_state')
-            except KeyError:
-                return None, None
+            if "scheduler" in self.client.features():
+                try:
+                    arepl_doc = Scheduler(self.client).get_doc(repl_id)
+                    return arepl_doc, arepl_doc['state']
+                except HTTPError:
+                    return None, None
+            else:
+                try:
+                    arepl_doc = self.database[repl_id]
+                    arepl_doc.fetch()
+                    return arepl_doc, arepl_doc.get('_replication_state')
+                except KeyError:
+                    return None, None
 
         while True:
             # Make sure we fetch the state up front, just in case it moves
