@@ -13,12 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-TODO
+API module for interacting with scheduler endpoints
 """
 
 class Scheduler(object):
     """
-    TODO
+    API for retrieving scheduler jobs and documents.
+
+    :param client: Client instance used by the database.  Can either be a
+        ``CouchDB`` or ``Cloudant`` client instance.
     """
 
     def __init__(self, client):
@@ -28,7 +31,14 @@ class Scheduler(object):
 
     def list_docs(self, limit=None, skip=None):
         """
-        TODO
+        Lists replication documents. Includes information
+        about all the documents, even in completed and failed
+        states. For each document it returns the document ID, the
+        database, the replication ID, source and target, and other
+        information.
+
+        :param limit: How many results to return.
+        :param skip: How many result to skip starting at the beginning, if ordered by document ID.
         """
         params = dict()
         if limit != None:
@@ -41,7 +51,7 @@ class Scheduler(object):
 
     def get_doc(self, doc_id):
         """
-        TODO
+        Get replication document state for a given replication document ID.
         """
         resp = self._r_session.get('/'.join([self._scheduler, 'docs', '_replicator', doc_id]))
         resp.raise_for_status()
@@ -50,7 +60,16 @@ class Scheduler(object):
 
     def list_jobs(self, limit=None, skip=None):
         """
-        TODO
+        Lists replication jobs. Includes replications created via
+        /_replicate endpoint as well as those created from replication
+        documents. Does not include replications which have completed
+        or have failed to start because replication documents were
+        malformed. Each job description will include source and target
+        information, replication id, a history of recent event, and a
+        few other things.
+
+        :param limit: How many results to return.
+        :param skip: How many result to skip starting at the beginning, if ordered by document ID.
         """
         params = dict()
         if limit != None:
