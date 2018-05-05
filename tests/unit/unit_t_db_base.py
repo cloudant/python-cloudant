@@ -158,6 +158,7 @@ class UnitTestDbBase(unittest.TestCase):
         self.user = os.environ.get('DB_USER', None)
         self.pwd = os.environ.get('DB_PASSWORD', None)
         self.use_cookie_auth = True
+        self.iam_api_key = os.environ.get('IAM_API_KEY', None)
 
         if os.environ.get('RUN_CLOUDANT_TESTS') is None:
             self.url = os.environ['DB_URL']
@@ -198,12 +199,12 @@ class UnitTestDbBase(unittest.TestCase):
                     timeout=timeout,
                     use_basic_auth=True,
                 )
-            elif os.environ.get('IAM_API_KEY'):
+            elif self.iam_api_key:
                 self.use_cookie_auth = False
                 # construct Cloudant client (using IAM authentication)
                 self.client = Cloudant(
                     None,  # username is not required
-                    os.environ.get('IAM_API_KEY'),
+                    self.iam_api_key,
                     url=self.url,
                     x_cloudant_user=self.account,
                     connect=auto_connect,
