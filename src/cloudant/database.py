@@ -608,6 +608,32 @@ class CouchDatabase(dict):
         else:
             raise KeyError(key)
 
+    def __contains__(self, key):
+        """
+        Overrides dictionary __contains__ behavior to check if a document
+        by key exists in the current cached or remote database.
+
+        For example:
+
+        .. code-block:: python
+
+            if key in database:
+                doc = database[key]
+                # Do something with doc
+
+        :param str key: Document id used to check if it exists in the database.
+
+        :returns: True if the document exists in the local or remote
+        database, otherwise False.
+        """
+        if key in list(self.keys()):
+            return True
+        if key.startswith('_design/'):
+            doc = DesignDocument(self, key)
+        else:
+            doc = Document(self, key)
+        return doc.exists()
+
     def __iter__(self, remote=True):
         """
         Overrides dictionary __iter__ behavior to provide iterable Document
@@ -921,131 +947,6 @@ class CouchDatabase(dict):
         resp.raise_for_status()
         return resp.text
 
-class CloudantDatabase(CouchDatabase):
-    """
-    Encapsulates a Cloudant database.  A CloudantDatabase object is
-    instantiated with a reference to a client/session.
-    It supports accessing the documents, and various database
-    features such as the document indexes, changes feed, design documents, etc.
-
-    :param Cloudant client: Client instance used by the database.
-    :param str database_name: Database name used to reference the database.
-    :param int fetch_limit: Optional fetch limit used to set the max number of
-        documents to fetch per query during iteration cycles.  Defaults to 100.
-    """
-    def __init__(self, client, database_name, fetch_limit=100):
-        super(CloudantDatabase, self).__init__(
-            client,
-            database_name,
-            fetch_limit=fetch_limit
-        )
-
-    def security_document(self):
-        """
-        Retrieves the security document for the current database
-        containing information about the users that the database
-        is shared with.
-
-        :returns: Security document as a ``dict``
-        """
-        return dict(self.get_security_document())
-
-    @property
-    def security_url(self):
-        """
-        Constructs and returns the security document URL.
-
-        :returns: Security document URL
-        """
-        url = '/'.join((self._database_host, '_api', 'v2', 'db',
-                        self.database_name, '_security'))
-        return url
-
-    def share_database(self, username, roles=None):
-        """
-        Shares the current remote database with the username provided.
-        You can grant varying degrees of access rights,
-        default is to share read-only, but additional
-        roles can be added by providing the specific roles as a
-        ``list`` argument.  If the user already has this database shared with
-        them then it will modify/overwrite the existing permissions.
-
-        :param str username: Cloudant user to share the database with.
-        :param list roles: A list of
-            `roles
-            <https://console.bluemix.net/docs/services/Cloudant/api/authorization.html#roles>`_
-            to grant to the named user.
-
-        :returns: Share database status in JSON format
-        """
-        if roles is None:
-            roles = ['_reader']
-        valid_roles = [
-            '_reader',
-            '_writer',
-            '_admin',
-            '_replicator',
-            '_db_updates',
-            '_design',
-            '_shards',
-            '_security'
-        ]
-        doc = self.security_document()
-        data = doc.get('cloudant', {})
-        perms = []
-        if all(role in valid_roles for role in roles):
-            perms = list(set(roles))
-
-        if not perms:
-            raise CloudantArgumentError(102, roles, valid_roles)
-
-        data[username] = perms
-        doc['cloudant'] = data
-        resp = self.r_session.put(
-            self.security_url,
-            data=json.dumps(doc, cls=self.client.encoder),
-            headers={'Content-Type': 'application/json'}
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    def unshare_database(self, username):
-        """
-        Removes all sharing with the named user for the current remote database.
-        This will remove the entry for the user from the security document.
-        To modify permissions, use the
-        :func:`~cloudant.database.CloudantDatabase.share_database` method
-        instead.
-
-        :param str username: Cloudant user to unshare the database from.
-
-        :returns: Unshare database status in JSON format
-        """
-        doc = self.security_document()
-        data = doc.get('cloudant', {})
-        if username in data:
-            del data[username]
-        doc['cloudant'] = data
-        resp = self.r_session.put(
-            self.security_url,
-            data=json.dumps(doc, cls=self.client.encoder),
-            headers={'Content-Type': 'application/json'}
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    def shards(self):
-        """
-        Retrieves information about the shards in the current remote database.
-
-        :returns: Shard information retrieval status in JSON format
-        """
-        url = '/'.join((self.database_url, '_shards'))
-        resp = self.r_session.get(url)
-        resp.raise_for_status()
-
-        return resp.json()
-
     def get_query_indexes(self, raw_result=False):
         """
         Retrieves query indexes from the remote database.
@@ -1241,6 +1142,132 @@ class CloudantDatabase(CouchDatabase):
             return QueryResult(query, **kwargs)
 
         return query.result
+
+
+class CloudantDatabase(CouchDatabase):
+    """
+    Encapsulates a Cloudant database.  A CloudantDatabase object is
+    instantiated with a reference to a client/session.
+    It supports accessing the documents, and various database
+    features such as the document indexes, changes feed, design documents, etc.
+
+    :param Cloudant client: Client instance used by the database.
+    :param str database_name: Database name used to reference the database.
+    :param int fetch_limit: Optional fetch limit used to set the max number of
+        documents to fetch per query during iteration cycles.  Defaults to 100.
+    """
+    def __init__(self, client, database_name, fetch_limit=100):
+        super(CloudantDatabase, self).__init__(
+            client,
+            database_name,
+            fetch_limit=fetch_limit
+        )
+
+    def security_document(self):
+        """
+        Retrieves the security document for the current database
+        containing information about the users that the database
+        is shared with.
+
+        :returns: Security document as a ``dict``
+        """
+        return dict(self.get_security_document())
+
+    @property
+    def security_url(self):
+        """
+        Constructs and returns the security document URL.
+
+        :returns: Security document URL
+        """
+        url = '/'.join((self._database_host, '_api', 'v2', 'db',
+                        self.database_name, '_security'))
+        return url
+
+    def share_database(self, username, roles=None):
+        """
+        Shares the current remote database with the username provided.
+        You can grant varying degrees of access rights,
+        default is to share read-only, but additional
+        roles can be added by providing the specific roles as a
+        ``list`` argument.  If the user already has this database shared with
+        them then it will modify/overwrite the existing permissions.
+
+        :param str username: Cloudant user to share the database with.
+        :param list roles: A list of
+            `roles
+            <https://console.bluemix.net/docs/services/Cloudant/api/authorization.html#roles>`_
+            to grant to the named user.
+
+        :returns: Share database status in JSON format
+        """
+        if roles is None:
+            roles = ['_reader']
+        valid_roles = [
+            '_reader',
+            '_writer',
+            '_admin',
+            '_replicator',
+            '_db_updates',
+            '_design',
+            '_shards',
+            '_security'
+        ]
+        doc = self.security_document()
+        data = doc.get('cloudant', {})
+        perms = []
+        if all(role in valid_roles for role in roles):
+            perms = list(set(roles))
+
+        if not perms:
+            raise CloudantArgumentError(102, roles, valid_roles)
+
+        data[username] = perms
+        doc['cloudant'] = data
+        resp = self.r_session.put(
+            self.security_url,
+            data=json.dumps(doc, cls=self.client.encoder),
+            headers={'Content-Type': 'application/json'}
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def unshare_database(self, username):
+        """
+        Removes all sharing with the named user for the current remote database.
+        This will remove the entry for the user from the security document.
+        To modify permissions, use the
+        :func:`~cloudant.database.CloudantDatabase.share_database` method
+        instead.
+
+        :param str username: Cloudant user to unshare the database from.
+
+        :returns: Unshare database status in JSON format
+        """
+        doc = self.security_document()
+        data = doc.get('cloudant', {})
+        if username in data:
+            del data[username]
+        doc['cloudant'] = data
+        resp = self.r_session.put(
+            self.security_url,
+            data=json.dumps(doc, cls=self.client.encoder),
+            headers={'Content-Type': 'application/json'}
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def shards(self):
+        """
+        Retrieves information about the shards in the current remote database.
+
+        :returns: Shard information retrieval status in JSON format
+        """
+        url = '/'.join((self.database_url, '_shards'))
+        resp = self.r_session.get(url)
+        resp.raise_for_status()
+
+        return resp.json()
 
     def get_search_result(self, ddoc_id, index_name, **query_params):
         """

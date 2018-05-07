@@ -270,6 +270,19 @@ classes are sub-classes of ``dict``, this is accomplished through standard
     # Display the document
     print(my_document)
 
+Checking if a document exists
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can check if a document exists in a database the same way you would check
+if a ``dict`` has a key-value pair by key.
+
+.. code-block:: python
+
+    doc_exists = 'julia30' in my_database
+
+    if doc_exists:
+        print('document with _id julia30 exists')
+
 Retrieve all documents
 ^^^^^^^^^^^^^^^^^^^^^^
 

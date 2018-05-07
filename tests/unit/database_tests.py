@@ -502,6 +502,20 @@ class DatabaseTests(UnitTestDbBase):
             ['julia000', 'julia001', 'julia002']
             )
 
+    def test_doc_id_in_db(self):
+        """
+        Test checking if a document exists in a DB with in operator
+        """
+        self.populate_db_with_documents(1)
+        self.assertTrue('julia000' in self.db)
+
+    def test_doc_id_not_in_db(self):
+        """
+        Test checking if a document exists in a DB with in operator
+        """
+        self.populate_db_with_documents(1)
+        self.assertFalse('julia001' in self.db)
+
     def test_get_non_existing_doc_via_getitem(self):
         """
         Test __getitem__ when retrieving a non-existing document
@@ -954,6 +968,43 @@ class DatabaseTests(UnitTestDbBase):
         finally:
             self.client.connect()
 
+    def test_create_json_index(self):
+        """
+        Ensure that a JSON index is created as expected.
+        """
+        index = self.db.create_query_index(fields=['name', 'age'])
+        self.assertIsInstance(index, Index)
+
+        ddoc = self.db[index.design_document_id]
+
+        self.assertEquals(ddoc['_id'], index.design_document_id)
+        self.assertTrue(ddoc['_rev'].startswith('1-'))
+
+        self.assertEquals(ddoc['indexes'], {})
+        self.assertEquals(ddoc['language'], 'query')
+        self.assertEquals(ddoc['lists'], {})
+        self.assertEquals(ddoc['shows'], {})
+
+        index = ddoc['views'][index.name]
+        self.assertEquals(index['map']['fields']['age'], 'asc')
+        self.assertEquals(index['map']['fields']['name'], 'asc')
+        self.assertEquals(index['options']['def']['fields'], ['name', 'age'])
+        self.assertEquals(index['reduce'], '_count')
+
+    def test_delete_json_index(self):
+        """
+        Ensure that a JSON index is deleted as expected.
+        """
+        index = self.db.create_query_index(
+            'ddoc001',
+            'index001',
+            fields=['name', 'age'])
+        self.assertIsInstance(index, Index)
+        ddoc = self.db['_design/ddoc001']
+        self.assertTrue(ddoc.exists())
+        self.db.delete_query_index('ddoc001', 'json', 'index001')
+        self.assertFalse(ddoc.exists())
+
 @unittest.skipUnless(
     os.environ.get('RUN_CLOUDANT_TESTS') is not None,
     'Skipping Cloudant specific Database tests'
@@ -1200,29 +1251,6 @@ class CloudantDatabaseTests(UnitTestDbBase):
             ['julia001', 'julia002', 'julia003', 'julia004']
         )
 
-    def test_create_json_index(self):
-        """
-        Ensure that a JSON index is created as expected.
-        """
-        index = self.db.create_query_index(fields=['name', 'age'])
-        self.assertIsInstance(index, Index)
-
-        ddoc = self.db[index.design_document_id]
-
-        self.assertEquals(ddoc['_id'], index.design_document_id)
-        self.assertTrue(ddoc['_rev'].startswith('1-'))
-
-        self.assertEquals(ddoc['indexes'], {})
-        self.assertEquals(ddoc['language'], 'query')
-        self.assertEquals(ddoc['lists'], {})
-        self.assertEquals(ddoc['shows'], {})
-
-        index = ddoc['views'][index.name]
-        self.assertEquals(index['map']['fields']['age'], 'asc')
-        self.assertEquals(index['map']['fields']['name'], 'asc')
-        self.assertEquals(index['options']['def']['fields'], ['name', 'age'])
-        self.assertEquals(index['reduce'], '_count')
-
     def test_create_text_index(self):
         """
         Ensure that a text index is created as expected.
@@ -1344,20 +1372,6 @@ class CloudantDatabaseTests(UnitTestDbBase):
             'Invalid index type: special.  '
             'Index type must be either \"json\" or \"text\".'
         )
-
-    def test_delete_json_index(self):
-        """
-        Ensure that a JSON index is deleted as expected.
-        """
-        index = self.db.create_query_index(
-            'ddoc001',
-            'index001',
-            fields=['name', 'age'])
-        self.assertIsInstance(index, Index)
-        ddoc = self.db['_design/ddoc001']
-        self.assertTrue(ddoc.exists())
-        self.db.delete_query_index('ddoc001', 'json', 'index001')
-        self.assertFalse(ddoc.exists())
 
     def test_delete_text_index(self):
         """
