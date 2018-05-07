@@ -298,6 +298,9 @@ class CouchDB(dict):
         """
         return Feed(self, raw_data, **kwargs)
 
+    def enable_cors(self):
+        raise NotImplementedError()
+
     def keys(self, remote=False):
         """
         Returns the database names for this client. Default is
