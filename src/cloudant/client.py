@@ -98,6 +98,15 @@ class CouchDB(dict):
         if connect_to_couch and self._DATABASE_CLASS == CouchDatabase:
             self.connect()
 
+    @property
+    def is_iam_authenticated(self):
+        """
+        Show if a client has authenticated using an IAM API key.
+
+        :return: True if client is IAM authenticated. False otherwise.
+        """
+        return self._use_iam
+
     def connect(self):
         """
         Starts up an authentication session for the client using cookie
@@ -107,10 +116,12 @@ class CouchDB(dict):
             self.session_logout()
 
         if self.admin_party:
+            self._use_iam = False
             self.r_session = ClientSession(
                 timeout=self._timeout
             )
         elif self._use_basic_auth:
+            self._use_iam = False
             self.r_session = BasicSession(
                 self._user,
                 self._auth_token,

@@ -1,7 +1,8 @@
 # Unreleased
 
-- [NEW] Moved `create_query_index` and other query related methods to `CouchDatabase` as the `_index`/`_find` API is available in CouchDB 2.x.
 - [NEW] Added functionality to test if a key is in a database as in `key in db`, overriding dict `__contains__` and checking in the remote database.
+- [NEW] Moved `create_query_index` and other query related methods to `CouchDatabase` as the `_index`/`_find` API is available in CouchDB 2.x.
+- [NEW] Support IAM authentication in replication documents.
 - [IMPROVED] Added support for IAM API key in `cloudant_bluemix` method.
 - [IMPROVED] Updated Travis CI and unit tests to run against CouchDB 2.1.1.
 
