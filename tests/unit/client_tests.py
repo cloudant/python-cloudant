@@ -128,6 +128,20 @@ class ClientTests(UnitTestDbBase):
         self.assertEqual(self.client.encoder, json.JSONEncoder)
         self.assertIsNone(self.client.r_session)
 
+    def test_constructor_with_creds_removed_from_url(self):
+        """
+        Test instantiating a client object using a URL
+        """
+        client = CouchDB(None, None, url='http://a9a9a9a9-a9a9-a9a9-a9a9-a9a9a9a9a9a9-bluemix'
+                                          ':a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9'
+                                          'a9a9a9a9a9a9@d8a01891-e4d2-4102-b5f8-751fb735ce31-'
+                                          'bluemix.couchdb.local:5984')
+        self.assertEqual(client.server_url, 'http://d8a01891-e4d2-4102-b5f8-751fb735ce31-'
+                                            'bluemix.couchdb.local:5984')
+        self.assertEqual(client._user, 'a9a9a9a9-a9a9-a9a9-a9a9-a9a9a9a9a9a9-bluemix')
+        self.assertEqual(client._auth_token, 'a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a'
+                                             '9a9a9a9a9a9a9a9a9a9a9a9a9')
+
     def test_connect(self):
         """
         Test connect and disconnect functionality.
@@ -594,6 +608,19 @@ class CloudantClientTests(UnitTestDbBase):
     Cloudant specific client unit tests
     """
 
+    def test_constructor_with_creds_removed_from_url(self):
+        """
+        Test instantiating a client object using a URL
+        """
+        client = Cloudant(None, None, url='https://a9a9a9a9-a9a9-a9a9-a9a9-a9a9a9a9a9a9-bluemix'
+                                          ':a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9'
+                                          'a9a9a9a9a9a9@d8a01891-e4d2-4102-b5f8-751fb735ce31-'
+                                          'bluemix.cloudant.com')
+        self.assertEqual(client.server_url, 'https://d8a01891-e4d2-4102-b5f8-751fb735ce31-'
+                                            'bluemix.cloudant.com')
+        self.assertEqual(client._user, 'a9a9a9a9-a9a9-a9a9-a9a9-a9a9a9a9a9a9-bluemix')
+        self.assertEqual(client._auth_token, 'a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a'
+                                             '9a9a9a9a9a9a9a9a9a9a9a9a9')
     @skip_if_not_cookie_auth
     def test_cloudant_session_login(self):
         """

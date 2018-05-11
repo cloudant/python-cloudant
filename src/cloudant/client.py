@@ -17,6 +17,7 @@ Top level API module that maps to a Cloudant or CouchDB client connection
 instance.
 """
 import json
+from ._2to3 import url_parse
 
 from ._client_session import (
     BasicSession,
@@ -93,6 +94,20 @@ class CouchDB(dict):
         self._auto_renew = kwargs.get('auto_renew', False)
         self._use_basic_auth = kwargs.get('use_basic_auth', False)
         self._use_iam = kwargs.get('use_iam', False)
+        # If user/pass exist in URL, remove and set variables
+        if not self._use_basic_auth and self.server_url:
+            parsed_url = url_parse(kwargs.get('url'))
+            # Note: To prevent conflicts with field names, the method
+            # and attribute names of `url_parse` start with an underscore
+            if parsed_url.port is None:
+                self.server_url = parsed_url._replace(
+                    netloc="{}".format(parsed_url.hostname)).geturl()
+            else:
+                self.server_url = parsed_url._replace(
+                    netloc="{}:{}".format(parsed_url.hostname, parsed_url.port)).geturl()
+            if (not user and not auth_token) and (parsed_url.username and parsed_url.password):
+                self._user = parsed_url.username
+                self._auth_token = parsed_url.password
 
         connect_to_couch = kwargs.get('connect', False)
         if connect_to_couch and self._DATABASE_CLASS == CouchDatabase:
@@ -450,14 +465,10 @@ class Cloudant(CouchDB):
         super(Cloudant, self).__init__(cloudant_user, auth_token, **kwargs)
         self._client_user_header = {'User-Agent': USER_AGENT}
         account = kwargs.get('account')
-        url = kwargs.get('url')
-        x_cloudant_user = kwargs.get('x_cloudant_user')
         if account is not None:
             self.server_url = 'https://{0}.cloudant.com'.format(account)
-        elif kwargs.get('url') is not None:
-            self.server_url = url
-            if x_cloudant_user is not None:
-                self._client_user_header['X-Cloudant-User'] = x_cloudant_user
+        if kwargs.get('x_cloudant_user') is not None:
+            self._client_user_header['X-Cloudant-User'] = kwargs.get('x_cloudant_user')
 
         if self.server_url is None:
             raise CloudantClientException(102)
