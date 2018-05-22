@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-TODO
+Unit tests for the Scheduler class
 """
 
 import unittest
