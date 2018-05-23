@@ -317,7 +317,7 @@ class ReplicatorTests(UnitTestDbBase):
         )
         self.replication_ids.append(repl_id)
         repl_state = None
-        valid_states = ['completed', 'error', 'triggered', None]
+        valid_states = ['completed', 'error', 'triggered', 'running', None]
         finished = False
         for _ in range(300):
             repl_state = self.replicator.replication_state(repl_id)
@@ -402,11 +402,15 @@ class ReplicatorTests(UnitTestDbBase):
             repl_id
         )
         self.replication_ids.append(repl_id)
-        valid_states = ('completed', 'error', 'triggered', None)
+        valid_states = ('completed', 'error', 'triggered', 'running', None)
         repl_states = []
+        if 'scheduler' in self.client.features():
+            state_key = 'state'
+        else:
+            state_key = '_replication_state'        
         for doc in self.replicator.follow_replication(repl_id):
-            self.assertIn(doc.get('_replication_state'), valid_states)
-            repl_states.append(doc.get('_replication_state'))
+            self.assertIn(doc.get(state_key), valid_states)
+            repl_states.append(doc.get(state_key))
         self.assertTrue(len(repl_states) > 0)
         self.assertEqual(repl_states[-1], 'completed')
         self.assertNotIn('error', repl_states)
