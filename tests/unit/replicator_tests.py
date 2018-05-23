@@ -402,7 +402,7 @@ class ReplicatorTests(UnitTestDbBase):
             repl_id
         )
         self.replication_ids.append(repl_id)
-        valid_states = ('completed', 'error', 'triggered', None)
+        valid_states = ('completed', 'error', 'triggered', 'running', None)
         repl_states = []
         if 'scheduler' in self.client.features():
             state_key = 'state'
