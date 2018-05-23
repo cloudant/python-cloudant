@@ -317,7 +317,7 @@ class ReplicatorTests(UnitTestDbBase):
         )
         self.replication_ids.append(repl_id)
         repl_state = None
-        valid_states = ['completed', 'error', 'triggered', None]
+        valid_states = ['completed', 'error', 'triggered', 'running', None]
         finished = False
         for _ in range(300):
             repl_state = self.replicator.replication_state(repl_id)
