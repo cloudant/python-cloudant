@@ -4,18 +4,20 @@ language: python
 
 python:
   - "2.7"
-  - "3.5"
+  - "3.6"
 
 env:
-  - ADMIN_PARTY=true
-  - ADMIN_PARTY=false
+  - ADMIN_PARTY=true COUCHDB_VERSION=2.1.1
+  - ADMIN_PARTY=false COUCHDB_VERSION=2.1.1
+  - ADMIN_PARTY=true COUCHDB_VERSION=1.7.1
+  - ADMIN_PARTY=false COUCHDB_VERSION=1.7.1
 
 services:
   - docker
 
 before_install:
-  - docker pull apache/couchdb:2.1.1
-  - docker run -d -it -p 5984:5984 apache/couchdb:2.1.1 --with-admin-party-please --with-haproxy
+  - docker pull apache/couchdb:$COUCHDB_VERSION
+  - docker run -d -p 5984:5984 apache/couchdb:$COUCHDB_VERSION
 
 install: "pip install -r requirements.txt && pip install -r test-requirements.txt"
 
