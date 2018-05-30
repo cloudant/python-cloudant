@@ -540,6 +540,29 @@ class DocumentTests(UnitTestDbBase):
         self.assertTrue(doc['_rev'].startswith('2-'))
         self.assertEqual(self.db['julia006'], doc)
 
+    def test_document_context_manager_no_doc_id(self):
+        """
+        Test that the __enter__ and __exit__ methods perform as expected
+        with no document id when initiated through a document context manager
+        """
+        with Document(self.db) as doc:
+            doc['_id'] = 'julia006'
+            doc['name'] = 'julia'
+            doc['age'] = 6
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(self.db['julia006'], doc)
+
+    def test_document_context_manager_doc_create(self):
+        """
+        Test that the document context manager will create a doc if it does
+        not yet exist.
+        """
+        with Document(self.db, 'julia006') as doc:
+            doc['name'] = 'julia'
+            doc['age'] = 6
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(self.db['julia006'], doc)
+
     def test_setting_id(self):
         """
         Ensure that proper processing occurs when setting the _id

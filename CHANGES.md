@@ -6,6 +6,7 @@
 - [IMPROVED] Added support for IAM API key in `cloudant_bluemix` method.
 - [IMPROVED] Verified library operation on Python 3.6.3.
 - [IMPROVED] Shortened length of client URLs by removing username and password.
+- [FIXED] Case where `Document` context manager would throw instead of creating a new document if no `_id` was provided.
 
 # 2.8.1 (2018-02-16)
 
