@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,9 +60,11 @@ RESULT_ARG_TYPES = {
     'limit': (int, LONGTYPE, NONETYPE,),
     'reduce': (bool,),
     'skip': (int, LONGTYPE, NONETYPE,),
+    'stable': (bool,),
     'stale': (STRTYPE,),
     'startkey': (int, LONGTYPE, STRTYPE, Sequence,),
     'startkey_docid': (STRTYPE,),
+    'update': (STRTYPE,),
 }
 
 # pylint: disable=unnecessary-lambda
@@ -196,7 +198,7 @@ def _py_to_couch_translate(key, val):
     equivalent.
     """
     try:
-        if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale']:
+        if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale', 'update']:
             return {key: val}
         elif val is None:
             return {key: None}

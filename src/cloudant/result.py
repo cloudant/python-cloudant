@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (c) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -150,6 +150,8 @@ class Result(object):
     :param bool reduce: True to use the reduce function, false otherwise.
     :param int skip: Skip this number of rows from the start.
         Not valid when used with key iteration.
+    :param bool stable: Whether or not the view results should be returned from
+        a "stable" set of shards.
     :param str stale: Allow the results from a stale view to be used. This
         makes the request return immediately, even if the view has not been
         completely built yet. If this parameter is not given, a response is
@@ -158,6 +160,12 @@ class Result(object):
         Not valid when used with key access and key slicing.
     :param str startkey_docid: Return records starting with the specified
         document ID.
+    :param str update: Determine whether the view in question should be
+        updated prior to or after responding to the user. Valid values are:
+        false: return results before updating the view; true: Return results
+        after updating the view; lazy: Return the view results without
+        waiting for an update, but update them immediately after the request
+
     """
     def __init__(self, method_ref, **options):
         self.options = options

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright (c) 2016, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -214,6 +214,14 @@ class PythonToCouchTests(unittest.TestCase):
             python_to_couch({'startkey_docid': 'foo'}),
             {'startkey_docid': 'foo'}
         )
+
+    def test_valid_update(self):
+        """
+        Test lazy translation is successful.
+        """
+        self.assertEqual(python_to_couch({'update': 'true'}), {'update': 'true'})
+        self.assertEqual(python_to_couch({'update': 'false'}), {'update': 'false'})
+        self.assertEqual(python_to_couch({'update': 'lazy'}), {'update': 'lazy'})
 
     def test_invalid_argument(self):
         """
