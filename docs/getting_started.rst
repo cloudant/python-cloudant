@@ -430,11 +430,16 @@ context manager.
 
         my_database = client.create_database('my_database')
 
-        # Performs a fetch upon entry and a save upon exit of this block
-        with Document(my_database, 'julia30') as doc:
-            doc['name'] = 'Julia'
-            doc['age'] = 30
-            doc['pets'] = ['cat', 'dog', 'frog']
+        # Upon entry into the document context, fetches the document from the
+        # remote database, if it exists. Upon exit from the context, saves the
+        # document to the remote database with changes made within the context
+        # or creates a new document.
+        with Document(database, 'julia006') as document:
+            # If document exists, it's fetched from the remote database
+            # Changes are made locally
+            document['name'] = 'Julia'
+            document['age'] = 6
+            # The document is saved to the remote database
 
         # Display a Document
         print(my_database['julia30'])

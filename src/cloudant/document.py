@@ -332,6 +332,9 @@ class Document(dict):
         except HTTPError as error:
             if error.response.status_code != 404:
                 raise
+        except CloudantDocumentException as error:
+            if error.status_code != 101:
+                raise
 
         return self
 
