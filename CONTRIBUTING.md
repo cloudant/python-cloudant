@@ -74,7 +74,7 @@ test behaviour:
 - Without `RUN_CLOUDANT_TESTS`, the following environment variables have an effect:
     - Set `DB_URL` to set the root URL of the CouchDB/Cloudant instance. It defaults
       to `http://localhost:5984`.
-    - Set `ADMIN_PARTY` to ``true`` to not use any authentication details.
+    - Set `ADMIN_PARTY` to `true` to not use any authentication details.
     - Without `ADMIN_PARTY`, set `DB_USER` and `DB_PASSWORD` to use those
       credentials to access the database.
     - Without `ADMIN_PARTY` and `DB_USER`, the tests assume CouchDB is in
