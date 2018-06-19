@@ -152,10 +152,12 @@ class Result(object):
         Not valid when used with key iteration.
     :param bool stable: Whether or not the view results should be returned from
         a "stable" set of shards.
-    :param str stale: Allow the results from a stale view to be used. This
-        makes the request return immediately, even if the view has not been
-        completely built yet. If this parameter is not given, a response is
-        returned only after the view has been built.
+    :param str stale: Allow the results from a stale view to be used. This makes
+        the request return immediately, even if the view has not been completely
+        built yet. If this parameter is not given, a response is returned only
+        after the view has been built. Note that this parameter is deprecated
+        and the appropriate combination of `stable` and `update` should be used
+        instead.
     :param startkey: Return records starting with the specified key.
         Not valid when used with key access and key slicing.
     :param str startkey_docid: Return records starting with the specified
