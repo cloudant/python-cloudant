@@ -164,7 +164,7 @@ class Result(object):
         updated prior to or after responding to the user. Valid values are:
         false: return results before updating the view; true: Return results
         after updating the view; lazy: Return the view results without
-        waiting for an update, but update them immediately after the request
+        waiting for an update, but update them immediately after the request.
 
     """
     def __init__(self, method_ref, **options):
