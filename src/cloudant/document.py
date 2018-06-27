@@ -104,6 +104,9 @@ class Document(dict):
         """
         Retrieves whether the document exists in the remote database or not.
 
+        Any parameters will be treated as request arguments to the
+        document endpoint.
+
         :returns: True if the document exists in the remote database,
             otherwise False
         """
@@ -159,6 +162,9 @@ class Document(dict):
         and populates the locally cached Document object with that content.
         A call to fetch will overwrite any dictionary content currently in
         the locally cached Document object.
+
+        Any parameters will be treated as request arguments to the
+        document endpoint.
         """
         if self.document_url is None:
             raise CloudantDocumentException(101)
