@@ -184,7 +184,7 @@ class DocumentTests(UnitTestDbBase):
             doc.exists()
         err = cm.exception
         self.assertEqual(err.response.status_code, 400)
-        self.client.r_session.head.assert_called_with(doc.document_url)
+        self.client.r_session.head.assert_called_with(doc.document_url, params={})
 
     def test_retrieve_document_json(self):
         """
@@ -488,7 +488,7 @@ class DocumentTests(UnitTestDbBase):
             self.fail('Above statement should raise an Exception')
         except CloudantDocumentException as err:
             self.assertEqual(
-                str(err), 
+                str(err),
                 'Attempting to delete a doc with no _rev. '
                 'Try running .fetch and re-try.'
             )
@@ -692,7 +692,7 @@ class DocumentTests(UnitTestDbBase):
             )
             orig_size = doc['_attachments']['attachment.txt']['length']
             self.assertEqual(orig_size, len(attachment.getvalue()))
-            # Confirm that the local document dictionary matches 
+            # Confirm that the local document dictionary matches
             # the document on the database.
             expected = Document(self.db, 'julia006')
             expected.fetch()
@@ -732,7 +732,7 @@ class DocumentTests(UnitTestDbBase):
                 doc.get_attachment('attachment.txt', attachment_type='text'),
                 attachment.getvalue()
             )
-            # Confirm that the local document dictionary matches 
+            # Confirm that the local document dictionary matches
             # the document on the database.
             expected = Document(self.db, 'julia006')
             expected.fetch()
@@ -759,7 +759,7 @@ class DocumentTests(UnitTestDbBase):
                     '_attachments'
                 ])
             )
-            # Confirm that the local document dictionary matches 
+            # Confirm that the local document dictionary matches
             # the document on the database.
             expected = Document(self.db, 'julia006')
             expected.fetch()
@@ -778,7 +778,7 @@ class DocumentTests(UnitTestDbBase):
                     'age'
                 ])
             )
-            # Confirm that the local document dictionary matches 
+            # Confirm that the local document dictionary matches
             # the document on the database.
             expected = Document(self.db, 'julia006')
             expected.fetch()
