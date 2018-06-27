@@ -1,4 +1,5 @@
 # Unreleased
+- [NEW] Added functionality to retrieve a previous version of a document.
 
 # 2.9.0 (2018-06-13)
 
