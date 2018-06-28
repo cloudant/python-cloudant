@@ -12,8 +12,8 @@ This is the official Cloudant library for Python.
 * [API Reference](http://python-cloudant.readthedocs.io/en/latest/cloudant.html)
 * [Related Documentation](#related-documentation)
 * [Development](#development)
-    * [Contributing](CONTRIBUTING.rst)
-    * [Test Suite](CONTRIBUTING.rst#running-the-tests)
+    * [Contributing](CONTRIBUTING.md)
+    * [Test Suite](CONTRIBUTING.md#running-the-tests)
     * [Using in Other Projects](#using-in-other-projects)
     * [License](#license)
     * [Issues](#issues)
@@ -44,7 +44,7 @@ See [API reference docs (readthedocs.io)](http://python-cloudant.readthedocs.io/
 
 ## Development
 
-See [CONTRIBUTING.rst](https://github.com/cloudant/python-cloudant/blob/master/CONTRIBUTING.rst)
+See [CONTRIBUTING.md](https://github.com/cloudant/python-cloudant/blob/master/CONTRIBUTING.md)
 
 ## Using in other projects
 
