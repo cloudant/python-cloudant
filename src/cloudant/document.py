@@ -162,11 +162,10 @@ class Document(dict):
         """
         Retrieves the content of the current document from the remote database
         and populates the locally cached Document object with that content.
-        A call to fetch will overwrite any dictionary content currently in
-        the locally cached Document object.
+        A call to fetch_revision will overwrite any dictionary content
+        currently in the locally cached Document object.
 
         :param str rev: Get a specific revision of the document.
-            Default is ``None``, which gets the most recent revision.
         """
         if self.document_url is None:
             raise CloudantDocumentException(101)
