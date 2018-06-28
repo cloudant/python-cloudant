@@ -102,7 +102,8 @@ DOCUMENT = {
     101: 'A document id is required to fetch document contents. '
          'Add an _id key and value to the document and re-try.',
     102: 'The field {0} is not a list.',
-    103: 'Attempting to delete a doc with no _rev. Try running .fetch and re-try.'
+    103: 'Attempting to delete a doc with no _rev. Try running .fetch and re-try.',
+    104: 'Document revision {0} is either invalid or its contents are not available'
 }
 
 FEED = {

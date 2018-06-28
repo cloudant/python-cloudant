@@ -803,5 +803,49 @@ class DocumentTests(UnitTestDbBase):
         finally:
             self.client.connect()
 
+    def test_document_get_revision(self):
+        """
+        Test the retrieval of a previous revision of a document which
+        still exists in the database
+        """
+        doc_rev1_data = {'_id': 'julia999', 'name': 'julia', 'age': 6}
+
+        doc = self.db.create_document(doc_rev1_data)
+
+        rev = doc['_rev']
+
+        doc['name'] = 'Julia'
+        doc.save()
+
+        # Check that a new revision has been created
+        self.assertNotEqual(rev, doc['_rev'])
+
+        old_doc = doc.get_revision(rev)
+        self.assertEqual(doc_rev1_data['name'], old_doc['name'])
+
+    def test_document_get_revision_not_stored_fails(self):
+        """
+        Test the retrieval of a previous version of a document which
+        does not exist in the database.
+        """
+        self.db.set_revision_limit(1)
+
+        doc_rev1_data = {'_id': 'julia9999', 'name': 'julia', 'age': 6}
+        doc = self.db.create_document(doc_rev1_data)
+
+        rev = doc['_rev']
+
+        doc['name'] = 'Julia'
+        doc.save()
+
+        # Check that a new revision has been created
+        self.assertNotEqual(rev, doc['_rev'])
+
+        with self.assertRaises(CloudantDocumentException) as cm:
+            doc.get_revision(rev)
+
+        self.assertEqual(cm.exception.status_code, 104)
+
+
 if __name__ == '__main__':
     unittest.main()
