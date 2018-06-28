@@ -114,7 +114,7 @@ class Document(dict):
             return False
         else:
             params = {'rev': rev} if rev is not None else {}
-            
+
             resp = self.r_session.head(self.document_url, params=params)
             if resp.status_code not in [200, 404]:
                 resp.raise_for_status()
@@ -158,7 +158,7 @@ class Document(dict):
         super(Document, self).__setitem__('_rev', data['rev'])
         return
 
-    def fetch(self, rev=None):
+    def fetch_revision(self, rev):
         """
         Retrieves the content of the current document from the remote database
         and populates the locally cached Document object with that content.
@@ -171,8 +171,24 @@ class Document(dict):
         if self.document_url is None:
             raise CloudantDocumentException(101)
 
-        params = {'rev': rev} if rev is not None else {}
+        params = {'rev': rev}
         resp = self.r_session.get(self.document_url, params=params)
+
+        resp.raise_for_status()
+        self.clear()
+        self.update(resp.json())
+
+    def fetch(self):
+        """
+        Retrieves the content of the current document from the remote database
+        and populates the locally cached Document object with that content.
+        A call to fetch will overwrite any dictionary content currently in
+        the locally cached Document object.
+        """
+        if self.document_url is None:
+            raise CloudantDocumentException(101)
+
+        resp = self.r_session.get(self.document_url)
 
         resp.raise_for_status()
         self.clear()
@@ -516,7 +532,7 @@ class Document(dict):
         doc = self.__class__(self._database, self._document_id)
 
         if doc.exists(rev=rev):
-            doc.fetch(rev=rev)
+            doc.fetch_revision(rev)
 
             return dict(doc)
 
