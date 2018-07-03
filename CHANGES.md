@@ -1,11 +1,12 @@
 # Unreleased
 
+- [NEW] Add new view parameters, `stable` and `update`, as keyword arguments to `get_view_result`.
+
 # 2.9.0 (2018-06-13)
 
 - [NEW] Added functionality to test if a key is in a database as in `key in db`, overriding dict `__contains__` and checking in the remote database.
 - [NEW] Moved `create_query_index` and other query related methods to `CouchDatabase` as the `_index`/`_find` API is available in CouchDB 2.x.
 - [NEW] Support IAM authentication in replication documents.
-- [NEW] Add new view parameters, `stable` and `update`, as keyword arguments to `get_view_result`.
 - [FIXED] Case where `Document` context manager would throw instead of creating a new document if no `_id` was provided.
 - [IMPROVED] Added support for IAM API key in `cloudant_bluemix` method.
 - [IMPROVED] Shortened length of client URLs by removing username and password.
