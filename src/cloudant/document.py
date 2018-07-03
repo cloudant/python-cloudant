@@ -100,9 +100,12 @@ class Document(dict):
             url_quote(self._document_id, safe='')
         ))
 
-    def exists(self):
+    def exists(self, rev=None):
         """
         Retrieves whether the document exists in the remote database or not.
+
+        :param str rev: Query a specific revision of the document.
+            Default is ``None``, which checks the most recent revision.
 
         :returns: True if the document exists in the remote database,
             otherwise False
@@ -110,7 +113,9 @@ class Document(dict):
         if self._document_id is None:
             return False
         else:
-            resp = self.r_session.head(self.document_url)
+            params = {'rev': rev} if rev is not None else {}
+
+            resp = self.r_session.head(self.document_url, params=params)
             if resp.status_code not in [200, 404]:
                 resp.raise_for_status()
 
@@ -153,6 +158,25 @@ class Document(dict):
         super(Document, self).__setitem__('_rev', data['rev'])
         return
 
+    def fetch_revision(self, rev):
+        """
+        Retrieves the content of the current document from the remote database
+        and populates the locally cached Document object with that content.
+        A call to fetch_revision will overwrite any dictionary content
+        currently in the locally cached Document object.
+
+        :param str rev: Get a specific revision of the document.
+        """
+        if self.document_url is None:
+            raise CloudantDocumentException(101)
+
+        params = {'rev': rev}
+        resp = self.r_session.get(self.document_url, params=params)
+
+        resp.raise_for_status()
+        self.clear()
+        self.update(resp.json())
+
     def fetch(self):
         """
         Retrieves the content of the current document from the remote database
@@ -162,7 +186,9 @@ class Document(dict):
         """
         if self.document_url is None:
             raise CloudantDocumentException(101)
+
         resp = self.r_session.get(self.document_url)
+
         resp.raise_for_status()
         self.clear()
         self.update(resp.json())
@@ -494,3 +520,20 @@ class Document(dict):
         resp.raise_for_status()
         self.fetch()
         return resp.json()
+
+    def get_revision(self, rev):
+        """
+        Retrieves a given revision of the current document.
+
+        :param rev: Revision ID.
+
+        :returns: Document data
+        """
+        doc = self.__class__(self._database, self._document_id)
+
+        if doc.exists(rev=rev):
+            doc.fetch_revision(rev)
+
+            return dict(doc)
+
+        raise CloudantDocumentException(104, rev)

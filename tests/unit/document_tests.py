@@ -184,7 +184,7 @@ class DocumentTests(UnitTestDbBase):
             doc.exists()
         err = cm.exception
         self.assertEqual(err.response.status_code, 400)
-        self.client.r_session.head.assert_called_with(doc.document_url)
+        self.client.r_session.head.assert_called_with(doc.document_url, params={})
 
     def test_retrieve_document_json(self):
         """
@@ -544,7 +544,7 @@ class DocumentTests(UnitTestDbBase):
             self.fail('Above statement should raise an Exception')
         except CloudantDocumentException as err:
             self.assertEqual(
-                str(err), 
+                str(err),
                 'Attempting to delete a doc with no _rev. '
                 'Try running .fetch and re-try.'
             )
@@ -748,7 +748,7 @@ class DocumentTests(UnitTestDbBase):
             )
             orig_size = doc['_attachments']['attachment.txt']['length']
             self.assertEqual(orig_size, len(attachment.getvalue()))
-            # Confirm that the local document dictionary matches 
+            # Confirm that the local document dictionary matches
             # the document on the database.
             expected = Document(self.db, 'julia006')
             expected.fetch()
@@ -788,7 +788,7 @@ class DocumentTests(UnitTestDbBase):
                 doc.get_attachment('attachment.txt', attachment_type='text'),
                 attachment.getvalue()
             )
-            # Confirm that the local document dictionary matches 
+            # Confirm that the local document dictionary matches
             # the document on the database.
             expected = Document(self.db, 'julia006')
             expected.fetch()
@@ -815,7 +815,7 @@ class DocumentTests(UnitTestDbBase):
                     '_attachments'
                 ])
             )
-            # Confirm that the local document dictionary matches 
+            # Confirm that the local document dictionary matches
             # the document on the database.
             expected = Document(self.db, 'julia006')
             expected.fetch()
@@ -834,7 +834,7 @@ class DocumentTests(UnitTestDbBase):
                     'age'
                 ])
             )
-            # Confirm that the local document dictionary matches 
+            # Confirm that the local document dictionary matches
             # the document on the database.
             expected = Document(self.db, 'julia006')
             expected.fetch()
@@ -858,6 +858,50 @@ class DocumentTests(UnitTestDbBase):
             self.assertIsNone(doc.r_session)
         finally:
             self.client.connect()
+
+    def test_document_get_revision(self):
+        """
+        Test the retrieval of a previous revision of a document which
+        still exists in the database
+        """
+        doc_rev1_data = {'_id': 'julia999', 'name': 'julia', 'age': 6}
+
+        doc = self.db.create_document(doc_rev1_data)
+
+        rev = doc['_rev']
+
+        doc['name'] = 'Julia'
+        doc.save()
+
+        # Check that a new revision has been created
+        self.assertNotEqual(rev, doc['_rev'])
+
+        old_doc = doc.get_revision(rev)
+        self.assertEqual(doc_rev1_data['name'], old_doc['name'])
+
+    def test_document_get_revision_not_stored_fails(self):
+        """
+        Test the retrieval of a previous version of a document which
+        does not exist in the database.
+        """
+        self.db.set_revision_limit(1)
+
+        doc_rev1_data = {'_id': 'julia9999', 'name': 'julia', 'age': 6}
+        doc = self.db.create_document(doc_rev1_data)
+
+        rev = doc['_rev']
+
+        doc['name'] = 'Julia'
+        doc.save()
+
+        # Check that a new revision has been created
+        self.assertNotEqual(rev, doc['_rev'])
+
+        with self.assertRaises(CloudantDocumentException) as cm:
+            doc.get_revision(rev)
+
+        self.assertEqual(cm.exception.status_code, 104)
+
 
 if __name__ == '__main__':
     unittest.main()
