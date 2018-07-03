@@ -474,6 +474,62 @@ class DocumentTests(UnitTestDbBase):
         self.assertTrue(doc['_rev'].startswith('2-'))
         self.assertEqual(doc['pets'], ['cat', 'dog', 'fish'])
 
+    @mock.patch('cloudant.document.Document.save')
+    def test_update_field_maxretries(self, m_save):
+        """
+        Test that conflict retries work for updating a single field.
+        """
+        # Create a doc
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.create()
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(doc['age'], 6)
+        # Mock conflicts when saving updates
+        m_save.side_effect = requests.HTTPError(response=mock.Mock(status_code=409, reason='conflict'))
+        # Tests that failing on retry eventually throws
+        with self.assertRaises(requests.HTTPError) as cm:
+            doc.update_field(doc.field_set, 'age', 7, max_tries=2)
+
+        # There is an off-by-one error for "max_tries"
+        # It really means max_retries i.e. 1 attempt
+        # followed by a max of 2 retries
+        self.assertEqual(m_save.call_count, 3)
+        self.assertEqual(cm.exception.response.status_code, 409)
+        self.assertEqual(cm.exception.response.reason, 'conflict')
+        # Fetch again before asserting, otherwise we assert against
+        # the locally updated age field
+        doc.fetch()
+        self.assertFalse(doc['_rev'].startswith('2-'))
+        self.assertNotEqual(doc['age'], 7)
+
+    def test_update_field_success_on_retry(self):
+        """
+        Test that conflict retries work for updating a single field.
+        """
+        # Create a doc
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.create()
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(doc['age'], 6)
+
+        # Mock when saving the document
+        # 1st call throw a 409
+        # 2nd call delegate to the real doc.save()
+        with mock.patch('cloudant.document.Document.save',
+                        side_effect=[requests.HTTPError(response=mock.Mock(status_code=409, reason='conflict')),
+                                     doc.save()]) as m_save:
+            # A list of side effects containing only 1 element
+            doc.update_field(doc.field_set, 'age', 7, max_tries=1)
+        # Two calls to save, one with a 409 and one that succeeds
+        self.assertEqual(m_save.call_count, 2)
+        # Check that the _rev and age field were updated
+        self.assertTrue(doc['_rev'].startswith('2-'))
+        self.assertEqual(doc['age'], 7)
+
     def test_delete_document_failure(self):
         """
         Test failure condition when attempting to remove a document

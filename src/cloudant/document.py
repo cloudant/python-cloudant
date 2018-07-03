@@ -259,7 +259,8 @@ class Document(dict):
             if tries < max_tries and ex.response.status_code == 409:
                 self._update_field(
                     action, field, value, max_tries, tries=tries+1)
-            raise
+            else:
+                raise
 
     def update_field(self, action, field, value, max_tries=10):
         """
