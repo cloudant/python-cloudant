@@ -100,6 +100,29 @@ class Document(dict):
             url_quote(self._document_id, safe='')
         ))
 
+    def _detransform(self, obj):
+        """
+        Detransform the document.
+
+        This method is executed whenever this object is deserialized into a
+        Python object.
+
+        :param obj: The object to be detransformed.
+        :return: The detransformed object.
+        """
+        return obj  # noop
+
+    def _transform(self):
+        """
+        Transform the document.
+
+        This method is executed whenever this object is serialized into a
+        JSON formatted string.
+
+        :return: The transformed object.
+        """
+        return self  # noop
+
     def exists(self):
         """
         Retrieves whether the document exists in the remote database or not.
@@ -124,7 +147,7 @@ class Document(dict):
 
         :returns: Encoded JSON string containing the document data
         """
-        return json.dumps(dict(self), cls=self.encoder)
+        return json.dumps(self._transform(), cls=self.encoder)
 
     def create(self):
         """
@@ -144,7 +167,7 @@ class Document(dict):
         resp = self.r_session.post(
             self._database.database_url,
             headers=headers,
-            data=json.dumps(doc, cls=self.encoder)
+            data=self.json()
         )
         resp.raise_for_status()
         data = resp.json()
@@ -165,7 +188,7 @@ class Document(dict):
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
         self.clear()
-        self.update(resp.json())
+        self.update(self._detransform(resp.json()))
 
     def save(self):
         """

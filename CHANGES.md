@@ -1,5 +1,6 @@
 # Unreleased
 
+- [NEW] Add `Document._transform` and `Document._detransform` methods.
 - [NEW] Add new view parameters, `stable` and `update`, as keyword arguments to `get_view_result`.
 - [FIXED] Case where an exception was raised after successful retry when using `doc.update_field`.
 
