@@ -30,6 +30,8 @@ import os
 import uuid
 import inspect
 
+from datetime import datetime
+
 from cloudant.document import Document
 from cloudant.error import CloudantDocumentException
 
@@ -858,6 +860,48 @@ class DocumentTests(UnitTestDbBase):
             self.assertIsNone(doc.r_session)
         finally:
             self.client.connect()
+
+    def test_document_custom_json_encoder_and_decoder(self):
+        dt_format = '%Y-%m-%dT%H:%M:%S'
+
+        class DTEncoder(json.JSONEncoder):
+
+            def default(self, obj):
+                if isinstance(obj, datetime):
+                    return {
+                        '_type': 'datetime',
+                        'value': obj.strftime(dt_format)
+                    }
+                return super(DTEncoder, self).default(obj)
+
+        class DTDecoder(json.JSONDecoder):
+
+            def __init__(self, *args, **kwargs):
+                json.JSONDecoder.__init__(self, object_hook=self.object_hook,
+                                          *args, **kwargs)
+
+            def object_hook(self, obj):
+                if '_type' not in obj:
+                    return obj
+                if obj['_type'] == 'datetime':
+                    return datetime.strptime(obj['value'], dt_format)
+                return obj
+
+        doc = Document(self.db, encoder=DTEncoder)
+        doc['name'] = 'julia'
+        doc['dt'] = datetime(2018, 7, 9, 15, 11, 10, 0)
+        doc.save()
+
+        raw_doc = self.db.all_docs(include_docs=True)['rows'][0]['doc']
+
+        self.assertEquals(raw_doc['name'], 'julia')
+        self.assertEquals(raw_doc['dt']['_type'], 'datetime')
+        self.assertEquals(raw_doc['dt']['value'], '2018-07-09T15:11:10')
+
+        doc2 = Document(self.db, doc['_id'], decoder=DTDecoder)
+        doc2.fetch()
+
+        self.assertEquals(doc2['dt'], doc['dt'])
 
 if __name__ == '__main__':
     unittest.main()
