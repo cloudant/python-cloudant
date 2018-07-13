@@ -148,6 +148,7 @@ class CookieSession(ClientSession):
             'POST',
             self._session_url,
             data={'name': self._username, 'password': self._password},
+            auth=(self._username, self._password)
         )
         resp.raise_for_status()
 
