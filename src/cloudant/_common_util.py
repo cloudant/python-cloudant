@@ -60,9 +60,11 @@ RESULT_ARG_TYPES = {
     'limit': (int, LONGTYPE, NONETYPE,),
     'reduce': (bool,),
     'skip': (int, LONGTYPE, NONETYPE,),
+    'stable': (bool,),
     'stale': (STRTYPE,),
     'startkey': (int, LONGTYPE, STRTYPE, Sequence,),
     'startkey_docid': (STRTYPE,),
+    'update': (STRTYPE,),
 }
 
 # pylint: disable=unnecessary-lambda
@@ -196,7 +198,7 @@ def _py_to_couch_translate(key, val):
     equivalent.
     """
     try:
-        if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale']:
+        if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale', 'update']:
             return {key: val}
         elif val is None:
             return {key: None}

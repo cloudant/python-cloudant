@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright (C) 2016, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -467,7 +467,7 @@ class QueryParmExecutionTests(UnitTestDbBase):
         try:
             self.view001(stale='ok')
         except Exception as err:
-            self.assertFail(str(err), 'An unexpected error was encountered.')
+            self.fail('An unexpected error was encountered: '+str(err))
 
     def test_stale_update_after(self):
         """
@@ -480,8 +480,48 @@ class QueryParmExecutionTests(UnitTestDbBase):
         try:
             self.view001(stale='update_after')
         except Exception as err:
-            self.assertFail(str(err), 'An unexpected error was encountered.')
+            self.fail('An unexpected error was encountered:' +str(err))
+            
+    def test_stable_true(self):
+        """
+        Test view query using the stable parameter set to true
 
+        
+        Since there is no way to know whether the view will return a response from a stable set of
+        shards or not the test here focuses on ensuring that the call itself is successful.
+
+        """
+        try:
+            self.view001(stable=True)
+        except Exception as err:
+            self.fail('An unexpected error was encountered: '+str(err))
+
+    def test_stable_update_lazy(self):
+        """
+        Test view query using the update parameter set to lazy
+
+        Since there is no way to know whether the view will update lazily or not the test here
+        focuses on ensuring that the call itself is successful.
+
+        """
+        try:
+            self.view001(update='lazy')
+        except Exception as err:
+            self.fail('An unexpected error was encountered: '+str(err))
+
+    def test_stable_update_true(self):
+        """
+        Test view query using the update parameter set to true
+
+        Since there is no way to know whether the view will update or not the test here focuses on
+        ensuring that the call itself is successful.
+
+        """
+        try:
+            self.view001(update='true')
+        except Exception as err:
+            self.fail('An unexpected error was encountered: '+str(err))
+                        
     def test_startkey_int(self):
         """
         Test view query using startkey parameter as an integer.

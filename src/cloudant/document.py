@@ -53,8 +53,10 @@ class Document(dict):
     :param database: A database instance used by the Document.  Can be
         either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
     :param str document_id: Optional document id used to identify the document.
+    :param str encoder: Optional JSON encoder object.
+    :param str decoder: Optional JSON decoder object.
     """
-    def __init__(self, database, document_id=None):
+    def __init__(self, database, document_id=None, **kwargs):
         super(Document, self).__init__()
         self._client = database.client
         self._database = database
@@ -63,7 +65,8 @@ class Document(dict):
         self._document_id = document_id
         if self._document_id is not None:
             self['_id'] = self._document_id
-        self.encoder = self._client.encoder
+        self.encoder = kwargs.get('encoder') or self._client.encoder
+        self.decoder = kwargs.get('decoder') or json.JSONDecoder
 
     @property
     def r_session(self):
@@ -165,7 +168,7 @@ class Document(dict):
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
         self.clear()
-        self.update(resp.json())
+        self.update(resp.json(cls=self.decoder))
 
     def save(self):
         """
@@ -259,7 +262,8 @@ class Document(dict):
             if tries < max_tries and ex.response.status_code == 409:
                 self._update_field(
                     action, field, value, max_tries, tries=tries+1)
-            raise
+            else:
+                raise
 
     def update_field(self, action, field, value, max_tries=10):
         """
@@ -331,6 +335,9 @@ class Document(dict):
             self.fetch()
         except HTTPError as error:
             if error.response.status_code != 404:
+                raise
+        except CloudantDocumentException as error:
+            if error.status_code != 101:
                 raise
 
         return self

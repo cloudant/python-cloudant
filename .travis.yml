@@ -16,8 +16,8 @@ services:
   - docker
 
 before_install:
-  - docker pull apache/couchdb:$COUCHDB_VERSION
-  - docker run -d -p 5984:5984 apache/couchdb:$COUCHDB_VERSION
+  - docker pull couchdb:$COUCHDB_VERSION
+  - docker run -d -p 5984:5984 couchdb:$COUCHDB_VERSION
 
 install: "pip install -r requirements.txt && pip install -r test-requirements.txt"
 

@@ -312,15 +312,24 @@ class CouchDatabase(dict):
         :param bool reduce: True to use the reduce function, false otherwise.
         :param int skip: Skip this number of rows from the start.
             Not valid when used with :class:`~cloudant.result.Result` iteration.
+        :param bool stable: Whether or not the view results should be returned
+            from a "stable" set of shards.
         :param str stale: Allow the results from a stale view to be used. This
             makes the request return immediately, even if the view has not been
             completely built yet. If this parameter is not given, a response is
-            returned only after the view has been built.
+            returned only after the view has been built. Note that this
+            parameter is deprecated and the appropriate combination of `stable`
+            and `update` should be used instead.
         :param startkey: Return records starting with the specified key.
             Not valid when used with :class:`~cloudant.result.Result` key
             access and key slicing.
         :param str startkey_docid: Return records starting with the specified
             document ID.
+        :param str update: Determine whether the view in question should be
+            updated prior to or after responding to the user. Valid values are:
+            false: return results before updating the view; true: Return results
+            after updating the view; lazy: Return the view results without
+            waiting for an update, but update them immediately after the request.
 
         :returns: The result content either wrapped in a QueryResult or
             as the raw response JSON content

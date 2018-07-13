@@ -30,6 +30,8 @@ import os
 import uuid
 import inspect
 
+from datetime import datetime
+
 from cloudant.document import Document
 from cloudant.error import CloudantDocumentException
 
@@ -474,6 +476,62 @@ class DocumentTests(UnitTestDbBase):
         self.assertTrue(doc['_rev'].startswith('2-'))
         self.assertEqual(doc['pets'], ['cat', 'dog', 'fish'])
 
+    @mock.patch('cloudant.document.Document.save')
+    def test_update_field_maxretries(self, m_save):
+        """
+        Test that conflict retries work for updating a single field.
+        """
+        # Create a doc
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.create()
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(doc['age'], 6)
+        # Mock conflicts when saving updates
+        m_save.side_effect = requests.HTTPError(response=mock.Mock(status_code=409, reason='conflict'))
+        # Tests that failing on retry eventually throws
+        with self.assertRaises(requests.HTTPError) as cm:
+            doc.update_field(doc.field_set, 'age', 7, max_tries=2)
+
+        # There is an off-by-one error for "max_tries"
+        # It really means max_retries i.e. 1 attempt
+        # followed by a max of 2 retries
+        self.assertEqual(m_save.call_count, 3)
+        self.assertEqual(cm.exception.response.status_code, 409)
+        self.assertEqual(cm.exception.response.reason, 'conflict')
+        # Fetch again before asserting, otherwise we assert against
+        # the locally updated age field
+        doc.fetch()
+        self.assertFalse(doc['_rev'].startswith('2-'))
+        self.assertNotEqual(doc['age'], 7)
+
+    def test_update_field_success_on_retry(self):
+        """
+        Test that conflict retries work for updating a single field.
+        """
+        # Create a doc
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.create()
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(doc['age'], 6)
+
+        # Mock when saving the document
+        # 1st call throw a 409
+        # 2nd call delegate to the real doc.save()
+        with mock.patch('cloudant.document.Document.save',
+                        side_effect=[requests.HTTPError(response=mock.Mock(status_code=409, reason='conflict')),
+                                     doc.save()]) as m_save:
+            # A list of side effects containing only 1 element
+            doc.update_field(doc.field_set, 'age', 7, max_tries=1)
+        # Two calls to save, one with a 409 and one that succeeds
+        self.assertEqual(m_save.call_count, 2)
+        # Check that the _rev and age field were updated
+        self.assertTrue(doc['_rev'].startswith('2-'))
+        self.assertEqual(doc['age'], 7)
+
     def test_delete_document_failure(self):
         """
         Test failure condition when attempting to remove a document
@@ -538,6 +596,29 @@ class DocumentTests(UnitTestDbBase):
             doc['name'] = 'julia'
             doc['age'] = 6
         self.assertTrue(doc['_rev'].startswith('2-'))
+        self.assertEqual(self.db['julia006'], doc)
+
+    def test_document_context_manager_no_doc_id(self):
+        """
+        Test that the __enter__ and __exit__ methods perform as expected
+        with no document id when initiated through a document context manager
+        """
+        with Document(self.db) as doc:
+            doc['_id'] = 'julia006'
+            doc['name'] = 'julia'
+            doc['age'] = 6
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(self.db['julia006'], doc)
+
+    def test_document_context_manager_doc_create(self):
+        """
+        Test that the document context manager will create a doc if it does
+        not yet exist.
+        """
+        with Document(self.db, 'julia006') as doc:
+            doc['name'] = 'julia'
+            doc['age'] = 6
+        self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(self.db['julia006'], doc)
 
     def test_setting_id(self):
@@ -779,6 +860,48 @@ class DocumentTests(UnitTestDbBase):
             self.assertIsNone(doc.r_session)
         finally:
             self.client.connect()
+
+    def test_document_custom_json_encoder_and_decoder(self):
+        dt_format = '%Y-%m-%dT%H:%M:%S'
+
+        class DTEncoder(json.JSONEncoder):
+
+            def default(self, obj):
+                if isinstance(obj, datetime):
+                    return {
+                        '_type': 'datetime',
+                        'value': obj.strftime(dt_format)
+                    }
+                return super(DTEncoder, self).default(obj)
+
+        class DTDecoder(json.JSONDecoder):
+
+            def __init__(self, *args, **kwargs):
+                json.JSONDecoder.__init__(self, object_hook=self.object_hook,
+                                          *args, **kwargs)
+
+            def object_hook(self, obj):
+                if '_type' not in obj:
+                    return obj
+                if obj['_type'] == 'datetime':
+                    return datetime.strptime(obj['value'], dt_format)
+                return obj
+
+        doc = Document(self.db, encoder=DTEncoder)
+        doc['name'] = 'julia'
+        doc['dt'] = datetime(2018, 7, 9, 15, 11, 10, 0)
+        doc.save()
+
+        raw_doc = self.db.all_docs(include_docs=True)['rows'][0]['doc']
+
+        self.assertEquals(raw_doc['name'], 'julia')
+        self.assertEquals(raw_doc['dt']['_type'], 'datetime')
+        self.assertEquals(raw_doc['dt']['value'], '2018-07-09T15:11:10')
+
+        doc2 = Document(self.db, doc['_id'], decoder=DTDecoder)
+        doc2.fetch()
+
+        self.assertEquals(doc2['dt'], doc['dt'])
 
 if __name__ == '__main__':
     unittest.main()
