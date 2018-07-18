@@ -38,7 +38,7 @@ Connecting with a client
 
     # Use CouchDB to create a CouchDB client
     # from cloudant.client import CouchDB
-    # client = CouchDB(USERNAME, PASSWORD, url='http://127.0.0.1:5984')
+    # client = CouchDB(USERNAME, PASSWORD, url='http://127.0.0.1:5984', connect=True)
 
     # Use Cloudant to create a Cloudant client using account
     from cloudant.client import Cloudant
