@@ -145,7 +145,6 @@ class Index(object):
         resp.raise_for_status()
         self._ddoc_id = resp.json()['id']
         self._name = resp.json()['name']
-        return
 
     def _def_check(self):
         """
@@ -168,7 +167,6 @@ class Index(object):
         url = '/'.join((self.index_url, ddoc_id, self._type, self._name))
         resp = self._r_session.delete(url)
         resp.raise_for_status()
-        return
 
 class TextIndex(Index):
     """

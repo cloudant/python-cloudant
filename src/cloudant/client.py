@@ -387,9 +387,9 @@ class CouchDB(dict):
         db = self._DATABASE_CLASS(self, key)
         if db.exists():
             super(CouchDB, self).__setitem__(key, db)
-            return db
         else:
             raise KeyError(key)
+        return db
 
     def __delitem__(self, key, remote=False):
         """

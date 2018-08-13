@@ -147,7 +147,7 @@ def feed_arg_types(feed_type):
     """
     if feed_type == 'Cloudant':
         return _DB_UPDATES_ARG_TYPES
-    elif feed_type == 'CouchDB':
+    if feed_type == 'CouchDB':
         return _COUCH_DB_UPDATES_ARG_TYPES
     return _CHANGES_ARG_TYPES
 
@@ -200,7 +200,7 @@ def _py_to_couch_translate(key, val):
     try:
         if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale', 'update']:
             return {key: val}
-        elif val is None:
+        if val is None:
             return {key: None}
         arg_converter = TYPE_CONVERTERS.get(type(val))
         return {key: arg_converter(val)}
