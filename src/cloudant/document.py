@@ -112,10 +112,10 @@ class Document(dict):
         """
         if self._document_id is None:
             return False
-        else:
-            resp = self.r_session.head(self.document_url)
-            if resp.status_code not in [200, 404]:
-                resp.raise_for_status()
+
+        resp = self.r_session.head(self.document_url)
+        if resp.status_code not in [200, 404]:
+            resp.raise_for_status()
 
         return resp.status_code == 200
 
@@ -154,7 +154,6 @@ class Document(dict):
         self._document_id = data['id']
         super(Document, self).__setitem__('_id', data['id'])
         super(Document, self).__setitem__('_rev', data['rev'])
-        return
 
     def fetch(self):
         """
@@ -320,7 +319,6 @@ class Document(dict):
         del_resp.raise_for_status()
         self.clear()
         self.__setitem__('_id', self._document_id)
-        return
 
     def __enter__(self):
         """
@@ -413,13 +411,13 @@ class Document(dict):
                 attachment_type = 'binary'
 
         if write_to is not None:
-            if attachment_type == 'text' or attachment_type == 'json':
+            if attachment_type in ('text', 'json'):
                 write_to.write(resp.text)
             else:
                 write_to.write(resp.content)
         if attachment_type == 'text':
             return resp.text
-        elif attachment_type == 'json':
+        if attachment_type == 'json':
             return resp.json()
 
         return resp.content

@@ -337,7 +337,7 @@ class CouchDatabase(dict):
         view = View(DesignDocument(self, ddoc_id), view_name)
         if raw_result:
             return view(**kwargs)
-        elif kwargs:
+        if kwargs:
             return Result(view, **kwargs)
 
         return view.result
@@ -613,9 +613,9 @@ class CouchDatabase(dict):
         if doc.exists():
             doc.fetch()
             super(CouchDatabase, self).__setitem__(key, doc)
-            return doc
         else:
             raise KeyError(key)
+        return doc
 
     def __contains__(self, key):
         """

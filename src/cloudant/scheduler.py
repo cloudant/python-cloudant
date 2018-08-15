@@ -41,9 +41,9 @@ class Scheduler(object):
         :param skip: How many result to skip starting at the beginning, if ordered by document ID.
         """
         params = dict()
-        if limit != None:
+        if limit is not None:
             params["limit"] = limit
-        if skip != None:
+        if skip is not None:
             params["skip"] = skip
         resp = self._r_session.get('/'.join([self._scheduler, 'docs']), params=params)
         resp.raise_for_status()
@@ -72,9 +72,9 @@ class Scheduler(object):
         :param skip: How many result to skip starting at the beginning, if ordered by document ID.
         """
         params = dict()
-        if limit != None:
+        if limit is not None:
             params["limit"] = limit
-        if skip != None:
+        if skip is not None:
             params["skip"] = skip
         resp = self._r_session.get('/'.join([self._scheduler, 'jobs']), params=params)
         resp.raise_for_status()

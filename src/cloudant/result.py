@@ -268,13 +268,13 @@ class Result(object):
         start = idx_slice.start
         stop = idx_slice.stop
         data = None
-        if (start is not None and stop is not None and
-                start >= 0 and stop >= 0 and start < stop):
+        # start and stop cannot be None and both must be greater than 0
+        if all(i is not None and i >= 0 for i in [start, stop]) and start < stop:
             if limit is not None:
                 if start >= limit:
                     # Result is out of range
                     return dict()
-                elif stop > limit:
+                if stop > limit:
                     # Ensure that slice does not extend past original limit
                     return self._ref(skip=skip+start, limit=limit-start, **opts)
             data = self._ref(skip=skip+start, limit=stop-start, **opts)
@@ -498,8 +498,8 @@ class QueryResult(Result):
                  type_or_none(int, arg.start) and
                  type_or_none(int, arg.stop))):
             return super(QueryResult, self).__getitem__(arg)
-        else:
-            raise ResultException(101, arg)
+
+        raise ResultException(101, arg)
 
     def _parse_data(self, data):
         """

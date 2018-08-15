@@ -164,8 +164,7 @@ class Feed(object):
         skip = False
         if self._raw_data:
             return skip, line
-        else:
-            line = unicode_(line)
+        line = unicode_(line)
         if not line:
             if (self._options.get('heartbeat', False) and
                     self._options.get('feed') in ('continuous', 'longpoll') and
