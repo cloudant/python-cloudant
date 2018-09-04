@@ -341,7 +341,8 @@ class Result(object):
             raise ResultException(103, invalid_options, self.options)
 
         try:
-            if int(self._page_size) <= 0:
+            self._page_size = int(self._page_size)
+            if self._page_size <= 0:
                 raise ResultException(104, self._page_size)
         except ValueError:
             raise ResultException(104, self._page_size)
@@ -349,15 +350,17 @@ class Result(object):
         skip = 0
         while True:
             response = self._ref(
-                limit=int(self._page_size),
+                limit=self._page_size,
                 skip=skip,
                 **self.options
             )
             result = self._parse_data(response)
-            skip += int(self._page_size)
+            skip += self._page_size
             if result:
                 for row in result:
                     yield row
+                if len(result) < self._page_size:
+                    break
                 del result
             else:
                 break
