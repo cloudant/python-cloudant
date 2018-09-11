@@ -47,6 +47,9 @@ SPECIAL_INDEX_TYPE = 'special'
 
 # Argument Types
 
+ANY_ARG = object()
+ANY_TYPE = object()
+
 RESULT_ARG_TYPES = {
     'descending': (bool,),
     'endkey': (int, LONGTYPE, STRTYPE, Sequence,),
@@ -101,6 +104,7 @@ _CHANGES_ARG_TYPES = {
     'filter': (STRTYPE,),
     'include_docs': (bool,),
     'style': (STRTYPE,),
+    ANY_ARG: ANY_TYPE  # pass arbitrary query parameters to a custom filter
 }
 _CHANGES_ARG_TYPES.update(_DB_UPDATES_ARG_TYPES)
 

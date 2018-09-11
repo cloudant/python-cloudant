@@ -2,6 +2,7 @@
 
 - [NEW] Add custom JSON encoder/decoder option to `Document` constructor.
 - [NEW] Add new view parameters, `stable` and `update`, as keyword arguments to `get_view_result`.
+- [NEW] Allow arbitrary query parameters to be passed to custom changes filters.
 - [FIXED] Case where an exception was raised after successful retry when using `doc.update_field`.
 - [FIXED] Removed unnecessary request when retrieving a Result collection that is less than the 'page_size' value
 
