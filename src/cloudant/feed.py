@@ -100,7 +100,7 @@ class Feed(object):
                 if isinstance(val, STRTYPE):
                     translation[key] = val
                 elif not isinstance(val, NONETYPE):
-                    arg_converter = TYPE_CONVERTERS.get(type(val))
+                    arg_converter = TYPE_CONVERTERS.get(type(val), json.dumps)
                     translation[key] = arg_converter(val)
             except Exception as ex:
                 raise CloudantArgumentError(115, key, ex)
