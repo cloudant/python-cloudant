@@ -15,7 +15,7 @@
 """
 API module/class for interacting with a design document in a database.
 """
-from ._2to3 import iteritems_, STRTYPE
+from ._2to3 import iteritems_, url_quote_plus, STRTYPE
 from ._common_util import QUERY_LANGUAGE, codify, response_to_json_dict
 from .document import Document
 from .view import View, QueryIndexView
@@ -40,10 +40,14 @@ class DesignDocument(Document):
     :param str document_id: Optional document id.  If provided and does not
         start with ``_design/``, it will be prepended with ``_design/``.
     """
-    def __init__(self, database, document_id=None):
+    def __init__(self, database, document_id=None, partitioned=False):
         if document_id and not document_id.startswith('_design/'):
             document_id = '_design/{0}'.format(document_id)
         super(DesignDocument, self).__init__(database, document_id)
+
+        if partitioned:
+            self.options = {'partitioned': partitioned}
+
         self._nested_object_names = frozenset(['views', 'indexes', 'lists', 'shows'])
         for prop in self._nested_object_names:
             self.setdefault(prop, dict())
@@ -711,3 +715,22 @@ class DesignDocument(Document):
             '/'.join([self.document_url, '_search_disk_size', search_index]))
         ddoc_search_disk_size.raise_for_status()
         return response_to_json_dict(ddoc_search_disk_size)
+
+    def partition_url(self, partition_key):
+        """
+        Retrieve the partition URL.
+
+        :param partition_key: Partition key as string.
+        :return: Partition URL as string.
+        """
+        if self._document_id is None:
+            return None
+
+        return '/'.join((
+            self._database_host,
+            url_quote_plus(self._database_name),
+            '_partition',
+            url_quote_plus(partition_key),
+            '_design',
+            url_quote_plus(self._document_id[8:], safe='')
+        ))

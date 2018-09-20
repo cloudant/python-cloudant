@@ -19,7 +19,7 @@ API module for composing and executing Cloudant queries.
 import json
 import contextlib
 
-from ._2to3 import iteritems_
+from ._2to3 import iteritems_, url_quote_plus
 from .result import QueryResult
 from .error import CloudantArgumentError
 from ._common_util import QUERY_ARG_TYPES
@@ -92,6 +92,7 @@ class Query(dict):
     def __init__(self, database, **kwargs):
         super(Query, self).__init__()
         self._database = database
+        self._partition_key = kwargs.pop('partition_key', None)
         self._r_session = self._database.r_session
         self._encoder = self._database.client.encoder
         if kwargs:
@@ -105,6 +106,10 @@ class Query(dict):
 
         :returns: Query URL
         """
+        if self._partition_key:
+            return '/'.join((self._database.database_url, '_partition',
+                             url_quote_plus(self._partition_key), '_find'))
+
         return '/'.join((self._database.database_url, '_find'))
 
     def __call__(self, **kwargs):

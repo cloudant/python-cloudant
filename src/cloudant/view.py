@@ -94,6 +94,7 @@ class View(dict):
             view_name,
             map_func=None,
             reduce_func=None,
+            partition_key=None,
             **kwargs
     ):
         super(View, self).__init__()
@@ -104,6 +105,7 @@ class View(dict):
             self['map'] = codify(map_func)
         if reduce_func is not None:
             self['reduce'] = codify(reduce_func)
+        self._partition_key = partition_key
         self.update(kwargs)
         self.result = Result(self)
 
@@ -167,6 +169,10 @@ class View(dict):
 
         :returns: View URL
         """
+        if self._partition_key:
+            return '/'.join((self.design_doc.partition_url(self._partition_key),
+                             '_view', self.view_name))
+
         return '/'.join((
             self.design_doc.document_url,
             '_view',
