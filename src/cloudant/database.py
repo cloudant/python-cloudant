@@ -31,6 +31,7 @@ from ._common_util import (
     response_to_json_dict)
 from .document import Document
 from .design_document import DesignDocument
+from .database_partition import CloudantDatabasePartition, CouchDatabasePartition
 from .security_document import SecurityDocument
 from .view import View
 from .index import Index, TextIndex, SpecialIndex
@@ -51,6 +52,8 @@ class CouchDatabase(dict):
     :param int fetch_limit: Optional fetch limit used to set the max number of
         documents to fetch per query during iteration cycles.  Defaults to 100.
     """
+    _DATABASE_PARTITION_CLASS = CouchDatabasePartition
+
     def __init__(self, client, database_name, fetch_limit=100,
                  partitioned=False):
         super(CouchDatabase, self).__init__()
@@ -106,6 +109,27 @@ class CouchDatabase(dict):
             "basic_auth": self.client.basic_auth_str(),
             "user_ctx": session.get('userCtx')
         }
+
+    @property
+    def partitioned(self):
+        """
+        Establish if this database is partitioned.
+
+        :return: True if database is partitioned, else False.
+        """
+        return self._partitioned
+
+    def partition(self, partition_key):
+        """
+        Retrieve database partition object.
+
+        :param partition_key: partition key as string.
+        :return: DatabasePartition object if database is partitioned, else None.
+        """
+        if not self._partitioned:
+            return None
+
+        return self._DATABASE_PARTITION_CLASS(self, partition_key)
 
     def exists(self):
         """
@@ -1180,6 +1204,8 @@ class CloudantDatabase(CouchDatabase):
     :param int fetch_limit: Optional fetch limit used to set the max number of
         documents to fetch per query during iteration cycles.  Defaults to 100.
     """
+    _DATABASE_PARTITION_CLASS = CloudantDatabasePartition
+
     def __init__(self, client, database_name, fetch_limit=100,
                  partitioned=False):
         super(CloudantDatabase, self).__init__(
