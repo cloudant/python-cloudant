@@ -22,21 +22,22 @@ module docstring.
 
 """
 
-import unittest
-import mock
-import json
-import requests
-import os
-import uuid
 import inspect
-
+import json
+import os
+import unittest
+import uuid
 from datetime import datetime
 
+import mock
+import requests
 from cloudant.document import Document
 from cloudant.error import CloudantDocumentException
+from nose.plugins.attrib import attr
 
-from .. import StringIO, unicode_
 from .unit_t_db_base import UnitTestDbBase
+from .. import StringIO, unicode_
+
 
 def find_fixture(name):
     import tests.unit.fixtures as fixtures
@@ -82,6 +83,7 @@ class CloudantDocumentExceptionTests(unittest.TestCase):
             raise CloudantDocumentException(102, 'foo')
         self.assertEqual(cm.exception.status_code, 102)
 
+@attr(db=['cloudant','couch'])
 class DocumentTests(UnitTestDbBase):
     """
     Document unit tests

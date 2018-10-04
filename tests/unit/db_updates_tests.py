@@ -16,14 +16,15 @@
 Unit tests for _db_updates feed
 """
 
-import unittest
-from requests import Session
 import json
 import os
+import unittest
 
-from cloudant.feed import Feed
-from cloudant.error import CloudantArgumentError
 from cloudant._2to3 import unicode_
+from cloudant.error import CloudantArgumentError
+from cloudant.feed import Feed
+from nose.plugins.attrib import attr
+from requests import Session
 
 from .unit_t_db_base import UnitTestDbBase
 from .. import BYTETYPE
@@ -104,8 +105,7 @@ class DbUpdatesTestsBase(UnitTestDbBase):
             self.assertDictEqual(
                 changes[2], {'db_name': self.new_dbs[2].database_name, 'type': 'created'})
 
-@unittest.skipIf(os.environ.get('RUN_CLOUDANT_TESTS'),
-    'Skipping CouchDB _db_updates feed tests')
+@attr(db='couch')
 class CouchDbUpdatesTests(DbUpdatesTestsBase):
     """
     CouchDB _db_updates feed unit tests
@@ -276,8 +276,8 @@ class CouchDbUpdatesTests(DbUpdatesTestsBase):
         self.assertTrue(str(cm.exception).startswith(
             'Invalid value (normal) for feed option.'))
 
-@unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
-    os.environ.get('SKIP_DB_UPDATES'), 'Skipping Cloudant _db_updates feed tests')
+@attr(db='cloudant')
+@unittest.skipIf(os.environ.get('SKIP_DB_UPDATES'), 'Skipping Cloudant _db_updates feed tests')
 class CloudantDbUpdatesTests(DbUpdatesTestsBase):
     """
     Cloudant _db_updates feed unit tests

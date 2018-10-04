@@ -37,7 +37,7 @@ def setupPythonAndTest(pythonVersion, testSuite) {
             pip install -r requirements.txt
             pip install -r test-requirements.txt
             pylint ./src/cloudant
-            nosetests -w ./tests/unit --with-xunit
+            nosetests -A 'not db or (db is "cloudant" or "cloudant" in db)' -w ./tests/unit --with-xunit
           """
         } finally {
           // Load the test results

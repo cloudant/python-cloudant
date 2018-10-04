@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright (C) 2016, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 result module - Unit tests for Result class
 """
 import unittest
-import os
-from requests.exceptions import HTTPError
 
 from cloudant.error import ResultException
 from cloudant.result import Result, ResultByKey
+from nose.plugins.attrib import attr
+from requests.exceptions import HTTPError
 
 from .unit_t_db_base import UnitTestDbBase
+
 
 class ResultExceptionTests(unittest.TestCase):
     """
@@ -72,6 +73,7 @@ class ResultExceptionTests(unittest.TestCase):
             raise ResultException(102, 'foo', 'bar')
         self.assertEqual(cm.exception.status_code, 102)
 
+@attr(db=['cloudant','couch'])
 class ResultTests(UnitTestDbBase):
     """
     Result unit tests

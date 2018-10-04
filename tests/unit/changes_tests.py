@@ -16,20 +16,23 @@
 Unit tests for _changes feed
 """
 
-import unittest
-from requests import Session
 import json
 import os
+import unittest
 
-from cloudant.feed import Feed
-from cloudant.document import Document
-from cloudant.design_document import DesignDocument
-from cloudant.error import CloudantArgumentError
 from cloudant._2to3 import unicode_
+from cloudant.design_document import DesignDocument
+from cloudant.document import Document
+from cloudant.error import CloudantArgumentError
+from cloudant.feed import Feed
+from nose.plugins.attrib import attr
+from requests import Session
 
 from .unit_t_db_base import UnitTestDbBase
 from .. import BYTETYPE
 
+
+@attr(db=['cloudant','couch'])
 class ChangesTests(UnitTestDbBase):
     """
     _changes feed unit tests
@@ -41,7 +44,6 @@ class ChangesTests(UnitTestDbBase):
         """
         super(ChangesTests, self).setUp()
         self.db_set_up()
-        self.cloudant_test = os.environ.get('RUN_CLOUDANT_TESTS') is not None
 
     def tearDown(self):
         """
@@ -448,8 +450,6 @@ class ChangesTests(UnitTestDbBase):
         self.assertSetEqual(set([x['id'] for x in changes]), expected)
         self.assertTrue(str(feed.last_seq).startswith('3'))
 
-    @unittest.skipIf(os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-        'Skipping since _doc_ids filter is not supported on all Cloudant clusters')
     def test_get_feed_using_doc_ids(self):
         """
         Test getting content back for a feed using doc_ids

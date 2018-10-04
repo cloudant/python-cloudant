@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016, 2017 IBM. All rights reserved.
+# Copyright (C) 2016, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,15 +18,18 @@ Unit tests for the renewal of cookie auth
 See configuration options for environment variables in unit_t_db_base
 module docstring.
 """
-import unittest
 import os
-import requests
 import time
+import unittest
 
+import requests
 from cloudant._client_session import CookieSession
+from nose.plugins.attrib import attr
 
 from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
 
+
+@attr(db=['cloudant','couch'])
 @unittest.skipIf(os.environ.get('ADMIN_PARTY') == 'true', 'Skipping - Admin Party mode')
 class AuthRenewalTests(UnitTestDbBase):
     """

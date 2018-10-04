@@ -82,3 +82,12 @@ test behaviour:
       This user is deleted at the end of the test run, but beware it'll
       break other applications using the CouchDB instance that rely on
       admin party mode being in effect while the tests are running.
+
+### Test attributes
+
+Database tests also have node attributes. Currently there are these attributes:
+`db` - `cloudant` and/or `couch`
+`couchapi` - Apache CouchDB major version number (i.e. API level) e.g. `2`
+
+Example to run database tests that require CouchDB version 1 API and no Cloudant features:
+`nosetests -A 'db and ((db is "couch" or "couch" in db) and (not couchapi or couchapi <=1))' -w ./tests/unit`

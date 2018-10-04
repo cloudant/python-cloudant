@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2017 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,27 +20,28 @@ module docstring.
 
 """
 
-import unittest
-import requests
-import json
 import base64
-import sys
-import os
 import datetime
-import mock
-
-from requests import ConnectTimeout, HTTPError
+import json
+import os
+import sys
+import unittest
 from time import sleep
 
+import mock
+import requests
 from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
-from cloudant.client import Cloudant, CouchDB
 from cloudant._client_session import BasicSession, CookieSession
+from cloudant.client import Cloudant, CouchDB
 from cloudant.database import CloudantDatabase
 from cloudant.error import CloudantArgumentError, CloudantClientException
 from cloudant.feed import Feed, InfiniteFeed
+from nose.plugins.attrib import attr
+from requests import ConnectTimeout, HTTPError
 
 from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
 from .. import bytes_, str_
+
 
 class CloudantClientExceptionTests(unittest.TestCase):
     """
@@ -86,10 +87,10 @@ class ClientTests(UnitTestDbBase):
     """
 
     @unittest.skipIf(
-        (os.environ.get('RUN_CLOUDANT_TESTS') is not None or
-        (os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
+        ((os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
         'Skipping couchdb context manager test'
     )
+    @attr(db='couch')
     def test_couchdb_context_helper(self):
         """
         Test that the couchdb context helper works as expected.
@@ -102,10 +103,10 @@ class ClientTests(UnitTestDbBase):
             self.fail('Exception {0} was raised.'.format(str(err)))
 
     @unittest.skipUnless(
-        (os.environ.get('RUN_CLOUDANT_TESTS') is None and
-        (os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
+        ((os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
         'Skipping couchdb_admin_party context manager test'
     )
+    @attr(db='couch')
     def test_couchdb_admin_party_context_helper(self):
         """
         Test that the couchdb_admin_party context helper works as expected.
@@ -599,10 +600,7 @@ class ClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
-@unittest.skipUnless(
-    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant client specific tests'
-)
+@attr(db='cloudant')
 class CloudantClientTests(UnitTestDbBase):
     """
     Cloudant specific client unit tests
