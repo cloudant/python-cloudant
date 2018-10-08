@@ -23,17 +23,18 @@ module docstring.
 """
 
 import unittest
+
 import mock
 import requests
-import os
-
-from cloudant.design_document import DesignDocument
-from cloudant.view import View, QueryIndexView
 from cloudant._common_util import _Code
-from cloudant.result import Result
+from cloudant.design_document import DesignDocument
 from cloudant.error import CloudantArgumentError, CloudantViewException
+from cloudant.result import Result
+from cloudant.view import View, QueryIndexView
+from nose.plugins.attrib import attr
 
 from .unit_t_db_base import UnitTestDbBase
+
 
 class CodeTests(unittest.TestCase):
     """
@@ -78,6 +79,7 @@ class CloudantViewExceptionTests(unittest.TestCase):
             raise CloudantViewException(101)
         self.assertEqual(cm.exception.status_code, 101)
 
+@attr(db=['cloudant','couch'])
 class ViewTests(UnitTestDbBase):
     """
     View class unit tests

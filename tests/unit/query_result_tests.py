@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import os
 from cloudant.query import Query
 from cloudant.result import QueryResult
 from cloudant.error import ResultException
+from nose.plugins.attrib import attr
 
 from .unit_t_db_base import UnitTestDbBase
 
-@unittest.skipUnless(os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant QueryResult tests')
+@attr(db=['cloudant','couch'])
+@attr(couchapi=2)
 class QueryResultTests(UnitTestDbBase):
     """
     QueryResult unit tests

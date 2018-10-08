@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,20 +22,22 @@ module docstring.
 """
 from __future__ import absolute_import
 
-import unittest
-import mock
 import os
-import requests
+import unittest
 
-from cloudant.index import Index, TextIndex, SpecialIndex
-from cloudant.query import Query
-from cloudant.view import QueryIndexView
+import mock
+import requests
 from cloudant.design_document import DesignDocument
 from cloudant.document import Document
 from cloudant.error import CloudantArgumentError, CloudantIndexException
+from cloudant.index import Index, TextIndex, SpecialIndex
+from cloudant.query import Query
+from cloudant.view import QueryIndexView
+from nose.plugins.attrib import attr
 
-from .. import PY2
 from .unit_t_db_base import UnitTestDbBase
+from .. import PY2
+
 
 class CloudantIndexExceptionTests(unittest.TestCase):
     """
@@ -66,10 +68,8 @@ class CloudantIndexExceptionTests(unittest.TestCase):
             raise CloudantIndexException(101)
         self.assertEqual(cm.exception.status_code, 101)
 
-@unittest.skipUnless(
-    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant Index tests'
-    )
+@attr(db=['cloudant','couch'])
+@attr(couchapi=2)
 class IndexTests(UnitTestDbBase):
     """
     Index unit tests
@@ -392,10 +392,7 @@ class IndexTests(UnitTestDbBase):
                 selector={'age': {'$eq': 6}}, raw_result=True)
         self.assertTrue(str(result['warning']).startswith("no matching index found"))
 
-@unittest.skipUnless(
-    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant Text Index tests'
-    )
+@attr(db='cloudant')
 class TextIndexTests(UnitTestDbBase):
     """
     Search Index unit tests

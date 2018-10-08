@@ -17,8 +17,12 @@ Unit tests for the execution of view queries using translated parameters.
 """
 import unittest
 
+from nose.plugins.attrib import attr
+
 from .unit_t_db_base import UnitTestDbBase
 
+
+@attr(db=['cloudant','couch'])
 class QueryParmExecutionTests(UnitTestDbBase):
     """
     Test cases for the execution of views queries using translated parameters.

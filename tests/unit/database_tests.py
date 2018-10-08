@@ -22,24 +22,26 @@ module docstring.
 
 """
 
-import unittest
-import mock
-import requests
 import os
+import unittest
 import uuid
 
+import mock
+import requests
 from cloudant._2to3 import UNICHR
-from cloudant.result import Result, QueryResult
-from cloudant.error import CloudantArgumentError, CloudantDatabaseException
-from cloudant.document import Document
 from cloudant.design_document import DesignDocument
-from cloudant.security_document import SecurityDocument
-from cloudant.index import Index, TextIndex, SpecialIndex
+from cloudant.document import Document
+from cloudant.error import CloudantArgumentError, CloudantDatabaseException
 from cloudant.feed import Feed, InfiniteFeed
-from tests.unit._test_util import LONG_NUMBER
+from cloudant.index import Index, TextIndex, SpecialIndex
+from cloudant.result import Result, QueryResult
+from cloudant.security_document import SecurityDocument
+from nose.plugins.attrib import attr
 
+from tests.unit._test_util import LONG_NUMBER
 from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase, skip_if_iam
 from .. import unicode_
+
 
 class CloudantDatabaseExceptionTests(unittest.TestCase):
     """
@@ -79,6 +81,7 @@ class CloudantDatabaseExceptionTests(unittest.TestCase):
             raise CloudantDatabaseException(400, 'foo')
         self.assertEqual(cm.exception.status_code, 400)
 
+@attr(db=['cloudant','couch'])
 class DatabaseTests(UnitTestDbBase):
     """
     CouchDatabase/CloudantDatabase unit tests
@@ -780,8 +783,7 @@ class DatabaseTests(UnitTestDbBase):
         self.assertNotEqual(new_limit, limit)
         self.assertEqual(new_limit, 1234)
 
-    @unittest.skipIf(os.environ.get('RUN_CLOUDANT_TESTS'),
-        'Skipping since view cleanup is automatic in Cloudant.')
+    @attr(db='couch')
     def test_view_clean_up(self):
         """
         Test cleaning up old view files
@@ -968,10 +970,7 @@ class DatabaseTests(UnitTestDbBase):
         finally:
             self.client.connect()
 
-    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
-                     (os.environ.get('COUCHDB_VERSION') and
-                     os.environ.get('COUCHDB_VERSION').startswith('1')),
-                     'Skipping test_create_json_index test')
+    @attr(couchapi=2)
     def test_create_json_index(self):
         """
         Ensure that a JSON index is created as expected.
@@ -995,10 +994,7 @@ class DatabaseTests(UnitTestDbBase):
         self.assertEquals(index['options']['def']['fields'], ['name', 'age'])
         self.assertEquals(index['reduce'], '_count')
 
-    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
-                     (os.environ.get('COUCHDB_VERSION') and
-                      os.environ.get('COUCHDB_VERSION').startswith('1')),
-                     'Skipping test_create_json_index test')
+    @attr(couchapi=2)
     def test_delete_json_index(self):
         """
         Ensure that a JSON index is deleted as expected.
@@ -1013,10 +1009,7 @@ class DatabaseTests(UnitTestDbBase):
         self.db.delete_query_index('ddoc001', 'json', 'index001')
         self.assertFalse(ddoc.exists())
 
-@unittest.skipUnless(
-    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant specific Database tests'
-)
+@attr(db='cloudant')
 class CloudantDatabaseTests(UnitTestDbBase):
     """
     Cloudant specific Database unit tests

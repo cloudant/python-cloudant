@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,20 +22,21 @@ module docstring.
 
 """
 
+import time
 import unittest
 import uuid
-import time
 
-from flaky import flaky
 import requests
-from requests import ConnectionError
-
-from cloudant.replicator import Replicator
 from cloudant.document import Document
 from cloudant.error import CloudantReplicatorException, CloudantClientException
+from cloudant.replicator import Replicator
+from flaky import flaky
+from nose.plugins.attrib import attr
+from requests import ConnectionError
 
-from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
+from .unit_t_db_base import UnitTestDbBase
 from .. import unicode_
+
 
 class CloudantReplicatorExceptionTests(unittest.TestCase):
     """
@@ -75,6 +76,7 @@ class CloudantReplicatorExceptionTests(unittest.TestCase):
             raise CloudantReplicatorException(404, 'foo')
         self.assertEqual(cm.exception.status_code, 404)
 
+@attr(db=['cloudant','couch'])
 class ReplicatorTests(UnitTestDbBase):
     """
     Replicator unit tests

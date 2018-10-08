@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright (C) 2016, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,16 +19,16 @@ See configuration options for environment variables in unit_t_db_base
 module docstring.
 """
 
-import unittest
-import requests
 import json
-import os
+import unittest
 
 from cloudant.security_document import SecurityDocument
+from nose.plugins.attrib import attr
 
 from .unit_t_db_base import UnitTestDbBase
 
 
+@attr(db=['cloudant','couch'])
 class SecurityDocumentTests(UnitTestDbBase):
     """
     SecurityDocument unit tests
