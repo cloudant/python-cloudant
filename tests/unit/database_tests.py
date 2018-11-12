@@ -29,6 +29,7 @@ import uuid
 import mock
 import requests
 from cloudant._2to3 import UNICHR
+from cloudant._common_util import response_to_json_dict
 from cloudant.design_document import DesignDocument
 from cloudant.document import Document
 from cloudant.error import CloudantArgumentError, CloudantDatabaseException
@@ -237,7 +238,7 @@ class DatabaseTests(UnitTestDbBase):
         """
         resp = self.db.r_session.get(
             '/'.join((self.client.server_url, self.test_dbname)))
-        expected = resp.json()
+        expected = response_to_json_dict(resp)
         actual = self.db.metadata()
         self.assertListEqual(list(actual.keys()), list(expected.keys()))
 

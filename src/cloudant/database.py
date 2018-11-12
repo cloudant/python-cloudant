@@ -26,7 +26,9 @@ from ._common_util import (
     SEARCH_INDEX_ARGS,
     SPECIAL_INDEX_TYPE,
     TEXT_INDEX_TYPE,
-    get_docs)
+    get_docs,
+    response_to_json_dict,
+    )
 from .document import Document
 from .design_document import DesignDocument
 from .security_document import SecurityDocument
@@ -123,7 +125,7 @@ class CouchDatabase(dict):
         """
         resp = self.r_session.get(self.database_url)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def doc_count(self):
         """
@@ -192,7 +194,7 @@ class CouchDatabase(dict):
         query = "startkey=\"_design\"&endkey=\"_design0\"&include_docs=true"
         resp = self.r_session.get(url, params=query)
         resp.raise_for_status()
-        data = resp.json()
+        data = response_to_json_dict(resp)
         return data['rows']
 
     def list_design_documents(self):
@@ -206,7 +208,7 @@ class CouchDatabase(dict):
         query = "startkey=\"_design\"&endkey=\"_design0\""
         resp = self.r_session.get(url, params=query)
         resp.raise_for_status()
-        data = resp.json()
+        data = response_to_json_dict(resp)
         return [x.get('key') for x in data.get('rows', [])]
 
     def get_design_document(self, ddoc_id):
@@ -403,7 +405,7 @@ class CouchDatabase(dict):
                         '/'.join([self.database_url, '_all_docs']),
                         self.client.encoder,
                         **kwargs)
-        return resp.json()
+        return response_to_json_dict(resp)
 
     @contextlib.contextmanager
     def custom_result(self, **options):
@@ -718,7 +720,7 @@ class CouchDatabase(dict):
             headers=headers
         )
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def missing_revisions(self, doc_id, *revisions):
         """
@@ -742,7 +744,7 @@ class CouchDatabase(dict):
         )
         resp.raise_for_status()
 
-        resp_json = resp.json()
+        resp_json = response_to_json_dict(resp)
         missing_revs = resp_json['missing_revs'].get(doc_id)
         if missing_revs is None:
             missing_revs = []
@@ -771,7 +773,7 @@ class CouchDatabase(dict):
         )
         resp.raise_for_status()
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def get_revision_limit(self):
         """
@@ -787,7 +789,7 @@ class CouchDatabase(dict):
         try:
             ret = int(resp.text)
         except ValueError:
-            raise CloudantDatabaseException(400, resp.json())
+            raise CloudantDatabaseException(400, response_to_json_dict(resp))
 
         return ret
 
@@ -806,7 +808,7 @@ class CouchDatabase(dict):
         resp = self.r_session.put(url, data=json.dumps(limit, cls=self.client.encoder))
         resp.raise_for_status()
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def view_cleanup(self):
         """
@@ -822,7 +824,7 @@ class CouchDatabase(dict):
         )
         resp.raise_for_status()
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def get_list_function_result(self, ddoc_id, list_name, view_name, **kwargs):
         """
@@ -974,10 +976,10 @@ class CouchDatabase(dict):
         resp.raise_for_status()
 
         if raw_result:
-            return resp.json()
+            return response_to_json_dict(resp)
 
         indexes = []
-        for data in resp.json().get('indexes', []):
+        for data in response_to_json_dict(resp).get('indexes', []):
             if data.get('type') == JSON_INDEX_TYPE:
                 indexes.append(Index(
                     self,
@@ -1239,7 +1241,7 @@ class CloudantDatabase(CouchDatabase):
             headers={'Content-Type': 'application/json'}
         )
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def unshare_database(self, username):
         """
@@ -1264,7 +1266,7 @@ class CloudantDatabase(CouchDatabase):
             headers={'Content-Type': 'application/json'}
         )
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def shards(self):
         """
@@ -1276,7 +1278,7 @@ class CloudantDatabase(CouchDatabase):
         resp = self.r_session.get(url)
         resp.raise_for_status()
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def get_search_result(self, ddoc_id, index_name, **query_params):
         """
@@ -1399,4 +1401,4 @@ class CloudantDatabase(CouchDatabase):
             data=json.dumps(query_params, cls=self.client.encoder)
         )
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)

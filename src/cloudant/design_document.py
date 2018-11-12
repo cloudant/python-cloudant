@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 API module/class for interacting with a design document in a database.
 """
 from ._2to3 import iteritems_, STRTYPE
-from ._common_util import QUERY_LANGUAGE, codify
+from ._common_util import QUERY_LANGUAGE, codify, response_to_json_dict
 from .document import Document
 from .view import View, QueryIndexView
 from .error import CloudantArgumentError, CloudantDesignDocumentException
@@ -686,7 +686,7 @@ class DesignDocument(Document):
         ddoc_info = self.r_session.get(
             '/'.join([self.document_url, '_info']))
         ddoc_info.raise_for_status()
-        return ddoc_info.json()
+        return response_to_json_dict(ddoc_info)
 
     def search_info(self, search_index):
         """
@@ -698,7 +698,7 @@ class DesignDocument(Document):
         ddoc_search_info = self.r_session.get(
             '/'.join([self.document_url, '_search_info', search_index]))
         ddoc_search_info.raise_for_status()
-        return ddoc_search_info.json()
+        return response_to_json_dict(ddoc_search_info)
 
     def search_disk_size(self, search_index):
         """
@@ -710,4 +710,4 @@ class DesignDocument(Document):
         ddoc_search_disk_size = self.r_session.get(
             '/'.join([self.document_url, '_search_disk_size', search_index]))
         ddoc_search_disk_size.raise_for_status()
-        return ddoc_search_disk_size.json()
+        return response_to_json_dict(ddoc_search_disk_size)

@@ -43,24 +43,22 @@ MOCK_ACCESS_TOKEN = ('eyJraWQiOiIyMDE3MDQwMi0wMDowMDowMCIsImFsZyI6IlJTMjU2In0.e'
                      '2PTo4Exa17V-R_73Nq8VPCwpOvZcwKRA2sPTVgTMzU34max8b5kpTzVGJ'
                      '6SXSItTVOUdAygZBng')
 
-MOCK_IAM_TOKEN_RESPONSE = {
-    'access_token':  MOCK_ACCESS_TOKEN,
-    'refresh_token': ('MO61FKNvVRWkSa4vmBZqYv_Jt1kkGMUc-XzTcNnR-GnIhVKXHUWxJVV3'
-                      'RddE8Kqh3X_TZRmyK8UySIWKxoJ2t6obUSUalPm90SBpTdoXtaljpNyo'
-                      'rmqCCYPROnk6JBym72ikSJqKHHEZVQkT0B5ggZCwPMnKagFj0ufs-VIh'
-                      'CF97xhDxDKcIPMWG02xxPuESaSTJJug7e_dUDoak_ZXm9xxBmOTRKwOx'
-                      'n5sTKthNyvVpEYPE7jIHeiRdVDOWhN5LomgCn3TqFCLpMErnqwgNYbyC'
-                      'Bd9rNm-alYKDb6Jle4njuIBpXxQPb4euDwLd1osApaSME3nEarFWqRBz'
-                      'hjoqCe1Kv564s_rY7qzD1nHGvKOdpSa0ZkMcfJ0LbXSQPs7gBTSVrBFZ'
-                      'qwlg-2F-U3Cto62-9qRR_cEu_K9ZyVwL4jWgOlngKmxV6Ku4L5mHp4Kg'
-                      'EJSnY_78_V2nm64E--i2ZA1FhiKwIVHDOivVNhggE9oabxg54vd63glp'
-                      '4GfpNnmZsMOUYG9blJJpH4fDX4Ifjbw-iNBD7S2LRpP8b8vG9pb4WioG'
-                      'zN43lE5CysveKYWrQEZpThznxXlw1snDu_A48JiL3Lrvo1LobLhF3zFV'
-                      '-kQ='),
-    'token_type': 'Bearer',
-    'expires_in': 3600,  # 60mins
-    'expiration': 1500470702  # Wed Jul 19 14:25:02 2017
-}
+MOCK_IAM_TOKEN_RESPONSE = '{"access_token": "%s",\
+    "refresh_token": "MO61FKNvVRWkSa4vmBZqYv_Jt1kkGMUc-XzTcNnR-GnIhVKXHUWxJVV3\
+                      RddE8Kqh3X_TZRmyK8UySIWKxoJ2t6obUSUalPm90SBpTdoXtaljpNyo\
+                      rmqCCYPROnk6JBym72ikSJqKHHEZVQkT0B5ggZCwPMnKagFj0ufs-VIh\
+                      CF97xhDxDKcIPMWG02xxPuESaSTJJug7e_dUDoak_ZXm9xxBmOTRKwOx\
+                      n5sTKthNyvVpEYPE7jIHeiRdVDOWhN5LomgCn3TqFCLpMErnqwgNYbyC\
+                      Bd9rNm-alYKDb6Jle4njuIBpXxQPb4euDwLd1osApaSME3nEarFWqRBz\
+                      hjoqCe1Kv564s_rY7qzD1nHGvKOdpSa0ZkMcfJ0LbXSQPs7gBTSVrBFZ\
+                      qwlg-2F-U3Cto62-9qRR_cEu_K9ZyVwL4jWgOlngKmxV6Ku4L5mHp4Kg\
+                      EJSnY_78_V2nm64E--i2ZA1FhiKwIVHDOivVNhggE9oabxg54vd63glp\
+                      4GfpNnmZsMOUYG9blJJpH4fDX4Ifjbw-iNBD7S2LRpP8b8vG9pb4WioG\
+                      zN43lE5CysveKYWrQEZpThznxXlw1snDu_A48JiL3Lrvo1LobLhF3zFV\
+                      -kQ=",\
+    "token_type": "Bearer",\
+    "expires_in": 3600,\
+    "expiration": 1500470702}'%(MOCK_ACCESS_TOKEN)
 
 
 class IAMAuthTests(unittest.TestCase):
@@ -100,7 +98,8 @@ class IAMAuthTests(unittest.TestCase):
     @mock.patch('cloudant._client_session.ClientSession.request')
     def test_iam_get_access_token(self, m_req):
         m_response = mock.MagicMock()
-        m_response.json.return_value = MOCK_IAM_TOKEN_RESPONSE
+        mock_token_response_text = mock.PropertyMock(return_value=MOCK_IAM_TOKEN_RESPONSE)
+        type(m_response).text = mock_token_response_text
         m_req.return_value = m_response
 
         iam = IAMSession(MOCK_API_KEY, 'http://127.0.0.1:5984')
@@ -120,7 +119,7 @@ class IAMAuthTests(unittest.TestCase):
 
         self.assertEqual(access_token, MOCK_ACCESS_TOKEN)
         self.assertTrue(m_response.raise_for_status.called)
-        self.assertTrue(m_response.json.called)
+        mock_token_response_text.assert_called_with()
 
     @mock.patch('cloudant._client_session.ClientSession.request')
     @mock.patch('cloudant._client_session.IAMSession._get_access_token')
@@ -152,10 +151,10 @@ class IAMAuthTests(unittest.TestCase):
 
     @mock.patch('cloudant._client_session.ClientSession.get')
     def test_iam_get_session_info(self, m_get):
-        m_info = {'ok': True, 'info': {'authentication_db': '_users'}}
+        m_info = '{"ok": true, "info": {"authentication_db": "_users"}}'
 
         m_response = mock.MagicMock()
-        m_response.json.return_value = m_info
+        type(m_response).text = mock.PropertyMock(return_value=m_info)
         m_get.return_value = m_response
 
         iam = IAMSession(MOCK_API_KEY, 'http://127.0.0.1:5984')
@@ -163,7 +162,7 @@ class IAMAuthTests(unittest.TestCase):
 
         m_get.assert_called_once_with(iam._session_url)
 
-        self.assertEqual(info, m_info)
+        self.assertEqual(info, json.loads(m_info))
         self.assertTrue(m_response.raise_for_status.called)
 
     @mock.patch('cloudant._client_session.IAMSession.login')
@@ -172,7 +171,7 @@ class IAMAuthTests(unittest.TestCase):
         # mock 200
         m_response_ok = mock.MagicMock()
         type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
-        m_response_ok.json.return_value = {'ok': True}
+        type(m_response_ok).text = mock.PropertyMock(return_value='{"ok": true}')
 
         m_req.return_value = m_response_ok
 
@@ -197,7 +196,7 @@ class IAMAuthTests(unittest.TestCase):
         # mock 200
         m_response_ok = mock.MagicMock()
         type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
-        m_response_ok.json.return_value = {'ok': True}
+        type(m_response_ok).text = mock.PropertyMock(return_value='{"ok": true}')
 
         m_req.return_value = m_response_ok
 
@@ -219,7 +218,7 @@ class IAMAuthTests(unittest.TestCase):
         # mock 200
         m_response_ok = mock.MagicMock()
         type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
-        m_response_ok.json.return_value = {'ok': True}
+        type(m_response_ok).text = mock.PropertyMock(return_value='{"ok": true}')
         # mock 401
         m_response_bad = mock.MagicMock()
         type(m_response_bad).status_code = mock.PropertyMock(return_value=401)
@@ -298,7 +297,7 @@ class IAMAuthTests(unittest.TestCase):
         # mock 200
         m_response_ok = mock.MagicMock()
         type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
-        m_response_ok.json.return_value = ['animaldb']
+        type(m_response_ok).text = mock.PropertyMock(return_value='["animaldb"]')
 
         m_req.return_value = m_response_ok
 

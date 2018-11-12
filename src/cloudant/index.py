@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ from ._common_util import JSON_INDEX_TYPE
 from ._common_util import TEXT_INDEX_TYPE
 from ._common_util import SPECIAL_INDEX_TYPE
 from ._common_util import TEXT_INDEX_ARGS
+from ._common_util import response_to_json_dict
 from .error import CloudantArgumentError, CloudantIndexException
 
 class Index(object):
@@ -143,8 +144,8 @@ class Index(object):
             headers=headers
         )
         resp.raise_for_status()
-        self._ddoc_id = resp.json()['id']
-        self._name = resp.json()['name']
+        self._ddoc_id = response_to_json_dict(resp)['id']
+        self._name = response_to_json_dict(resp)['name']
 
     def _def_check(self):
         """

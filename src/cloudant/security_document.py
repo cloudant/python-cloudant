@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright (C) 2016, 2018 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ API module/class for interacting with a security document in a database.
 import json
 
 from ._2to3 import url_quote_plus
+from ._common_util import response_to_json_dict
 
 class SecurityDocument(dict):
     """
@@ -101,7 +102,7 @@ class SecurityDocument(dict):
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
         self.clear()
-        self.update(resp.json())
+        self.update(response_to_json_dict(resp))
 
     def save(self):
         """

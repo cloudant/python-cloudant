@@ -270,7 +270,7 @@ def append_response_error_content(response, **kwargs):
     """
     if response.status_code >= 400:
         try:
-            resp_dict = response.json()
+            resp_dict = response_to_json_dict(response)
             error = resp_dict.get('error', '')
             reason = resp_dict.get('reason', '')
             # Append to the existing response's reason
@@ -278,6 +278,17 @@ def append_response_error_content(response, **kwargs):
         except ValueError:
             pass
     return response
+
+def response_to_json_dict(response, **kwargs):
+    """
+    Standard place to convert responses to JSON.
+
+    :param response: requests response object
+    :param **kwargs: arguments accepted by json.loads
+
+    :returns: dict of JSON response
+    """
+    return json.loads(response.text, **kwargs)
 
 # Classes
 
