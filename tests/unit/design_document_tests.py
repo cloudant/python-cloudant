@@ -27,6 +27,7 @@ import unittest
 
 import mock
 import requests
+from cloudant._common_util import response_to_json_dict
 from cloudant.design_document import DesignDocument
 from cloudant.document import Document
 from cloudant.error import CloudantArgumentError, CloudantDesignDocumentException
@@ -693,7 +694,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # Ensure that remotely saved design document does not
         # include a views sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
-        raw_ddoc = resp.json()
+        raw_ddoc = response_to_json_dict(resp)
         self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
@@ -1182,7 +1183,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # Ensure that remotely saved design document does not
         # include a search indexes sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
-        raw_ddoc = resp.json()
+        raw_ddoc = response_to_json_dict(resp)
         self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
@@ -1263,7 +1264,7 @@ class DesignDocumentTests(UnitTestDbBase):
         doc.save()
         resp = self.client.r_session.get('/'.join([ddoc.document_url, '_rewrite']))
         self.assertEquals(
-            resp.json(),
+            response_to_json_dict(resp),
             {
                 '_id': 'rewrite_doc',
                 '_rev': doc['_rev']
@@ -1451,7 +1452,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # Ensure that remotely saved design document does not
         # include a lists sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
-        raw_ddoc = resp.json()
+        raw_ddoc = response_to_json_dict(resp)
         self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
@@ -1752,7 +1753,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # Ensure that remotely saved design document does not
         # include a shows sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
-        raw_ddoc = resp.json()
+        raw_ddoc = response_to_json_dict(resp)
         self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
@@ -1834,7 +1835,7 @@ class DesignDocumentTests(UnitTestDbBase):
             data=json.dumps({'_id': 'test001'})
         )
         self.assertEqual(
-            resp.json(),
+            response_to_json_dict(resp),
             {'reason': 'Document must have an address.', 'error': 'forbidden'}
         )
 

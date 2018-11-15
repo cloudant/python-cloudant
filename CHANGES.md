@@ -1,3 +1,9 @@
+# Unreleased
+
+- [FIXED] Unexpected keyword argument errors when using the library with the
+ `simplejson` module present in the environment caused by `requests` preferentially
+  loading it over the system `json` module.
+
 # 2.10.0 (2018-09-19)
 
 - [NEW] Add custom JSON encoder/decoder option to `Document` constructor.

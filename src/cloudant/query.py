@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ from ._2to3 import iteritems_
 from .result import QueryResult
 from .error import CloudantArgumentError
 from ._common_util import QUERY_ARG_TYPES
+from ._common_util import response_to_json_dict
 
 class Query(dict):
     """
@@ -172,7 +173,7 @@ class Query(dict):
             data=json.dumps(data, cls=self._encoder)
         )
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     @contextlib.contextmanager
     def custom_result(self, **options):

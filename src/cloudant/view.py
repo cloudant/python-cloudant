@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ API module for interacting with a view in a design document.
 import contextlib
 
 from ._2to3 import STRTYPE
-from ._common_util import codify, get_docs
+from ._common_util import codify, get_docs, response_to_json_dict
 from .result import Result
 from .error import CloudantArgumentError, CloudantViewException
 
@@ -227,7 +227,7 @@ class View(dict):
                         self.url,
                         self.design_doc.encoder,
                         **kwargs)
-        return resp.json()
+        return response_to_json_dict(resp)
 
     @contextlib.contextmanager
     def custom_result(self, **options):

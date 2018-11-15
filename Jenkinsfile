@@ -10,11 +10,12 @@ def getEnvForSuite(suiteName) {
     case 'basic':
       envVars.add("RUN_BASIC_AUTH_TESTS=1")
       break
-    case 'cookie':
-      break
     case 'iam':
       // Setting IAM_API_KEY forces tests to run using an IAM enabled client.
       envVars.add("IAM_API_KEY=$DB_IAM_API_KEY")
+      break
+    case 'cookie':
+    case 'simplejson':
       break
     default:
       error("Unknown test suite environment ${suiteName}")
@@ -36,6 +37,7 @@ def setupPythonAndTest(pythonVersion, testSuite) {
             . ./tmp/bin/activate
             pip install -r requirements.txt
             pip install -r test-requirements.txt
+            ${'simplejson'.equals(testSuite) ? 'pip install simplejson' : ''}
             pylint ./src/cloudant
             nosetests -A 'not db or (db is "cloudant" or "cloudant" in db)' -w ./tests/unit --with-xunit
           """
@@ -58,12 +60,15 @@ stage('Checkout'){
 }
 
 stage('Test'){
-  axes = [:]
-  ['2.7.12','3.5.2'].each { version ->
+  def py2 = '2.7.12'
+  def py3 = '3.5.2'
+  def axes = [:]
+  [py2, py3].each { version ->
     ['basic','cookie','iam'].each { auth ->
        axes.put("Python${version}-${auth}", {setupPythonAndTest(version, auth)})
     }
   }
+  axes.put("Python${py3}-simplejson", {setupPythonAndTest(py3, 'simplejson')})
   parallel(axes)
 }
 

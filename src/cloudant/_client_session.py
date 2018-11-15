@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import os
 from requests import RequestException, Session
 
 from ._2to3 import bytes_, unicode_, url_join
+from ._common_util import response_to_json_dict
 from .error import CloudantException
 
 
@@ -75,7 +76,7 @@ class ClientSession(Session):
 
         resp = self.get(self._session_url)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def set_credentials(self, username, password):
         """
@@ -170,7 +171,7 @@ class CookieSession(ClientSession):
 
         is_expired = any((
             resp.status_code == 403 and
-            resp.json().get('error') == 'credentials_expired',
+            response_to_json_dict(resp).get('error') == 'credentials_expired',
             resp.status_code == 401
         ))
 
@@ -282,10 +283,10 @@ class IAMSession(ClientSession):
                     'apikey': self._api_key
                 }
             )
-            err = resp.json().get('errorMessage', err)
+            err = response_to_json_dict(resp).get('errorMessage', err)
             resp.raise_for_status()
 
-            return resp.json()['access_token']
+            return response_to_json_dict(resp)['access_token']
 
         except KeyError:
             raise CloudantException('Invalid response from IAM token service')

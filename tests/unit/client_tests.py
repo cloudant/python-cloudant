@@ -247,7 +247,7 @@ class ClientTests(UnitTestDbBase):
         """
         m_response_ok = mock.MagicMock()
         type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
-        m_response_ok.json.return_value = ['animaldb']
+        type(m_response_ok).text = mock.PropertyMock(return_value='["animaldb"]')
         m_req.return_value = m_response_ok
 
         client = Cloudant('foo', 'bar', url=self.url, use_basic_auth=True)
@@ -298,8 +298,7 @@ class ClientTests(UnitTestDbBase):
         """
         # mock 200
         m_response_ok = mock.MagicMock()
-        m_response_ok.json.return_value = ['animaldb']
-
+        type(m_response_ok).text = mock.PropertyMock(return_value='["animaldb"]')
         # mock 401
         m_response_bad = mock.MagicMock()
         m_response_bad.raise_for_status.side_effect = HTTPError('401 Unauthorized')

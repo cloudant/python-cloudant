@@ -35,6 +35,7 @@ from ._common_util import (
     USER_AGENT,
     append_response_error_content,
     CloudFoundryService,
+    response_to_json_dict,
     )
 
 
@@ -256,7 +257,7 @@ class CouchDB(dict):
         url = '/'.join((self.server_url, '_all_dbs'))
         resp = self.r_session.get(url)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def create_database(self, dbname, **kwargs):
         """
@@ -345,7 +346,7 @@ class CouchDB(dict):
         """
         resp = self.r_session.get(self.server_url)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def keys(self, remote=False):
         """
@@ -622,7 +623,7 @@ class Cloudant(CouchDB):
             raise CloudantArgumentError(101, year, month)
         else:
             resp.raise_for_status()
-            return resp.json()
+            return response_to_json_dict(resp)
 
     def bill(self, year=None, month=None):
         """
@@ -687,7 +688,7 @@ class Cloudant(CouchDB):
             self.server_url, '_api', 'v2', 'user', 'shared_databases'))
         resp = self.r_session.get(endpoint)
         resp.raise_for_status()
-        data = resp.json()
+        data = response_to_json_dict(resp)
         return data.get('shared_databases', [])
 
     def generate_api_key(self):
@@ -699,7 +700,7 @@ class Cloudant(CouchDB):
         endpoint = '/'.join((self.server_url, '_api', 'v2', 'api_keys'))
         resp = self.r_session.post(endpoint)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def cors_configuration(self):
         """
@@ -712,7 +713,7 @@ class Cloudant(CouchDB):
         resp = self.r_session.get(endpoint)
         resp.raise_for_status()
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def disable_cors(self):
         """
@@ -807,7 +808,7 @@ class Cloudant(CouchDB):
         )
         resp.raise_for_status()
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     @classmethod
     def bluemix(cls, vcap_services, instance_name=None, service_name=None, **kwargs):

@@ -20,6 +20,7 @@ import requests
 from requests.exceptions import HTTPError
 
 from ._2to3 import url_quote, url_quote_plus
+from ._common_util import response_to_json_dict
 from .error import CloudantDocumentException
 
 
@@ -53,8 +54,8 @@ class Document(dict):
     :param database: A database instance used by the Document.  Can be
         either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
     :param str document_id: Optional document id used to identify the document.
-    :param str encoder: Optional JSON encoder object.
-    :param str decoder: Optional JSON decoder object.
+    :param str encoder: Optional JSON encoder object (extending json.JSONEncoder).
+    :param str decoder: Optional JSON decoder object (extending json.JSONDecoder).
     """
     def __init__(self, database, document_id=None, **kwargs):
         super(Document, self).__init__()
@@ -150,7 +151,7 @@ class Document(dict):
             data=json.dumps(doc, cls=self.encoder)
         )
         resp.raise_for_status()
-        data = resp.json()
+        data = response_to_json_dict(resp)
         self._document_id = data['id']
         super(Document, self).__setitem__('_id', data['id'])
         super(Document, self).__setitem__('_rev', data['rev'])
@@ -167,7 +168,7 @@ class Document(dict):
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
         self.clear()
-        self.update(resp.json(cls=self.decoder))
+        self.update(response_to_json_dict(resp, cls=self.decoder))
 
     def save(self):
         """
@@ -189,7 +190,7 @@ class Document(dict):
             headers=headers
         )
         put_resp.raise_for_status()
-        data = put_resp.json()
+        data = response_to_json_dict(put_resp)
         super(Document, self).__setitem__('_rev', data['rev'])
         return
 
@@ -418,7 +419,7 @@ class Document(dict):
         if attachment_type == 'text':
             return resp.text
         if attachment_type == 'json':
-            return resp.json()
+            return response_to_json_dict(resp)
 
         return resp.content
 
@@ -447,7 +448,7 @@ class Document(dict):
             headers=headers
         )
         resp.raise_for_status()
-        super(Document, self).__setitem__('_rev', resp.json()['rev'])
+        super(Document, self).__setitem__('_rev', response_to_json_dict(resp)['rev'])
         # Execute logic only if attachment metadata exists locally
         if self.get('_attachments'):
             # Remove the attachment metadata for the specified attachment
@@ -457,7 +458,7 @@ class Document(dict):
             if not self['_attachments']:
                 super(Document, self).__delitem__('_attachments')
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def put_attachment(self, attachment, content_type, data, headers=None):
         """
@@ -494,4 +495,4 @@ class Document(dict):
         )
         resp.raise_for_status()
         self.fetch()
-        return resp.json()
+        return response_to_json_dict(resp)
