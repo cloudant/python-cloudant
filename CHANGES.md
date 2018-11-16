@@ -1,4 +1,4 @@
-# Unreleased
+# 2.10.1 (2018-11-16)
 
 - [FIXED] Unexpected keyword argument errors when using the library with the
  `simplejson` module present in the environment caused by `requests` preferentially
