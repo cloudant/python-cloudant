@@ -95,12 +95,14 @@ class ClientSession(Session):
         """
         No-op method - not implemented here.
         """
+        # pylint: disable=unnecessary-pass
         pass
 
     def logout(self):
         """
         No-op method - not implemented here.
         """
+        # pylint: disable=unnecessary-pass
         pass
 
 
