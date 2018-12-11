@@ -56,7 +56,7 @@ class DatabasePartitionTests(unittest.TestCase):
                       allow_redirects=False, auth=('foo', 'bar')),
             mock.call('PUT', 'https://foo.cloudant.com/partitioned_db_1',
                       auth=('foo', 'bar'), data=None,
-                      params={'partitioned': True})
+                      params={'partitioned': 'true'})
         ])
 
     @mock.patch('cloudant._client_session.ClientSession.request')
@@ -83,7 +83,7 @@ class DatabasePartitionTests(unittest.TestCase):
                       allow_redirects=False, auth=('foo', 'bar')),
             mock.call('PUT', 'https://foo.cloudant.com/partitioned_db_2',
                       auth=('foo', 'bar'), data=None,
-                      params={'partitioned': True}),
+                      params={'partitioned': 'true'}),
             mock.call('POST',
                       'https://foo.cloudant.com/partitioned_db_2/_partition/partition_key_a/_find',
                       auth=('foo', 'bar'),
@@ -117,7 +117,7 @@ class DatabasePartitionTests(unittest.TestCase):
                       allow_redirects=False, auth=('foo', 'bar')),
             mock.call('PUT', 'https://foo.cloudant.com/partitioned_db_3',
                       auth=('foo', 'bar'), data=None,
-                      params={'partitioned': True}),
+                      params={'partitioned': 'true'}),
             mock.call('POST',
                       'https://foo.cloudant.com/partitioned_db_3/_partition/partition_key_b/_design/ddoc001/_search/searchindex001',
                       auth=('foo', 'bar'), data='{"query": "name:julia*"}',
@@ -150,7 +150,7 @@ class DatabasePartitionTests(unittest.TestCase):
                       allow_redirects=False, auth=('foo', 'bar')),
             mock.call('PUT', 'https://foo.cloudant.com/partitioned_db_4',
                       auth=('foo', 'bar'), data=None,
-                      params={'partitioned': True}),
+                      params={'partitioned': 'true'}),
             mock.call('GET',
                       'https://foo.cloudant.com/partitioned_db_4/_partition/partition_key_c/_design/ddoc/_view/my_view',
                       allow_redirects=True, auth=('foo', 'bar'), headers=None,
