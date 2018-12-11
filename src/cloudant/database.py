@@ -110,15 +110,6 @@ class CouchDatabase(dict):
             "user_ctx": session.get('userCtx')
         }
 
-    @property
-    def partitioned(self):
-        """
-        Establish if this database is partitioned.
-
-        :return: True if database is partitioned, else False.
-        """
-        return self._partitioned
-
     def get_partition(self, partition_key):
         """
         Retrieve database partition object.
@@ -126,9 +117,6 @@ class CouchDatabase(dict):
         :param partition_key: partition key as string.
         :return: DatabasePartition object if database is partitioned, else None.
         """
-        if not self._partitioned:
-            return None
-
         return self._DATABASE_PARTITION_CLASS(self, partition_key)
 
     def exists(self):

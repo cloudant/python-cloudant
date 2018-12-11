@@ -47,7 +47,6 @@ class DatabasePartitionTests(unittest.TestCase):
         m_req.side_effect = [self.mock_404, self.mock_200]
 
         db = self.client.create_database('partitioned_db_1', partitioned=True)
-        self.assertTrue(db.partitioned)
 
         self.assertEquals(m_req.call_count, 2)
 
@@ -68,7 +67,6 @@ class DatabasePartitionTests(unittest.TestCase):
         ]
 
         db = self.client.create_database('partitioned_db_2', partitioned=True)
-        self.assertTrue(db.partitioned)
 
         result = db.get_partition('partition_key_a')\
                    .query(selector={'name': {'$eq': 'foo'}})
@@ -102,7 +100,6 @@ class DatabasePartitionTests(unittest.TestCase):
         ]
 
         db = self.client.create_database('partitioned_db_3', partitioned=True)
-        self.assertTrue(db.partitioned)
 
         result = db.get_partition('partition_key_b')\
                    .search('ddoc001', 'searchindex001', query='name:julia*')
@@ -135,7 +132,6 @@ class DatabasePartitionTests(unittest.TestCase):
         ]
 
         db = self.client.create_database('partitioned_db_4', partitioned=True)
-        self.assertTrue(db.partitioned)
 
         result = db.get_partition('partition_key_c')\
                    .view('ddoc', 'my_view')
