@@ -17,7 +17,7 @@ Database partition.
 """
 
 
-class CouchDatabasePartition(object):
+class DatabasePartition(object):
     """
     CouchDB database partition.
 
@@ -66,23 +66,6 @@ class CouchDatabasePartition(object):
                                          partition_key=self._partition_key,
                                          **kwargs)
 
-    def view(self, *args, **kwargs):
-        """
-        Run a view over this database partition.
-
-        See :func:`~database.CouchDatabase.get_view_result`.
-
-        :return: The result.
-        """
-        return self._db.get_view_result(*args,
-                                        partition_key=self._partition_key,
-                                        **kwargs)
-
-
-class CloudantDatabasePartition(CouchDatabasePartition):
-    """
-    Cloudant database partition.
-    """
     def search(self, *args, **kwargs):
         """
         Run a search over this database partition.
@@ -94,3 +77,15 @@ class CloudantDatabasePartition(CouchDatabasePartition):
         return self._db.get_search_result(*args,
                                           partition_key=self._partition_key,
                                           **kwargs)
+
+    def view(self, *args, **kwargs):
+        """
+        Run a view over this database partition.
+
+        See :func:`~database.CouchDatabase.get_view_result`.
+
+        :return: The result.
+        """
+        return self._db.get_view_result(*args,
+                                        partition_key=self._partition_key,
+                                        **kwargs)
