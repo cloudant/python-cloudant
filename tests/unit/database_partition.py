@@ -70,7 +70,7 @@ class DatabasePartitionTests(unittest.TestCase):
         db = self.client.create_database('partitioned_db_2', partitioned=True)
         self.assertTrue(db.partitioned)
 
-        result = db.partition('partition_key_a')\
+        result = db.get_partition('partition_key_a')\
                    .query(selector={'name': {'$eq': 'foo'}})
 
         docs = [doc for doc in result]  # trigger query fetch
@@ -104,7 +104,7 @@ class DatabasePartitionTests(unittest.TestCase):
         db = self.client.create_database('partitioned_db_3', partitioned=True)
         self.assertTrue(db.partitioned)
 
-        result = db.partition('partition_key_b')\
+        result = db.get_partition('partition_key_b')\
                    .search('ddoc001', 'searchindex001', query='name:julia*')
 
         docs = [doc for doc in result]  # trigger query fetch
@@ -137,7 +137,7 @@ class DatabasePartitionTests(unittest.TestCase):
         db = self.client.create_database('partitioned_db_4', partitioned=True)
         self.assertTrue(db.partitioned)
 
-        result = db.partition('partition_key_c')\
+        result = db.get_partition('partition_key_c')\
                    .view('ddoc', 'my_view')
 
         docs = [doc for doc in result]  # trigger query fetch

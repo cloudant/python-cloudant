@@ -119,7 +119,7 @@ class CouchDatabase(dict):
         """
         return self._partitioned
 
-    def partition(self, partition_key):
+    def get_partition(self, partition_key):
         """
         Retrieve database partition object.
 
