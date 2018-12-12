@@ -720,8 +720,9 @@ class DesignDocument(Document):
         """
         Retrieve the partition URL.
 
-        :param partition_key: Partition key as string.
-        :return: Partition URL as string.
+        :param str partition_key: Partition key.
+        :return: Partition URL.
+        :rtype: str
         """
         if self._document_id is None:
             return None

@@ -51,6 +51,8 @@ class CouchDatabase(dict):
     :param str database_name: Database name used to reference the database.
     :param int fetch_limit: Optional fetch limit used to set the max number of
         documents to fetch per query during iteration cycles.  Defaults to 100.
+    :param bool partitioned: Create as a partitioned database. Defaults to
+        ``False``.
     """
     def __init__(self, client, database_name, fetch_limit=100,
                  partitioned=False):
@@ -110,10 +112,11 @@ class CouchDatabase(dict):
 
     def get_partition(self, partition_key):
         """
-        Retrieve database partition object.
+        Retrieve a database partition object for the specified partition key.
 
-        :param partition_key: partition key as string.
-        :return: DatabasePartition object if database is partitioned, else None.
+        :param str partition_key: partition key.
+        :return: DatabasePartition object for specified partition key.
+        :rtype: `~cloudant.database_partition.DatabasePartition`
         """
         return DatabasePartition(self, partition_key)
 
@@ -1189,6 +1192,8 @@ class CloudantDatabase(CouchDatabase):
     :param str database_name: Database name used to reference the database.
     :param int fetch_limit: Optional fetch limit used to set the max number of
         documents to fetch per query during iteration cycles.  Defaults to 100.
+    :param bool partitioned: Create as a partitioned database. Defaults to
+        ``False``.
     """
     def __init__(self, client, database_name, fetch_limit=100,
                  partitioned=False):

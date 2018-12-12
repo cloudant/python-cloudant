@@ -6,6 +6,7 @@ Modules
 
    client
    database
+   database_partition
    document
    design_document
    security_document

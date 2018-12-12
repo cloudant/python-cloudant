@@ -271,6 +271,8 @@ class CouchDB(dict):
         :param bool throw_on_exists: Boolean flag dictating whether or
             not to throw a CloudantClientException when attempting to
             create a database that already exists.
+        :param bool partitioned: Create as a partitioned database. Defaults to
+            ``False``.
 
         :returns: The newly created database object
         """
