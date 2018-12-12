@@ -288,6 +288,8 @@ def response_to_json_dict(response, **kwargs):
 
     :returns: dict of JSON response
     """
+    if response.encoding is None:
+        response.encoding = 'utf-8'
     return json.loads(response.text, **kwargs)
 
 # Classes
