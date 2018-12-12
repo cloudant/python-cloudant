@@ -1,3 +1,7 @@
+# Unreleased
+
+- [FIXED] A performance regression deserializing JSON in version 2.10.1.
+
 # 2.10.1 (2018-11-16)
 
 - [FIXED] Unexpected keyword argument errors when using the library with the
