@@ -1,4 +1,4 @@
-# Unreleased
+# 2.10.2 (2018-12-19)
 
 - [FIXED] A performance regression deserializing JSON in version 2.10.1.
 
