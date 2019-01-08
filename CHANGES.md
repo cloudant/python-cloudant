@@ -1,6 +1,7 @@
 # UNRELEASED
 
 - [NEW] Added option for client to authenticate with IAM token server.
+- [FIXED] Updated the default IAM token server URL.
 
 # 2.10.2 (2018-12-19)
 
