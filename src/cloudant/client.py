@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,6 +78,10 @@ class CouchDB(dict):
         IAM authentication with server. Default is False.
         Use :func:`~cloudant.client.CouchDB.iam` to construct an IAM
         authenticated client.
+    :param string iam_client_id: Keyword argument, client ID to use when
+        authenticating with the IAM token server. Default is ``None``.
+    :param string iam_client_secret: Keyword argument, client secret to use when
+        authenticating with the IAM token server. Default is ``None``.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -95,6 +99,8 @@ class CouchDB(dict):
         self._auto_renew = kwargs.get('auto_renew', False)
         self._use_basic_auth = kwargs.get('use_basic_auth', False)
         self._use_iam = kwargs.get('use_iam', False)
+        self._iam_client_id = kwargs.get('iam_client_id', None)
+        self._iam_client_secret = kwargs.get('iam_client_secret', None)
         # If user/pass exist in URL, remove and set variables
         if not self._use_basic_auth and self.server_url:
             parsed_url = url_parse(kwargs.get('url'))
@@ -162,6 +168,8 @@ class CouchDB(dict):
                 self._auth_token,
                 self.server_url,
                 auto_renew=self._auto_renew,
+                client_id=self._iam_client_id,
+                client_secret=self._iam_client_secret,
                 timeout=self._timeout
             )
         else:
@@ -844,7 +852,8 @@ class Cloudant(CouchDB):
         if hasattr(service, 'iam_api_key'):
             return Cloudant.iam(service.username,
                                 service.iam_api_key,
-                                url=service.url)
+                                url=service.url,
+                                **kwargs)
         return Cloudant(service.username,
                         service.password,
                         url=service.url,

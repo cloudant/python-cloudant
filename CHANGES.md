@@ -1,3 +1,7 @@
+# UNRELEASED
+
+- [NEW] Added option for client to authenticate with IAM token server.
+
 # 2.10.2 (2018-12-19)
 
 - [FIXED] A performance regression deserializing JSON in version 2.10.1.
