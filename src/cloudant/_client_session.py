@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -189,7 +189,8 @@ class IAMSession(ClientSession):
     This class extends ClientSession and provides IAM authentication.
     """
 
-    def __init__(self, api_key, server_url, **kwargs):
+    def __init__(self, api_key, server_url, client_id=None, client_secret=None,
+                 **kwargs):
         super(IAMSession, self).__init__(
             session_url=url_join(server_url, '_iam_session'),
             **kwargs)
@@ -197,6 +198,9 @@ class IAMSession(ClientSession):
         self._api_key = api_key
         self._token_url = os.environ.get(
             'IAM_TOKEN_URL', 'https://iam.bluemix.net/identity/token')
+        self._token_auth = None
+        if client_id and client_secret:
+            self._token_auth = (client_id, client_secret)
 
     @property
     def get_api_key(self):
@@ -277,7 +281,7 @@ class IAMSession(ClientSession):
             resp = super(IAMSession, self).request(
                 'POST',
                 self._token_url,
-                auth=('bx', 'bx'),  # required for user API keys
+                auth=self._token_auth,
                 headers={'Accepts': 'application/json'},
                 data={
                     'grant_type': 'urn:ibm:params:oauth:grant-type:apikey',

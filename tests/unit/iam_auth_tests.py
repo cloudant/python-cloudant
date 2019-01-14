@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017 IBM. All rights reserved.
+# Copyright (c) 2017, 2019 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -108,7 +108,38 @@ class IAMAuthTests(unittest.TestCase):
         m_req.assert_called_once_with(
             'POST',
             iam._token_url,
-            auth=('bx', 'bx'),
+            auth=None,
+            headers={'Accepts': 'application/json'},
+            data={
+                'grant_type': 'urn:ibm:params:oauth:grant-type:apikey',
+                'response_type': 'cloud_iam',
+                'apikey': MOCK_API_KEY
+            }
+        )
+
+        self.assertEqual(access_token, MOCK_ACCESS_TOKEN)
+        self.assertTrue(m_response.raise_for_status.called)
+        mock_token_response_text.assert_called_with()
+
+    @mock.patch('cloudant._client_session.ClientSession.request')
+    def test_iam_get_access_token_with_iam_client_id_and_secret(self, m_req):
+        m_response = mock.MagicMock()
+        mock_token_response_text = mock.PropertyMock(return_value=MOCK_IAM_TOKEN_RESPONSE)
+        type(m_response).text = mock_token_response_text
+        m_req.return_value = m_response
+
+        iam_client_id = 'foo'
+        iam_client_secret = 'bar'
+
+        iam = IAMSession(MOCK_API_KEY, 'http://127.0.0.1:5984',
+                         client_id=iam_client_id,
+                         client_secret=iam_client_secret)
+        access_token = iam._get_access_token()
+
+        m_req.assert_called_once_with(
+            'POST',
+            iam._token_url,
+            auth=(iam_client_id, iam_client_secret),
             headers={'Accepts': 'application/json'},
             data={
                 'grant_type': 'urn:ibm:params:oauth:grant-type:apikey',
