@@ -100,7 +100,7 @@ Cloud Platform.
 See `IBM Cloud Identity and Access Management <https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management>`_
 for more information.
 
-The production IAM token service at *https://iam.bluemix.net/identity/token* is used
+The production IAM token service at *https://iam.cloud.ibm.com/identity/token* is used
 by default. You can set an ``IAM_TOKEN_URL`` environment variable to override
 this.
 

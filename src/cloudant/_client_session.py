@@ -197,7 +197,7 @@ class IAMSession(ClientSession):
 
         self._api_key = api_key
         self._token_url = os.environ.get(
-            'IAM_TOKEN_URL', 'https://iam.bluemix.net/identity/token')
+            'IAM_TOKEN_URL', 'https://iam.cloud.ibm.com/identity/token')
         self._token_auth = None
         if client_id and client_secret:
             self._token_auth = (client_id, client_secret)
