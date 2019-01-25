@@ -385,7 +385,7 @@ to the :class:`~cloudant.result.QueryResult` documentation.
   docs = my_database.get_query_result(selector)
   for doc in docs:
    # Create Document object from dict
-   updated_doc = Document(todos, doc['_id'])
+   updated_doc = Document(my_database, doc['_id'])
    updated_doc.update(doc)
    # Update document field
    updated_doc['name'] = 'new_name'
