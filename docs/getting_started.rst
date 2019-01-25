@@ -372,6 +372,26 @@ object already exists.
     for result in result_collection:
         print(result)
 
+This example retrieves the query result from the specified database based on the query parameters provided, updates the
+document, and saves the document in the remote database.
+By default, the result is returned as a ``QueryResult`` which uses the skip and limit query parameters internally to
+handle slicing and iteration through the query result collection.  For more detail on slicing and iteration, refer
+to the :class:`~cloudant.result.QueryResult` documentation.
+
+.. code-block:: python
+
+  # Retrieve documents where the name field is 'foo'
+  selector = {'name': {'$eq': 'foo'}}
+  docs = my_database.get_query_result(selector)
+  for doc in docs:
+   # Create Document object from dict
+   updated_doc = Document(my_database, doc['_id'])
+   updated_doc.update(doc)
+   # Update document field
+   updated_doc['name'] = 'new_name'
+   # Save document
+   updated_doc.save()
+
 ****************
 Context managers
 ****************

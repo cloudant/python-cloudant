@@ -1,3 +1,7 @@
+# Unreleased
+
+- [IMPROVED] Updated `Getting started` section with a `get_query_result` example. 
+
 # 2.11.0 (2019-01-21)
 
 - [NEW] Added option for client to authenticate with IAM token server.
