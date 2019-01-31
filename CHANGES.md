@@ -1,6 +1,7 @@
 # Unreleased
 
 - [IMPROVED] Updated `Getting started` section with a `get_query_result` example. 
+- [FIXED] Fixed type for `selector` in docstring of the `get_query_result` function.
 
 # 2.11.0 (2019-01-21)
 
