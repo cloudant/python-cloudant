@@ -454,7 +454,7 @@ class QueryResult(Result):
     :param int r: Read quorum needed for the result.  Each document is read
         from at least 'r' number of replicas before it is returned in the
         results.
-    :param str selector: Dictionary object describing criteria used to
+    :param dict selector: Dictionary object describing criteria used to
         select documents.
     :param list sort: A list of fields to sort by.  Optionally the list can
         contain elements that are single member dictionary structures that
