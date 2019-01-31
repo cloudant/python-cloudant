@@ -1112,7 +1112,7 @@ class CouchDatabase(dict):
         For more detail on slicing and iteration, refer to the
         :class:`~cloudant.result.QueryResult` documentation.
 
-        :param str selector: Dictionary object describing criteria used to
+        :param dict selector: Dictionary object describing criteria used to
             select documents.
         :param list fields: A list of fields to be returned by the query.
         :param bool raw_result: Dictates whether the query result is returned
