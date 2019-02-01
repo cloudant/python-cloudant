@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1112,7 +1112,7 @@ class CouchDatabase(dict):
         For more detail on slicing and iteration, refer to the
         :class:`~cloudant.result.QueryResult` documentation.
 
-        :param str selector: Dictionary object describing criteria used to
+        :param dict selector: Dictionary object describing criteria used to
             select documents.
         :param list fields: A list of fields to be returned by the query.
         :param bool raw_result: Dictates whether the query result is returned
