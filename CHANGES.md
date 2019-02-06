@@ -1,5 +1,6 @@
 # Unreleased
 
+- [NEW] Added partitioned database support.
 - [IMPROVED] Updated `Result` iteration by paginating with views' `startkey` and
   queries' `bookmark`.
 - [FIXED] Bug where document context manager performed remote save despite

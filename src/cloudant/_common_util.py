@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -140,7 +140,8 @@ SEARCH_INDEX_ARGS = {
     'highlight_post_tag': STRTYPE,
     'highlight_number': (int, LONGTYPE, NONETYPE),
     'highlight_size': (int, LONGTYPE, NONETYPE),
-    'include_fields': list
+    'include_fields': list,
+    'partition': STRTYPE
 }
 
 # Functions
