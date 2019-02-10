@@ -633,6 +633,41 @@ class DocumentTests(UnitTestDbBase):
         self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(self.db['julia006'], doc)
 
+    def test_document_context_manager_atomic_creation_failure(self):
+        """
+        Test that the atomic context manager skip doc creation if there
+        is an exception.
+        """
+        with self.assertRaises(ZeroDivisionError):
+            with Document(self.db, 'julia006').atomic() as doc:
+                doc['name'] = 'julia'
+                doc['age'] = 6
+                0 / 0
+        doc = Document(self.db, 'julia006')
+        try:
+            doc.fetch()
+            self.fail('Above statement should raise an Exception')
+        except requests.HTTPError as err:
+            self.assertEqual(err.response.status_code, 404)
+
+    def test_document_context_manager_atomic_update_failure(self):
+        """
+        Test that the atomic context manager skip doc update if there
+        is an exception.
+        """
+        # First create the document
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.save()
+        # Then try an update with an exception
+        with self.assertRaises(ZeroDivisionError):
+            with Document(self.db, 'julia006').atomic() as doc:
+                doc['age'] = 7
+                0 / 0
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(self.db['julia006']['age'], 6)
+
     def test_setting_id(self):
         """
         Ensure that proper processing occurs when setting the _id

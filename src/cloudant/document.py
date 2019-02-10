@@ -18,6 +18,7 @@ API module/class for interacting with a document in a database.
 import json
 import requests
 from requests.exceptions import HTTPError
+from contextlib import contextmanager
 
 from ._2to3 import url_quote, url_quote_plus
 from ._common_util import response_to_json_dict
@@ -347,6 +348,14 @@ class Document(dict):
         logic.  Executes a Document.save() upon exit.
         """
         self.save()
+
+    @contextmanager
+    def atomic(self):
+        """
+        Context manager that only save if there is no exceptions in inner block.
+        """
+        yield self.__enter__()
+        self.__exit__()
 
     def __setitem__(self, key, value):
         """
