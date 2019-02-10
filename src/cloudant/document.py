@@ -63,9 +63,8 @@ class Document(dict):
         self._database = database
         self._database_host = self._client.server_url
         self._database_name = database.database_name
-        self._document_id = document_id
-        if self._document_id is not None:
-            self['_id'] = self._document_id
+        if document_id:
+            self['_id'] = document_id
         self.encoder = kwargs.get('encoder') or self._client.encoder
         self.decoder = kwargs.get('decoder') or json.JSONDecoder
 
@@ -85,23 +84,23 @@ class Document(dict):
 
         :returns: Document URL
         """
-        if self._document_id is None:
+        if '_id' not in self or self['_id'] is None:
             return None
 
         # handle design document url
-        if self._document_id.startswith('_design/'):
+        if self['_id'].startswith('_design/'):
             return '/'.join((
                 self._database_host,
                 url_quote_plus(self._database_name),
                 '_design',
-                url_quote(self._document_id[8:], safe='')
+                url_quote(self['_id'][8:], safe='')
             ))
 
         # handle document url
         return '/'.join((
             self._database_host,
             url_quote_plus(self._database_name),
-            url_quote(self._document_id, safe='')
+            url_quote(self['_id'], safe='')
         ))
 
     def exists(self):
@@ -111,7 +110,7 @@ class Document(dict):
         :returns: True if the document exists in the remote database,
             otherwise False
         """
-        if self._document_id is None:
+        if '_id' not in self or self['_id'] is None:
             return False
 
         resp = self.r_session.head(self.document_url)
@@ -136,8 +135,6 @@ class Document(dict):
         updates the locally cached Document object with the ``_id``
         and ``_rev`` returned as part of the successful response.
         """
-        if self._document_id is not None:
-            self['_id'] = self._document_id
 
         # Ensure that an existing document will not be "updated"
         doc = dict(self)
@@ -152,7 +149,6 @@ class Document(dict):
         )
         resp.raise_for_status()
         data = response_to_json_dict(resp)
-        self._document_id = data['id']
         super(Document, self).__setitem__('_id', data['id'])
         super(Document, self).__setitem__('_rev', data['rev'])
 
@@ -318,8 +314,9 @@ class Document(dict):
             params={"rev": self["_rev"]},
         )
         del_resp.raise_for_status()
+        _id = self['_id']
         self.clear()
-        self.__setitem__('_id', self._document_id)
+        self['_id'] = _id
 
     def __enter__(self):
         """
@@ -348,23 +345,6 @@ class Document(dict):
         """
         if exc_type is None:
             self.save()
-
-    def __setitem__(self, key, value):
-        """
-        Sets the _document_id when setting the '_id' field.
-        The _document_id is used to construct the document url.
-        """
-        if key == '_id':
-            self._document_id = value
-        super(Document, self).__setitem__(key, value)
-
-    def __delitem__(self, key):
-        """
-        Sets the _document_id to None when deleting the '_id' field.
-        """
-        if key == '_id':
-            self._document_id = None
-        super(Document, self).__delitem__(key)
 
     def get_attachment(
             self,

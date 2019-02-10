@@ -4,6 +4,8 @@
   uncaught exceptions being raised inside `with` block.
 - [FIXED] Fixed parameter type of `selector` in docstring.
 - [IMPROVED] Updated `Getting started` section with a `get_query_result` example.
+- [FIXED] Removed internal `Document._document_id` property to allow a safe use of
+  dict's methods.
 
 # 2.11.0 (2019-01-21)
 
