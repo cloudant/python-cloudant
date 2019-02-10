@@ -6,6 +6,7 @@
 - [IMPROVED] Updated `Getting started` section with a `get_query_result` example.
 - [FIXED] Removed internal `Document._document_id` property to allow a safe use of
   dict's methods.
+- [IMPROVED] `Document.save` only when creating or local copy changed.
 
 # 2.11.0 (2019-01-21)
 

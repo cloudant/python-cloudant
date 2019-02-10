@@ -67,6 +67,7 @@ class Document(dict):
             self['_id'] = document_id
         self.encoder = kwargs.get('encoder') or self._client.encoder
         self.decoder = kwargs.get('decoder') or json.JSONDecoder
+        self.dirty = True
 
     @property
     def r_session(self):
@@ -163,8 +164,9 @@ class Document(dict):
             raise CloudantDocumentException(101)
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
-        self.clear()
+        self.clear(keep_revision=False)
         self.update(response_to_json_dict(resp, cls=self.decoder))
+        self.dirty = False
 
     def save(self):
         """
@@ -175,20 +177,21 @@ class Document(dict):
         case the locally cached Document object is also updated accordingly
         based on the successful response of the operation.
         """
-        headers = {}
-        headers.setdefault('Content-Type', 'application/json')
         if not self.exists():
             self.create()
+            self.dirty = False
             return
-        put_resp = self.r_session.put(
-            self.document_url,
-            data=self.json(),
-            headers=headers
-        )
-        put_resp.raise_for_status()
-        data = response_to_json_dict(put_resp)
-        super(Document, self).__setitem__('_rev', data['rev'])
-        return
+
+        if self.dirty:
+            headers = {'Content-Type': 'application/json'}
+            put_resp = self.r_session.put(
+                self.document_url,
+                data=self.json(),
+                headers=headers)
+            put_resp.raise_for_status()
+            data = response_to_json_dict(put_resp)
+            super(Document, self).__setitem__('_rev', data['rev'])
+            self.dirty = False
 
     # Update Actions
     # These are handy functions to use with update_field below.
@@ -209,6 +212,7 @@ class Document(dict):
             raise CloudantDocumentException(102, field)
         if value is not None:
             doc[field].append(value)
+            doc.dirty = True
 
     @staticmethod
     def list_field_remove(doc, field, value):
@@ -223,6 +227,7 @@ class Document(dict):
         if not isinstance(doc[field], list):
             raise CloudantDocumentException(102, field)
         doc[field].remove(value)
+        doc.dirty = True
 
     @staticmethod
     def field_set(doc, field, value):
@@ -315,7 +320,7 @@ class Document(dict):
         )
         del_resp.raise_for_status()
         _id = self['_id']
-        self.clear()
+        self.clear(keep_revision=False)
         self['_id'] = _id
 
     def __enter__(self):
@@ -345,6 +350,77 @@ class Document(dict):
         """
         if exc_type is None:
             self.save()
+
+    def __setitem__(self, key, value):
+        changed = key not in self or self[key] != value
+        super(Document, self).__setitem__(key, value)
+        if changed:
+            self.dirty = True
+
+    def __delitem__(self, key):
+        changed = key in self
+        super(Document, self).__delitem__(key)
+        if changed:
+            self.dirty = True
+
+    def pop(self, key, *args):
+        ret = super(Document, self).pop(key, *args)
+        self.dirty = True
+        return ret
+
+    def popitem(self):
+        _id = super(Document, self).pop('_id', None)
+        _rev = super(Document, self).pop('_rev', None)
+        try:
+            key, value = super(Document, self).popitem()
+        except KeyError:
+            if _id:
+                super(Document, self).__setitem__('_id', _id)
+            if _rev:
+                super(Document, self).__setitem__('_rev', _rev)
+            raise
+        if _id:
+            super(Document, self).__setitem__('_id', _id)
+        if _rev:
+            super(Document, self).__setitem__('_rev', _rev)
+        self.dirty = True
+        return key, value
+
+    def clear(self, keep_revision=True):
+        _id = super(Document, self).pop('_id', None)
+        _rev = super(Document, self).pop('_rev', None)
+        if not self.dirty:
+            self.dirty = len(self) > 0
+        super(Document, self).clear()
+        if _id:
+            super(Document, self).__setitem__('_id', _id)
+        if keep_revision and _rev:
+            super(Document, self).__setitem__('_rev', _rev)
+
+    def update(self, *E, **F):
+        changed = False
+        if E:
+            other = E[0]
+            if isinstance(other, dict):
+                if not other.items() <= self.items():
+                    changed = True
+            else:
+                for k, v in other:
+                    if self[k] != v:
+                        changed = True
+        if F and not F.items() <= self.items():
+            changed = True
+
+        super(Document, self).update(*E, **F)
+        if changed:
+            self.dirty = True
+
+    def setdefault(self, key, default=None):
+        changed = key not in self
+        ret = super(Document, self).setdefault(key, default)
+        if changed:
+            self.dirty = True
+        return ret
 
     def get_attachment(
             self,

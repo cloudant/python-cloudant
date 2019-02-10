@@ -376,6 +376,110 @@ class DocumentTests(UnitTestDbBase):
         self.assertEqual(remote_doc, doc)
         self.assertEqual(remote_doc['name'], 'jules')
 
+    def test_dont_update_unchanged_document(self):
+        """
+        Test that save functionality works skips if no
+        local changes are made.
+        """
+
+        def _check():
+            """
+            save and check revision and remote doc
+            """
+            doc.save()
+            self.assertTrue(doc['_rev'].startswith('1-'))
+            remote_doc = Document(self.db, 'julia006')
+            remote_doc.fetch()
+            self.assertEqual(remote_doc, doc)
+
+        # First create the document
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc['pets'] = ['cat']
+        _check()
+        _check()
+        doc.update({'age': 6})
+        _check()
+        doc.field_set(doc, 'pets', ['cat'])
+        _check()
+        doc.update_field(action=doc.field_set,
+                         field='pets',
+                         value=['cat'])
+        _check()
+        doc['age'] = 6
+        _check()
+        doc.setdefault('age', 6)
+        _check()
+        doc.setdefault('age', 7)
+        _check()
+
+    def test_update_changed_document(self):
+        """
+        Test that save functionality works only if local changes
+        are made.
+        """
+        self.rev = 0
+
+        def _check():
+            doc.save()
+            self.rev += 1
+            self.assertTrue(doc['_rev'].startswith('{}-'.format(self.rev)))
+            remote_doc = Document(self.db, 'julia006')
+            remote_doc.fetch()
+            self.assertEqual(remote_doc, doc)
+
+        # First create the document
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc['pets'] = ['cat']
+        _check()
+        doc.list_field_append(doc, 'pets', 'dog')
+        _check()
+        self.assertEqual(doc['pets'], ['cat', 'dog'], 'no update made')
+        doc.list_field_remove(doc, 'pets', 'dog')
+        _check()
+        self.assertEqual(doc['pets'], ['cat'], 'no update made')
+        del doc['pets']
+        _check()
+        doc.pop('age')
+        _check()
+        doc.popitem()
+        _check()
+        doc.update({'age': 6, 'name': 'julia', 'pets': ['cat']})
+        _check()
+        doc.field_set(doc, 'name', 'jules')
+        _check()
+        doc.field_set(doc, 'name', None)
+        _check()
+        doc.update_field(action=doc.list_field_append,
+                         field='pets',
+                         value='dog')
+        _check()
+        self.assertEqual(doc['pets'], ['cat', 'dog'], 'no update made')
+        doc.update_field(action=doc.list_field_remove,
+                         field='pets',
+                         value='dog')
+        _check()
+        self.assertEqual(doc['pets'], ['cat'], 'no update made')
+        doc.update_field(action=doc.field_set,
+                         field='pets',
+                         value=None)
+        _check()
+        self.assertNotIn('pets', doc, 'no field set')
+        doc.delete()
+        self.rev += 1
+        doc = Document(self.db, 'julia006')
+        _check()
+        doc.clear()
+        doc.fetch()
+        self.rev -= 1
+        _check()
+        doc.setdefault('pets', [])
+        _check()
+        del self.rev
+
     def test_update_document_with_encoded_url(self):
         """
         Test that updating a document where the document id requires that the
@@ -910,6 +1014,12 @@ class DocumentTests(UnitTestDbBase):
             self.assertIsNone(doc.r_session)
         finally:
             self.client.connect()
+
+    def test_document_popitem(self):
+        """
+        Test document dict.pop functionality
+        """
+        
 
     def test_document_custom_json_encoder_and_decoder(self):
         dt_format = '%Y-%m-%dT%H:%M:%S'
