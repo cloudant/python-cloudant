@@ -622,6 +622,47 @@ class DocumentTests(UnitTestDbBase):
         self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(self.db['julia006'], doc)
 
+    def test_document_context_manager_creation_failure_on_error(self):
+        """
+        Test that the document context manager skips document creation if there
+        is an error.
+        """
+        with self.assertRaises(ZeroDivisionError), Document(self.db, 'julia006') as doc:
+            doc['name'] = 'julia'
+            doc['age'] = 6
+            raise ZeroDivisionError()
+
+        doc = Document(self.db, 'julia006')
+        try:
+            doc.fetch()
+        except requests.HTTPError as err:
+            self.assertEqual(err.response.status_code, 404)
+        else:
+            self.fail('Above statement should raise a HTTPError.')
+
+    def test_document_context_manager_update_failure_on_error(self):
+        """
+        Test that the document context manager skips document update if there
+        is an error.
+        """
+        # Create the document.
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.save()
+
+        # Make a document update and then raise an error.
+        with self.assertRaises(ZeroDivisionError), Document(self.db, 'julia006') as doc:
+            doc['age'] = 7
+            raise ZeroDivisionError()
+
+        # Assert the change persists locally.
+        self.assertEqual(doc['age'], 7)
+
+        # Assert the document has not been saved to remote server.
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(self.db['julia006']['age'], 6)
+
     def test_document_context_manager_doc_create(self):
         """
         Test that the document context manager will create a doc if it does

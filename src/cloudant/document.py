@@ -341,12 +341,13 @@ class Document(dict):
 
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, exc_type, exc_value, traceback):
         """
-        Support context like editing of document fields.  Handles context exit
-        logic.  Executes a Document.save() upon exit.
+        Support context like editing of document fields. Handles context exit
+        logic. Executes a `Document.save()` upon exit if no exception occurred.
         """
-        self.save()
+        if exc_type is None:
+            self.save()
 
     def __setitem__(self, key, value):
         """
