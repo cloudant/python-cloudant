@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import cloudant
 """
 _document_tests_
 
@@ -523,9 +524,18 @@ class DocumentTests(UnitTestDbBase):
         # Mock when saving the document
         # 1st call throw a 409
         # 2nd call delegate to the real doc.save()
-        with mock.patch('cloudant.document.Document.save',
-                        side_effect=[requests.HTTPError(response=mock.Mock(status_code=409, reason='conflict')),
-                                     doc.save()]) as m_save:
+
+        class SaveMock(object):
+            calls = 0
+            def save(self):
+                if self.calls == 0:
+                    self.calls += 1
+                    raise requests.HTTPError(response=mock.Mock(status_code=409, reason='conflict'))
+                else:
+                    return cloudant.document.Document.save(doc)
+
+        with mock.patch.object(doc, 'save',
+                               side_effect=SaveMock().save) as m_save:
             # A list of side effects containing only 1 element
             doc.update_field(doc.field_set, 'age', 7, max_tries=1)
         # Two calls to save, one with a 409 and one that succeeds
