@@ -441,41 +441,45 @@ multiple updates to a single document. Note that we don't save to the server
 after each update. We only save once to the server upon exiting the ``Document``
 context manager.
 
- .. code-block:: python
+.. warning:: Uncaught exceptions inside the ``with`` block will prevent your
+             document changes being saved to the remote server. However, changes
+             will still be applied to your local document object.
 
-    from cloudant import cloudant
-    from cloudant.document import Document
+.. code-block:: python
 
-    with cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME) as client:
+   from cloudant import cloudant
+   from cloudant.document import Document
 
-        my_database = client.create_database('my_database')
+   with cloudant(USERNAME, PASSWORD, account=ACCOUNT_NAME) as client:
 
-        # Upon entry into the document context, fetches the document from the
-        # remote database, if it exists. Upon exit from the context, saves the
-        # document to the remote database with changes made within the context
-        # or creates a new document.
-        with Document(database, 'julia006') as document:
-            # If document exists, it's fetched from the remote database
-            # Changes are made locally
-            document['name'] = 'Julia'
-            document['age'] = 6
-            # The document is saved to the remote database
+       my_database = client.create_database('my_database')
 
-        # Display a Document
-        print(my_database['julia30'])
-    
-        # Delete the database
-        client.delete_database('my_database')
+       # Upon entry into the document context, fetches the document from the
+       # remote database, if it exists. Upon exit from the context, saves the
+       # document to the remote database with changes made within the context
+       # or creates a new document.
+       with Document(database, 'julia006') as document:
+           # If document exists, it's fetched from the remote database
+           # Changes are made locally
+           document['name'] = 'Julia'
+           document['age'] = 6
+           # The document is saved to the remote database
 
-        print('Databases: {0}'.format(client.all_dbs()))
+       # Display a Document
+       print(my_database['julia30'])
+
+       # Delete the database
+       client.delete_database('my_database')
+
+       print('Databases: {0}'.format(client.all_dbs()))
 
 Always use the ``_deleted`` document property to delete a document from within
 a ``Document`` context manager. For example:
 
- .. code-block:: python
+.. code-block:: python
 
-    with Document(my_database, 'julia30') as doc:
-        doc['_deleted'] = True
+   with Document(my_database, 'julia30') as doc:
+       doc['_deleted'] = True
 
 *You can also delete non underscore prefixed document keys to reduce the size of the request.*
 
