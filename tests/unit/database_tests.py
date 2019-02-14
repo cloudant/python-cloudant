@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -773,16 +773,36 @@ class DatabaseTests(UnitTestDbBase):
         # Test no differences
         self.assertEqual(self.db.revisions_diff('julia006', doc['_rev']), {})
 
-    def test_get_set_revision_limit(self):
+    @mock.patch('cloudant._client_session.ClientSession.request')
+    def test_get_set_revision_limit(self, m_req):
         """
         Test setting and getting revision limits
         """
-        limit = self.db.get_revision_limit()
-        self.assertIsInstance(limit, int)
+        # Setup mock responses.
+        mock_200_get_1 = mock.MagicMock()
+        type(mock_200_get_1).status_code = mock.PropertyMock(return_value=200)
+        type(mock_200_get_1).text = mock.PropertyMock(return_value='4321')
+
+        mock_200_get_2 = mock.MagicMock()
+        type(mock_200_get_2).status_code = mock.PropertyMock(return_value=200)
+        type(mock_200_get_2).text = mock.PropertyMock(return_value='1234')
+
+        mock_200_set = mock.MagicMock()
+        type(mock_200_set).status_code = mock.PropertyMock(return_value=200)
+        type(mock_200_set).text = mock.PropertyMock(return_value='{"ok":true}')
+
+        m_req.side_effect = [mock_200_get_1, mock_200_set, mock_200_get_2]
+
+        # Get current revisions limit.
+        self.assertEqual(self.db.get_revision_limit(), 4321)
+
+        # Set new revisions limit.
         self.assertEqual(self.db.set_revision_limit(1234), {'ok': True})
-        new_limit = self.db.get_revision_limit()
-        self.assertNotEqual(new_limit, limit)
-        self.assertEqual(new_limit, 1234)
+
+        # Get new revisions limit.
+        self.assertEqual(self.db.get_revision_limit(), 1234)
+
+        self.assertEquals(m_req.call_count, 3)
 
     @attr(db='couch')
     def test_view_clean_up(self):
