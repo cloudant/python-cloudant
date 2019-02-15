@@ -680,10 +680,8 @@ class DocumentTests(UnitTestDbBase):
         """
         doc = Document(self.db)
         self.assertIsNone(doc.get('_id'))
-        self.assertEqual(doc._document_id, None)
         doc['_id'] = 'julia006'
         self.assertEqual(doc['_id'], 'julia006')
-        self.assertEqual(doc._document_id, 'julia006')
 
     def test_removing_id(self):
         """
@@ -693,7 +691,6 @@ class DocumentTests(UnitTestDbBase):
         doc['_id'] = 'julia006'
         del doc['_id']
         self.assertIsNone(doc.get('_id'))
-        self.assertEqual(doc._document_id, None)
 
     def test_get_text_attachment(self):
         """
