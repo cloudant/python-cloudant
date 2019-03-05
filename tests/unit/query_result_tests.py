@@ -425,20 +425,10 @@ class QueryResultTests(UnitTestDbBase):
 
     def test_iteration_with_invalid_options(self):
         """
-        Test that iteration raises an exception when "skip" and/or "limit" are
-        used as options for the result.
+        Test that iteration raises an exception when "limit" is
+        used as option for the result.
         """
-        result = self.create_result(q_parms={'skip': 10})
-        with self.assertRaises(ResultException) as cm:
-            invalid_result = [row for row in result]
-        self.assertEqual(cm.exception.status_code, 103)
-
         result = self.create_result(q_parms={'limit': 10})
-        with self.assertRaises(ResultException) as cm:
-            invalid_result = [row for row in result]
-        self.assertEqual(cm.exception.status_code, 103)
-
-        result = self.create_result(q_parms={'limit': 10, 'skip': 10})
         with self.assertRaises(ResultException) as cm:
             invalid_result = [row for row in result]
         self.assertEqual(cm.exception.status_code, 103)

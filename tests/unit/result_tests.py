@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import mock
 """
 result module - Unit tests for Result class
 """
@@ -19,6 +20,7 @@ import unittest
 
 from cloudant.error import ResultException
 from cloudant.result import Result, ResultByKey
+from cloudant.view import View
 from nose.plugins.attrib import attr
 from requests.exceptions import HTTPError
 
@@ -564,20 +566,10 @@ class ResultTests(UnitTestDbBase):
 
     def test_iteration_with_invalid_options(self):
         """
-        Test that iteration raises an exception when "skip" and/or "limit" are
-        used as options for the result.
+        Test that iteration raises an exception when "limit" is
+        used as option for the result.
         """
-        result = Result(self.view001, skip=10)
-        with self.assertRaises(ResultException) as cm:
-            invalid_result = [row for row in result]
-        self.assertEqual(cm.exception.status_code, 103)
-
         result = Result(self.view001, limit=10)
-        with self.assertRaises(ResultException) as cm:
-            invalid_result = [row for row in result]
-        self.assertEqual(cm.exception.status_code, 103)
-
-        result = Result(self.view001, skip=10, limit=10)
         with self.assertRaises(ResultException) as cm:
             invalid_result = [row for row in result]
         self.assertEqual(cm.exception.status_code, 103)
@@ -642,6 +634,50 @@ class ResultTests(UnitTestDbBase):
         """
         result = Result(self.view001, startkey='ruby')
         self.assertEqual([x for x in result], [])
+
+    def test_iteration_integer_keys(self):
+        """
+        Test that iteration works as expected when keys are integer.
+        """
+        result = Result(self.view007, page_size=10)
+        self.assertEqual(len([x for x in result]), 100)
+
+    def test_iteration_pagination(self):
+        """
+        Test that iteration pagination works as expected.
+        """
+
+        class CallMock:
+            expected_calls = [
+                {'limit': 28},
+                {'limit': 28, 'startkey': 1, 'startkey_docid': 'julia027'},
+                {'limit': 28, 'startkey': 1, 'startkey_docid': 'julia054'},
+                {'limit': 28, 'startkey': 1, 'startkey_docid': 'julia081'},
+            ]
+
+            def __init__(self, outer):
+                self.outer = outer
+                self.expected_calls.reverse()
+
+            def call(self, *args, **kwargs):
+                self.outer.assertEqual(dict(kwargs),
+                                       self.expected_calls.pop(),
+                                       'pagination error')
+                return View.__call__(self.outer.view007, *args, **kwargs)
+
+        with mock.patch.object(self, 'view007',
+                               CallMock(self).call) as _:
+
+            result = Result(self.view007, page_size=27)
+
+        expected = [
+            {'id': 'julia{0:03d}'.format(i),
+             'key': 1,
+             'value': 'julia'}
+            for i in range(100)
+        ]
+        self.assertEqual([x for x in result], expected)
+
 
 if __name__ == '__main__':
     unittest.main()

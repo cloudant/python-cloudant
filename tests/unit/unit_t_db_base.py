@@ -314,6 +314,10 @@ class UnitTestDbBase(unittest.TestCase):
             'function (doc) {\n emit([doc.name, doc.age], 1);\n}',
             '_count'
         )
+        self.ddoc.add_view(
+            'view007',
+            'function (doc) {\n emit(1, doc.name);\n}'
+        )
         self.ddoc.save()
         self.view001 = self.ddoc.get_view('view001')
         self.view002 = self.ddoc.get_view('view002')
@@ -321,6 +325,7 @@ class UnitTestDbBase(unittest.TestCase):
         self.view004 = self.ddoc.get_view('view004')
         self.view005 = self.ddoc.get_view('view005')
         self.view006 = self.ddoc.get_view('view006')
+        self.view007 = self.ddoc.get_view('view007')
 
     def create_search_index(self):
         """
