@@ -629,9 +629,9 @@ class Cloudant(CouchDB):
 
         if err:
             raise CloudantArgumentError(101, year, month)
-        else:
-            resp.raise_for_status()
-            return response_to_json_dict(resp)
+
+        resp.raise_for_status()
+        return response_to_json_dict(resp)
 
     def bill(self, year=None, month=None):
         """
