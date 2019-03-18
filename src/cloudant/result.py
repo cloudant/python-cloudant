@@ -15,6 +15,7 @@
 """
 API module for interacting with result collections.
 """
+from functools import partial
 from ._2to3 import STRTYPE
 from .error import ResultException
 from ._common_util import py_to_couch_validate, type_or_none
@@ -327,16 +328,16 @@ class Result(object):
     def __iter__(self):
         """
         Provides iteration support, primarily for large data collections.
-        The iterator uses the ``skip`` and ``limit`` options to consume
-        data in chunks controlled by the ``page_size`` option.  It retrieves
-        a batch of data from the result collection and then yields each
-        element.
+        The iterator uses the ``startkey``, ``startkey_docid``, and ``limit``
+        options to consume data in chunks controlled by the ``page_size``
+        option. It retrieves a batch of data from the result collection
+        and then yields each element.
 
         See :class:`~cloudant.result.Result` for Result iteration examples.
 
         :returns: Iterable data sequence
         """
-        invalid_options = ('skip', 'limit')
+        invalid_options = ('limit', )
         if any(x in invalid_options for x in self.options):
             raise ResultException(103, invalid_options, self.options)
 
@@ -347,21 +348,60 @@ class Result(object):
         except ValueError:
             raise ResultException(104, self._page_size)
 
-        skip = 0
+        init_opts = {
+            'skip': self.options.pop('skip', None),
+            'startkey': self.options.pop('startkey', None)
+        }
+
+        self._call = partial(self._ref,  #pylint: disable=attribute-defined-outside-init
+                             limit=self._real_page_size,
+                             **self.options)
+
+        response = self._call(**{k: v
+                                 for k, v
+                                 in init_opts.items()
+                                 if v is not None})
+
+        return self._iterator(response)
+
+    @property
+    def _real_page_size(self):
+        '''
+        In views we paginate with N+1 items per page.
+        https://docs.couchdb.org/en/stable/ddocs/views/pagination.html#paging-alternate-method
+        '''
+        return self._page_size + 1
+
+    def _iterator(self, response):
+        '''
+        Iterate through view data.
+        '''
+
         while True:
-            response = self._ref(
-                limit=self._page_size,
-                skip=skip,
-                **self.options
-            )
             result = self._parse_data(response)
-            skip += self._page_size
             if result:
+                doc_count = len(result)
+                last = result.pop()
                 for row in result:
                     yield row
-                if len(result) < self._page_size:
+
+                # We expect doc_count = self._page_size + 1 results, if
+                # we have self._page_size or less it means we are on the
+                # last page and need to return the last result.
+                if doc_count < self._real_page_size:
+                    yield last
                     break
                 del result
+
+                # if we are in a view, keys could be duplicate so we
+                # need to start from the right docid
+                if last['id']:
+                    response = self._call(startkey=last['key'],
+                                          startkey_docid=last['id'])
+                # reduce result keys are unique by definition
+                else:
+                    response = self._call(startkey=last['key'])
+
             else:
                 break
 
@@ -510,3 +550,32 @@ class QueryResult(Result):
         query result JSON response content
         """
         return data.get('docs', [])
+
+    @property
+    def _real_page_size(self):
+        '''
+        During queries iteration page size is user-specified
+        '''
+        return self._page_size
+
+    def _iterator(self, response):
+        '''
+        Iterate through query data.
+        '''
+
+        while True:
+            result = self._parse_data(response)
+            bookmark = response.get('bookmark')
+            if result:
+                for row in result:
+                    yield row
+
+                del result
+
+                if not bookmark:
+                    break
+
+                response = self._call(bookmark=bookmark)
+
+            else:
+                break

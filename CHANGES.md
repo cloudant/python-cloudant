@@ -1,5 +1,7 @@
 # Unreleased
 
+- [IMPROVED] Updated `Result` iteration by paginating with views' `startkey` and
+  queries' `bookmark`.
 - [FIXED] Bug where document context manager performed remote save despite
   uncaught exceptions being raised inside `with` block.
 - [FIXED] Fixed parameter type of `selector` in docstring.
