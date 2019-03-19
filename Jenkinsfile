@@ -33,8 +33,9 @@ def setupPythonAndTest(pythonVersion, testSuite) {
       withEnv(getEnvForSuite("${testSuite}")) {
         try {
           sh """
-            virtualenv tmp -p /usr/local/lib/python${pythonVersion}/bin/${pythonVersion.startsWith('3') ? "python3" : "python"}
+            virtualenv tmp -p ${pythonVersion.startsWith('3') ? "python3" : "python"}
             . ./tmp/bin/activate
+            python --version
             pip install -r requirements.txt
             pip install -r test-requirements.txt
             ${'simplejson'.equals(testSuite) ? 'pip install simplejson' : ''}
@@ -60,8 +61,8 @@ stage('Checkout'){
 }
 
 stage('Test'){
-  def py2 = '2.7.12'
-  def py3 = '3.5.2'
+  def py2 = '2'
+  def py3 = '3'
   def axes = [:]
   [py2, py3].each { version ->
     ['basic','cookie','iam'].each { auth ->
