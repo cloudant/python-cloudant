@@ -87,13 +87,18 @@ class Query(dict):
     :param str use_index: Identifies a specific index for the query to run
         against, rather than using the Cloudant Query algorithm which finds
         what it believes to be the best index.
+    :param str partition_key: Optional. Specify a query partition key. Defaults
+        to ``None`` resulting in global queries.
     """
 
     def __init__(self, database, **kwargs):
         super(Query, self).__init__()
         self._database = database
+        self._partition_key = kwargs.pop('partition_key', None)
         self._r_session = self._database.r_session
         self._encoder = self._database.client.encoder
+        if kwargs.get('fields', True) is None:
+            del kwargs['fields']  # delete `None` fields kwarg
         if kwargs:
             super(Query, self).update(kwargs)
         self.result = QueryResult(self)
@@ -105,7 +110,13 @@ class Query(dict):
 
         :returns: Query URL
         """
-        return '/'.join((self._database.database_url, '_find'))
+        if self._partition_key:
+            base_url = self._database.database_partition_url(
+                self._partition_key)
+        else:
+            base_url = self._database.database_url
+
+        return base_url + '/_find'
 
     def __call__(self, **kwargs):
         """

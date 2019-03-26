@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -253,13 +253,14 @@ class UnitTestDbBase(unittest.TestCase):
         """
         del self.client
 
-    def db_set_up(self):
+    def db_set_up(self, partitioned=False):
         """
         Set up test attributes for Database tests
         """
         self.client.connect()
         self.test_dbname = self.dbname()
-        self.db = self.client._DATABASE_CLASS(self.client, self.test_dbname)
+        self.db = self.client._DATABASE_CLASS(
+            self.client, self.test_dbname, partitioned=partitioned)
         self.db.create()
 
     def db_tear_down(self):
@@ -281,6 +282,20 @@ class UnitTestDbBase(unittest.TestCase):
             for i in range(off_set, off_set + doc_count)
         ]
         return self.db.bulk_docs(docs)
+
+    def populate_db_with_partitioned_documents(self, key_count, docs_per_partition):
+        partition_keys = [uuid.uuid4().hex.upper()[:8] for _ in range(key_count)]
+        for partition_key in partition_keys:
+            docs = []
+            for i in range(docs_per_partition):
+                docs.append({
+                    '_id': '{0}:doc{1}'.format(partition_key, i),
+                    'foo': 'bar'
+                })
+
+            self.db.bulk_docs(docs)
+
+        return partition_keys
 
     def create_views(self):
         """
