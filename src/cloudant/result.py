@@ -379,6 +379,7 @@ class Result(object):
 
         while True:
             result = self._parse_data(response)
+            del response
             if result:
                 doc_count = len(result)
                 last = result.pop()
