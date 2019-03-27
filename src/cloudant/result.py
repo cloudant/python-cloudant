@@ -15,6 +15,7 @@
 """
 API module for interacting with result collections.
 """
+from collections import deque
 from functools import partial
 from ._2to3 import STRTYPE
 from .error import ResultException
@@ -378,13 +379,13 @@ class Result(object):
         '''
 
         while True:
-            result = self._parse_data(response)
+            result = deque(self._parse_data(response))
             del response
             if result:
                 doc_count = len(result)
                 last = result.pop()
-                for row in result:
-                    yield row
+                while result:
+                    yield result.popleft()
 
                 # We expect doc_count = self._page_size + 1 results, if
                 # we have self._page_size or less it means we are on the
