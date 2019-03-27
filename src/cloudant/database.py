@@ -26,9 +26,9 @@ from ._common_util import (
     SEARCH_INDEX_ARGS,
     SPECIAL_INDEX_TYPE,
     TEXT_INDEX_TYPE,
+    TYPE_CONVERTERS,
     get_docs,
-    response_to_json_dict,
-    )
+    response_to_json_dict)
 from .document import Document
 from .design_document import DesignDocument
 from .security_document import SecurityDocument
@@ -50,13 +50,17 @@ class CouchDatabase(dict):
     :param str database_name: Database name used to reference the database.
     :param int fetch_limit: Optional fetch limit used to set the max number of
         documents to fetch per query during iteration cycles.  Defaults to 100.
+    :param bool partitioned: Create as a partitioned database. Defaults to
+        ``False``.
     """
-    def __init__(self, client, database_name, fetch_limit=100):
+    def __init__(self, client, database_name, fetch_limit=100,
+                 partitioned=False):
         super(CouchDatabase, self).__init__()
         self.client = client
         self._database_host = client.server_url
         self.database_name = database_name
         self._fetch_limit = fetch_limit
+        self._partitioned = partitioned
         self.result = Result(self.all_docs)
 
     @property
@@ -105,6 +109,18 @@ class CouchDatabase(dict):
             "user_ctx": session.get('userCtx')
         }
 
+    def database_partition_url(self, partition_key):
+        """
+        Get the URL of the database partition.
+
+        :param str partition_key: Partition key.
+        :return: URL of the database partition.
+        :rtype: str
+        """
+        return '/'.join((self.database_url,
+                         '_partition',
+                         url_quote_plus(partition_key)))
+
     def exists(self):
         """
         Performs an existence check on the remote database.
@@ -124,6 +140,18 @@ class CouchDatabase(dict):
         :returns: Dictionary containing database metadata details
         """
         resp = self.r_session.get(self.database_url)
+        resp.raise_for_status()
+        return response_to_json_dict(resp)
+
+    def partition_metadata(self, partition_key):
+        """
+        Retrieves the metadata dictionary for the remote database partition.
+
+        :param str partition_key: Partition key.
+        :returns: Metadata dictionary for the database partition.
+        :rtype: dict
+        """
+        resp = self.r_session.get(self.database_partition_url(partition_key))
         resp.raise_for_status()
         return response_to_json_dict(resp)
 
@@ -244,6 +272,33 @@ class CouchDatabase(dict):
         sdoc.fetch()
         return sdoc
 
+    def get_partitioned_view_result(self, partition_key, ddoc_id, view_name,
+                                    raw_result=False, **kwargs):
+        """
+        Retrieves the partitioned view result based on the design document and
+        view name.
+
+        See :func:`~cloudant.database.CouchDatabase.get_view_result` method for
+        further details.
+
+        :param str partition_key: Partition key.
+        :param str ddoc_id: Design document id used to get result.
+        :param str view_name: Name of the view used to get result.
+        :param bool raw_result: Dictates whether the view result is returned
+            as a default Result object or a raw JSON response.
+            Defaults to False.
+        :param kwargs: See
+            :func:`~cloudant.database.CouchDatabase.get_view_result` method for
+            available keyword arguments.
+        :returns: The result content either wrapped in a QueryResult or
+            as the raw response JSON content.
+        :rtype: QueryResult, dict
+        """
+        ddoc = DesignDocument(self, ddoc_id)
+        view = View(ddoc, view_name, partition_key=partition_key)
+
+        return self._get_view_result(view, raw_result, **kwargs)
+
     def get_view_result(self, ddoc_id, view_name, raw_result=False, **kwargs):
         """
         Retrieves the view result based on the design document and view name.
@@ -336,7 +391,14 @@ class CouchDatabase(dict):
         :returns: The result content either wrapped in a QueryResult or
             as the raw response JSON content
         """
-        view = View(DesignDocument(self, ddoc_id), view_name)
+        ddoc = DesignDocument(self, ddoc_id)
+        view = View(ddoc, view_name)
+
+        return self._get_view_result(view, raw_result, **kwargs)
+
+    @staticmethod
+    def _get_view_result(view, raw_result, **kwargs):
+        """ Get view results helper. """
         if raw_result:
             return view(**kwargs)
         if kwargs:
@@ -359,7 +421,9 @@ class CouchDatabase(dict):
         if not throw_on_exists and self.exists():
             return self
 
-        resp = self.r_session.put(self.database_url)
+        resp = self.r_session.put(self.database_url, params={
+            'partitioned': TYPE_CONVERTERS.get(bool)(self._partitioned)
+        })
         if resp.status_code == 201 or resp.status_code == 202:
             return self
 
@@ -403,6 +467,29 @@ class CouchDatabase(dict):
         """
         resp = get_docs(self.r_session,
                         '/'.join([self.database_url, '_all_docs']),
+                        self.client.encoder,
+                        **kwargs)
+        return response_to_json_dict(resp)
+
+    def partitioned_all_docs(self, partition_key, **kwargs):
+        """
+        Wraps the _all_docs primary index on the database partition, and returns
+        the results by value.
+
+        See :func:`~cloudant.database.CouchDatabase.all_docs` method for further
+        details.
+
+        :param str partition_key: Partition key.
+        :param kwargs: See :func:`~cloudant.database.CouchDatabase.all_docs`
+            method for available keyword arguments.
+        :returns: Raw JSON response content from ``_all_docs`` endpoint.
+        :rtype: dict
+        """
+        resp = get_docs(self.r_session,
+                        '/'.join([
+                            self.database_partition_url(partition_key),
+                            '_all_docs'
+                        ]),
                         self.client.encoder,
                         **kwargs)
         return response_to_json_dict(resp)
@@ -985,6 +1072,7 @@ class CouchDatabase(dict):
                     self,
                     data.get('ddoc'),
                     data.get('name'),
+                    partitioned=data.get('partitioned', False),
                     **data.get('def', {})
                 ))
             elif data.get('type') == TEXT_INDEX_TYPE:
@@ -992,6 +1080,7 @@ class CouchDatabase(dict):
                     self,
                     data.get('ddoc'),
                     data.get('name'),
+                    partitioned=data.get('partitioned', False),
                     **data.get('def', {})
                 ))
             elif data.get('type') == SPECIAL_INDEX_TYPE:
@@ -999,6 +1088,7 @@ class CouchDatabase(dict):
                     self,
                     data.get('ddoc'),
                     data.get('name'),
+                    partitioned=data.get('partitioned', False),
                     **data.get('def', {})
                 ))
             else:
@@ -1010,6 +1100,7 @@ class CouchDatabase(dict):
             design_document_id=None,
             index_name=None,
             index_type='json',
+            partitioned=False,
             **kwargs
     ):
         """
@@ -1047,9 +1138,11 @@ class CouchDatabase(dict):
             remote database
         """
         if index_type == JSON_INDEX_TYPE:
-            index = Index(self, design_document_id, index_name, **kwargs)
+            index = Index(self, design_document_id, index_name,
+                          partitioned=partitioned, **kwargs)
         elif index_type == TEXT_INDEX_TYPE:
-            index = TextIndex(self, design_document_id, index_name, **kwargs)
+            index = TextIndex(self, design_document_id, index_name,
+                              partitioned=partitioned, **kwargs)
         else:
             raise CloudantArgumentError(103, index_type)
         index.create()
@@ -1073,6 +1166,36 @@ class CouchDatabase(dict):
         else:
             raise CloudantArgumentError(103, index_type)
         index.delete()
+
+    def get_partitioned_query_result(self, partition_key, selector, fields=None,
+                                     raw_result=False, **kwargs):
+        """
+        Retrieves the partitioned query result from the specified database based
+        on the query parameters provided.
+
+        See :func:`~cloudant.database.CouchDatabase.get_query_result` method for
+        further details.
+
+        :param str partition_key: Partition key.
+        :param str selector: Dictionary object describing criteria used to
+            select documents.
+        :param list fields: A list of fields to be returned by the query.
+        :param bool raw_result: Dictates whether the query result is returned
+            wrapped in a QueryResult or if the response JSON is returned.
+            Defaults to False.
+        :param kwargs: See
+            :func:`~cloudant.database.CouchDatabase.get_query_result` method for
+            available keyword arguments.
+        :returns: The result content either wrapped in a QueryResult or
+            as the raw response JSON content.
+        :rtype: QueryResult, dict
+        """
+        query = Query(self,
+                      selector=selector,
+                      fields=fields,
+                      partition_key=partition_key)
+
+        return self._get_query_result(query, raw_result, **kwargs)
 
     def get_query_result(self, selector, fields=None, raw_result=False,
                          **kwargs):
@@ -1143,10 +1266,15 @@ class CouchDatabase(dict):
         :returns: The result content either wrapped in a QueryResult or
             as the raw response JSON content
         """
-        if fields:
-            query = Query(self, selector=selector, fields=fields)
-        else:
-            query = Query(self, selector=selector)
+        query = Query(self,
+                      selector=selector,
+                      fields=fields)
+
+        return self._get_query_result(query, raw_result, **kwargs)
+
+    @staticmethod
+    def _get_query_result(query, raw_result, **kwargs):
+        """ Get query results helper. """
         if raw_result:
             return query(**kwargs)
         if kwargs:
@@ -1166,12 +1294,16 @@ class CloudantDatabase(CouchDatabase):
     :param str database_name: Database name used to reference the database.
     :param int fetch_limit: Optional fetch limit used to set the max number of
         documents to fetch per query during iteration cycles.  Defaults to 100.
+    :param bool partitioned: Create as a partitioned database. Defaults to
+        ``False``.
     """
-    def __init__(self, client, database_name, fetch_limit=100):
+    def __init__(self, client, database_name, fetch_limit=100,
+                 partitioned=False):
         super(CloudantDatabase, self).__init__(
             client,
             database_name,
-            fetch_limit=fetch_limit
+            fetch_limit=fetch_limit,
+            partitioned=partitioned
         )
 
     def security_document(self):
@@ -1280,6 +1412,36 @@ class CloudantDatabase(CouchDatabase):
 
         return response_to_json_dict(resp)
 
+    def get_partitioned_search_result(self, partition_key, ddoc_id, index_name,
+                                      **query_params):
+        """
+        Retrieves the raw JSON content from the remote database based on the
+        partitioned search index on the server, using the query_params provided
+        as query parameters.
+
+        See :func:`~cloudant.database.CouchDatabase.get_search_result` method
+        for further details.
+
+        :param str partition_key: Partition key.
+        :param str ddoc_id: Design document id used to get the search result.
+        :param str index_name: Name used in part to identify the index.
+        :param query_params: See
+            :func:`~cloudant.database.CloudantDatabase.get_search_result` method
+            for available keyword arguments.
+        :returns: Search query result data in JSON format.
+        :rtype: dict
+        """
+        ddoc = DesignDocument(self, ddoc_id)
+
+        return self._get_search_result(
+            '/'.join((
+                ddoc.document_partition_url(partition_key),
+                '_search',
+                index_name
+            )),
+            **query_params
+        )
+
     def get_search_result(self, ddoc_id, index_name, **query_params):
         """
         Retrieves the raw JSON content from the remote database based on the
@@ -1380,6 +1542,14 @@ class CloudantDatabase(CouchDatabase):
 
         :returns: Search query result data in JSON format
         """
+        ddoc = DesignDocument(self, ddoc_id)
+        return self._get_search_result(
+            '/'.join((ddoc.document_url, '_search', index_name)),
+            **query_params
+        )
+
+    def _get_search_result(self, query_url, **query_params):
+        """ Get search results helper. """
         param_q = query_params.get('q')
         param_query = query_params.get('query')
         # Either q or query parameter is required
@@ -1394,9 +1564,8 @@ class CloudantDatabase(CouchDatabase):
                 raise CloudantArgumentError(106, key, SEARCH_INDEX_ARGS[key])
         # Execute query search
         headers = {'Content-Type': 'application/json'}
-        ddoc = DesignDocument(self, ddoc_id)
         resp = self.r_session.post(
-            '/'.join([ddoc.document_url, '_search', index_name]),
+            query_url,
             headers=headers,
             data=json.dumps(query_params, cls=self.client.encoder)
         )

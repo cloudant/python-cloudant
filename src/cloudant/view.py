@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM. All rights reserved.
+# Copyright (C) 2015, 2019 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -87,6 +87,8 @@ class View(dict):
     :param str view_name: Name used in part to identify the view.
     :param str map_func: Optional Javascript map function.
     :param str reduce_func: Optional Javascript reduce function.
+    :param str partition_key: Optional. Specify a view partition key. Defaults
+        to ``None`` resulting in global queries.
     """
     def __init__(
             self,
@@ -94,6 +96,7 @@ class View(dict):
             view_name,
             map_func=None,
             reduce_func=None,
+            partition_key=None,
             **kwargs
     ):
         super(View, self).__init__()
@@ -104,6 +107,7 @@ class View(dict):
             self['map'] = codify(map_func)
         if reduce_func is not None:
             self['reduce'] = codify(reduce_func)
+        self._partition_key = partition_key
         self.update(kwargs)
         self.result = Result(self)
 
@@ -167,8 +171,14 @@ class View(dict):
 
         :returns: View URL
         """
+        if self._partition_key:
+            base_url = self.design_doc.document_partition_url(
+                self._partition_key)
+        else:
+            base_url = self.design_doc.document_url
+
         return '/'.join((
-            self.design_doc.document_url,
+            base_url,
             '_view',
             self.view_name
         ))

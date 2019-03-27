@@ -267,7 +267,7 @@ class CouchDB(dict):
         resp.raise_for_status()
         return response_to_json_dict(resp)
 
-    def create_database(self, dbname, **kwargs):
+    def create_database(self, dbname, partitioned=False, **kwargs):
         """
         Creates a new database on the remote server with the name provided
         and adds the new database object to the client's locally cached
@@ -279,10 +279,12 @@ class CouchDB(dict):
         :param bool throw_on_exists: Boolean flag dictating whether or
             not to throw a CloudantClientException when attempting to
             create a database that already exists.
+        :param bool partitioned: Create as a partitioned database. Defaults to
+            ``False``.
 
         :returns: The newly created database object
         """
-        new_db = self._DATABASE_CLASS(self, dbname)
+        new_db = self._DATABASE_CLASS(self, dbname, partitioned=partitioned)
         try:
             new_db.create(kwargs.get('throw_on_exists', False))
         except CloudantDatabaseException as ex:

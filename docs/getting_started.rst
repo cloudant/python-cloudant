@@ -1,6 +1,6 @@
-===============
+###############
 Getting started
-===============
+###############
 
 Now it's time to begin doing some work with Cloudant and Python.  For working
 code samples of any of the API's please go to our test suite.
@@ -32,7 +32,7 @@ a HTTP connection or a response on all requests.  A timeout can be
 set using the ``timeout`` argument when constructing a client.
 
 Connecting with a client
-^^^^^^^^^^^^^^^^^^^^^^^^
+========================
 
 .. code-block:: python
 
@@ -144,7 +144,7 @@ Note: Idle connections within the pool may be terminated by the server, so will 
 indefinitely meaning that this will not completely remove the overhead of creating new connections.
 
 Using library in app server environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================================
 
 This library can be used in an app server, and the example
 below shows how to use ``client`` in a ``flask`` app server.
@@ -190,7 +190,7 @@ existing database, or delete a database.  The following examples assume a client
 connection has already been established.
 
 Creating a database
-^^^^^^^^^^^^^^^^^^^
+===================
 
 .. code-block:: python
 
@@ -203,7 +203,7 @@ Creating a database
         print('SUCCESS!!')
 
 Opening a database
-^^^^^^^^^^^^^^^^^^
+==================
 
 Opening an existing database is done by supplying the name of an existing 
 database to the client.  Since the ``Cloudant`` and ``CouchDB`` classes are 
@@ -216,12 +216,133 @@ sub-classes of ``dict``, this can be accomplished through standard Python
     my_database = client['my_database']
 
 Deleting a database
-^^^^^^^^^^^^^^^^^^^
+===================
 
 .. code-block:: python
 
     # Delete a database using an initialized client
     client.delete_database('my_database')
+
+
+Partitioned Databases
+=====================
+
+Partitioned databases introduce the ability for a user to create logical groups
+of documents called partitions by providing a partition key with each document.
+
+.. warning:: Your Cloudant cluster must have the ``partitions`` feature enabled.
+             A full list of enabled features can be retrieved by calling the
+             client :func:`~cloudant.client.CouchDB.metadata` method.
+
+Creating a partitioned database
+-------------------------------
+
+.. code-block:: python
+
+    db = client.create_database('mydb', partitioned=True)
+
+Handling documents
+------------------
+
+The document ID contains both the partition key and document key in the form
+``<partitionkey>:<documentkey>`` where:
+
+- Partition Key *(string)*. Must be non-empty. Must not contain colons (as this
+  is the partition key delimiter) or begin with an underscore.
+- Document Key *(string)*. Must be non-empty. Must not begin with an underscore.
+
+Be aware that ``_design`` documents and ``_local`` documents must not contain a
+partition key as they are global definitions.
+
+**Create a document**
+
+.. code-block:: python
+
+    partition_key = 'Year2'
+    document_key = 'julia30'
+    db.create_document({
+        '_id': ':'.join((partition_key, document_key)),
+        'name': 'Jules',
+        'age': 6
+    })
+
+**Get a document**
+
+.. code-block:: python
+
+    doc = db[':'.join((partition_key, document_key))]
+
+Creating design documents
+-------------------------
+
+To define partitioned indexes you must set the ``partitioned=True`` optional
+when constructing the new ``DesignDocument`` class.
+
+.. code-block:: python
+
+    ddoc = DesignDocument(db, document_id='view', partitioned=True)
+    ddoc.add_view('myview','function(doc) { emit(doc.foo, doc.bar); }')
+    ddoc.save()
+
+Similarly, to define a partitioned Cloudant Query index you must set the
+``partitioned=True`` optional.
+
+.. code-block:: python
+
+    index = db.create_query_index(
+        design_document_id='query',
+        index_name='foo-index',
+        fields=['foo'],
+        partitioned=True
+    )
+    index.create()
+
+Querying data
+-------------
+
+A partition key can be specified when querying data so that results can be
+constrained to a specific database partition.
+
+.. warning:: To run partitioned queries the database itself must be partitioned.
+
+**Query**
+
+.. code-block:: python
+
+    results = self.db.get_partitioned_query_result(
+        partition_key, selector={'foo': {'$eq': 'bar'}})
+
+    for result in results:
+        ...
+
+See :func:`~cloudant.database.CouchDatabase.get_partitioned_query_result` for a
+full list of supported parameters.
+
+**Search**
+
+.. code-block:: python
+
+    results = self.db.get_partitioned_search_result(
+        partition_key, search_ddoc['_id'], 'search1', query='*:*')
+
+    for result in results['rows']:
+        ....
+
+See :func:`~cloudant.database.CloudantDatabase.get_partitioned_search_result`
+for a full list of supported parameters.
+
+**Views (MapReduce)**
+
+.. code-block:: python
+
+    results = self.db.get_partitioned_view_result(
+        partition_key, view_ddoc['_id'], 'view1')
+
+    for result in results:
+        ....
+
+See :func:`~cloudant.database.CouchDatabase.get_partitioned_view_result` for a
+full list of supported parameters.
 
 *********
 Documents
@@ -235,7 +356,7 @@ create, read, update, and delete a document.  These examples assume that
 either a CloudantDatabase or a CouchDatabase object already exists.
 
 Creating a document
-^^^^^^^^^^^^^^^^^^^
+===================
 
 .. code-block:: python
 
@@ -255,7 +376,7 @@ Creating a document
         print('SUCCESS!!')
 
 Retrieving a document
-^^^^^^^^^^^^^^^^^^^^^
+=====================
 
 Accessing a document from a database is done by supplying the document 
 identifier of an existing document to either a ``CloudantDatabase`` or a 
@@ -271,7 +392,7 @@ classes are sub-classes of ``dict``, this is accomplished through standard
     print(my_document)
 
 Checking if a document exists
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=============================
 
 You can check if a document exists in a database the same way you would check
 if a ``dict`` has a key-value pair by key.
@@ -284,7 +405,7 @@ if a ``dict`` has a key-value pair by key.
         print('document with _id julia30 exists')
 
 Retrieve all documents
-^^^^^^^^^^^^^^^^^^^^^^
+======================
 
 You can also iterate over a ``CloudantDatabase`` or a ``CouchDatabase`` object 
 to retrieve all documents in a database.
@@ -296,7 +417,7 @@ to retrieve all documents in a database.
         print(document)
 
 Update a document
-^^^^^^^^^^^^^^^^^
+=================
 
 .. code-block:: python
 
@@ -312,7 +433,7 @@ Update a document
     my_document.save()
 
 Delete a document
-^^^^^^^^^^^^^^^^^
+=================
 
 .. code-block:: python
 
