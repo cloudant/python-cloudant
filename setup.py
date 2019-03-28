@@ -19,6 +19,7 @@ Cloudant / CouchDB Client Library
 
 """
 
+from os import path
 from setuptools import setup, find_packages
 
 requirements_file = open('requirements.txt')
@@ -28,8 +29,14 @@ version_file = open('VERSION')
 version = version_file.read().strip()
 version_file.close()
 
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup_args = {
     'description': 'Cloudant / CouchDB Client Library',
+    'long_description': long_description,
+    'long_description_content_type': 'text/markdown',
     'include_package_data': True,
     'install_requires': requirements,
     'name': 'cloudant',
