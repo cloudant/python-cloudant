@@ -1,13 +1,15 @@
-# Unreleased
+# 2.12.0 (2019-03-28)
 
 - [NEW] Added partitioned database support.
-- [IMPROVED] Updated `Result` iteration by paginating with views' `startkey` and queries'
-  `bookmark`.
 - [FIXED] Bug where document context manager performed remote save despite uncaught exceptions being
   raised inside `with` block.
 - [FIXED] Fixed parameter type of `selector` in docstring.
-- [IMPROVED] Updated `Getting started` section with a `get_query_result` example.
 - [FIXED] Removed internal `Document._document_id` property to allow a safe use of dict's methods.
+- [IMPROVED] Performance of `Result` iteration by releasing result objects immediately after they
+  are returned to the client.
+- [IMPROVED] Updated `Getting started` section with a `get_query_result` example.
+- [IMPROVED] Updated `Result` iteration by paginating with views' `startkey` and queries'
+  `bookmark`.
 
 # 2.11.0 (2019-01-21)
 
