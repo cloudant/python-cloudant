@@ -932,7 +932,7 @@ class CouchDatabase(dict):
             # Assuming that 'view001' exists as part of the
             # 'ddoc001' design document in the remote database...
             # Retrieve documents where the list function is 'list1'
-            resp = db.get_list_result('ddoc001', 'list1', 'view001', limit=10)
+            resp = db.get_list_function_result('ddoc001', 'list1', 'view001', limit=10)
             for row in resp['rows']:
                 # Process data (in text format).
 
