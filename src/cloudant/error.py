@@ -107,7 +107,13 @@ class CloudantDatabaseException(CloudantException):
     """
     def __init__(self, code=100, *args):
         try:
-            msg = DATABASE[code].format(*args)
+            if code in DATABASE:
+                msg = DATABASE[code].format(*args)
+            elif isinstance(code, int):
+                msg = ' '.join(args)
+            else:
+                code = 100
+                msg = DATABASE[code]
         except (KeyError, IndexError):
             code = 100
             msg = DATABASE[code]

@@ -34,7 +34,8 @@ from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
 from cloudant._client_session import BasicSession, CookieSession
 from cloudant.client import Cloudant, CouchDB
 from cloudant.database import CloudantDatabase
-from cloudant.error import CloudantArgumentError, CloudantClientException
+from cloudant.error import (CloudantArgumentError, CloudantClientException,
+                            CloudantDatabaseException)
 from cloudant.feed import Feed, InfiniteFeed
 from nose.plugins.attrib import attr
 from requests import ConnectTimeout, HTTPError
@@ -397,6 +398,56 @@ class ClientTests(UnitTestDbBase):
 
         self.client.delete_database(dbname)
         self.client.disconnect()
+
+    def test_create_invalid_database_name(self):
+        """
+        Test creation of database with an invalid name
+        """
+        dbname = 'invalidDbName_'
+        self.client.connect()
+        with self.assertRaises(CloudantDatabaseException) as cm:
+            self.client.create_database(dbname)
+        self.assertEqual(cm.exception.status_code, 400)
+        self.client.disconnect()
+
+    @skip_if_not_cookie_auth
+    @mock.patch('cloudant._client_session.Session.request')
+    def test_create_with_server_error(self, m_req):
+        """
+        Test creation of database with a server error
+        """
+        dbname = self.dbname()
+        # mock 200 for authentication
+        m_response_ok = mock.MagicMock()
+        type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
+
+        # mock 404 for head request when verifying if database exists
+        m_response_bad = mock.MagicMock()
+        type(m_response_bad).status_code = mock.PropertyMock(return_value=404)
+
+        # mock 500 when trying to create the database
+        m_resp_service_error = mock.MagicMock()
+        type(m_resp_service_error).status_code = mock.PropertyMock(
+            return_value=500)
+        type(m_resp_service_error).text = mock.PropertyMock(
+            return_value='Internal Server Error')
+
+        m_req.side_effect = [m_response_ok, m_response_bad, m_resp_service_error]
+
+        self.client.connect()
+        with self.assertRaises(CloudantDatabaseException) as cm:
+            self.client.create_database(dbname)
+
+        self.assertEqual(cm.exception.status_code, 500)
+
+        self.assertEquals(m_req.call_count, 3)
+        m_req.assert_called_with(
+            'PUT',
+            '/'.join([self.url, dbname]),
+            data=None,
+            params={'partitioned': 'false'},
+            timeout=(30, 300)
+        )
 
     def test_delete_non_existing_database(self):
         """

@@ -290,6 +290,7 @@ class CouchDB(dict):
         except CloudantDatabaseException as ex:
             if ex.status_code == 412:
                 raise CloudantClientException(412, dbname)
+            raise ex
         super(CouchDB, self).__setitem__(dbname, new_db)
         return new_db
 
