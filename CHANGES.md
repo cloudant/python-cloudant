@@ -1,3 +1,7 @@
+# Unreleased
+
+- [FIXED] Correctly raise exceptions from `create_database` calls.
+
 # 2.12.0 (2019-03-28)
 
 - [NEW] Added partitioned database support.
