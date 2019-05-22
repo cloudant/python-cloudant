@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ from cloudant.feed import Feed, InfiniteFeed
 from nose.plugins.attrib import attr
 from requests import ConnectTimeout, HTTPError
 
-from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
+from .unit_t_db_base import skip_if_iam, skip_if_not_cookie_auth, UnitTestDbBase
 from .. import bytes_, str_
 
 
@@ -782,6 +782,7 @@ class CloudantClientTests(UnitTestDbBase):
                 str(err)
             )
 
+    @skip_if_iam
     def test_cloudant_bluemix_dedicated_context_helper(self):
         """
         Test that the cloudant_bluemix context helper works as expected when
@@ -888,6 +889,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             c.disconnect()
 
+    @skip_if_iam
     def test_bluemix_constructor_specify_instance_name(self):
         """
         Test instantiating a client object using a VCAP_SERVICES environment
