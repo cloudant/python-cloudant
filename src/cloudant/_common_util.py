@@ -19,7 +19,7 @@ throughout the library.
 
 import sys
 import platform
-from collections import Sequence
+from collections.abc import Sequence
 import json
 
 from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_
