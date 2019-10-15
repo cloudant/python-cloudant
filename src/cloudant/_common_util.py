@@ -26,9 +26,9 @@ from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_
 from .error import CloudantArgumentError, CloudantException, CloudantClientException
 
 try:
-    sequence = collections.abc.Sequence
+    Sequence = collections.abc.Sequence  # noqa
 except AttributeError:
-    sequence = collections.Sequence
+    Sequence = collections.Sequence  # noqa
 
 # Library Constants
 
@@ -57,20 +57,20 @@ ANY_TYPE = object()
 
 RESULT_ARG_TYPES = {
     'descending': (bool,),
-    'endkey': (int, LONGTYPE, STRTYPE, sequence,),
+    'endkey': (int, LONGTYPE, STRTYPE, Sequence,),
     'endkey_docid': (STRTYPE,),
     'group': (bool,),
     'group_level': (int, LONGTYPE, NONETYPE,),
     'include_docs': (bool,),
     'inclusive_end': (bool,),
-    'key': (int, LONGTYPE, STRTYPE, sequence,),
+    'key': (int, LONGTYPE, STRTYPE, Sequence,),
     'keys': (list,),
     'limit': (int, LONGTYPE, NONETYPE,),
     'reduce': (bool,),
     'skip': (int, LONGTYPE, NONETYPE,),
     'stable': (bool,),
     'stale': (STRTYPE,),
-    'startkey': (int, LONGTYPE, STRTYPE, sequence,),
+    'startkey': (int, LONGTYPE, STRTYPE, Sequence,),
     'startkey_docid': (STRTYPE,),
     'update': (STRTYPE,),
 }
@@ -80,7 +80,7 @@ TYPE_CONVERTERS = {
     STRTYPE: lambda x: json.dumps(x),
     str: lambda x: json.dumps(x),
     UNITYPE: lambda x: json.dumps(x),
-    sequence: lambda x: json.dumps(list(x)),
+    Sequence: lambda x: json.dumps(list(x)),
     list: lambda x: json.dumps(x),
     tuple: lambda x: json.dumps(list(x)),
     int: lambda x: x,
