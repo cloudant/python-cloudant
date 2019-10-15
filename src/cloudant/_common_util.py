@@ -19,16 +19,15 @@ throughout the library.
 
 import sys
 import platform
-import collections
 import json
 
 from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_
 from .error import CloudantArgumentError, CloudantException, CloudantClientException
 
 try:
-    Sequence = collections.abc.Sequence  # noqa
+    from collections.abc import Sequence
 except AttributeError:
-    Sequence = collections.Sequence  # noqa
+    from collections import Sequence
 
 # Library Constants
 
