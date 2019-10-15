@@ -26,7 +26,7 @@ from .error import CloudantArgumentError, CloudantException, CloudantClientExcep
 
 try:
     from collections.abc import Sequence
-except AttributeError:
+except ImportError:
     from collections import Sequence
 
 # Library Constants
