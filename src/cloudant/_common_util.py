@@ -26,9 +26,9 @@ from ._2to3 import LONGTYPE, STRTYPE, NONETYPE, UNITYPE, iteritems_
 from .error import CloudantArgumentError, CloudantException, CloudantClientException
 
 try:
-    Sequence = collections.abc.Sequence
+    Sequence = collections.abc.Sequence  # noqa
 except AttributeError:
-    Sequence = collections.Sequence
+    Sequence = collections.Sequence  # noqa
 
 # Library Constants
 
