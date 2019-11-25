@@ -16,6 +16,8 @@
 API module for interacting with scheduler endpoints
 """
 
+from ._common_util import response_to_json_dict
+
 class Scheduler(object):
     """
     API for retrieving scheduler jobs and documents.
@@ -41,13 +43,13 @@ class Scheduler(object):
         :param skip: How many result to skip starting at the beginning, if ordered by document ID.
         """
         params = dict()
-        if limit != None:
+        if limit is not None:
             params["limit"] = limit
-        if skip != None:
+        if skip is not None:
             params["skip"] = skip
         resp = self._r_session.get('/'.join([self._scheduler, 'docs']), params=params)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def get_doc(self, doc_id):
         """
@@ -55,7 +57,7 @@ class Scheduler(object):
         """
         resp = self._r_session.get('/'.join([self._scheduler, 'docs', '_replicator', doc_id]))
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
 
     def list_jobs(self, limit=None, skip=None):
@@ -72,10 +74,10 @@ class Scheduler(object):
         :param skip: How many result to skip starting at the beginning, if ordered by document ID.
         """
         params = dict()
-        if limit != None:
+        if limit is not None:
             params["limit"] = limit
-        if skip != None:
+        if skip is not None:
             params["skip"] = skip
         resp = self._r_session.get('/'.join([self._scheduler, 'jobs']), params=params)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)

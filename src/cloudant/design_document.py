@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2019 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 """
 API module/class for interacting with a design document in a database.
 """
-from ._2to3 import iteritems_, STRTYPE
-from ._common_util import QUERY_LANGUAGE, codify
+from ._2to3 import iteritems_, url_quote_plus, STRTYPE
+from ._common_util import QUERY_LANGUAGE, codify, response_to_json_dict
 from .document import Document
 from .view import View, QueryIndexView
 from .error import CloudantArgumentError, CloudantDesignDocumentException
@@ -39,11 +39,18 @@ class DesignDocument(Document):
         either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
     :param str document_id: Optional document id.  If provided and does not
         start with ``_design/``, it will be prepended with ``_design/``.
+    :param bool partitioned: Optional. Create as a partitioned design document.
+        Defaults to ``False`` for both partitioned and non-partitioned
+        databases.
     """
-    def __init__(self, database, document_id=None):
+    def __init__(self, database, document_id=None, partitioned=False):
         if document_id and not document_id.startswith('_design/'):
             document_id = '_design/{0}'.format(document_id)
         super(DesignDocument, self).__init__(database, document_id)
+
+        if partitioned:
+            self.setdefault('options', {'partitioned': True})
+
         self._nested_object_names = frozenset(['views', 'indexes', 'lists', 'shows'])
         for prop in self._nested_object_names:
             self.setdefault(prop, dict())
@@ -268,6 +275,20 @@ class DesignDocument(Document):
             as key/value
         """
         return self.get('indexes')
+
+    def document_partition_url(self, partition_key):
+        """
+        Retrieve the design document partition URL.
+
+        :param str partition_key: Partition key.
+        :return: Design document partition URL.
+        :rtype: str
+        """
+        return '/'.join((
+            self._database.database_partition_url(partition_key),
+            '_design',
+            url_quote_plus(self['_id'][8:], safe='')
+        ))
 
     def add_view(self, view_name, map_func, reduce_func=None, **kwargs):
         """
@@ -686,7 +707,7 @@ class DesignDocument(Document):
         ddoc_info = self.r_session.get(
             '/'.join([self.document_url, '_info']))
         ddoc_info.raise_for_status()
-        return ddoc_info.json()
+        return response_to_json_dict(ddoc_info)
 
     def search_info(self, search_index):
         """
@@ -698,7 +719,7 @@ class DesignDocument(Document):
         ddoc_search_info = self.r_session.get(
             '/'.join([self.document_url, '_search_info', search_index]))
         ddoc_search_info.raise_for_status()
-        return ddoc_search_info.json()
+        return response_to_json_dict(ddoc_search_info)
 
     def search_disk_size(self, search_index):
         """
@@ -710,4 +731,4 @@ class DesignDocument(Document):
         ddoc_search_disk_size = self.r_session.get(
             '/'.join([self.document_url, '_search_disk_size', search_index]))
         ddoc_search_disk_size.raise_for_status()
-        return ddoc_search_disk_size.json()
+        return response_to_json_dict(ddoc_search_disk_size)

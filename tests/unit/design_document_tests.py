@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,15 +24,18 @@ module docstring.
 import json
 import os
 import unittest
+
 import mock
 import requests
-
-from cloudant.document import Document 
+from cloudant._common_util import response_to_json_dict
 from cloudant.design_document import DesignDocument
-from cloudant.view import View, QueryIndexView
+from cloudant.document import Document
 from cloudant.error import CloudantArgumentError, CloudantDesignDocumentException
+from cloudant.view import View, QueryIndexView
+from nose.plugins.attrib import attr
 
 from .unit_t_db_base import UnitTestDbBase, skip_if_iam
+
 
 class CloudantDesignDocumentExceptionTests(unittest.TestCase):
     """
@@ -72,6 +75,7 @@ class CloudantDesignDocumentExceptionTests(unittest.TestCase):
             raise CloudantDesignDocumentException(104, 'foo')
         self.assertEqual(cm.exception.status_code, 104)
 
+@attr(db=['cloudant','couch'])
 class DesignDocumentTests(UnitTestDbBase):
     """
     DesignDocument unit tests
@@ -360,10 +364,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertIsInstance(ddoc_remote['views']['view001'], View)
         self.assertIsInstance(ddoc_remote['views']['view003'], View)
 
-    @unittest.skipUnless(
-        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-        'Skipping Cloudant fetch dbcopy test'
-    )
+    @attr(db='cloudant')
     def test_fetch_dbcopy(self):
         """
         Ensure that the document fetch from the database returns the
@@ -693,7 +694,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # Ensure that remotely saved design document does not
         # include a views sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
-        raw_ddoc = resp.json()
+        raw_ddoc = response_to_json_dict(resp)
         self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
@@ -810,10 +811,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.client.r_session.get.assert_called_with(
             '/'.join([ddoc.document_url, '_info']))
 
-    @unittest.skipUnless(
-        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-        'Skipping Cloudant _search_info endpoint test'
-    )
+    @attr(db='cloudant')
     def test_get_search_info(self):
         """
         Test retrieval of search_info endpoint from the DesignDocument.
@@ -841,10 +839,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertTrue(search_index_metadata['pending_seq'] <= 101, 'The pending_seq should be 101 or fewer.')
         self.assertTrue(search_index_metadata['disk_size'] >0, 'The disk_size should be greater than 0.')
 
-    @unittest.skipUnless(
-        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-        'Skipping Cloudant _search_disk_size endpoint test'
-    )
+    @attr(db='cloudant')
     def test_get_search_disk_size(self):
         """
         Test retrieval of search_disk_size endpoint from the DesignDocument.
@@ -881,10 +876,7 @@ class DesignDocumentTests(UnitTestDbBase):
             search_disk_size['search_index']['disk_size'] > 0,
             'The "disk_size" should be greater than 0.')
 
-    @unittest.skipUnless(
-        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-        'Skipping Cloudant _search_info raises HTTPError test'
-    )
+    @attr(db='cloudant')
     def test_get_search_info_raises_httperror(self):
         """
         Test get_search_info raises an HTTPError.
@@ -1191,7 +1183,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # Ensure that remotely saved design document does not
         # include a search indexes sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
-        raw_ddoc = resp.json()
+        raw_ddoc = response_to_json_dict(resp)
         self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
@@ -1272,7 +1264,7 @@ class DesignDocumentTests(UnitTestDbBase):
         doc.save()
         resp = self.client.r_session.get('/'.join([ddoc.document_url, '_rewrite']))
         self.assertEquals(
-            resp.json(),
+            response_to_json_dict(resp),
             {
                 '_id': 'rewrite_doc',
                 '_rev': doc['_rev']
@@ -1460,7 +1452,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # Ensure that remotely saved design document does not
         # include a lists sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
-        raw_ddoc = resp.json()
+        raw_ddoc = response_to_json_dict(resp)
         self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
@@ -1525,10 +1517,7 @@ class DesignDocumentTests(UnitTestDbBase):
             'html += \'</ol></body></html>\'; return html; }); }'
         )
 
-    @unittest.skipUnless(
-        os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-        'Skipping Cloudant specific Cloudant Geo tests'
-    )
+    @attr(db='cloudant')
     def test_geospatial_index(self):
         """
         Test retrieval and query of Cloudant Geo indexes from the DesignDocument.
@@ -1764,7 +1753,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # Ensure that remotely saved design document does not
         # include a shows sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
-        raw_ddoc = resp.json()
+        raw_ddoc = response_to_json_dict(resp)
         self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
@@ -1846,7 +1835,7 @@ class DesignDocumentTests(UnitTestDbBase):
             data=json.dumps({'_id': 'test001'})
         )
         self.assertEqual(
-            resp.json(),
+            response_to_json_dict(resp),
             {'reason': 'Document must have an address.', 'error': 'forbidden'}
         )
 

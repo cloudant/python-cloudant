@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2016 IBM. All rights reserved.
+# Copyright (c) 2015, 2018 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import json
 
 from ._2to3 import iteritems_, next_, unicode_, STRTYPE, NONETYPE
 from .error import CloudantArgumentError, CloudantFeedException
-from ._common_util import feed_arg_types, TYPE_CONVERTERS
+from ._common_util import ANY_ARG, ANY_TYPE, feed_arg_types, TYPE_CONVERTERS
 
 class Feed(object):
     """
@@ -100,7 +100,7 @@ class Feed(object):
                 if isinstance(val, STRTYPE):
                     translation[key] = val
                 elif not isinstance(val, NONETYPE):
-                    arg_converter = TYPE_CONVERTERS.get(type(val))
+                    arg_converter = TYPE_CONVERTERS.get(type(val), json.dumps)
                     translation[key] = arg_converter(val)
             except Exception as ex:
                 raise CloudantArgumentError(115, key, ex)
@@ -111,11 +111,18 @@ class Feed(object):
         Ensures that the key and the value are valid arguments to be used with
         the feed.
         """
-        if key not in arg_types:
-            raise CloudantArgumentError(116, key)
-        if (not isinstance(val, arg_types[key]) or
-                (isinstance(val, bool) and int in arg_types[key])):
-            raise CloudantArgumentError(117, key, arg_types[key])
+        if key in arg_types:
+            arg_type = arg_types[key]
+        else:
+            if ANY_ARG not in arg_types:
+                raise CloudantArgumentError(116, key)
+            arg_type = arg_types[ANY_ARG]
+
+        if arg_type == ANY_TYPE:
+            return
+        if (not isinstance(val, arg_type) or
+                (isinstance(val, bool) and int in arg_type)):
+            raise CloudantArgumentError(117, key, arg_type)
         if isinstance(val, int) and val < 0 and not isinstance(val, bool):
             raise CloudantArgumentError(118, key, val)
         if key == 'feed':
@@ -164,8 +171,7 @@ class Feed(object):
         skip = False
         if self._raw_data:
             return skip, line
-        else:
-            line = unicode_(line)
+        line = unicode_(line)
         if not line:
             if (self._options.get('heartbeat', False) and
                     self._options.get('feed') in ('continuous', 'longpoll') and

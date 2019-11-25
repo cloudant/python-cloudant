@@ -20,6 +20,7 @@ import requests
 from requests.exceptions import HTTPError
 
 from ._2to3 import url_quote, url_quote_plus
+from ._common_util import response_to_json_dict
 from .error import CloudantDocumentException
 
 
@@ -53,8 +54,8 @@ class Document(dict):
     :param database: A database instance used by the Document.  Can be
         either a ``CouchDatabase`` or ``CloudantDatabase`` instance.
     :param str document_id: Optional document id used to identify the document.
-    :param str encoder: Optional JSON encoder object.
-    :param str decoder: Optional JSON decoder object.
+    :param str encoder: Optional JSON encoder object (extending json.JSONEncoder).
+    :param str decoder: Optional JSON decoder object (extending json.JSONDecoder).
     """
     def __init__(self, database, document_id=None, **kwargs):
         super(Document, self).__init__()
@@ -62,9 +63,8 @@ class Document(dict):
         self._database = database
         self._database_host = self._client.server_url
         self._database_name = database.database_name
-        self._document_id = document_id
-        if self._document_id is not None:
-            self['_id'] = self._document_id
+        if document_id:
+            self['_id'] = document_id
         self.encoder = kwargs.get('encoder') or self._client.encoder
         self.decoder = kwargs.get('decoder') or json.JSONDecoder
 
@@ -84,23 +84,23 @@ class Document(dict):
 
         :returns: Document URL
         """
-        if self._document_id is None:
+        if '_id' not in self or self['_id'] is None:
             return None
 
         # handle design document url
-        if self._document_id.startswith('_design/'):
+        if self['_id'].startswith('_design/'):
             return '/'.join((
                 self._database_host,
                 url_quote_plus(self._database_name),
                 '_design',
-                url_quote(self._document_id[8:], safe='')
+                url_quote(self['_id'][8:], safe='')
             ))
 
         # handle document url
         return '/'.join((
             self._database_host,
             url_quote_plus(self._database_name),
-            url_quote(self._document_id, safe='')
+            url_quote(self['_id'], safe='')
         ))
 
     def exists(self):
@@ -110,12 +110,12 @@ class Document(dict):
         :returns: True if the document exists in the remote database,
             otherwise False
         """
-        if self._document_id is None:
+        if '_id' not in self or self['_id'] is None:
             return False
-        else:
-            resp = self.r_session.head(self.document_url)
-            if resp.status_code not in [200, 404]:
-                resp.raise_for_status()
+
+        resp = self.r_session.head(self.document_url)
+        if resp.status_code not in [200, 404]:
+            resp.raise_for_status()
 
         return resp.status_code == 200
 
@@ -135,8 +135,6 @@ class Document(dict):
         updates the locally cached Document object with the ``_id``
         and ``_rev`` returned as part of the successful response.
         """
-        if self._document_id is not None:
-            self['_id'] = self._document_id
 
         # Ensure that an existing document will not be "updated"
         doc = dict(self)
@@ -150,11 +148,9 @@ class Document(dict):
             data=json.dumps(doc, cls=self.encoder)
         )
         resp.raise_for_status()
-        data = resp.json()
-        self._document_id = data['id']
+        data = response_to_json_dict(resp)
         super(Document, self).__setitem__('_id', data['id'])
         super(Document, self).__setitem__('_rev', data['rev'])
-        return
 
     def fetch(self):
         """
@@ -168,7 +164,7 @@ class Document(dict):
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
         self.clear()
-        self.update(resp.json(cls=self.decoder))
+        self.update(response_to_json_dict(resp, cls=self.decoder))
 
     def save(self):
         """
@@ -190,7 +186,7 @@ class Document(dict):
             headers=headers
         )
         put_resp.raise_for_status()
-        data = put_resp.json()
+        data = response_to_json_dict(put_resp)
         super(Document, self).__setitem__('_rev', data['rev'])
         return
 
@@ -318,9 +314,9 @@ class Document(dict):
             params={"rev": self["_rev"]},
         )
         del_resp.raise_for_status()
+        _id = self['_id']
         self.clear()
-        self.__setitem__('_id', self._document_id)
-        return
+        self['_id'] = _id
 
     def __enter__(self):
         """
@@ -342,29 +338,13 @@ class Document(dict):
 
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, exc_type, exc_value, traceback):
         """
-        Support context like editing of document fields.  Handles context exit
-        logic.  Executes a Document.save() upon exit.
+        Support context like editing of document fields. Handles context exit
+        logic. Executes a `Document.save()` upon exit if no exception occurred.
         """
-        self.save()
-
-    def __setitem__(self, key, value):
-        """
-        Sets the _document_id when setting the '_id' field.
-        The _document_id is used to construct the document url.
-        """
-        if key == '_id':
-            self._document_id = value
-        super(Document, self).__setitem__(key, value)
-
-    def __delitem__(self, key):
-        """
-        Sets the _document_id to None when deleting the '_id' field.
-        """
-        if key == '_id':
-            self._document_id = None
-        super(Document, self).__delitem__(key)
+        if exc_type is None:
+            self.save()
 
     def get_attachment(
             self,
@@ -413,14 +393,14 @@ class Document(dict):
                 attachment_type = 'binary'
 
         if write_to is not None:
-            if attachment_type == 'text' or attachment_type == 'json':
+            if attachment_type in ('text', 'json'):
                 write_to.write(resp.text)
             else:
                 write_to.write(resp.content)
         if attachment_type == 'text':
             return resp.text
-        elif attachment_type == 'json':
-            return resp.json()
+        if attachment_type == 'json':
+            return response_to_json_dict(resp)
 
         return resp.content
 
@@ -449,7 +429,7 @@ class Document(dict):
             headers=headers
         )
         resp.raise_for_status()
-        super(Document, self).__setitem__('_rev', resp.json()['rev'])
+        super(Document, self).__setitem__('_rev', response_to_json_dict(resp)['rev'])
         # Execute logic only if attachment metadata exists locally
         if self.get('_attachments'):
             # Remove the attachment metadata for the specified attachment
@@ -459,7 +439,7 @@ class Document(dict):
             if not self['_attachments']:
                 super(Document, self).__delitem__('_attachments')
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def put_attachment(self, attachment, content_type, data, headers=None):
         """
@@ -496,4 +476,4 @@ class Document(dict):
         )
         resp.raise_for_status()
         self.fetch()
-        return resp.json()
+        return response_to_json_dict(resp)

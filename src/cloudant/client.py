@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ from ._common_util import (
     USER_AGENT,
     append_response_error_content,
     CloudFoundryService,
+    response_to_json_dict,
     )
 
 
@@ -77,6 +78,10 @@ class CouchDB(dict):
         IAM authentication with server. Default is False.
         Use :func:`~cloudant.client.CouchDB.iam` to construct an IAM
         authenticated client.
+    :param string iam_client_id: Keyword argument, client ID to use when
+        authenticating with the IAM token server. Default is ``None``.
+    :param string iam_client_secret: Keyword argument, client secret to use when
+        authenticating with the IAM token server. Default is ``None``.
     """
     _DATABASE_CLASS = CouchDatabase
 
@@ -94,6 +99,8 @@ class CouchDB(dict):
         self._auto_renew = kwargs.get('auto_renew', False)
         self._use_basic_auth = kwargs.get('use_basic_auth', False)
         self._use_iam = kwargs.get('use_iam', False)
+        self._iam_client_id = kwargs.get('iam_client_id', None)
+        self._iam_client_secret = kwargs.get('iam_client_secret', None)
         # If user/pass exist in URL, remove and set variables
         if not self._use_basic_auth and self.server_url:
             parsed_url = url_parse(kwargs.get('url'))
@@ -161,6 +168,8 @@ class CouchDB(dict):
                 self._auth_token,
                 self.server_url,
                 auto_renew=self._auto_renew,
+                client_id=self._iam_client_id,
+                client_secret=self._iam_client_secret,
                 timeout=self._timeout
             )
         else:
@@ -256,9 +265,9 @@ class CouchDB(dict):
         url = '/'.join((self.server_url, '_all_dbs'))
         resp = self.r_session.get(url)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
-    def create_database(self, dbname, **kwargs):
+    def create_database(self, dbname, partitioned=False, **kwargs):
         """
         Creates a new database on the remote server with the name provided
         and adds the new database object to the client's locally cached
@@ -270,15 +279,18 @@ class CouchDB(dict):
         :param bool throw_on_exists: Boolean flag dictating whether or
             not to throw a CloudantClientException when attempting to
             create a database that already exists.
+        :param bool partitioned: Create as a partitioned database. Defaults to
+            ``False``.
 
         :returns: The newly created database object
         """
-        new_db = self._DATABASE_CLASS(self, dbname)
+        new_db = self._DATABASE_CLASS(self, dbname, partitioned=partitioned)
         try:
             new_db.create(kwargs.get('throw_on_exists', False))
         except CloudantDatabaseException as ex:
             if ex.status_code == 412:
                 raise CloudantClientException(412, dbname)
+            raise ex
         super(CouchDB, self).__setitem__(dbname, new_db)
         return new_db
 
@@ -345,7 +357,7 @@ class CouchDB(dict):
         """
         resp = self.r_session.get(self.server_url)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def keys(self, remote=False):
         """
@@ -387,9 +399,9 @@ class CouchDB(dict):
         db = self._DATABASE_CLASS(self, key)
         if db.exists():
             super(CouchDB, self).__setitem__(key, db)
-            return db
         else:
             raise KeyError(key)
+        return db
 
     def __delitem__(self, key, remote=False):
         """
@@ -620,9 +632,9 @@ class Cloudant(CouchDB):
 
         if err:
             raise CloudantArgumentError(101, year, month)
-        else:
-            resp.raise_for_status()
-            return resp.json()
+
+        resp.raise_for_status()
+        return response_to_json_dict(resp)
 
     def bill(self, year=None, month=None):
         """
@@ -687,7 +699,7 @@ class Cloudant(CouchDB):
             self.server_url, '_api', 'v2', 'user', 'shared_databases'))
         resp = self.r_session.get(endpoint)
         resp.raise_for_status()
-        data = resp.json()
+        data = response_to_json_dict(resp)
         return data.get('shared_databases', [])
 
     def generate_api_key(self):
@@ -699,7 +711,7 @@ class Cloudant(CouchDB):
         endpoint = '/'.join((self.server_url, '_api', 'v2', 'api_keys'))
         resp = self.r_session.post(endpoint)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def cors_configuration(self):
         """
@@ -712,7 +724,7 @@ class Cloudant(CouchDB):
         resp = self.r_session.get(endpoint)
         resp.raise_for_status()
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def disable_cors(self):
         """
@@ -807,7 +819,7 @@ class Cloudant(CouchDB):
         )
         resp.raise_for_status()
 
-        return resp.json()
+        return response_to_json_dict(resp)
 
     @classmethod
     def bluemix(cls, vcap_services, instance_name=None, service_name=None, **kwargs):
@@ -843,7 +855,8 @@ class Cloudant(CouchDB):
         if hasattr(service, 'iam_api_key'):
             return Cloudant.iam(service.username,
                                 service.iam_api_key,
-                                url=service.url)
+                                url=service.url,
+                                **kwargs)
         return Cloudant(service.username,
                         service.password,
                         url=service.url,

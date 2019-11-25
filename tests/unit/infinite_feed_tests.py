@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright (C) 2016, 2018 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 feed module - Unit tests for Feed class
 """
 
-import unittest
-from requests import Session
-import json
 import os
+import unittest
 from time import sleep
 
-from cloudant.feed import InfiniteFeed, Feed
-from cloudant.client import CouchDB
 from cloudant.error import CloudantArgumentError, CloudantFeedException
+from cloudant.feed import InfiniteFeed, Feed
+from nose.plugins.attrib import attr
+from requests import Session
 
 from .unit_t_db_base import UnitTestDbBase
+
 
 class MethodCallCount(object):
     """
@@ -71,6 +71,7 @@ class CloudantFeedExceptionTests(unittest.TestCase):
             raise CloudantFeedException(101)
         self.assertEqual(cm.exception.status_code, 101)
 
+@attr(db=['cloudant','couch'])
 class InfiniteFeedTests(UnitTestDbBase):
     """
     Infinite Feed unit tests
@@ -126,8 +127,7 @@ class InfiniteFeedTests(UnitTestDbBase):
             'Invalid infinite feed option: longpoll.  Must be set to continuous.'
         )
 
-    @unittest.skipIf(os.environ.get('RUN_CLOUDANT_TESTS'), 
-        'Skipping since test is possible only when testing against CouchDB.')
+    @attr(db='couch')
     def test_invalid_source_couchdb(self):
         """
         Ensure that a CouchDB client cannot be used with an infinite feed.
@@ -137,8 +137,8 @@ class InfiniteFeedTests(UnitTestDbBase):
         self.assertEqual(str(cm.exception),
             'Infinite _db_updates feed not supported for CouchDB.')
     
-    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
-        os.environ.get('SKIP_DB_UPDATES'), 'Skipping Cloudant _db_updates feed tests')
+    @unittest.skipIf(os.environ.get('SKIP_DB_UPDATES'), 'Skipping Cloudant _db_updates feed tests')
+    @attr(db='cloudant')
     def test_constructor_db_updates(self):
         """
         Test constructing an infinite _db_updates feed.
@@ -185,8 +185,8 @@ class InfiniteFeedTests(UnitTestDbBase):
         # the continuous feed was started/restarted 3 separate times.
         self.assertEqual(feed._start.called_count, 3)
 
-    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
-        os.environ.get('SKIP_DB_UPDATES'), 'Skipping Cloudant _db_updates feed tests')
+    @unittest.skipIf(os.environ.get('SKIP_DB_UPDATES'), 'Skipping Cloudant _db_updates feed tests')
+    @attr(db='cloudant')
     def test_infinite_db_updates_feed(self):
         """
         Test that an _db_updates infinite feed will continue to issue multiple

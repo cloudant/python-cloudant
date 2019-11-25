@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import cloudant
 """
 _document_tests_
 
@@ -22,21 +23,22 @@ module docstring.
 
 """
 
-import unittest
-import mock
-import json
-import requests
-import os
-import uuid
 import inspect
-
+import json
+import os
+import unittest
+import uuid
 from datetime import datetime
 
+import mock
+import requests
 from cloudant.document import Document
 from cloudant.error import CloudantDocumentException
+from nose.plugins.attrib import attr
 
-from .. import StringIO, unicode_
 from .unit_t_db_base import UnitTestDbBase
+from .. import StringIO, unicode_
+
 
 def find_fixture(name):
     import tests.unit.fixtures as fixtures
@@ -82,6 +84,7 @@ class CloudantDocumentExceptionTests(unittest.TestCase):
             raise CloudantDocumentException(102, 'foo')
         self.assertEqual(cm.exception.status_code, 102)
 
+@attr(db=['cloudant','couch'])
 class DocumentTests(UnitTestDbBase):
     """
     Document unit tests
@@ -521,9 +524,18 @@ class DocumentTests(UnitTestDbBase):
         # Mock when saving the document
         # 1st call throw a 409
         # 2nd call delegate to the real doc.save()
-        with mock.patch('cloudant.document.Document.save',
-                        side_effect=[requests.HTTPError(response=mock.Mock(status_code=409, reason='conflict')),
-                                     doc.save()]) as m_save:
+
+        class SaveMock(object):
+            calls = 0
+            def save(self):
+                if self.calls == 0:
+                    self.calls += 1
+                    raise requests.HTTPError(response=mock.Mock(status_code=409, reason='conflict'))
+                else:
+                    return cloudant.document.Document.save(doc)
+
+        with mock.patch.object(doc, 'save',
+                               side_effect=SaveMock().save) as m_save:
             # A list of side effects containing only 1 element
             doc.update_field(doc.field_set, 'age', 7, max_tries=1)
         # Two calls to save, one with a 409 and one that succeeds
@@ -610,6 +622,47 @@ class DocumentTests(UnitTestDbBase):
         self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(self.db['julia006'], doc)
 
+    def test_document_context_manager_creation_failure_on_error(self):
+        """
+        Test that the document context manager skips document creation if there
+        is an error.
+        """
+        with self.assertRaises(ZeroDivisionError), Document(self.db, 'julia006') as doc:
+            doc['name'] = 'julia'
+            doc['age'] = 6
+            raise ZeroDivisionError()
+
+        doc = Document(self.db, 'julia006')
+        try:
+            doc.fetch()
+        except requests.HTTPError as err:
+            self.assertEqual(err.response.status_code, 404)
+        else:
+            self.fail('Above statement should raise a HTTPError.')
+
+    def test_document_context_manager_update_failure_on_error(self):
+        """
+        Test that the document context manager skips document update if there
+        is an error.
+        """
+        # Create the document.
+        doc = Document(self.db, 'julia006')
+        doc['name'] = 'julia'
+        doc['age'] = 6
+        doc.save()
+
+        # Make a document update and then raise an error.
+        with self.assertRaises(ZeroDivisionError), Document(self.db, 'julia006') as doc:
+            doc['age'] = 7
+            raise ZeroDivisionError()
+
+        # Assert the change persists locally.
+        self.assertEqual(doc['age'], 7)
+
+        # Assert the document has not been saved to remote server.
+        self.assertTrue(doc['_rev'].startswith('1-'))
+        self.assertEqual(self.db['julia006']['age'], 6)
+
     def test_document_context_manager_doc_create(self):
         """
         Test that the document context manager will create a doc if it does
@@ -627,10 +680,8 @@ class DocumentTests(UnitTestDbBase):
         """
         doc = Document(self.db)
         self.assertIsNone(doc.get('_id'))
-        self.assertEqual(doc._document_id, None)
         doc['_id'] = 'julia006'
         self.assertEqual(doc['_id'], 'julia006')
-        self.assertEqual(doc._document_id, 'julia006')
 
     def test_removing_id(self):
         """
@@ -640,7 +691,6 @@ class DocumentTests(UnitTestDbBase):
         doc['_id'] = 'julia006'
         del doc['_id']
         self.assertIsNone(doc.get('_id'))
-        self.assertEqual(doc._document_id, None)
 
     def test_get_text_attachment(self):
         """

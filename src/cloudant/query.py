@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2019 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ from ._2to3 import iteritems_
 from .result import QueryResult
 from .error import CloudantArgumentError
 from ._common_util import QUERY_ARG_TYPES
+from ._common_util import response_to_json_dict
 
 class Query(dict):
     """
@@ -74,7 +75,7 @@ class Query(dict):
     :param int limit: Maximum number of results returned.
     :param int r: Read quorum needed for the result.  Each document is read from
         at least 'r' number of replicas before it is returned in the results.
-    :param str selector: Dictionary object describing criteria used to select
+    :param dict selector: Dictionary object describing criteria used to select
         documents.
     :param int skip: Skip the first 'n' results, where 'n' is the value
         specified.
@@ -86,13 +87,18 @@ class Query(dict):
     :param str use_index: Identifies a specific index for the query to run
         against, rather than using the Cloudant Query algorithm which finds
         what it believes to be the best index.
+    :param str partition_key: Optional. Specify a query partition key. Defaults
+        to ``None`` resulting in global queries.
     """
 
     def __init__(self, database, **kwargs):
         super(Query, self).__init__()
         self._database = database
+        self._partition_key = kwargs.pop('partition_key', None)
         self._r_session = self._database.r_session
         self._encoder = self._database.client.encoder
+        if kwargs.get('fields', True) is None:
+            del kwargs['fields']  # delete `None` fields kwarg
         if kwargs:
             super(Query, self).update(kwargs)
         self.result = QueryResult(self)
@@ -104,7 +110,13 @@ class Query(dict):
 
         :returns: Query URL
         """
-        return '/'.join((self._database.database_url, '_find'))
+        if self._partition_key:
+            base_url = self._database.database_partition_url(
+                self._partition_key)
+        else:
+            base_url = self._database.database_url
+
+        return base_url + '/_find'
 
     def __call__(self, **kwargs):
         """
@@ -136,7 +148,7 @@ class Query(dict):
         :param int r: Read quorum needed for the result.  Each document is read
             from at least 'r' number of replicas before it is returned in the
             results.
-        :param str selector: Dictionary object describing criteria used to
+        :param dict selector: Dictionary object describing criteria used to
             select documents.
         :param int skip: Skip the first 'n' results, where 'n' is the value
             specified.
@@ -172,7 +184,7 @@ class Query(dict):
             data=json.dumps(data, cls=self._encoder)
         )
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     @contextlib.contextmanager
     def custom_result(self, **options):
@@ -200,7 +212,7 @@ class Query(dict):
         :param int r: Read quorum needed for the result.  Each document is read
             from at least 'r' number of replicas before it is returned in the
             results.
-        :param str selector: Dictionary object describing criteria used to
+        :param dict selector: Dictionary object describing criteria used to
             select documents.
         :param list sort: A list of fields to sort by.  Optionally the list can
             contain elements that are single member dictionary structures that

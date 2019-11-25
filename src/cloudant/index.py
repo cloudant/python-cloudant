@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015 IBM. All rights reserved.
+# Copyright (C) 2015, 2019 IBM. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ from ._common_util import JSON_INDEX_TYPE
 from ._common_util import TEXT_INDEX_TYPE
 from ._common_util import SPECIAL_INDEX_TYPE
 from ._common_util import TEXT_INDEX_ARGS
+from ._common_util import response_to_json_dict
 from .error import CloudantArgumentError, CloudantIndexException
 
 class Index(object):
@@ -39,18 +40,21 @@ class Index(object):
         Index.
     :param str design_document_id: Optional identifier of the design document.
     :param str name: Optional name of the index.
+    :param bool partitioned: Optional. Create as a partitioned index. Defaults
+        to ``False`` for both partitioned and non-partitioned databases.
     :param kwargs: Options used to construct the index definition for the
         purposes of index creation.  For more details on valid options See
         :func:`~cloudant.database.CloudantDatabase.create_query_index`.
     """
 
-    def __init__(self, database, design_document_id=None, name=None, **kwargs):
+    def __init__(self, database, design_document_id=None, name=None, partitioned=False, **kwargs):
         self._database = database
         self._r_session = self._database.r_session
         self._ddoc_id = design_document_id
         self._name = name
         self._type = JSON_INDEX_TYPE
         self._def = kwargs
+        self._partitioned = partitioned
 
     @property
     def index_url(self):
@@ -99,6 +103,17 @@ class Index(object):
         """
         return self._def
 
+    @property
+    def partitioned(self):
+        """
+        Check if this index is partitioned.
+
+        :return: ``True`` if index is partitioned, else ``False``.
+        :rtype: bool
+        """
+
+        return self._partitioned
+
     def as_a_dict(self):
         """
         Displays the index as a dictionary.  This includes the design document
@@ -112,6 +127,9 @@ class Index(object):
             'type': self._type,
             'def': self._def
         }
+
+        if self._partitioned:
+            index_dict['partitioned'] = True
 
         return index_dict
 
@@ -136,6 +154,9 @@ class Index(object):
         self._def_check()
         payload['index'] = self._def
 
+        if self._partitioned:
+            payload['partitioned'] = True
+
         headers = {'Content-Type': 'application/json'}
         resp = self._r_session.post(
             self.index_url,
@@ -143,9 +164,8 @@ class Index(object):
             headers=headers
         )
         resp.raise_for_status()
-        self._ddoc_id = resp.json()['id']
-        self._name = resp.json()['name']
-        return
+        self._ddoc_id = response_to_json_dict(resp)['id']
+        self._name = response_to_json_dict(resp)['name']
 
     def _def_check(self):
         """
@@ -168,7 +188,6 @@ class Index(object):
         url = '/'.join((self.index_url, ddoc_id, self._type, self._name))
         resp = self._r_session.delete(url)
         resp.raise_for_status()
-        return
 
 class TextIndex(Index):
     """

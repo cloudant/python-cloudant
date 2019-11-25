@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import os
 from requests import RequestException, Session
 
 from ._2to3 import bytes_, unicode_, url_join
+from ._common_util import response_to_json_dict
 from .error import CloudantException
 
 
@@ -75,7 +76,7 @@ class ClientSession(Session):
 
         resp = self.get(self._session_url)
         resp.raise_for_status()
-        return resp.json()
+        return response_to_json_dict(resp)
 
     def set_credentials(self, username, password):
         """
@@ -94,12 +95,14 @@ class ClientSession(Session):
         """
         No-op method - not implemented here.
         """
+        # pylint: disable=unnecessary-pass
         pass
 
     def logout(self):
         """
         No-op method - not implemented here.
         """
+        # pylint: disable=unnecessary-pass
         pass
 
 
@@ -171,7 +174,7 @@ class CookieSession(ClientSession):
 
         is_expired = any((
             resp.status_code == 403 and
-            resp.json().get('error') == 'credentials_expired',
+            response_to_json_dict(resp).get('error') == 'credentials_expired',
             resp.status_code == 401
         ))
 
@@ -187,14 +190,18 @@ class IAMSession(ClientSession):
     This class extends ClientSession and provides IAM authentication.
     """
 
-    def __init__(self, api_key, server_url, **kwargs):
+    def __init__(self, api_key, server_url, client_id=None, client_secret=None,
+                 **kwargs):
         super(IAMSession, self).__init__(
             session_url=url_join(server_url, '_iam_session'),
             **kwargs)
 
         self._api_key = api_key
         self._token_url = os.environ.get(
-            'IAM_TOKEN_URL', 'https://iam.bluemix.net/identity/token')
+            'IAM_TOKEN_URL', 'https://iam.cloud.ibm.com/identity/token')
+        self._token_auth = None
+        if client_id and client_secret:
+            self._token_auth = (client_id, client_secret)
 
     @property
     def get_api_key(self):
@@ -275,7 +282,7 @@ class IAMSession(ClientSession):
             resp = super(IAMSession, self).request(
                 'POST',
                 self._token_url,
-                auth=('bx', 'bx'),  # required for user API keys
+                auth=self._token_auth,
                 headers={'Accepts': 'application/json'},
                 data={
                     'grant_type': 'urn:ibm:params:oauth:grant-type:apikey',
@@ -283,10 +290,10 @@ class IAMSession(ClientSession):
                     'apikey': self._api_key
                 }
             )
-            err = resp.json().get('errorMessage', err)
+            err = response_to_json_dict(resp).get('errorMessage', err)
             resp.raise_for_status()
 
-            return resp.json()['access_token']
+            return response_to_json_dict(resp)['access_token']
 
         except KeyError:
             raise CloudantException('Invalid response from IAM token service')

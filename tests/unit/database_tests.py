@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,24 +22,27 @@ module docstring.
 
 """
 
-import unittest
-import mock
-import requests
 import os
+import unittest
 import uuid
 
+import mock
+import requests
 from cloudant._2to3 import UNICHR
-from cloudant.result import Result, QueryResult
-from cloudant.error import CloudantArgumentError, CloudantDatabaseException
-from cloudant.document import Document
+from cloudant._common_util import response_to_json_dict
 from cloudant.design_document import DesignDocument
-from cloudant.security_document import SecurityDocument
-from cloudant.index import Index, TextIndex, SpecialIndex
+from cloudant.document import Document
+from cloudant.error import CloudantArgumentError, CloudantDatabaseException
 from cloudant.feed import Feed, InfiniteFeed
-from tests.unit._test_util import LONG_NUMBER
+from cloudant.index import Index, TextIndex, SpecialIndex
+from cloudant.result import Result, QueryResult
+from cloudant.security_document import SecurityDocument
+from nose.plugins.attrib import attr
 
+from tests.unit._test_util import LONG_NUMBER
 from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase, skip_if_iam
 from .. import unicode_
+
 
 class CloudantDatabaseExceptionTests(unittest.TestCase):
     """
@@ -79,6 +82,7 @@ class CloudantDatabaseExceptionTests(unittest.TestCase):
             raise CloudantDatabaseException(400, 'foo')
         self.assertEqual(cm.exception.status_code, 400)
 
+@attr(db=['cloudant','couch'])
 class DatabaseTests(UnitTestDbBase):
     """
     CouchDatabase/CloudantDatabase unit tests
@@ -234,7 +238,7 @@ class DatabaseTests(UnitTestDbBase):
         """
         resp = self.db.r_session.get(
             '/'.join((self.client.server_url, self.test_dbname)))
-        expected = resp.json()
+        expected = response_to_json_dict(resp)
         actual = self.db.metadata()
         self.assertListEqual(list(actual.keys()), list(expected.keys()))
 
@@ -769,19 +773,38 @@ class DatabaseTests(UnitTestDbBase):
         # Test no differences
         self.assertEqual(self.db.revisions_diff('julia006', doc['_rev']), {})
 
-    def test_get_set_revision_limit(self):
+    @mock.patch('cloudant._client_session.ClientSession.request')
+    def test_get_set_revision_limit(self, m_req):
         """
         Test setting and getting revision limits
         """
-        limit = self.db.get_revision_limit()
-        self.assertIsInstance(limit, int)
-        self.assertEqual(self.db.set_revision_limit(1234), {'ok': True})
-        new_limit = self.db.get_revision_limit()
-        self.assertNotEqual(new_limit, limit)
-        self.assertEqual(new_limit, 1234)
+        # Setup mock responses.
+        mock_200_get_1 = mock.MagicMock()
+        type(mock_200_get_1).status_code = mock.PropertyMock(return_value=200)
+        type(mock_200_get_1).text = mock.PropertyMock(return_value='4321')
 
-    @unittest.skipIf(os.environ.get('RUN_CLOUDANT_TESTS'),
-        'Skipping since view cleanup is automatic in Cloudant.')
+        mock_200_get_2 = mock.MagicMock()
+        type(mock_200_get_2).status_code = mock.PropertyMock(return_value=200)
+        type(mock_200_get_2).text = mock.PropertyMock(return_value='1234')
+
+        mock_200_set = mock.MagicMock()
+        type(mock_200_set).status_code = mock.PropertyMock(return_value=200)
+        type(mock_200_set).text = mock.PropertyMock(return_value='{"ok":true}')
+
+        m_req.side_effect = [mock_200_get_1, mock_200_set, mock_200_get_2]
+
+        # Get current revisions limit.
+        self.assertEqual(self.db.get_revision_limit(), 4321)
+
+        # Set new revisions limit.
+        self.assertEqual(self.db.set_revision_limit(1234), {'ok': True})
+
+        # Get new revisions limit.
+        self.assertEqual(self.db.get_revision_limit(), 1234)
+
+        self.assertEquals(m_req.call_count, 3)
+
+    @attr(db='couch')
     def test_view_clean_up(self):
         """
         Test cleaning up old view files
@@ -968,10 +991,7 @@ class DatabaseTests(UnitTestDbBase):
         finally:
             self.client.connect()
 
-    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
-                     (os.environ.get('COUCHDB_VERSION') and
-                     os.environ.get('COUCHDB_VERSION').startswith('1')),
-                     'Skipping test_create_json_index test')
+    @attr(couchapi=2)
     def test_create_json_index(self):
         """
         Ensure that a JSON index is created as expected.
@@ -995,10 +1015,7 @@ class DatabaseTests(UnitTestDbBase):
         self.assertEquals(index['options']['def']['fields'], ['name', 'age'])
         self.assertEquals(index['reduce'], '_count')
 
-    @unittest.skipIf(not os.environ.get('RUN_CLOUDANT_TESTS') or
-                     (os.environ.get('COUCHDB_VERSION') and
-                      os.environ.get('COUCHDB_VERSION').startswith('1')),
-                     'Skipping test_create_json_index test')
+    @attr(couchapi=2)
     def test_delete_json_index(self):
         """
         Ensure that a JSON index is deleted as expected.
@@ -1013,10 +1030,7 @@ class DatabaseTests(UnitTestDbBase):
         self.db.delete_query_index('ddoc001', 'json', 'index001')
         self.assertFalse(ddoc.exists())
 
-@unittest.skipUnless(
-    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant specific Database tests'
-)
+@attr(db='cloudant')
 class CloudantDatabaseTests(UnitTestDbBase):
     """
     Cloudant specific Database unit tests

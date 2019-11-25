@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2017 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,27 +20,29 @@ module docstring.
 
 """
 
-import unittest
-import requests
-import json
 import base64
-import sys
-import os
 import datetime
-import mock
-
-from requests import ConnectTimeout, HTTPError
+import json
+import os
+import sys
+import unittest
 from time import sleep
 
+import mock
+import requests
 from cloudant import cloudant, cloudant_bluemix, couchdb, couchdb_admin_party
-from cloudant.client import Cloudant, CouchDB
 from cloudant._client_session import BasicSession, CookieSession
+from cloudant.client import Cloudant, CouchDB
 from cloudant.database import CloudantDatabase
-from cloudant.error import CloudantArgumentError, CloudantClientException
+from cloudant.error import (CloudantArgumentError, CloudantClientException,
+                            CloudantDatabaseException)
 from cloudant.feed import Feed, InfiniteFeed
+from nose.plugins.attrib import attr
+from requests import ConnectTimeout, HTTPError
 
-from .unit_t_db_base import skip_if_not_cookie_auth, UnitTestDbBase
+from .unit_t_db_base import skip_if_iam, skip_if_not_cookie_auth, UnitTestDbBase
 from .. import bytes_, str_
+
 
 class CloudantClientExceptionTests(unittest.TestCase):
     """
@@ -86,10 +88,10 @@ class ClientTests(UnitTestDbBase):
     """
 
     @unittest.skipIf(
-        (os.environ.get('RUN_CLOUDANT_TESTS') is not None or
-        (os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
+        ((os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
         'Skipping couchdb context manager test'
     )
+    @attr(db='couch')
     def test_couchdb_context_helper(self):
         """
         Test that the couchdb context helper works as expected.
@@ -102,10 +104,10 @@ class ClientTests(UnitTestDbBase):
             self.fail('Exception {0} was raised.'.format(str(err)))
 
     @unittest.skipUnless(
-        (os.environ.get('RUN_CLOUDANT_TESTS') is None and
-        (os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
+        ((os.environ.get('ADMIN_PARTY') and os.environ.get('ADMIN_PARTY') == 'true')),
         'Skipping couchdb_admin_party context manager test'
     )
+    @attr(db='couch')
     def test_couchdb_admin_party_context_helper(self):
         """
         Test that the couchdb_admin_party context helper works as expected.
@@ -246,7 +248,7 @@ class ClientTests(UnitTestDbBase):
         """
         m_response_ok = mock.MagicMock()
         type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
-        m_response_ok.json.return_value = ['animaldb']
+        type(m_response_ok).text = mock.PropertyMock(return_value='["animaldb"]')
         m_req.return_value = m_response_ok
 
         client = Cloudant('foo', 'bar', url=self.url, use_basic_auth=True)
@@ -297,8 +299,7 @@ class ClientTests(UnitTestDbBase):
         """
         # mock 200
         m_response_ok = mock.MagicMock()
-        m_response_ok.json.return_value = ['animaldb']
-
+        type(m_response_ok).text = mock.PropertyMock(return_value='["animaldb"]')
         # mock 401
         m_response_bad = mock.MagicMock()
         m_response_bad.raise_for_status.side_effect = HTTPError('401 Unauthorized')
@@ -397,6 +398,56 @@ class ClientTests(UnitTestDbBase):
 
         self.client.delete_database(dbname)
         self.client.disconnect()
+
+    def test_create_invalid_database_name(self):
+        """
+        Test creation of database with an invalid name
+        """
+        dbname = 'invalidDbName_'
+        self.client.connect()
+        with self.assertRaises(CloudantDatabaseException) as cm:
+            self.client.create_database(dbname)
+        self.assertEqual(cm.exception.status_code, 400)
+        self.client.disconnect()
+
+    @skip_if_not_cookie_auth
+    @mock.patch('cloudant._client_session.Session.request')
+    def test_create_with_server_error(self, m_req):
+        """
+        Test creation of database with a server error
+        """
+        dbname = self.dbname()
+        # mock 200 for authentication
+        m_response_ok = mock.MagicMock()
+        type(m_response_ok).status_code = mock.PropertyMock(return_value=200)
+
+        # mock 404 for head request when verifying if database exists
+        m_response_bad = mock.MagicMock()
+        type(m_response_bad).status_code = mock.PropertyMock(return_value=404)
+
+        # mock 500 when trying to create the database
+        m_resp_service_error = mock.MagicMock()
+        type(m_resp_service_error).status_code = mock.PropertyMock(
+            return_value=500)
+        type(m_resp_service_error).text = mock.PropertyMock(
+            return_value='Internal Server Error')
+
+        m_req.side_effect = [m_response_ok, m_response_bad, m_resp_service_error]
+
+        self.client.connect()
+        with self.assertRaises(CloudantDatabaseException) as cm:
+            self.client.create_database(dbname)
+
+        self.assertEqual(cm.exception.status_code, 500)
+
+        self.assertEquals(m_req.call_count, 3)
+        m_req.assert_called_with(
+            'PUT',
+            '/'.join([self.url, dbname]),
+            data=None,
+            params={'partitioned': 'false'},
+            timeout=(30, 300)
+        )
 
     def test_delete_non_existing_database(self):
         """
@@ -599,10 +650,7 @@ class ClientTests(UnitTestDbBase):
         finally:
             self.client.disconnect()
 
-@unittest.skipUnless(
-    os.environ.get('RUN_CLOUDANT_TESTS') is not None,
-    'Skipping Cloudant client specific tests'
-)
+@attr(db='cloudant')
 class CloudantClientTests(UnitTestDbBase):
     """
     Cloudant specific client unit tests
@@ -734,6 +782,7 @@ class CloudantClientTests(UnitTestDbBase):
                 str(err)
             )
 
+    @skip_if_iam
     def test_cloudant_bluemix_dedicated_context_helper(self):
         """
         Test that the cloudant_bluemix context helper works as expected when
@@ -840,6 +889,7 @@ class CloudantClientTests(UnitTestDbBase):
         finally:
             c.disconnect()
 
+    @skip_if_iam
     def test_bluemix_constructor_specify_instance_name(self):
         """
         Test instantiating a client object using a VCAP_SERVICES environment
