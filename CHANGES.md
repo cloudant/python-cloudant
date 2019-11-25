@@ -1,6 +1,7 @@
 # Unreleased
 
 - [FIXED] Correctly raise exceptions from `create_database` calls.
+- [FIXED] Fixed authentication with CouchDB for option require_valid_user
 
 # 2.12.0 (2019-03-28)
 
