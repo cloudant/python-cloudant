@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2020 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -390,7 +390,7 @@ class IndexTests(UnitTestDbBase):
         self.populate_db_with_documents(100)
         result = self.db.get_query_result(fields=['name', 'age'],
                 selector={'age': {'$eq': 6}}, raw_result=True)
-        self.assertTrue(str(result['warning']).startswith("no matching index found"))
+        self.assertTrue(str(result['warning']).lower().startswith("no matching index found"))
 
 @attr(db='cloudant')
 class TextIndexTests(UnitTestDbBase):
