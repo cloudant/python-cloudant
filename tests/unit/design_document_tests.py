@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2020 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -776,7 +776,8 @@ class DesignDocumentTests(UnitTestDbBase):
         info = ddoc_remote.info()
         # Remove variable fields to make equality easier to check
         info['view_index'].pop('signature')
-        info['view_index'].pop('disk_size')
+        if 'disk_size' in info['view_index']:
+            info['view_index'].pop('disk_size')
         # Remove Cloudant/Couch 2 fields if present to allow test to pass on Couch 1.6
         if 'sizes' in info['view_index']:
             info['view_index'].pop('sizes')
