@@ -778,6 +778,8 @@ class DesignDocumentTests(UnitTestDbBase):
         info['view_index'].pop('signature')
         if 'disk_size' in info['view_index']:
             info['view_index'].pop('disk_size')
+        if 'data_size' in info['view_index']:
+            info['view_index'].pop('data_size')
         # Remove Cloudant/Couch 2 fields if present to allow test to pass on Couch 1.6
         if 'sizes' in info['view_index']:
             info['view_index'].pop('sizes')
@@ -790,8 +792,7 @@ class DesignDocumentTests(UnitTestDbBase):
             {'view_index': {'update_seq': 0, 'waiting_clients': 0,
                             'language': 'javascript',
                             'purge_seq': 0, 'compact_running': False,
-                            'waiting_commit': False, 'updater_running': False,
-                            'data_size': 0
+                            'waiting_commit': False, 'updater_running': False
                             },
              'name': name
             })
