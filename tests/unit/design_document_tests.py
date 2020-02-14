@@ -827,6 +827,9 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
 
+        # Make a request to the search index to ensure it is built
+        self.db.get_search_result('_design/ddoc001', 'search001', query='name:julia*')
+
         search_info = ddoc_remote.search_info('search001')
         # Check the search index name
         self.assertEqual(search_info['name'], '_design/ddoc001/search001', 'The search index name should be correct.')
@@ -856,7 +859,8 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
 
-        ddoc_remote.search_info('search001')  # trigger index build
+        # Make a request to the search index to ensure it is built
+        self.db.get_search_result('_design/ddoc001', 'search001', query='name:julia*')
 
         search_disk_size = ddoc_remote.search_disk_size('search001')
 
