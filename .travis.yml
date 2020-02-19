@@ -29,7 +29,7 @@ before_script:
 # command to run tests
 script:
     - pylint ./src/cloudant
-    - nosetests -A 'not db or ((db is "couch" or "couch" in db) and (not couchapi or couchapi <='${COUCHDB_VERSION:0:1}'))' -w ./tests/unit
+    - nosetests -A 'not db or ((db == "couch" or "couch" in db) and (not couchapi or couchapi <='${COUCHDB_VERSION:0:1}'))' -w ./tests/unit
 
 notifications:
   email: false
