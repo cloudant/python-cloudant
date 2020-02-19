@@ -3,14 +3,13 @@ sudo: required
 language: python
 
 python:
-  - "2.7"
-  - "3.6"
+  - "3.8"
 
 env:
-  - ADMIN_PARTY=true COUCHDB_VERSION=2.1.1
-  - ADMIN_PARTY=false COUCHDB_VERSION=2.1.1
-  - ADMIN_PARTY=true COUCHDB_VERSION=1.7.1
-  - ADMIN_PARTY=false COUCHDB_VERSION=1.7.1
+  - ADMIN_PARTY=true COUCHDB_VERSION=2.3.1
+  - ADMIN_PARTY=false COUCHDB_VERSION=2.3.1
+  - ADMIN_PARTY=true COUCHDB_VERSION=1.7.2
+  - ADMIN_PARTY=false COUCHDB_VERSION=1.7.2
 
 services:
   - docker
