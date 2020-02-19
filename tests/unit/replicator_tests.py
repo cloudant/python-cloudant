@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2020 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -220,10 +220,13 @@ class ReplicatorTests(UnitTestDbBase):
     def test_timeout_in_create_replication(self):
         """
         Test that a read timeout exception is thrown when creating a
-        replicator with a timeout value of 500 ms.
+        replicator with a read timeout value of 5 s.
         """
-        # Setup client with a timeout
-        self.set_up_client(auto_connect=True, timeout=.5)
+        # Setup client with a read timeout (but the standard connect timeout)
+        # Note that this timeout applies to all connections from this client
+        # setting it too short can cause intermittent failures when responses
+        # are not quick enough. Setting it too long makes the test take longer.
+        self.set_up_client(auto_connect=True, timeout=(30,5))
         self.db = self.client[self.test_target_dbname]
         self.target_db = self.client[self.test_dbname]
         # Construct a replicator with the updated client

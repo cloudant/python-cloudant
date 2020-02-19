@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2020 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -405,9 +405,10 @@ class ClientTests(UnitTestDbBase):
         """
         dbname = 'invalidDbName_'
         self.client.connect()
-        with self.assertRaises(CloudantDatabaseException) as cm:
+        with self.assertRaises((CloudantDatabaseException, HTTPError)) as cm:
             self.client.create_database(dbname)
-        self.assertEqual(cm.exception.status_code, 400)
+        code = cm.exception.status_code if hasattr(cm.exception, 'status_code') else cm.exception.response.status_code
+        self.assertEqual(code, 400)
         self.client.disconnect()
 
     @skip_if_not_cookie_auth

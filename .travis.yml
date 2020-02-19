@@ -3,14 +3,13 @@ sudo: required
 language: python
 
 python:
-  - "2.7"
-  - "3.6"
+  - "3.8"
 
 env:
-  - ADMIN_PARTY=true COUCHDB_VERSION=2.1.1
-  - ADMIN_PARTY=false COUCHDB_VERSION=2.1.1
-  - ADMIN_PARTY=true COUCHDB_VERSION=1.7.1
-  - ADMIN_PARTY=false COUCHDB_VERSION=1.7.1
+  - ADMIN_PARTY=true COUCHDB_VERSION=2.3.1
+  - ADMIN_PARTY=false COUCHDB_VERSION=2.3.1
+  - ADMIN_PARTY=true COUCHDB_VERSION=1.7.2
+  - ADMIN_PARTY=false COUCHDB_VERSION=1.7.2
 
 services:
   - docker
@@ -30,7 +29,7 @@ before_script:
 # command to run tests
 script:
     - pylint ./src/cloudant
-    - nosetests -A 'not db or ((db is "couch" or "couch" in db) and (not couchapi or couchapi <='${COUCHDB_VERSION:0:1}'))' -w ./tests/unit
+    - nosetests -A 'not db or ((db == "couch" or "couch" in db) and (not couchapi or couchapi <='${COUCHDB_VERSION:0:1}'))' -w ./tests/unit
 
 notifications:
   email: false

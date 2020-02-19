@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2020 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ class UnitTestDbBase(unittest.TestCase):
 
             if os.environ.get('DB_USER') is None:
                 # Get couchdb docker node name
-                if os.environ.get('COUCHDB_VERSION') == '2.1.1':
+                if os.environ.get('COUCHDB_VERSION') == '2.3.1':
                     os.environ['NODENAME'] = requests.get(
                         '{0}/_membership'.format(os.environ['DB_URL'])).json()['all_nodes'][0]
                 os.environ['DB_USER_CREATED'] = '1'
@@ -117,7 +117,7 @@ class UnitTestDbBase(unittest.TestCase):
                     unicode_(uuid.uuid4())
                     )
                 os.environ['DB_PASSWORD'] = 'password'
-                if os.environ.get('COUCHDB_VERSION') == '2.1.1':
+                if os.environ.get('COUCHDB_VERSION') == '2.3.1':
                     resp = requests.put(
                         '{0}/_node/{1}/_config/admins/{2}'.format(
                             os.environ['DB_URL'],
@@ -143,7 +143,7 @@ class UnitTestDbBase(unittest.TestCase):
         """
         if (os.environ.get('RUN_CLOUDANT_TESTS') is None and
             os.environ.get('DB_USER_CREATED') is not None):
-            if os.environ.get('COUCHDB_VERSION') == '2.1.1':
+            if os.environ.get('COUCHDB_VERSION') == '2.3.1':
                 resp = requests.delete(
                     '{0}://{1}:{2}@{3}/_node/{4}/_config/admins/{5}'.format(
                         os.environ['DB_URL'].split('://', 1)[0],

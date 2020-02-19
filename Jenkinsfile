@@ -40,7 +40,7 @@ def setupPythonAndTest(pythonVersion, testSuite) {
             pip install -r test-requirements.txt
             ${'simplejson'.equals(testSuite) ? 'pip install simplejson' : ''}
             pylint ./src/cloudant
-            nosetests -A 'not db or (db is "cloudant" or "cloudant" in db)' -w ./tests/unit --with-xunit
+            nosetests -A 'not db or (db == "cloudant" or "cloudant" in db)' -w ./tests/unit --with-xunit
           """
         } finally {
           // Load the test results
@@ -61,10 +61,9 @@ stage('Checkout'){
 }
 
 stage('Test'){
-  def py2 = '2'
   def py3 = '3'
   def axes = [:]
-  [py2, py3].each { version ->
+  [py3].each { version ->
     ['basic','cookie','iam'].each { auth ->
        axes.put("Python${version}-${auth}", {setupPythonAndTest(version, auth)})
     }
