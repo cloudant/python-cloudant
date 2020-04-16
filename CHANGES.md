@@ -1,6 +1,7 @@
-# Unreleased
+# 2.13.0 (2020-04-16)
 
 - [FIXED] Correctly raise exceptions from `create_database` calls.
+- [FIXED] Fix `DeprecationWarning` from `collections`.
 
 # 2.12.0 (2019-03-28)
 

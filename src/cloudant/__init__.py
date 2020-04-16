@@ -15,7 +15,7 @@
 """
 Cloudant / CouchDB Python client library API package
 """
-__version__ = '2.12.1-SNAPSHOT'
+__version__ = '2.13.0'
 
 # pylint: disable=wrong-import-position
 import contextlib
