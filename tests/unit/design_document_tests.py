@@ -161,6 +161,32 @@ class DesignDocumentTests(UnitTestDbBase):
         remote_ddoc.fetch()
         self.assertEqual(remote_ddoc, ddoc)
 
+    def test_correct_view_partitioning(self):
+        """
+        Test that adding a design doc with particular partition flag
+        is created properly.
+        """
+        ddoc = DesignDocument(self.db, '_design/ddoc001',partitioned=True)
+        ddoc.create()
+        ddoc.fetch()
+        
+        try:
+            partition_val = ddoc.get('options')["partitioned"]
+        except:
+            partition_val = None
+        ddoc.delete()
+        self.assertEqual(partition_val, True)
+        
+        ddoc = DesignDocument(self.db, '_design/ddoc002',partitioned=False)
+        ddoc.create()
+        ddoc.fetch()
+        try:
+            partition_val = ddoc.get('options')["partitioned"]
+        except:
+            partition_val = None
+        ddoc.delete()
+        self.assertEqual(partition_val, False)
+    
     def test_delete_design_document_success_with_encoded_url(self):
         """
         Test that we can remove a design document from the remote
