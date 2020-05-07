@@ -161,7 +161,7 @@ class DesignDocumentTests(UnitTestDbBase):
         remote_ddoc.fetch()
         self.assertEqual(remote_ddoc, ddoc)
 
-    def test_correct_design_document_partitioning(self):
+    def test_design_document_with_partitioned_true(self):
         """
         Test that adding a design doc with particular partition flag
         is created properly.
@@ -169,13 +169,18 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc = DesignDocument(self.db, '_design/ddoc001',partitioned=True)
         ddoc.create()
         ddoc.fetch()
-        
         try:
             partition_val = ddoc.get('options')["partitioned"]
         except:
             partition_val = None
         ddoc.delete()
         self.assertEqual(partition_val, True)
+        
+    def test_design_document_with_partitioned_false(self):
+        """
+        Test that adding a design doc with particular partition flag
+        is created properly.
+        """
         
         ddoc = DesignDocument(self.db, '_design/ddoc002',partitioned=False)
         ddoc.create()
