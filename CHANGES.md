@@ -1,3 +1,7 @@
+# 2.14.0 (2020-05-07)
+
+- [FIXED] Creating design documents with appropriate partition flag
+
 # 2.13.0 (2020-04-16)
 
 - [FIXED] Correctly raise exceptions from `create_database` calls.
