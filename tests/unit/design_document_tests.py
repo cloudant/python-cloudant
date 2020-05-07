@@ -161,7 +161,7 @@ class DesignDocumentTests(UnitTestDbBase):
         remote_ddoc.fetch()
         self.assertEqual(remote_ddoc, ddoc)
 
-    def test_correct_view_partitioning(self):
+    def test_correct_design_document_partitioning(self):
         """
         Test that adding a design doc with particular partition flag
         is created properly.
