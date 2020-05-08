@@ -1,6 +1,6 @@
-# 2.14.0 (2020-05-07)
+# UNRELEASED
 
-- [FIXED] Creating design documents with appropriate partition flag
+- [FIXED] Set default value for `partitioned` parameter to false when creating a design document.
 
 # 2.13.0 (2020-04-16)
 
