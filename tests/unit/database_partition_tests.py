@@ -48,6 +48,17 @@ class DatabasePartitionTests(UnitTestDbBase):
         r.raise_for_status()
 
         self.assertTrue(r.json()['options']['partitioned'])
+        
+    def test_create_non_partitioned_design_document(self):
+        ddoc_id = 'empty_ddoc'
+
+        ddoc = DesignDocument(self.db, ddoc_id, partitioned=False)
+        ddoc.save()
+
+        r = self.db.r_session.get(ddoc.document_url)
+        r.raise_for_status()
+
+        self.assertFalse(r.json()['options']['partitioned'])
 
     def test_partitioned_all_docs(self):
         for partition_key in self.populate_db_with_partitioned_documents(5, 25):

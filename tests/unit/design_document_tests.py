@@ -353,6 +353,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertEqual(ddoc_remote, {
             '_id': '_design/ddoc001',
             '_rev': ddoc['_rev'],
+            'options': {'partitioned': False},
             'lists': {},
             'shows': {},
             'indexes': {},
@@ -415,7 +416,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
+                         {'_id', '_rev', 'indexes', 'views', 'options', 'lists', 'shows'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -432,6 +433,7 @@ class DesignDocumentTests(UnitTestDbBase):
         data = {
             '_id': '_design/ddoc001',
             'indexes': {},
+            'options': {'partitioned': False},
             'lists': {},
             'shows': {},
             'language': 'query',
@@ -463,6 +465,7 @@ class DesignDocumentTests(UnitTestDbBase):
         data = {
             '_id': '_design/ddoc001',
             'language': 'query',
+            'options': {'partitioned': False},
             'lists': {},
             'shows': {},
             'indexes': {'index001':
@@ -499,6 +502,7 @@ class DesignDocumentTests(UnitTestDbBase):
             'language': 'query',
             'lists': {},
             'shows': {},
+            'options': {'partitioned': False},
             'views': {
                 'view001': {'map': {'fields': {'name': 'asc', 'age': 'asc'}},
                             'reduce': '_count',
@@ -687,7 +691,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         # Ensure that locally cached DesignDocument contains an
         # empty views dict.
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'options', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         self.assertEqual(ddoc.views, {})
@@ -695,7 +699,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # include a views sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
         raw_ddoc = response_to_json_dict(resp)
-        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
+        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev','options'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
 
@@ -1076,6 +1080,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertEqual(ddoc_remote, {
             '_id': '_design/ddoc001',
             '_rev': ddoc['_rev'],
+            'options': {'partitioned': False},
             'indexes': {
                 'search001': {'index': search_index},
                 'search002': {'index': search_index, 'analyzer': 'simple'},
@@ -1100,7 +1105,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
+                         {'_id', '_rev', 'indexes', 'options', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -1183,14 +1188,14 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc.save()
         # Ensure that locally cached DesignDocument contains an
         # empty search indexes and views dict.
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'indexes','options', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         # Ensure that remotely saved design document does not
         # include a search indexes sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
         raw_ddoc = response_to_json_dict(resp)
-        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
+        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev','options'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
 
@@ -1413,6 +1418,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertEqual(ddoc_remote, {
             '_id': '_design/ddoc001',
             '_rev': ddoc['_rev'],
+            'options': {'partitioned': False},
             'lists': {
                 'list001': list_func,
                 'list002': list_func,
@@ -1437,7 +1443,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
+                         {'_id', '_rev', 'options', 'indexes', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -1452,14 +1458,14 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         ddoc.save()
         # Ensure that locally cached DesignDocument contains lists dict
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'lists', 'shows', 'indexes', 'views'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'lists', 'options', 'shows', 'indexes', 'views'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         # Ensure that remotely saved design document does not
         # include a lists sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
         raw_ddoc = response_to_json_dict(resp)
-        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
+        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev','options'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
 
@@ -1714,6 +1720,7 @@ class DesignDocumentTests(UnitTestDbBase):
         self.assertEqual(ddoc_remote, {
             '_id': '_design/ddoc001',
             '_rev': ddoc['_rev'],
+            'options': {'partitioned': False},
             'lists': {},
             'shows': {
                 'show001': show_func,
@@ -1738,7 +1745,7 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc_remote = DesignDocument(self.db, '_design/ddoc001')
         ddoc_remote.fetch()
         self.assertEqual(set(ddoc_remote.keys()),
-                         {'_id', '_rev', 'indexes', 'views', 'lists', 'shows'})
+                         {'_id', '_rev', 'indexes', 'options', 'views', 'lists', 'shows'})
         self.assertEqual(ddoc_remote['_id'], '_design/ddoc001')
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote['_rev'], ddoc['_rev'])
@@ -1753,14 +1760,14 @@ class DesignDocumentTests(UnitTestDbBase):
         ddoc = DesignDocument(self.db, '_design/ddoc001')
         ddoc.save()
         # Ensure that locally cached DesignDocument contains shows dict
-        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'lists', 'shows', 'indexes', 'views'})
+        self.assertEqual(set(ddoc.keys()), {'_id', '_rev', 'lists','options', 'shows', 'indexes', 'views'})
         self.assertEqual(ddoc['_id'], '_design/ddoc001')
         self.assertTrue(ddoc['_rev'].startswith('1-'))
         # Ensure that remotely saved design document does not
         # include a shows sub-document.
         resp = self.client.r_session.get(ddoc.document_url)
         raw_ddoc = response_to_json_dict(resp)
-        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev'})
+        self.assertEqual(set(raw_ddoc.keys()), {'_id', '_rev','options'})
         self.assertEqual(raw_ddoc['_id'], ddoc['_id'])
         self.assertEqual(raw_ddoc['_rev'], ddoc['_rev'])
 

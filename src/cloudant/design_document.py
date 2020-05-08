@@ -50,6 +50,8 @@ class DesignDocument(Document):
 
         if partitioned:
             self.setdefault('options', {'partitioned': True})
+        else:
+            self.setdefault('options', {'partitioned': False})
 
         self._nested_object_names = frozenset(['views', 'indexes', 'lists', 'shows'])
         for prop in self._nested_object_names:
