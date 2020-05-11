@@ -391,6 +391,7 @@ class DesignDocumentTests(UnitTestDbBase):
         # the expected content in each case.
         self.assertEqual(db_copy, ddoc['views']['view002'].pop('dbcopy'))
         self.assertEqual({'epi': {'dbcopy': {'view002': db_copy}}, 'partitioned': False}, ddoc_remote.pop('options'))
+        self.assertEqual({'partitioned': False}, ddoc.pop('options'))
         self.assertEqual(ddoc_remote, ddoc)
         self.assertTrue(ddoc_remote['_rev'].startswith('1-'))
         self.assertEqual(ddoc_remote, {
@@ -1553,7 +1554,8 @@ class DesignDocumentTests(UnitTestDbBase):
             'indexes': {},
             'views': {},
             'lists': {},
-            'shows': {}
+            'shows': {},
+            'options': {'partitioned': False}
         })
         # Document with geospatial point
         geodoc = Document(self.db, 'doc001')
