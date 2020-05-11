@@ -2,5 +2,5 @@ mock==1.3.0
 nose
 sphinx
 sphinx_rtd_theme
-pylint
+pylint==2.5.2
 flaky

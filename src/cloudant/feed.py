@@ -144,7 +144,7 @@ class Feed(object):
         """
         Provides Python3 compatibility.
         """
-        return self.next()
+        return self.next()  # pylint: disable=not-callable
 
     def next(self):
         """
