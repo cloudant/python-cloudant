@@ -1,6 +1,7 @@
 # UNRELEASED
 
 - [FIXED] Set default value for `partitioned` parameter to false when creating a design document.
+- [FIXED] Always set `partitioned` for `create_query_index` requests
 
 # 2.13.0 (2020-04-16)
 
