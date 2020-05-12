@@ -561,7 +561,11 @@ class TextIndexTests(UnitTestDbBase):
         ddoc = DesignDocument(self.db, document_id="unpartitioned_query_index_ddoc")
         ddoc["language"] = "query"
         ddoc.save()
-        index = self.db.create_query_index(design_document_id="_design/unpartitioned_query_index_ddoc", fields=["key"])
+        index = self.db.create_query_index(
+            design_document_id="_design/unpartitioned_query_index_ddoc",
+            fields=["key"],
+            partitioned=False
+        )
         index.create()
         self.assertGreater(len(self.db.get_query_indexes()), 0)
 

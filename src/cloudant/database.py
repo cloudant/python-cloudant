@@ -1100,7 +1100,7 @@ class CouchDatabase(dict):
             design_document_id=None,
             index_name=None,
             index_type='json',
-            partitioned=False,
+            partitioned=None,
             **kwargs
     ):
         """
