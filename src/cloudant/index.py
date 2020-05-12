@@ -154,8 +154,7 @@ class Index(object):
         self._def_check()
         payload['index'] = self._def
 
-        if self._partitioned:
-            payload['partitioned'] = True
+        payload['partitioned'] = bool(self._partitioned)
 
         headers = {'Content-Type': 'application/json'}
         resp = self._r_session.post(
