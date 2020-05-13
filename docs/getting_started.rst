@@ -284,8 +284,12 @@ when constructing the new ``DesignDocument`` class.
     ddoc.add_view('myview','function(doc) { emit(doc.foo, doc.bar); }')
     ddoc.save()
 
-Similarly, to define a partitioned Cloudant Query index you must set the
-``partitioned=True`` optional.
+
+To define a partitioned Cloudant Query index you may set the
+``partitioned=True`` optional, but it is not required as the index will be
+partitioned by default in a partitioned database. Conversely, you must
+set the ``partitioned=False`` optional if you wish to create a global
+(non-partitioned) index in a partitioned database.
 
 .. code-block:: python
 
