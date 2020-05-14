@@ -554,6 +554,21 @@ class TextIndexTests(UnitTestDbBase):
             '<{} \'dict\'>'.format('type' if PY2 else 'class')
         )
 
+    def test_create_unpartitioned_query_index(self):
+        """
+        Test that create_query_index works on an unpartitioned database
+        """
+        ddoc = DesignDocument(self.db, document_id="unpartitioned_query_index_ddoc")
+        ddoc["language"] = "query"
+        ddoc.save()
+        index = self.db.create_query_index(
+            design_document_id="_design/unpartitioned_query_index_ddoc",
+            fields=["key"],
+            partitioned=False
+        )
+        index.create()
+        self.assertGreater(len(self.db.get_query_indexes()), 0)
+
     def test_search_index_via_query(self):
         """
         Test that a created TEXT index will produce expected query results.

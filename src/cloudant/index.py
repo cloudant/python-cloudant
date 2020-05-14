@@ -47,7 +47,7 @@ class Index(object):
         :func:`~cloudant.database.CloudantDatabase.create_query_index`.
     """
 
-    def __init__(self, database, design_document_id=None, name=None, partitioned=False, **kwargs):
+    def __init__(self, database, design_document_id=None, name=None, partitioned=None, **kwargs):
         self._database = database
         self._r_session = self._database.r_session
         self._ddoc_id = design_document_id
@@ -154,8 +154,8 @@ class Index(object):
         self._def_check()
         payload['index'] = self._def
 
-        if self._partitioned:
-            payload['partitioned'] = True
+        if self._partitioned is not None:
+            payload['partitioned'] = bool(self._partitioned)
 
         headers = {'Content-Type': 'application/json'}
         resp = self._r_session.post(
