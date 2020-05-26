@@ -2,6 +2,7 @@
 
 - [FIXED] Set default value for `partitioned` parameter to false when creating a design document.
 - [FIXED] Corrected setting of `partitioned` flag for `create_query_index` requests.
+- [NEW] Override the `get()` method for CouchDatabase, allowing it to retrive remote docuemnts if the `remote` parameter is specified.
 
 # 2.13.0 (2020-04-16)
 
