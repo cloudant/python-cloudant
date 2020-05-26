@@ -705,6 +705,25 @@ class CouchDatabase(dict):
         else:
             raise KeyError(key)
         return doc
+		
+    def get(self, key, remote=False):
+        """
+        Overrides dict's get method. This gets an item from the databse  or cache 
+        like __getitem__, but instead of throwing an exception if the item is not
+        found, it simply returns None.
+        
+        :param bool remote: Dictates whether a request to the server is made to
+            retreive the doc, or if the doc will only be retrieved from the local
+            cache.
+            Defaults to False.
+        """
+        if remote:
+            try:
+                return self.__getitem__(key)
+            except KeyError:
+                return None
+        else:
+            return super(CouchDatabase, self).get(key)
 
     def __contains__(self, key):
         """
