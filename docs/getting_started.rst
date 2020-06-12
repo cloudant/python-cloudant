@@ -111,6 +111,13 @@ You can easily connect to your Cloudant account using an IAM API key:
     # Authenticate using an IAM API key
     client = Cloudant.iam(ACCOUNT_NAME, API_KEY, connect=True)
 
+If you need to authenticate to a server outside of the `cloudant.com` domain, you can use the `url` parameter:
+
+.. code-block:: python
+
+    # Authenticate using an IAM API key to an account outside of the cloudant.com domain
+    client = Cloudant.iam(None, API_KEY, url='https://private.endpoint.example', connect=True)
+
 
 ****************
 Resource sharing
