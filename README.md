@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/cloudant/python-cloudant.svg?branch=master)](https://travis-ci.org/cloudant/python-cloudant)
 [![Readthedocs](https://readthedocs.org/projects/pip/badge/)](http://python-cloudant.readthedocs.io)
-[![Compatibility](https://img.shields.io/badge/python-2.7%2C%203.5-blue.svg)](http://python-cloudant.readthedocs.io/en/latest/compatibility.html)
+[![Compatibility](https://img.shields.io/badge/python-3.5-blue.svg)](http://python-cloudant.readthedocs.io/en/latest/compatibility.html)
 [![pypi](https://img.shields.io/pypi/v/cloudant.svg)](https://pypi.python.org/pypi/cloudant)
 
 This is the official Cloudant library for Python.
