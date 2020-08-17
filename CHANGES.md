@@ -2,6 +2,7 @@
 
 - [FIXED] Set default value for `partitioned` parameter to false when creating a design document.
 - [FIXED] Corrected setting of `partitioned` flag for `create_query_index` requests.
+- [FIXED] Added a workaround for installation on Python 2.
 
 # 2.13.0 (2020-04-16)
 
