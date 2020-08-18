@@ -1,4 +1,5 @@
 # UNRELEASED
+- [REMOVED] Removed Python 2 compatibility from the supported environments.
 
 # 2.14.0 (2020-08-17)
 
