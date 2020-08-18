@@ -19,6 +19,7 @@ Cloudant / CouchDB Client Library
 
 """
 
+from io import open
 from os import path
 from setuptools import setup, find_packages
 

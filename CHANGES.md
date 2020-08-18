@@ -1,8 +1,11 @@
 # UNRELEASED
+- [REMOVED] Removed Python 2 compatibility from the supported environments.
+
+# 2.14.0 (2020-08-17)
 
 - [FIXED] Set default value for `partitioned` parameter to false when creating a design document.
 - [FIXED] Corrected setting of `partitioned` flag for `create_query_index` requests.
-- [REMOVED] Removed Python 2 compatibility from the supported environments.
+- [FIXED] Added a workaround for installation on Python 2.
 
 # 2.13.0 (2020-04-16)
 
