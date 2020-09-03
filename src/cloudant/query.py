@@ -69,8 +69,7 @@ class Query(dict):
     :param CloudantDatabase database: A Cloudant database instance used by the
         Query.
     :param str bookmark: A string that enables you to specify which page of
-        results you require. Only valid for queries using indexes of type
-        *text*.
+        results you require.
     :param list fields: A list of fields to be returned by the query.
     :param int limit: Maximum number of results returned.
     :param int r: Read quorum needed for the result.  Each document is read from
@@ -141,8 +140,7 @@ class Query(dict):
         and set ``raw_result=True`` instead.
 
         :param str bookmark: A string that enables you to specify which page of
-            results you require. Only valid for queries using indexes of type
-            *text*.
+            results you require.
         :param list fields: A list of fields to be returned by the query.
         :param int limit: Maximum number of results returned.
         :param int r: Read quorum needed for the result.  Each document is read
@@ -204,8 +202,7 @@ class Query(dict):
                 data = rslt[100:200]
 
         :param str bookmark: A string that enables you to specify which page of
-            results you require. Only valid for queries using indexes of type
-            *text*.
+            results you require.
         :param list fields: A list of fields to be returned by the query.
         :param int page_size: Sets the page size for result iteration.  Default
             is 100.

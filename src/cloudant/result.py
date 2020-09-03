@@ -488,8 +488,7 @@ class QueryResult(Result):
     :param query: A reference to the query callable that returns
         the JSON content result to be wrapped.
     :param str bookmark: A string that enables you to specify which page of
-        results you require. Only valid for queries using indexes of type
-        *text*.
+        results you require.
     :param list fields: A list of fields to be returned by the query.
     :param int page_size: Sets the page size for result iteration.  Default
         is 100.
