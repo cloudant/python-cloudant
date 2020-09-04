@@ -1242,8 +1242,7 @@ class CouchDatabase(dict):
             wrapped in a QueryResult or if the response JSON is returned.
             Defaults to False.
         :param str bookmark: A string that enables you to specify which page of
-            results you require. Only valid for queries using indexes of type
-            *text*.
+            results you require.
         :param int limit: Maximum number of results returned.  Only valid if
             used with ``raw_result=True``.
         :param int page_size: Sets the page size for result iteration.  Default
