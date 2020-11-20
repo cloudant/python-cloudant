@@ -193,7 +193,12 @@ class Replicator(object):
             repl_doc, state = update_state()
             if repl_doc:
                 yield repl_doc
-            if state is not None and state in ['error', 'completed']:
+            # This is a little awkward, since 2.1 the terminal states are
+            # "failed" and "completed", so those should be the exit states, but
+            # for backwards compatibility with older versions "error" is also
+            # needed. The code has always exited for "error" state even long
+            # after 2.1 was available so that behaviour is retained.
+            if state is not None and state in ['error', 'failed', 'completed']:
                 return
 
             # Now listen on changes feed for the state
@@ -202,7 +207,8 @@ class Replicator(object):
                     repl_doc, state = update_state()
                     if repl_doc is not None:
                         yield repl_doc
-                    if state is not None and state in ['error', 'completed']:
+                    # See note about these states
+                    if state is not None and state in ['error', 'failed', 'completed']:
                         return
 
     def stop_replication(self, repl_id):
