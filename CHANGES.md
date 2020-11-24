@@ -1,6 +1,7 @@
 # UNRELEASED
 - [REMOVED] Removed Python 2 compatibility from the supported environments.
 - [FIXED] Fixed the documentation for `bookmarks`.
+- [FIXED] Also exit `follow_replication` for `failed` state.
 
 # 2.14.0 (2020-08-17)
 

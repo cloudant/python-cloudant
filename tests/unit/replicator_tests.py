@@ -322,12 +322,14 @@ class ReplicatorTests(UnitTestDbBase):
         )
         self.replication_ids.append(repl_id)
         repl_state = None
-        valid_states = ['completed', 'error', 'triggered', 'running', None]
+        # note triggered is for versions prior to 2.1
+        valid_states = ['completed', 'error', 'initializing', 'triggered', 'pending', 'running', 'failed', 'crashing', None]
         finished = False
+        # Wait for 5 minutes or a terminal replication state
         for _ in range(300):
             repl_state = self.replicator.replication_state(repl_id)
             self.assertTrue(repl_state in valid_states)
-            if repl_state in ('error', 'completed'):
+            if repl_state in ('error', 'failed', 'completed'):
                 finished = True
                 break
             time.sleep(1)
@@ -407,7 +409,8 @@ class ReplicatorTests(UnitTestDbBase):
             repl_id
         )
         self.replication_ids.append(repl_id)
-        valid_states = ('completed', 'error', 'triggered', 'running', None)
+        # note triggered is for versions prior to 2.1
+        valid_states = ['completed', 'error', 'initializing', 'triggered', 'pending', 'running', 'failed', 'crashing', None]
         repl_states = []
         if 'scheduler' in self.client.features():
             state_key = 'state'
