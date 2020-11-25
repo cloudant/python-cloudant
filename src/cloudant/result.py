@@ -397,9 +397,10 @@ class Result(object):
 
                 # if we are in a view, keys could be duplicate so we
                 # need to start from the right docid
-                if last['id']:
+                last_doc_id = last.get('id')
+                if last_doc_id is not None:
                     response = self._call(startkey=last['key'],
-                                          startkey_docid=last['id'])
+                                          startkey_docid=last_doc_id)
                 # reduce result keys are unique by definition
                 else:
                     response = self._call(startkey=last['key'])

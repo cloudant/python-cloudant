@@ -408,6 +408,34 @@ class DatabaseTests(UnitTestDbBase):
         self.assertIsInstance(rslt, Result)
         self.assertEqual(rslt[:1], rslt['julia099'])
 
+    def test_retrieve_grouped_view_result_with_page_size(self):
+        """
+        Test retrieving Result wrapped output from a design document grouped view
+        that uses a custom page size
+
+        The view used here along with group=True will generate rows of
+        data where each key will be grouped into groups of 2.  Such as:
+        {'key': 0, 'value': 2},
+        {'key': 1, 'value': 2},
+        ...
+        """
+        map_func = 'function(doc) {\n emit(Math.floor(doc.age / 2), 1); \n}'
+        data = {'_id': '_design/ddoc01','views': {'view01': {"map": map_func, "reduce": "_count"}}}
+        self.db.create_document(data)
+        self.populate_db_with_documents(5)
+
+        rslt = self.db.get_view_result(
+            '_design/ddoc01',
+            'view01',
+            group=True,
+            page_size=1)
+        self.assertIsInstance(rslt, Result)
+        i = 0
+        for row in rslt:
+            self.assertIsNotNone(row)
+            self.assertEqual(row['key'], i)
+            i += 1
+
     def test_retrieve_raw_view_results(self):
         """
         Test retrieving raw output from a design document view
