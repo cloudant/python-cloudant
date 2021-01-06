@@ -1,13 +1,13 @@
 # Migrating to the `cloudant-python-sdk` library 
-This document is to assist in migrating from the legacy `python-cloudant` to the newly supported `cloudant-python-sdk`.
+This document is to assist in migrating from the legacy `python-cloudant` to the newly supported [`cloudant-python-sdk`](https://github.com/IBM/cloudant-python-sdk).
 
 ## Initializing the client connection
 There are several ways to create a client connection in `cloudant-python-sdk`:
-1. [Enviornment variables](https://github.com/IBM/cloudant-python-sdk#authenticate-with-environment-variables)
-2. [External configuration file](https://github.com/IBM/cloudant-python-sdk#authenticate-with-external-configuration)
-3. [Programmatically](https://github.com/IBM/cloudant-python-sdk#authenticate-programmatically)
+1. [Enviornment variables](https://github.com/IBM/cloudant-python-sdk#authentication-with-environment-variables)
+2. [External configuration file](https://github.com/IBM/cloudant-python-sdk#authentication-with-external-configuration)
+3. [Programmatically](https://github.com/IBM/cloudant-python-sdk#programmatic-authentication)
 
-[See the README](https://github.com/IBM/cloudant-python-sdk#1-retrieve-information-from-an-existing-database) for code examples on using enviornment variables.
+[See the README](https://github.com/IBM/cloudant-python-sdk#code-examples) for code examples on using enviornment variables.
 
 ## Other differences
 1. The `cloudant-python-sdk` library does not support local dictionary caching of database and document objects.
@@ -15,7 +15,7 @@ There are several ways to create a client connection in `cloudant-python-sdk`:
 1. Cloudant View, Search, and Query (aka `_find` endpoint) operations will contain raw JSON response content.  
 
 ## Request mapping
-Here's a short list of which new functions to use for common operations:
+Here's a list of the top 5 most frequently used `python-cloudant` operations and the `cloudant-python-sdk` equivalent API operation documentation link:
 
 | `python-cloudant` operation           | `cloudant-python-sdk` API operation documentation link |
 |---------------------------------------|---------------------------------|
@@ -26,7 +26,7 @@ Here's a short list of which new functions to use for common operations:
 |`Document('db_name', 'docid').save()`  |[`putDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#putdocument)|
 
 
-[A more complete table](#reference-table) that links `cloudant-python-sdk` API operations with `python-cloudant` functions is provided at the end of this guide.
+[A table](#reference-table) with the whole list of operations is provided at the end of this guide.
 
 The beta SDKs are generated from a more complete API spec and provide a significant number of operations that did not exist in the legacy libraries. See [the IBM Cloud API Documentation](https://cloud.ibm.com/apidocs/cloudant) to review request parameter and body options, code examples, and additional details for every endpoint.
 
@@ -34,6 +34,10 @@ The beta SDKs are generated from a more complete API spec and provide a signific
 There's an [outline of known issues](https://github.com/IBM/cloudant-python-sdk/blob/master/KNOWN_ISSUES.md) in the `cloudant-python-sdk` repository.
 
 ## Reference table
+The table below contains a list of `python-cloudant` functions and the `cloudant-python-sdk` equivalent API operation documentation link.  The `cloudant-python-sdk` operation documentation link will contain the new function in a code sample e.g. `getServerInformation` link will contain a code example with `get_server_information()`.
+
+**Note:** There are many API operations included in the new `cloudant-python-sdk` that are not available in the `python-cloudant` library. The [API documentation](https://cloud.ibm.com/apidocs/cloudant?code=python) contains the full list of operations.
+
 | `python-cloudant` function | `cloudant-python-sdk` API operation documentation link |
 |-----------------|---------------------|
 |metadata()|[getServerInformation](https://cloud.ibm.com/apidocs/cloudant?code=python#getserverinformation)|
