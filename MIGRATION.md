@@ -1,5 +1,5 @@
 # Migrating to the `cloudant-python-sdk` library 
-This document is to assist in migrating from the legacy `python-cloudant` to the newly supported [`cloudant-python-sdk`](https://github.com/IBM/cloudant-python-sdk).
+This document is to assist in migrating from the `python-cloudant` (module: `cloudant`) to the newly supported [`cloudant-python-sdk`](https://github.com/IBM/cloudant-python-sdk) (module: `ibmcloudant`).
 
 ## Initializing the client connection
 There are several ways to create a client connection in `cloudant-python-sdk`:
