@@ -17,6 +17,7 @@ This is the official Cloudant library for Python.
     * [Using in Other Projects](#using-in-other-projects)
     * [License](#license)
     * [Issues](#issues)
+* [Migrating to `cloudant-python-sdk` library](#migrating-to-cloudant-python-sdk-library)
 
 ## Installation and Usage
 
@@ -87,3 +88,7 @@ to see if the problem has already been reported. Note that the default search
 includes only open issues, but it may already have been closed.
 * Cloudant customers should contact Cloudant support for urgent issues.
 * When opening a new issue [here in github](../../issues) please complete the template fully.
+
+## Migrating to `cloudant-python-sdk` library
+We have a newly supported Cloudant Python SDK named [cloudant-python-sdk](https://github.com/IBM/cloudant-python-sdk).
+For advice on migrating from this module see [MIGRATION.md](MIGRATION.md).
