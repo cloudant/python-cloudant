@@ -28,7 +28,7 @@ Here's a list of the top 5 most frequently used `python-cloudant` operations and
 
 [A table](#reference-table) with the whole list of operations is provided at the end of this guide.
 
-The beta SDKs are generated from a more complete API spec and provide a significant number of operations that did not exist in the legacy libraries. See [the IBM Cloud API Documentation](https://cloud.ibm.com/apidocs/cloudant) to review request parameter and body options, code examples, and additional details for every endpoint.
+The `cloudant-python-sdk` library is generated from a more complete API spec and provides a significant number of operations that do not exist in `python-cloudant`. See [the IBM Cloud API Documentation](https://cloud.ibm.com/apidocs/cloudant) to review request parameter and body options, code examples, and additional details for every endpoint.
 
 ## Known Issues
 There's an [outline of known issues](https://github.com/IBM/cloudant-python-sdk/blob/master/KNOWN_ISSUES.md) in the `cloudant-python-sdk` repository.
