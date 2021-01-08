@@ -12,7 +12,7 @@ There are several ways to create a client connection in `cloudant-python-sdk`:
 ## Other differences
 1. The `cloudant-python-sdk` library does not support local dictionary caching of database and document objects.
 1. There's no context manager feature in `cloudant-python-sdk`.  You'll need to create the client, connect to the database, fetch and save a document as separate commands.
-1. Cloudant View, Search, and Query (aka `_find` endpoint) operations will contain raw JSON response content.  
+1. In `cloudant-python-sdk` View, Search, and Query (aka `_find` endpoint) operation responses contain raw JSON content like using `raw_result=True` in `python-cloudant`.
 
 ## Request mapping
 Here's a list of the top 5 most frequently used `python-cloudant` operations and the `cloudant-python-sdk` equivalent API operation documentation link:
