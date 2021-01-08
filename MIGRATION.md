@@ -3,7 +3,7 @@ This document is to assist in migrating from the `python-cloudant` (module: `clo
 
 ## Initializing the client connection
 There are several ways to create a client connection in `cloudant-python-sdk`:
-1. [Enviornment variables](https://github.com/IBM/cloudant-python-sdk#authentication-with-environment-variables)
+1. [Environment variables](https://github.com/IBM/cloudant-python-sdk#authentication-with-environment-variables)
 2. [External configuration file](https://github.com/IBM/cloudant-python-sdk#authentication-with-external-configuration)
 3. [Programmatically](https://github.com/IBM/cloudant-python-sdk#programmatic-authentication)
 
