@@ -7,7 +7,7 @@ There are several ways to create a client connection in `cloudant-python-sdk`:
 2. [External configuration file](https://github.com/IBM/cloudant-python-sdk#authentication-with-external-configuration)
 3. [Programmatically](https://github.com/IBM/cloudant-python-sdk#programmatic-authentication)
 
-[See the README](https://github.com/IBM/cloudant-python-sdk#code-examples) for code examples on using enviornment variables.
+[See the README](https://github.com/IBM/cloudant-python-sdk#code-examples) for code examples on using environment variables.
 
 ## Other differences
 1. The `cloudant-python-sdk` library does not support local dictionary caching of database and document objects.
