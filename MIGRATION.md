@@ -70,8 +70,9 @@ The table below contains a list of `python-cloudant` functions and the `cloudant
 |`db.get_query_indexes()`|[getIndexesInformation](https://cloud.ibm.com/apidocs/cloudant?code=python#getindexesinformation)|
 |`db.create_query_index()`|[postIndex](https://cloud.ibm.com/apidocs/cloudant?code=python#postindex)|
 |`db.delete_query_index()`|[deleteIndex](https://cloud.ibm.com/apidocs/cloudant?code=python#deleteindex)|
-|`Document(db, 'docid').delete()`|[getLocalDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#getlocaldocument)|
-|`Document(db, 'docid').create()`|[putLocalDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#putlocaldocument)|
+|`Document(db, '_local/docid').fetch()`|[getLocalDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#getlocaldocument)|
+|`Document(db, '_local/docid').save()`|[putLocalDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#putlocaldocument)|
+|`Document(db, '_local/docid').delete()`|[deleteLocalDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#deletelocaldocument)|
 |`db.missing_revisions()`|[postMissingRevs](https://cloud.ibm.com/apidocs/cloudant?code=python#postmissingrevs)|
 |`db.partition_metadata()`|[getPartitionInformation](https://cloud.ibm.com/apidocs/cloudant?code=python#getpartitioninformation)|
 |`db.partitioned_all_docs()`|[postPartitionAllDocs](https://cloud.ibm.com/apidocs/cloudant?code=python#postpartitionalldocs)|
@@ -82,7 +83,7 @@ The table below contains a list of `python-cloudant` functions and the `cloudant
 |`db.get_security_document()/db.security_document()`|[getSecurity](https://cloud.ibm.com/apidocs/cloudant?code=python#getsecurity)|
 |`db.share_database()`|[putSecurity](https://cloud.ibm.com/apidocs/cloudant?code=python#putsecurity)|
 |`db.shards()`|[getShardsInformation](https://cloud.ibm.com/apidocs/cloudant?code=python#getshardsinformation)|
-|`Document(db, 'docid').delete()`|[getLocalDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#getlocaldocument)|
+|`Document(db, 'docid').delete()`|[deleteDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#deletedocument)|
 |`Document(db, 'docid').fetch()`|[getDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#getdocument)|
 |`Document(db, 'docid').exists()`|[headDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#headdocument)|
 |`Document(db, 'docid').save()`|[putDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#putdocument)|
