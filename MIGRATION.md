@@ -1,4 +1,4 @@
-# Migrating to the `cloudant-python-sdk` library 
+# Migrating to the `cloudant-python-sdk` library
 This document is to assist in migrating from the `python-cloudant` (module: `cloudant`) to the newly supported [`cloudant-python-sdk`](https://github.com/IBM/cloudant-python-sdk) (module: `ibmcloudant`).
 
 ## Initializing the client connection
@@ -11,11 +11,11 @@ There are several ways to create a client connection in `cloudant-python-sdk`:
 
 ## Other differences
 1. The `cloudant-python-sdk` library does not support local dictionary caching of database and document objects.
-1. There are no context managers in `cloudant-python-sdk`. To reproduce the behaviour of the `python-cloudant` 
-context managers in `cloudant-python-sdk` users need to explicitly call the specific operations against the 
-remote HTTP API. For example, in the case of the document context manager, this would mean doing both a `get_document` 
+1. There are no context managers in `cloudant-python-sdk`. To reproduce the behaviour of the `python-cloudant`
+context managers in `cloudant-python-sdk` users need to explicitly call the specific operations against the
+remote HTTP API. For example, in the case of the document context manager, this would mean doing both a `get_document`
 to fetch and a `put_document` to save.
-1. In `cloudant-python-sdk` View, Search, and Query (aka `_find` endpoint) operation responses contain raw JSON 
+1. In `cloudant-python-sdk` View, Search, and Query (aka `_find` endpoint) operation responses contain raw JSON
 content like using `raw_result=True` in `python-cloudant`.
 
 ## Request mapping
@@ -47,8 +47,11 @@ The table below contains a list of `python-cloudant` functions and the `cloudant
 |`metadata()`|[getServerInformation](https://cloud.ibm.com/apidocs/cloudant?code=python#getserverinformation)|
 |`all_dbs()`|[getAllDbs](https://cloud.ibm.com/apidocs/cloudant?code=python#getalldbs)|
 |`db_updates()/infinite_db_updates()`|[getDbUpdates](https://cloud.ibm.com/apidocs/cloudant?code=python#getdbupdates)|
-|`Replicator.create_replication()`|[postReplicate](https://cloud.ibm.com/apidocs/cloudant?code=python#postreplicate)|
+|`Replicator.stop_replication()`|[deleteReplicationDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#deletereplicationdocument)|
+|`Replicator.replication_state()`|[getReplicationDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#getreplicationdocument)|
+|`Replicator.create_replication()`|[putReplicationDocument](https://cloud.ibm.com/apidocs/cloudant?code=#putreplicationdocument)|
 |`Scheduler.get_doc()`|[getSchedulerDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#getschedulerdocument)|
+|`Scheduler.list_docs()`|[getSchedulerDocs](https://cloud.ibm.com/apidocs/cloudant?code=python#getschedulerdocs)|
 |`Scheduler.list_jobs()`|[getSchedulerJobs](https://cloud.ibm.com/apidocs/cloudant?code=python#getschedulerjobs)|
 |`session()`|[getSessionInformation](https://cloud.ibm.com/apidocs/cloudant?code=python#getsessioninformation)|
 |`uuids()`|[getUuids](https://cloud.ibm.com/apidocs/cloudant?code=python#getuuids)|
