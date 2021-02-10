@@ -51,6 +51,7 @@ The table below contains a list of `python-cloudant` functions and the `cloudant
 |`Replicator.replication_state()`|[getReplicationDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#getreplicationdocument)|
 |`Replicator.create_replication()`|[putReplicationDocument](https://cloud.ibm.com/apidocs/cloudant?code=#putreplicationdocument)|
 |`Scheduler.get_doc()`|[getSchedulerDocument](https://cloud.ibm.com/apidocs/cloudant?code=python#getschedulerdocument)|
+|`Scheduler.list_docs()`|[getSchedulerDocs](https://cloud.ibm.com/apidocs/cloudant?code=python#getschedulerdocs)|
 |`Scheduler.list_jobs()`|[getSchedulerJobs](https://cloud.ibm.com/apidocs/cloudant?code=python#getschedulerjobs)|
 |`session()`|[getSessionInformation](https://cloud.ibm.com/apidocs/cloudant?code=python#getsessioninformation)|
 |`uuids()`|[getUuids](https://cloud.ibm.com/apidocs/cloudant?code=python#getuuids)|
