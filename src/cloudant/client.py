@@ -63,6 +63,9 @@ class CouchDB(dict):
     :param bool auto_renew: Keyword argument, if set to True performs
         automatic renewal of expired session authentication settings.
         Default is False.
+    :param bool keep_alive: Keyword argument, if set to False add
+        header Connection: Close to session header.
+        Default is True.
     :param float timeout: Timeout in seconds (use float for milliseconds, for
         example 0.1 for 100 ms) for connecting to and reading bytes from the
         server.  If a single value is provided it will be applied to both the
@@ -97,6 +100,7 @@ class CouchDB(dict):
         self._timeout = kwargs.get('timeout', None)
         self.r_session = None
         self._auto_renew = kwargs.get('auto_renew', False)
+        self._keep_alive = kwargs.get('keep_alive', True)
         self._use_basic_auth = kwargs.get('use_basic_auth', False)
         self._use_iam = kwargs.get('use_iam', False)
         self._iam_client_id = kwargs.get('iam_client_id', None)
@@ -180,6 +184,9 @@ class CouchDB(dict):
                 auto_renew=self._auto_renew,
                 timeout=self._timeout
             )
+        # If a keep alive is false, we add a new custom header
+        if not self._keep_alive:
+            self.r_session.headers.update({'Connection': 'close'})
 
         # If a Transport Adapter was supplied add it to the session
         if self.adapter is not None:
