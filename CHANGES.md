@@ -3,6 +3,7 @@
 - [FIXED] Fixed the documentation for `bookmarks`.
 - [FIXED] Also exit `follow_replication` for `failed` state.
 - [FIXED] Fixed result paging for grouped view queries.
+- [FIXED] Replaced a depricated method `method_whitelist` with `allowed_methods`
 
 # 2.14.0 (2020-08-17)
 
