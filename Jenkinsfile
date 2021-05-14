@@ -1,7 +1,7 @@
 def getEnvForSuite(suiteName) {
   // Base environment variables
   def envVars = [
-    "CLOUDANT_ACCOUNT=$DB_USER",
+    "DB_URL=${SDKS_TEST_SERVER_URL}",
     "RUN_CLOUDANT_TESTS=1",
     "SKIP_DB_UPDATES=1" // Disable pending resolution of case 71610
   ]
@@ -29,8 +29,8 @@ def setupPythonAndTest(pythonVersion, testSuite) {
     // Unstash the source on this node
     unstash name: 'source'
     // Set up the environment and test
-    withCredentials([usernamePassword(credentialsId: 'clientlibs-test', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD'),
-                     string(credentialsId: 'clientlibs-test-iam', variable: 'DB_IAM_API_KEY')]) {
+    withCredentials([usernamePassword(credentialsId: 'testServerLegacy', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD'),
+                     string(credentialsId: 'testServerIamApiKey', variable: 'DB_IAM_API_KEY')]) {
       withEnv(getEnvForSuite("${testSuite}")) {
         try {
           sh """
