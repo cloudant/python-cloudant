@@ -13,6 +13,7 @@ def getEnvForSuite(suiteName) {
     case 'iam':
       // Setting IAM_API_KEY forces tests to run using an IAM enabled client.
       envVars.add("IAM_API_KEY=$DB_IAM_API_KEY")
+      envVars.add("IAM_TOKEN_URL=$SDKS_TEST_IAM_URL")
       break
     case 'cookie':
     case 'simplejson':
