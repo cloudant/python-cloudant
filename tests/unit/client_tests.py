@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2020 IBM Corp. All rights reserved.
+# Copyright (C) 2015, 2021 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import os
 import sys
 import unittest
 from time import sleep
+from urllib.parse import urlparse
 
 import mock
 import requests
@@ -213,7 +214,7 @@ class ClientTests(UnitTestDbBase):
     @skip_if_not_cookie_auth
     def test_session(self):
         """
-        Test getting session information.  
+        Test getting session information.
         Session info is None if CouchDB Admin Party mode was selected.
         """
         try:
@@ -563,7 +564,7 @@ class ClientTests(UnitTestDbBase):
             self.client.connect()
             # Default returns None
             self.assertIsNone(self.client.get('no_such_db'))
-            # Creates the database remotely and adds it to the 
+            # Creates the database remotely and adds it to the
             # client database cache
             db = self.client.create_database(dbname)
             # Locally cached database object is returned
@@ -702,7 +703,7 @@ class CloudantClientTests(UnitTestDbBase):
         Test that the cloudant context helper works as expected.
         """
         try:
-            with cloudant(self.user, self.pwd, account=self.account) as c:
+            with cloudant(self.user, self.pwd, url=self.url) as c:
                 self.assertIsInstance(c, Cloudant)
                 self.assertIsInstance(c.r_session, requests.Session)
         except Exception as err:
@@ -718,7 +719,7 @@ class CloudantClientTests(UnitTestDbBase):
           'credentials': {
             'username': self.user,
             'password': self.pwd,
-            'host': '{0}.cloudant.com'.format(self.account),
+            'host': urlparse(self.url).hostname,
             'port': 443,
             'url': self.url
           },
@@ -744,7 +745,7 @@ class CloudantClientTests(UnitTestDbBase):
           'credentials': {
             'apikey': self.iam_api_key,
             'username': self.user,
-            'host': '{0}.cloudant.com'.format(self.account),
+            'host': urlparse(self.url).hostname,
             'port': 443,
             'url': self.url
           },
@@ -766,7 +767,7 @@ class CloudantClientTests(UnitTestDbBase):
         instance_name = 'Cloudant NoSQL DB-lv'
         vcap_services = {'cloudantNoSQLDB': [{
           'credentials': {
-            'host': '{0}.cloudant.com'.format(self.account),
+            'host': urlparse(self.url).hostname,
             'port': 443,
             'url': self.url
           },
@@ -795,7 +796,7 @@ class CloudantClientTests(UnitTestDbBase):
           'credentials': {
             'username': self.user,
             'password': self.pwd,
-            'host': '{0}.cloudant.com'.format(self.account),
+            'host': urlparse(self.url).hostname,
             'port': 443,
             'url': self.url
           },
@@ -818,10 +819,10 @@ class CloudantClientTests(UnitTestDbBase):
         """
         # Ensure that the client is new
         del self.client
-        self.client = Cloudant(self.user, self.pwd, account=self.account)
+        self.client = Cloudant('user', 'pass', account='foo')
         self.assertEqual(
             self.client.server_url,
-            'https://{0}.cloudant.com'.format(self.account)
+            'https://foo.cloudant.com'
             )
 
     @skip_if_not_cookie_auth
@@ -835,7 +836,7 @@ class CloudantClientTests(UnitTestDbBase):
             'credentials': {
                 'username': self.user,
                 'password': self.pwd,
-                'host': '{0}.cloudant.com'.format(self.account),
+                'host': urlparse(self.url).hostname,
                 'port': 443,
                 'url': self.url
             },
@@ -870,7 +871,7 @@ class CloudantClientTests(UnitTestDbBase):
             'credentials': {
                 'apikey': self.iam_api_key,
                 'username': self.user,
-                'host': '{0}.cloudant.com'.format(self.account),
+                'host': urlparse(self.url).hostname,
                 'port': 443
             },
             'name': instance_name
@@ -901,7 +902,7 @@ class CloudantClientTests(UnitTestDbBase):
             'credentials': {
                 'username': self.user,
                 'password': self.pwd,
-                'host': '{0}.cloudant.com'.format(self.account),
+                'host': urlparse(self.url).hostname,
                 'port': 443,
                 'url': self.url
             },
@@ -934,7 +935,7 @@ class CloudantClientTests(UnitTestDbBase):
             {
                 'credentials': {
                     'apikey': '1234api',
-                    'host': '{0}.cloudant.com'.format(self.account),
+                    'host': urlparse(self.url).hostname,
                     'port': 443,
                     'url': self.url
                 },
@@ -973,10 +974,11 @@ class CloudantClientTests(UnitTestDbBase):
         """
         try:
             self.client.connect()
-            self.assertEqual(
-                self.client.r_session.headers['X-Cloudant-User'],
-                self.account
-                )
+            if (self.account):
+                self.assertEqual(
+                    self.client.r_session.headers['X-Cloudant-User'],
+                    self.account
+                    )
             agent = self.client.r_session.headers.get('User-Agent')
             ua_parts = agent.split('/')
             self.assertEqual(len(ua_parts), 6)

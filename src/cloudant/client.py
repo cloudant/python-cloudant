@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015, 2019 IBM Corp. All rights reserved.
+# Copyright (c) 2015, 2021 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -853,7 +853,7 @@ class Cloudant(CouchDB):
             raise CloudantClientException(103)
 
         if hasattr(service, 'iam_api_key'):
-            return Cloudant.iam(service.username,
+            return Cloudant.iam(None,
                                 service.iam_api_key,
                                 url=service.url,
                                 **kwargs)
@@ -867,7 +867,7 @@ class Cloudant(CouchDB):
         """
         Create a Cloudant client that uses IAM authentication.
 
-        :param account_name: Cloudant account name.
+        :param account_name: Cloudant account name; or use None and a url kwarg.
         :param api_key: IAM authentication API key.
         """
         return cls(None,

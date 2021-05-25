@@ -3,6 +3,8 @@
 - [FIXED] Fixed the documentation for `bookmarks`.
 - [FIXED] Also exit `follow_replication` for `failed` state.
 - [FIXED] Fixed result paging for grouped view queries.
+- [FIXED] Incorrect use of username as account name in `Cloudant.bluemix()`.
+- [IMPROVED] Documented use of None account name and url override for `Cloudant.iam()`.
 
 # 2.14.0 (2020-08-17)
 
