@@ -36,7 +36,7 @@ class PythonToCouchTests(unittest.TestCase):
             {'descending': 'true'}
         )
         self.assertEqual(
-            python_to_couch({'descending': False}), 
+            python_to_couch({'descending': False}),
             {'descending': 'false'}
         )
 
@@ -53,6 +53,12 @@ class PythonToCouchTests(unittest.TestCase):
         )
         self.assertEqual(
             python_to_couch({'endkey': ['foo', 10]}),
+            {'endkey': '["foo", 10]'}
+        )
+
+        # Test with custom encoder
+        self.assertEqual(
+            python_to_couch({'endkey': ['foo', 10]}, "AEncoder"),
             {'endkey': '["foo", 10]'}
         )
 

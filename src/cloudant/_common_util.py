@@ -29,6 +29,8 @@ try:
 except ImportError:
     from collections import Sequence
 
+ENCODER = None
+
 # Library Constants
 
 USER_AGENT = '/'.join([
@@ -76,12 +78,12 @@ RESULT_ARG_TYPES = {
 
 # pylint: disable=unnecessary-lambda
 TYPE_CONVERTERS = {
-    STRTYPE: lambda x: json.dumps(x),
-    str: lambda x: json.dumps(x),
-    UNITYPE: lambda x: json.dumps(x),
-    Sequence: lambda x: json.dumps(list(x)),
-    list: lambda x: json.dumps(x),
-    tuple: lambda x: json.dumps(list(x)),
+    STRTYPE: lambda x: json.dumps(x, cls=ENCODER),
+    str: lambda x: json.dumps(x, cls=ENCODER),
+    UNITYPE: lambda x: json.dumps(x, cls=ENCODER),
+    Sequence: lambda x: json.dumps(list(x), cls=ENCODER),
+    list: lambda x: json.dumps(x, cls=ENCODER),
+    tuple: lambda x: json.dumps(list(x), cls=ENCODER),
     int: lambda x: x,
     LONGTYPE: lambda x: x,
     bool: lambda x: 'true' if x else 'false',
@@ -160,7 +162,7 @@ def feed_arg_types(feed_type):
         return _COUCH_DB_UPDATES_ARG_TYPES
     return _CHANGES_ARG_TYPES
 
-def python_to_couch(options):
+def python_to_couch(options, encoder=None):
     """
     Translates query options from python style options into CouchDB/Cloudant
     query options.  For example ``{'include_docs': True}`` will
@@ -177,7 +179,7 @@ def python_to_couch(options):
     translation = dict()
     for key, val in iteritems_(options):
         py_to_couch_validate(key, val)
-        translation.update(_py_to_couch_translate(key, val))
+        translation.update(_py_to_couch_translate(key, val, encoder))
     return translation
 
 def py_to_couch_validate(key, val):
@@ -201,7 +203,7 @@ def py_to_couch_validate(key, val):
         if val not in ('ok', 'update_after'):
             raise CloudantArgumentError(135, val)
 
-def _py_to_couch_translate(key, val):
+def _py_to_couch_translate(key, val, encoder=None):
     """
     Performs the conversion of the Python parameter value to its CouchDB
     equivalent.
@@ -211,6 +213,7 @@ def _py_to_couch_translate(key, val):
             return {key: val}
         if val is None:
             return {key: None}
+        ENCODER = encoder
         arg_converter = TYPE_CONVERTERS.get(type(val))
         return {key: arg_converter(val)}
     except Exception as ex:
@@ -249,7 +252,7 @@ def get_docs(r_session, url, encoder=None, headers=None, **params):
     keys = None
     if keys_list is not None:
         keys = json.dumps({'keys': keys_list}, cls=encoder)
-    f_params = python_to_couch(params)
+    f_params = python_to_couch(params, encoder)
     resp = None
     if keys is not None:
         # If we're using POST we are sending JSON so add the header
