@@ -29,8 +29,6 @@ try:
 except ImportError:
     from collections import Sequence
 
-ENCODER = None
-
 # Library Constants
 
 USER_AGENT = '/'.join([
@@ -78,12 +76,12 @@ RESULT_ARG_TYPES = {
 
 # pylint: disable=unnecessary-lambda
 TYPE_CONVERTERS = {
-    STRTYPE: lambda x: json.dumps(x, cls=ENCODER),
-    str: lambda x: json.dumps(x, cls=ENCODER),
-    UNITYPE: lambda x: json.dumps(x, cls=ENCODER),
-    Sequence: lambda x: json.dumps(list(x), cls=ENCODER),
-    list: lambda x: json.dumps(x, cls=ENCODER),
-    tuple: lambda x: json.dumps(list(x), cls=ENCODER),
+    STRTYPE: lambda x: json.dumps(x),
+    str: lambda x: json.dumps(x),
+    UNITYPE: lambda x: json.dumps(x),
+    Sequence: lambda x: json.dumps(list(x)),
+    list: lambda x: json.dumps(x),
+    tuple: lambda x: json.dumps(list(x)),
     int: lambda x: x,
     LONGTYPE: lambda x: x,
     bool: lambda x: 'true' if x else 'false',
@@ -211,9 +209,10 @@ def _py_to_couch_translate(key, val, encoder=None):
     try:
         if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale', 'update']:
             return {key: val}
+        elif key in ['endkey', 'key', 'startkey']:
+            return {key: json.dumps(val, cls=encoder)}
         if val is None:
             return {key: None}
-        ENCODER = encoder
         arg_converter = TYPE_CONVERTERS.get(type(val))
         return {key: arg_converter(val)}
     except Exception as ex:
