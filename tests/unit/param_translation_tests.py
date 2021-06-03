@@ -36,7 +36,7 @@ class PythonToCouchTests(unittest.TestCase):
             {'descending': 'true'}
         )
         self.assertEqual(
-            python_to_couch({'descending': False}),
+            python_to_couch({'descending': False}), 
             {'descending': 'false'}
         )
 
@@ -44,8 +44,7 @@ class PythonToCouchTests(unittest.TestCase):
         """
         Test endkey translation is successful.
         """
-        expected = python_to_couch({'endkey': 10})
-        self.assertEqual(expected, {'endkey': 10})
+        self.assertEqual(python_to_couch({'endkey': 10}), {'endkey': 10})
         # Test with long type
         self.assertEqual(python_to_couch({'endkey': LONG_NUMBER}), {'endkey': LONG_NUMBER})
         self.assertEqual(
