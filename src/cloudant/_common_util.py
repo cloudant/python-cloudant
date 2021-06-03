@@ -209,7 +209,9 @@ def _py_to_couch_translate(key, val, encoder=None):
     try:
         if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale', 'update']:
             return {key: val}
-        elif key in ['endkey', 'key', 'startkey']:
+        elif key in ['endkey', 'key', 'startkey'] and type(val) is not (int or LONGTYPE or bool):
+            # if type(val) == list:
+            #     return {key: json.dumps(list(val), cls=encoder)}
             return {key: json.dumps(val, cls=encoder)}
         if val is None:
             return {key: None}

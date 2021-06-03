@@ -44,7 +44,8 @@ class PythonToCouchTests(unittest.TestCase):
         """
         Test endkey translation is successful.
         """
-        self.assertEqual(python_to_couch({'endkey': 10}), {'endkey': 10})
+        expected = python_to_couch({'endkey': 10})
+        self.assertEqual(expected, {'endkey': 10})
         # Test with long type
         self.assertEqual(python_to_couch({'endkey': LONG_NUMBER}), {'endkey': LONG_NUMBER})
         self.assertEqual(
@@ -57,10 +58,8 @@ class PythonToCouchTests(unittest.TestCase):
         )
 
         # Test with custom encoder
-        self.assertEqual(
-            python_to_couch({'endkey': ['foo', 10]}, "AEncoder"),
-            {'endkey': '["foo", 10]'}
-        )
+        with self.assertRaises(CloudantArgumentError):
+            python_to_couch({'endkey': ['foo', 10]}, "AEncoder")
 
     def test_valid_endkey_docid(self):
         """
