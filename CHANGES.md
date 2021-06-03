@@ -1,13 +1,15 @@
 # UNRELEASED
-- [REMOVED] Removed Python 2 compatibility from the supported environments.
+- [NEW] Override `dict.get` method for `CouchDatabase` to add `remote` parameter allowing it to
+  retrieve a remote document if specified.
 - [FIXED] Fixed the documentation for `bookmarks`.
 - [FIXED] Also exit `follow_replication` for `failed` state.
 - [FIXED] Fixed result paging for grouped view queries.
 - [FIXED] Incorrect use of username as account name in `Cloudant.bluemix()`.
-- [IMPROVED] Documented use of None account name and url override for `Cloudant.iam()`.
 - [FIXED] Use custom encoder (if provided) for all view `key` params not just `keys`.
 - [FIXED] Support boolean type for `key`, `endkey`, and `startkey` in view requests.
-- [NEW] Override `dict.get` method for `CouchDatabase` to add `remote` parameter allowing it to retrieve a remote document if specified.
+- [DEPRECATED] This library is now deprecated and will be EOL on Dec 31 2021.
+- [REMOVED] Removed Python 2 compatibility from the supported environments.
+- [IMPROVED] Documented use of `None` account name and url override for `Cloudant.iam()`.
 
 # 2.14.0 (2020-08-17)
 
@@ -139,7 +141,7 @@
 
 # 2.2.0 (2016-10-20)
 
-- [NEW] Added auto connect feature to the client constructor. 
+- [NEW] Added auto connect feature to the client constructor.
 - [FIXED] Requests session is no longer valid after disconnect.
 
 # 2.1.1 (2016-10-03)

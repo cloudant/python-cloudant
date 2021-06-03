@@ -19,9 +19,13 @@ __version__ = '2.14.1-SNAPSHOT'
 
 # pylint: disable=wrong-import-position
 import contextlib
+import warnings
 # pylint: disable=wrong-import-position
 from .client import Cloudant, CouchDB
 from ._common_util import CloudFoundryService
+
+warnings.warn('The module cloudant is now deprecated. The replacement is ibmcloudant.',
+              DeprecationWarning)
 
 @contextlib.contextmanager
 def cloudant(user, passwd, **kwargs):
