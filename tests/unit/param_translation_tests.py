@@ -57,10 +57,6 @@ class PythonToCouchTests(unittest.TestCase):
             {'endkey': '["foo", 10]'}
         )
 
-        # Test with custom encoder
-        with self.assertRaises(CloudantArgumentError):
-            python_to_couch({'endkey': ['foo', 10]}, "AEncoder")
-
     def test_valid_endkey_docid(self):
         """
         Test endkey_docid translation is successful.

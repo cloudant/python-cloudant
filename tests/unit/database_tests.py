@@ -512,6 +512,15 @@ class DatabaseTests(UnitTestDbBase):
         data = self.db.all_docs(limit=1, skip=LONG_NUMBER)
         self.assertEqual(len(data.get('rows')), 1)
 
+    def test_all_docs_get_uses_custom_encoder(self):
+        """
+        Test that all_docs uses the custom encoder.
+        """
+        self.set_up_client(auto_connect=True, encoder="AEncoder")
+        database = self.client[self.test_dbname]
+        with self.assertRaises(CloudantArgumentError):
+            database.all_docs(endkey=['foo', 10])
+
     def test_custom_result_context_manager(self):
         """
         Test using the database custom result context manager
