@@ -171,6 +171,7 @@ def python_to_couch(options, encoder=None):
     :func:`~cloudant.view.View.__call__` callable, both used to retrieve data.
 
     :param dict options: Python style parameters to be translated.
+    :param encoder: Custom encoder, defaults to None
 
     :returns: Dictionary of translated CouchDB/Cloudant query parameters
     """
