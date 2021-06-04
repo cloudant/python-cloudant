@@ -192,7 +192,7 @@ def py_to_couch_validate(key, val):
     if key == 'keys':
         for key_list_val in val:
             if (not isinstance(key_list_val, RESULT_ARG_TYPES['key']) or
-                    type(key_list_val) is bool):
+                    isinstance(key_list_val, bool)):
                 raise CloudantArgumentError(134, RESULT_ARG_TYPES['key'])
     if key == 'stale':
         if val not in ('ok', 'update_after'):
