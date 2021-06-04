@@ -56,20 +56,20 @@ ANY_TYPE = object()
 
 RESULT_ARG_TYPES = {
     'descending': (bool,),
-    'endkey': (int, LONGTYPE, STRTYPE, Sequence,),
+    'endkey': (int, LONGTYPE, STRTYPE, Sequence, bool,),
     'endkey_docid': (STRTYPE,),
     'group': (bool,),
     'group_level': (int, LONGTYPE, NONETYPE,),
     'include_docs': (bool,),
     'inclusive_end': (bool,),
-    'key': (int, LONGTYPE, STRTYPE, Sequence,),
+    'key': (int, LONGTYPE, STRTYPE, Sequence, bool,),
     'keys': (list,),
     'limit': (int, LONGTYPE, NONETYPE,),
     'reduce': (bool,),
     'skip': (int, LONGTYPE, NONETYPE,),
     'stable': (bool,),
     'stale': (STRTYPE,),
-    'startkey': (int, LONGTYPE, STRTYPE, Sequence,),
+    'startkey': (int, LONGTYPE, STRTYPE, Sequence, bool,),
     'startkey_docid': (STRTYPE,),
     'update': (STRTYPE,),
 }
