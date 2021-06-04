@@ -187,7 +187,11 @@ def py_to_couch_validate(key, val):
     """
     if key not in RESULT_ARG_TYPES:
         raise CloudantArgumentError(116, key)
-    if not isinstance(val, RESULT_ARG_TYPES[key]):
+    # pylint: disable=unidiomatic-typecheck
+    # Validate argument values and ensure that a boolean is not passed in
+    # if an integer is expected
+    if (not isinstance(val, RESULT_ARG_TYPES[key]) or
+            (type(val) is bool and int in RESULT_ARG_TYPES[key])):
         raise CloudantArgumentError(117, key, RESULT_ARG_TYPES[key])
     if key == 'keys':
         for key_list_val in val:
