@@ -5,6 +5,7 @@
 - [FIXED] Fixed result paging for grouped view queries.
 - [FIXED] Incorrect use of username as account name in `Cloudant.bluemix()`.
 - [IMPROVED] Documented use of None account name and url override for `Cloudant.iam()`.
+- [FIXED] Use custom encoder on get_docs params.
 
 # 2.14.0 (2020-08-17)
 
