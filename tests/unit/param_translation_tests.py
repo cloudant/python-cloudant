@@ -55,7 +55,6 @@ class PythonToCouchTests(unittest.TestCase):
             python_to_couch({'endkey': ['foo', 10]}),
             {'endkey': '["foo", 10]'}
         )
-
         self.assertEqual(
             python_to_couch({'endkey': True}),
             {'endkey': 'true'}
@@ -214,7 +213,6 @@ class PythonToCouchTests(unittest.TestCase):
             python_to_couch({'startkey': ['foo', 10]}),
             {'startkey': '["foo", 10]'}
         )
-
         self.assertEqual(
             python_to_couch({'startkey': True}),
             {'startkey': 'true'}
