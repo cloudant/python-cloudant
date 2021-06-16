@@ -160,7 +160,7 @@ def feed_arg_types(feed_type):
         return _COUCH_DB_UPDATES_ARG_TYPES
     return _CHANGES_ARG_TYPES
 
-def python_to_couch(options):
+def python_to_couch(options, encoder=None):
     """
     Translates query options from python style options into CouchDB/Cloudant
     query options.  For example ``{'include_docs': True}`` will
@@ -171,13 +171,14 @@ def python_to_couch(options):
     :func:`~cloudant.view.View.__call__` callable, both used to retrieve data.
 
     :param dict options: Python style parameters to be translated.
+    :param encoder: Custom encoder, defaults to None
 
     :returns: Dictionary of translated CouchDB/Cloudant query parameters
     """
     translation = dict()
     for key, val in iteritems_(options):
         py_to_couch_validate(key, val)
-        translation.update(_py_to_couch_translate(key, val))
+        translation.update(_py_to_couch_translate(key, val, encoder))
     return translation
 
 def py_to_couch_validate(key, val):
@@ -201,7 +202,7 @@ def py_to_couch_validate(key, val):
         if val not in ('ok', 'update_after'):
             raise CloudantArgumentError(135, val)
 
-def _py_to_couch_translate(key, val):
+def _py_to_couch_translate(key, val, encoder=None):
     """
     Performs the conversion of the Python parameter value to its CouchDB
     equivalent.
@@ -209,6 +210,8 @@ def _py_to_couch_translate(key, val):
     try:
         if key in ['keys', 'endkey_docid', 'startkey_docid', 'stale', 'update']:
             return {key: val}
+        if key in ['endkey', 'key', 'startkey']:
+            return {key: json.dumps(val, cls=encoder)}
         if val is None:
             return {key: None}
         arg_converter = TYPE_CONVERTERS.get(type(val))
@@ -249,7 +252,7 @@ def get_docs(r_session, url, encoder=None, headers=None, **params):
     keys = None
     if keys_list is not None:
         keys = json.dumps({'keys': keys_list}, cls=encoder)
-    f_params = python_to_couch(params)
+    f_params = python_to_couch(params, encoder)
     resp = None
     if keys is not None:
         # If we're using POST we are sending JSON so add the header

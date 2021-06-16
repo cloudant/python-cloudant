@@ -36,7 +36,7 @@ class PythonToCouchTests(unittest.TestCase):
             {'descending': 'true'}
         )
         self.assertEqual(
-            python_to_couch({'descending': False}), 
+            python_to_couch({'descending': False}),
             {'descending': 'false'}
         )
 
@@ -44,9 +44,9 @@ class PythonToCouchTests(unittest.TestCase):
         """
         Test endkey translation is successful.
         """
-        self.assertEqual(python_to_couch({'endkey': 10}), {'endkey': 10})
+        self.assertEqual(python_to_couch({'endkey': 10}), {'endkey': '10'})
         # Test with long type
-        self.assertEqual(python_to_couch({'endkey': LONG_NUMBER}), {'endkey': LONG_NUMBER})
+        self.assertEqual(python_to_couch({'endkey': LONG_NUMBER}), {'endkey': str(LONG_NUMBER)})
         self.assertEqual(
             python_to_couch({'endkey': 'foo'}),
             {'endkey': '"foo"'}
@@ -120,9 +120,9 @@ class PythonToCouchTests(unittest.TestCase):
         """
         Test key translation is successful.
         """
-        self.assertEqual(python_to_couch({'key': 10}), {'key': 10})
+        self.assertEqual(python_to_couch({'key': 10}), {'key': '10'})
         # Test with long type
-        self.assertEqual(python_to_couch({'key': LONG_NUMBER}), {'key': LONG_NUMBER})
+        self.assertEqual(python_to_couch({'key': LONG_NUMBER}), {'key': str(LONG_NUMBER)})
         self.assertEqual(python_to_couch({'key': 'foo'}), {'key': '"foo"'})
         self.assertEqual(
             python_to_couch({'key': ['foo', 10]}),
@@ -194,9 +194,9 @@ class PythonToCouchTests(unittest.TestCase):
         """
         Test startkey translation is successful.
         """
-        self.assertEqual(python_to_couch({'startkey': 10}), {'startkey': 10})
+        self.assertEqual(python_to_couch({'startkey': 10}), {'startkey': '10'})
         # Test with long type
-        self.assertEqual(python_to_couch({'startkey': LONG_NUMBER}), {'startkey': LONG_NUMBER})
+        self.assertEqual(python_to_couch({'startkey': LONG_NUMBER}), {'startkey': str(LONG_NUMBER)})
         self.assertEqual(
             python_to_couch({'startkey': 'foo'}),
             {'startkey': '"foo"'}
