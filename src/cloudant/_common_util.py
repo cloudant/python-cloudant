@@ -191,7 +191,7 @@ def py_to_couch_validate(key, val):
     # Validate argument values and ensure that a boolean is not passed in
     # if an integer is expected
     if (not isinstance(val, RESULT_ARG_TYPES[key]) or
-            (type(val) is bool and int in RESULT_ARG_TYPES[key])):
+            (type(val) is bool and bool not in RESULT_ARG_TYPES[key] and int in RESULT_ARG_TYPES[key])):
         raise CloudantArgumentError(117, key, RESULT_ARG_TYPES[key])
     if key == 'keys':
         for key_list_val in val:
