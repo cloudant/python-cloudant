@@ -6,7 +6,7 @@
 - [FIXED] Incorrect use of username as account name in `Cloudant.bluemix()`.
 - [IMPROVED] Documented use of None account name and url override for `Cloudant.iam()`.
 - [FIXED] Use custom encoder (if provided) for all view `key` params not just `keys`.
-- [FIXED] View with a boolean type key.
+- [FIXED] Support boolean type for key, endkey, and startkey in view requests.
 
 # 2.14.0 (2020-08-17)
 

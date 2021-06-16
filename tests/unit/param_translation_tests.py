@@ -36,7 +36,7 @@ class PythonToCouchTests(unittest.TestCase):
             {'descending': 'true'}
         )
         self.assertEqual(
-            python_to_couch({'descending': False}), 
+            python_to_couch({'descending': False}),
             {'descending': 'false'}
         )
 
@@ -54,6 +54,11 @@ class PythonToCouchTests(unittest.TestCase):
         self.assertEqual(
             python_to_couch({'endkey': ['foo', 10]}),
             {'endkey': '["foo", 10]'}
+        )
+
+        self.assertEqual(
+            python_to_couch({'endkey': True}),
+            {'endkey': 'true'}
         )
 
     def test_valid_endkey_docid(self):
@@ -127,6 +132,10 @@ class PythonToCouchTests(unittest.TestCase):
         self.assertEqual(
             python_to_couch({'key': ['foo', 10]}),
             {'key': '["foo", 10]'}
+        )
+        self.assertEqual(
+            python_to_couch({'key': True}),
+            {'key': 'true'}
         )
 
     def test_valid_keys(self):
@@ -206,6 +215,11 @@ class PythonToCouchTests(unittest.TestCase):
             {'startkey': '["foo", 10]'}
         )
 
+        self.assertEqual(
+            python_to_couch({'startkey': True}),
+            {'startkey': 'true'}
+        )
+
     def test_valid_startkey_docid(self):
         """
         Test startkey_docid translation is successful.
@@ -238,16 +252,6 @@ class PythonToCouchTests(unittest.TestCase):
         msg = 'Argument descending not instance of expected type:'
         with self.assertRaises(CloudantArgumentError) as cm:
             python_to_couch({'descending': 10})
-        self.assertTrue(str(cm.exception).startswith(msg))
-
-    def test_invalid_endkey(self):
-        """
-        Test endkey translation fails when a non-string or a non-list value is
-        used.
-        """
-        msg = 'Argument endkey not instance of expected type:'
-        with self.assertRaises(CloudantArgumentError) as cm:
-            python_to_couch({'endkey': True})
         self.assertTrue(str(cm.exception).startswith(msg))
 
     def test_invalid_endkey_docid(self):
@@ -293,16 +297,6 @@ class PythonToCouchTests(unittest.TestCase):
         msg = 'Argument inclusive_end not instance of expected type:'
         with self.assertRaises(CloudantArgumentError) as cm:
             python_to_couch({'inclusive_end': 10})
-        self.assertTrue(str(cm.exception).startswith(msg))
-
-    def test_invalid_key(self):
-        """
-        Test key translation fails when a non-string or a non-list value is
-        used.
-        """
-        msg = 'Argument key not instance of expected type:'
-        with self.assertRaises(CloudantArgumentError) as cm:
-            python_to_couch({'key': True})
         self.assertTrue(str(cm.exception).startswith(msg))
 
     def test_invalid_keys_not_list(self):
@@ -363,16 +357,6 @@ class PythonToCouchTests(unittest.TestCase):
         msg = 'Invalid value for stale option foo'
         with self.assertRaises(CloudantArgumentError) as cm:
             python_to_couch({'stale': 'foo'})
-        self.assertTrue(str(cm.exception).startswith(msg))
-
-    def test_invalid_startkey(self):
-        """
-        Test startkey translation fails when a non-string or a non-list value
-        is used.
-        """
-        msg = 'Argument startkey not instance of expected type:'
-        with self.assertRaises(CloudantArgumentError) as cm:
-            python_to_couch({'startkey': True})
         self.assertTrue(str(cm.exception).startswith(msg))
 
     def test_invalid_startkey_docid(self):
