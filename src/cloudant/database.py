@@ -708,13 +708,12 @@ class CouchDatabase(dict):
 
     def get(self, key, remote=False):
         """
-        Overrides dict's get method. This gets an item from the databse  or cache
+        Overrides dict's get method. This gets an item from the database or cache
         like __getitem__, but instead of throwing an exception if the item is not
         found, it simply returns None.
 
-        :param bool remote: Dictates whether a request to the server is made to
-            retreive the doc, or if the doc will only be retrieved from the local
-            cache.
+        :param bool remote: Dictates whether a remote request is made to
+            retrieve the doc, if it is not present in the local cache.
             Defaults to False.
         """
         if remote:
