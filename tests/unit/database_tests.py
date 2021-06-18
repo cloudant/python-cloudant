@@ -316,7 +316,7 @@ class DatabaseTests(UnitTestDbBase):
         data = {'_id': 'julia'}
         doc = self.db.create_document(data)
         self.assertEqual(self.db['julia'], doc)
-        self.assertEqual(self.db.get('julia', doc))
+        self.assertEqual(self.db.get('julia'), doc)
         self.assertEqual(self.db.get('julia', remote=True), doc)
         self.assertTrue(doc['_rev'].startswith('1-'))
         # attempt to recreate document
