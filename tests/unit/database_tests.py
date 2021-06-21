@@ -256,6 +256,8 @@ class DatabaseTests(UnitTestDbBase):
         data = {'_id': 'julia06', 'name': 'julia', 'age': 6}
         doc = self.db.create_document(data)
         self.assertEqual(self.db['julia06'], doc)
+        self.assertEqual(self.db.get('julia06'), doc)
+        self.assertEqual(self.db.get('julia06', remote=True), doc)
         self.assertEqual(doc['_id'], data['_id'])
         self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(doc['name'], data['name'])
@@ -271,6 +273,42 @@ class DatabaseTests(UnitTestDbBase):
                 'Document with id julia06 already exists.'
                 )
 
+    def test_get_non_existing_document_from_remote(self):
+        """
+        Test dict's get on non existing document from remote.
+        """
+        doc = self.db.get('non-existing', remote=True)
+        self.assertIsNone(doc)
+
+    def test_get_non_existing_document_from_cache(self):
+        """
+        Test dict's get on non existing document from cache.
+        """
+        doc = self.db.get('non-existing')
+        self.assertIsNone(doc)
+
+    def test_get_document_from_cache(self):
+        """
+        Test dict's get on a document from cache.
+        """
+        doc = Document(self.db, document_id='julia06')
+        self.db['julia06'] = doc
+        self.assertEqual(self.db.get('julia06'), doc)
+        # doc is fetched from the local dict preferentially to remote even with remote=True
+        self.assertEqual(self.db.get('julia06', remote=True), doc)
+        self.assertEqual(self.db['julia06'], doc)
+
+    def test_get_document_from_remote(self):
+        """
+        Test dict's get on a document from remote.
+        """
+        data = {'_id': 'julia06','name': 'julia06', 'age': 6}
+        doc = self.db.create_document(data)
+        self.db.clear()
+        self.assertIsNone(self.db.get('julia06'))
+        self.assertEqual(self.db.get('julia06', remote=True), doc)
+        self.assertEqual(self.db['julia06'], doc)
+
     def test_create_document_that_already_exists(self):
         """
         Test creating a document that already exists
@@ -278,6 +316,8 @@ class DatabaseTests(UnitTestDbBase):
         data = {'_id': 'julia'}
         doc = self.db.create_document(data)
         self.assertEqual(self.db['julia'], doc)
+        self.assertEqual(self.db.get('julia'), doc)
+        self.assertEqual(self.db.get('julia', remote=True), doc)
         self.assertTrue(doc['_rev'].startswith('1-'))
         # attempt to recreate document
         self.db.create_document(data, throw_on_exists=False)
@@ -289,6 +329,8 @@ class DatabaseTests(UnitTestDbBase):
         data = {'name': 'julia', 'age': 6}
         doc = self.db.create_document(data)
         self.assertEqual(self.db[doc['_id']], doc)
+        self.assertEqual(self.db.get(doc['_id']), doc)
+        self.assertEqual(self.db.get(doc['_id'], remote=True), doc)
         self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(doc['name'], data['name'])
         self.assertEqual(doc['age'], data['age'])
@@ -302,6 +344,8 @@ class DatabaseTests(UnitTestDbBase):
         data = {'_id': '_design/julia06', 'name': 'julia', 'age': 6}
         doc = self.db.create_document(data)
         self.assertEqual(self.db['_design/julia06'], doc)
+        self.assertEqual(self.db.get('_design/julia06'), doc)
+        self.assertEqual(self.db.get('_design/julia06', remote=True), doc)
         self.assertEqual(doc['_id'], data['_id'])
         self.assertTrue(doc['_rev'].startswith('1-'))
         self.assertEqual(doc['name'], data['name'])
@@ -316,6 +360,8 @@ class DatabaseTests(UnitTestDbBase):
         """
         empty_doc = self.db.new_document()
         self.assertEqual(self.db[empty_doc['_id']], empty_doc)
+        self.assertEqual(self.db.get(empty_doc['_id']), empty_doc)
+        self.assertEqual(self.db.get(empty_doc['_id'], remote=True), empty_doc)
         self.assertTrue(all(x in ['_id', '_rev'] for x in empty_doc.keys()))
         self.assertTrue(empty_doc['_rev'].startswith('1-'))
 
