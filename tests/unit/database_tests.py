@@ -294,7 +294,7 @@ class DatabaseTests(UnitTestDbBase):
         doc = Document(self.db, document_id='julia06')
         self.db['julia06'] = doc
         self.assertEqual(self.db.get('julia06'), doc)
-        # fetch the local doc independently from the value of the remote param
+        # doc is fetched from the local dict preferentially to remote even with remote=True
         self.assertEqual(self.db.get('julia06', remote=True), doc)
         self.assertEqual(self.db['julia06'], doc)
 
