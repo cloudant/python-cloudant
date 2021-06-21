@@ -55,6 +55,10 @@ class PythonToCouchTests(unittest.TestCase):
             python_to_couch({'endkey': ['foo', 10]}),
             {'endkey': '["foo", 10]'}
         )
+        self.assertEqual(
+            python_to_couch({'endkey': True}),
+            {'endkey': 'true'}
+        )
 
     def test_valid_endkey_docid(self):
         """
@@ -127,6 +131,10 @@ class PythonToCouchTests(unittest.TestCase):
         self.assertEqual(
             python_to_couch({'key': ['foo', 10]}),
             {'key': '["foo", 10]'}
+        )
+        self.assertEqual(
+            python_to_couch({'key': True}),
+            {'key': 'true'}
         )
 
     def test_valid_keys(self):
@@ -205,6 +213,10 @@ class PythonToCouchTests(unittest.TestCase):
             python_to_couch({'startkey': ['foo', 10]}),
             {'startkey': '["foo", 10]'}
         )
+        self.assertEqual(
+            python_to_couch({'startkey': True}),
+            {'startkey': 'true'}
+        )
 
     def test_valid_startkey_docid(self):
         """
@@ -247,7 +259,7 @@ class PythonToCouchTests(unittest.TestCase):
         """
         msg = 'Argument endkey not instance of expected type:'
         with self.assertRaises(CloudantArgumentError) as cm:
-            python_to_couch({'endkey': True})
+            python_to_couch({'endkey': {'foo': 'bar'}})
         self.assertTrue(str(cm.exception).startswith(msg))
 
     def test_invalid_endkey_docid(self):
@@ -302,7 +314,7 @@ class PythonToCouchTests(unittest.TestCase):
         """
         msg = 'Argument key not instance of expected type:'
         with self.assertRaises(CloudantArgumentError) as cm:
-            python_to_couch({'key': True})
+            python_to_couch({'key': {'foo': 'bar'}})
         self.assertTrue(str(cm.exception).startswith(msg))
 
     def test_invalid_keys_not_list(self):
@@ -372,7 +384,7 @@ class PythonToCouchTests(unittest.TestCase):
         """
         msg = 'Argument startkey not instance of expected type:'
         with self.assertRaises(CloudantArgumentError) as cm:
-            python_to_couch({'startkey': True})
+            python_to_couch({'startkey': {'foo': 'bar'}})
         self.assertTrue(str(cm.exception).startswith(msg))
 
     def test_invalid_startkey_docid(self):

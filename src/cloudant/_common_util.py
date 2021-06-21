@@ -56,20 +56,20 @@ ANY_TYPE = object()
 
 RESULT_ARG_TYPES = {
     'descending': (bool,),
-    'endkey': (int, LONGTYPE, STRTYPE, Sequence,),
+    'endkey': (int, LONGTYPE, STRTYPE, Sequence, bool,),
     'endkey_docid': (STRTYPE,),
     'group': (bool,),
     'group_level': (int, LONGTYPE, NONETYPE,),
     'include_docs': (bool,),
     'inclusive_end': (bool,),
-    'key': (int, LONGTYPE, STRTYPE, Sequence,),
+    'key': (int, LONGTYPE, STRTYPE, Sequence, bool,),
     'keys': (list,),
     'limit': (int, LONGTYPE, NONETYPE,),
     'reduce': (bool,),
     'skip': (int, LONGTYPE, NONETYPE,),
     'stable': (bool,),
     'stale': (STRTYPE,),
-    'startkey': (int, LONGTYPE, STRTYPE, Sequence,),
+    'startkey': (int, LONGTYPE, STRTYPE, Sequence, bool,),
     'startkey_docid': (STRTYPE,),
     'update': (STRTYPE,),
 }
@@ -191,12 +191,13 @@ def py_to_couch_validate(key, val):
     # Validate argument values and ensure that a boolean is not passed in
     # if an integer is expected
     if (not isinstance(val, RESULT_ARG_TYPES[key]) or
-            (type(val) is bool and int in RESULT_ARG_TYPES[key])):
+            (type(val) is bool and bool not in RESULT_ARG_TYPES[key] and
+             int in RESULT_ARG_TYPES[key])):
         raise CloudantArgumentError(117, key, RESULT_ARG_TYPES[key])
     if key == 'keys':
         for key_list_val in val:
             if (not isinstance(key_list_val, RESULT_ARG_TYPES['key']) or
-                    type(key_list_val) is bool):
+                    isinstance(key_list_val, bool)):
                 raise CloudantArgumentError(134, RESULT_ARG_TYPES['key'])
     if key == 'stale':
         if val not in ('ok', 'update_after'):
