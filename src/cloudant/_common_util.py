@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2019 IBM Corp. All rights reserved.
+# Copyright © 2015, 2021 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ except ImportError:
 
 # Library Constants
 
+DESIGN_PREFIX = '_design/'
+LOCAL_PREFIX = '_local/'
 USER_AGENT = '/'.join([
     'python-cloudant',
     sys.modules['cloudant'].__version__,
@@ -301,6 +303,30 @@ def response_to_json_dict(response, **kwargs):
         response.encoding = 'utf-8'
     return json.loads(response.text, **kwargs)
 
+def assert_document_type_id(docid):
+    """
+    Validate the document ID.  Raises an error if the ID is an `_` prefixed name
+    that isn't either `_design` or `_local`.
+    :return:
+    """
+    invalid = False
+    if docid.startswith('_'):
+        if docid.startswith(DESIGN_PREFIX) and DESIGN_PREFIX != docid:
+            invalid = False
+        elif docid.startswith(LOCAL_PREFIX) and LOCAL_PREFIX != docid:
+            invalid = False
+        else:
+            invalid = True
+    if invalid:
+        raise CloudantArgumentError(137, docid)
+
+def assert_attachment_name(attname):
+    """
+    Validate the document attachment's name.  Raises an error if `_` prefixed name exists.
+    :return:
+    """
+    if attname.startswith('_'):
+        raise CloudantArgumentError(138, attname)
 # Classes
 
 

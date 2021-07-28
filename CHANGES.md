@@ -10,6 +10,11 @@
 - [DEPRECATED] This library is now deprecated and will be EOL on Dec 31 2021.
 - [REMOVED] Removed Python 2 compatibility from the supported environments.
 - [IMPROVED] Documented use of `None` account name and url override for `Cloudant.iam()`.
+- [IMPROVED] - Document IDs and attachment names are now rejected if they could cause an unexpected
+  Cloudant request. We have seen that some applications pass unsantized document IDs to SDK functions
+  (e.g. direct from user requests). In response to this we have updated many functions to reject
+  obviously invalid paths. However, for complete safety applications must still validate that
+  document IDs and attachment names match expected patterns.
 
 # 2.14.0 (2020-08-17)
 
