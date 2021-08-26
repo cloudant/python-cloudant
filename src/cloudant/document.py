@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2015, 2018 IBM Corp. All rights reserved.
+# Copyright © 2015, 2021 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import requests
 from requests.exceptions import HTTPError
 
 from ._2to3 import url_quote, url_quote_plus
-from ._common_util import response_to_json_dict
+from ._common_util import response_to_json_dict, assert_document_type_id, assert_attachment_name
 from .error import CloudantDocumentException
 
 
@@ -96,6 +96,15 @@ class Document(dict):
                 url_quote(self['_id'][8:], safe='')
             ))
 
+        # handle _local document url
+        if self['_id'].startswith('_local/'):
+            return '/'.join((
+                self._database_host,
+                url_quote_plus(self._database_name),
+                '_local',
+                url_quote(self['_id'][7:], safe='')
+            ))
+
         # handle document url
         return '/'.join((
             self._database_host,
@@ -112,6 +121,8 @@ class Document(dict):
         """
         if '_id' not in self or self['_id'] is None:
             return False
+
+        assert_document_type_id(self['_id'])
 
         resp = self.r_session.head(self.document_url)
         if resp.status_code not in [200, 404]:
@@ -161,6 +172,8 @@ class Document(dict):
         """
         if self.document_url is None:
             raise CloudantDocumentException(101)
+        if '_id' in self:
+            assert_document_type_id(self['_id'])
         resp = self.r_session.get(self.document_url)
         resp.raise_for_status()
         self.clear()
@@ -309,6 +322,8 @@ class Document(dict):
         if not self.get("_rev"):
             raise CloudantDocumentException(103)
 
+        assert_document_type_id(self['_id'])
+
         del_resp = self.r_session.delete(
             self.document_url,
             params={"rev": self["_rev"]},
@@ -375,7 +390,8 @@ class Document(dict):
         """
         # need latest rev
         self.fetch()
-        attachment_url = '/'.join((self.document_url, attachment))
+        assert_attachment_name(attachment)
+        attachment_url = '/'.join((self.document_url, url_quote(attachment, safe='')))
         if headers is None:
             headers = {'If-Match': self['_rev']}
         else:
@@ -418,6 +434,7 @@ class Document(dict):
         """
         # need latest rev
         self.fetch()
+        assert_attachment_name(attachment)
         attachment_url = '/'.join((self.document_url, attachment))
         if headers is None:
             headers = {'If-Match': self['_rev']}
@@ -459,6 +476,7 @@ class Document(dict):
         """
         # need latest rev
         self.fetch()
+        assert_attachment_name(attachment)
         attachment_url = '/'.join((self.document_url, attachment))
         if headers is None:
             headers = {

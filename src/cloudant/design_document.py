@@ -16,7 +16,8 @@
 API module/class for interacting with a design document in a database.
 """
 from ._2to3 import iteritems_, url_quote_plus, STRTYPE
-from ._common_util import QUERY_LANGUAGE, codify, response_to_json_dict
+from ._common_util import QUERY_LANGUAGE, codify, response_to_json_dict, \
+    assert_document_type_id, DESIGN_PREFIX
 from .document import Document
 from .view import View, QueryIndexView
 from .error import CloudantArgumentError, CloudantDesignDocumentException
@@ -44,8 +45,10 @@ class DesignDocument(Document):
         databases.
     """
     def __init__(self, database, document_id=None, partitioned=False):
-        if document_id and not document_id.startswith('_design/'):
-            document_id = '_design/{0}'.format(document_id)
+        if document_id:
+            assert_document_type_id(document_id)
+        if document_id and not document_id.startswith(DESIGN_PREFIX):
+            document_id = '{0}{1}'.format(DESIGN_PREFIX, document_id)
         super(DesignDocument, self).__init__(database, document_id)
 
         if partitioned:

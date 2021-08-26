@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2016 IBM. All rights reserved.
+# Copyright © 2016, 2021 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,7 +65,9 @@ ARGUMENT_ERROR = {
     # Common_util
     134: 'Key list element not of expected type: {0}',
     135: 'Invalid value for stale option {0} must be ok or update_after.',
-    136: 'Error converting argument {0}: {1}'
+    136: 'Error converting argument {0}: {1}',
+    137: 'Invalid document ID: {0}',
+    138: 'Invalid attachment name: {0}'
 }
 
 CLIENT = {

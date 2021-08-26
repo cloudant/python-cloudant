@@ -25,7 +25,7 @@ def getEnvForSuite(suiteName) {
 }
 
 def setupPythonAndTest(pythonVersion, testSuite) {
-  node {
+  node('sdks-executor') {
     // Unstash the source on this node
     unstash name: 'source'
     // Set up the environment and test
