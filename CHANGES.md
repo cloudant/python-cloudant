@@ -1,4 +1,4 @@
-# UNRELEASED
+# 2.15.0 (2021-08-26)
 - [NEW] Override `dict.get` method for `CouchDatabase` to add `remote` parameter allowing it to
   retrieve a remote document if specified.
 - [FIXED] Fixed the documentation for `bookmarks`.
