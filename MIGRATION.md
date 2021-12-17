@@ -61,7 +61,7 @@ The table below contains a list of `python-cloudant` functions and the `cloudant
 |`db.create()`|[`putDatabase`](https://cloud.ibm.com/apidocs/cloudant?code=python#putdatabase)|
 |`db.all_docs()/db.keys()`|[`postAllDocs`](https://cloud.ibm.com/apidocs/cloudant?code=python#postalldocs)|
 |`db.bulk_docs()`|[`postBulkDocs`](https://cloud.ibm.com/apidocs/cloudant?code=python#postbulkdocs)|
-|`db.changes()/db.infinite_changes()`|[`postChanges`](https://cloud.ibm.com/apidocs/cloudant?code=python#postchanges)|
+|`db.changes()/db.infinite_changes()`|[`postChanges`](https://cloud.ibm.com/apidocs/cloudant?code=python#postchanges-databases)|
 |`DesignDocument(db, '_design/doc').delete()`|[`deleteDesignDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#deletedesigndocument)|
 |`db.get_design_document()/DesignDocument(db, '_design/doc').fetch()`|[`getDesignDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#getdesigndocument)|
 |`DesignDocument(db, '_design/doc').save()`|[`putDesignDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#putdesigndocument)|
@@ -76,13 +76,12 @@ The table below contains a list of `python-cloudant` functions and the `cloudant
 |`Document(db, '_local/docid').fetch()`|[`getLocalDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#getlocaldocument)|
 |`Document(db, '_local/docid').save()`|[`putLocalDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#putlocaldocument)|
 |`Document(db, '_local/docid').delete()`|[`deleteLocalDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#deletelocaldocument)|
-|`db.missing_revisions()`|[`postMissingRevs`](https://cloud.ibm.com/apidocs/cloudant?code=python#postmissingrevs)|
+|`db.missing_revisions()/db.revisions_diff`|[`postRevsDiff`](https://cloud.ibm.com/apidocs/cloudant?code=python#postrevsdiff)|
 |`db.partition_metadata()`|[`getPartitionInformation`](https://cloud.ibm.com/apidocs/cloudant?code=python#getpartitioninformation)|
 |`db.partitioned_all_docs()`|[`postPartitionAllDocs`](https://cloud.ibm.com/apidocs/cloudant?code=python#postpartitionalldocs)|
 |`db.get_partitioned_search_result()`|[`postPartitionSearch`](https://cloud.ibm.com/apidocs/cloudant?code=python#postpartitionsearch)|
 |`db.get_partitioned_view_result()`|[`postPartitionView`](https://cloud.ibm.com/apidocs/cloudant?code=python#postpartitionview)|
-|`db.get_partitioned_query_result()`|[`postPartitionFind`](https://cloud.ibm.com/apidocs/cloudant?code=python#postpartitionfind)|
-|`db.revisions_diff()`|[`postRevsDiff`](https://cloud.ibm.com/apidocs/cloudant?code=python#postrevsdiff)|
+|`db.get_partitioned_query_result()`|[`postPartitionFind`](https://cloud.ibm.com/apidocs/cloudant?code=python#postpartitionfind-partitioned-databases)|
 |`db.get_security_document()/db.security_document()`|[`getSecurity`](https://cloud.ibm.com/apidocs/cloudant?code=python#getsecurity)|
 |`db.share_database()`|[`putSecurity`](https://cloud.ibm.com/apidocs/cloudant?code=python#putsecurity)|
 |`db.shards()`|[`getShardsInformation`](https://cloud.ibm.com/apidocs/cloudant?code=python#getshardsinformation)|
@@ -94,6 +93,6 @@ The table below contains a list of `python-cloudant` functions and the `cloudant
 |`Document(db, 'docid').get_attachment()`|[`getAttachment`](https://cloud.ibm.com/apidocs/cloudant?code=python#getattachment)|
 |`Document(db, 'docid').put_attachment()`|[`putAttachment`](https://cloud.ibm.com/apidocs/cloudant?code=python#putattachment)|
 |`generate_api_key()`|[`postApiKeys`](https://cloud.ibm.com/apidocs/cloudant?code=python#postapikeys)|
-|`SecurityDocument().save()`|[`putCloudantSecurityConfiguration`](https://cloud.ibm.com/apidocs/cloudant?code=python#putcloudantsecurityconfiguration)|
+|`SecurityDocument().save()`|[`putCloudantSecurityConfiguration`](https://cloud.ibm.com/apidocs/cloudant?code=python#putcloudantsecurity)|
 |`cors_configuration()/cors_origin()`|[`getCorsInformation`](https://cloud.ibm.com/apidocs/cloudant?code=python#getcorsinformation)|
 |`update_cors_configuration()`|[`putCorsConfiguration`](https://cloud.ibm.com/apidocs/cloudant?code=python#putcorsconfiguration)|
