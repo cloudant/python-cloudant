@@ -20,7 +20,7 @@ content like using `raw_result=True` in `python-cloudant`.
 1. Replay adapters are replaced by the [automatic retries](https://github.
    com/IBM/ibm-cloud-sdk-common/#automatic-retries) feature for failed requests.
 1. Error handling is not transferable from `python-cloudant` to `cloudant-python-sdk`. For more information go to the [Error handling section](https://cloud.ibm.com/apidocs/cloudant?code=python#error-handling) in our API docs.
-1. Configuring HTTP client is not transferable from `python-cloudant` to `python-java-sdk`. For more information go to the [Configuring the HTTP client section(https://githubcom/IBM/ibm-cloud-sdk-common/#configuring-the-http-client) in the IBM Cloud SDK Common README.
+1. Custom HTTP client configurations in `python-cloudant` are not transferable to `python-java-sdk`. For more information go to the [Configuring the HTTP client section(https://githubcom/IBM/ibm-cloud-sdk-common/#configuring-the-http-client) in the IBM Cloud SDK Common README.
 
 ## Request mapping
 Here's a list of the top 5 most frequently used `python-cloudant` operations and the `cloudant-python-sdk` equivalent API operation documentation link:
@@ -80,7 +80,7 @@ The table below contains a list of `python-cloudant` functions and the `cloudant
 |`Document(db, '_local/docid').fetch()`|[`getLocalDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#getlocaldocument)|
 |`Document(db, '_local/docid').save()`|[`putLocalDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#putlocaldocument)|
 |`Document(db, '_local/docid').delete()`|[`deleteLocalDocument`](https://cloud.ibm.com/apidocs/cloudant?code=python#deletelocaldocument)|
-|`db.missing_revisions()/db.revisions_diff`|[`postRevsDiff`](https://cloud.ibm.com/apidocs/cloudant?code=python#postrevsdiff)|
+|`db.missing_revisions()/db.revisions_diff()`|[`postRevsDiff`](https://cloud.ibm.com/apidocs/cloudant?code=python#postrevsdiff)|
 |`db.partition_metadata()`|[`getPartitionInformation`](https://cloud.ibm.com/apidocs/cloudant?code=python#getpartitioninformation)|
 |`db.partitioned_all_docs()`|[`postPartitionAllDocs`](https://cloud.ibm.com/apidocs/cloudant?code=python#postpartitionalldocs)|
 |`db.get_partitioned_search_result()`|[`postPartitionSearch`](https://cloud.ibm.com/apidocs/cloudant?code=python#postpartitionsearch)|
