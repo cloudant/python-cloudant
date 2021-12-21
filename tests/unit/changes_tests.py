@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2016, 2018 IBM Corp. All rights reserved.
+# Copyright (C) 2016, 2021 IBM Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -227,8 +227,7 @@ class ChangesTests(UnitTestDbBase):
         Test getting content back for a descending feed.  When testing, the sequence
         identifier is in the form of <number prefix>-<random char seq>.  Often times
         the number prefix sorts as expected when using descending but sometimes the
-        number prefix is repeated.  In these cases the check is to see if the following
-        random character sequence suffix is longer than its predecessor.
+        number prefix is repeated.
         """
         self.populate_db_with_documents(50)
         feed = Feed(self.db, descending=True)
@@ -245,7 +244,6 @@ class ChangesTests(UnitTestDbBase):
                         self.assertTrue(current < last)
                     except AssertionError:
                         self.assertEqual(current, last)
-                        self.assertTrue(len(change['seq']) > len(last_seq))
             seq_list.append(change['seq'])
             last_seq = change['seq']
         self.assertEqual(len(seq_list), 50)
@@ -522,7 +520,7 @@ class ChangesTests(UnitTestDbBase):
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
         self.assertEqual(
-            str(cm.exception), 
+            str(cm.exception),
             'Invalid value (foo) for style option.  Must be main_only, or all_docs.')
 
 if __name__ == '__main__':
