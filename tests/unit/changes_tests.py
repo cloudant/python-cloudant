@@ -227,8 +227,7 @@ class ChangesTests(UnitTestDbBase):
         Test getting content back for a descending feed.  When testing, the sequence
         identifier is in the form of <number prefix>-<random char seq>.  Often times
         the number prefix sorts as expected when using descending but sometimes the
-        number prefix is repeated.  In these cases the check is to see if the following
-        random character sequence suffix is longer than its predecessor.
+        number prefix is repeated.
         """
         self.populate_db_with_documents(50)
         feed = Feed(self.db, descending=True)
