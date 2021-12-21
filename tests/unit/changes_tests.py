@@ -245,7 +245,6 @@ class ChangesTests(UnitTestDbBase):
                         self.assertTrue(current < last)
                     except AssertionError:
                         self.assertEqual(current, last)
-                        self.assertTrue(len(change['seq']) > len(last_seq))
             seq_list.append(change['seq'])
             last_seq = change['seq']
         self.assertEqual(len(seq_list), 50)
@@ -522,7 +521,7 @@ class ChangesTests(UnitTestDbBase):
         with self.assertRaises(CloudantArgumentError) as cm:
             invalid_feed = [x for x in feed]
         self.assertEqual(
-            str(cm.exception), 
+            str(cm.exception),
             'Invalid value (foo) for style option.  Must be main_only, or all_docs.')
 
 if __name__ == '__main__':
