@@ -161,21 +161,21 @@ class IndexTests(UnitTestDbBase):
         with DesignDocument(self.db, index.design_document_id) as ddoc:
             self.assertIsInstance(ddoc.get_view(index.name), QueryIndexView)
 
-            self.assertEquals(ddoc['_id'], index.design_document_id)
+            self.assertEqual(ddoc['_id'], index.design_document_id)
             self.assertTrue(ddoc['_rev'].startswith('1-'))
 
-            self.assertEquals(ddoc['indexes'], {})
-            self.assertEquals(ddoc['language'], 'query')
-            self.assertEquals(ddoc['lists'], {})
-            self.assertEquals(ddoc['shows'], {})
+            self.assertEqual(ddoc['indexes'], {})
+            self.assertEqual(ddoc['language'], 'query')
+            self.assertEqual(ddoc['lists'], {})
+            self.assertEqual(ddoc['shows'], {})
 
             self.assertListEqual(list(ddoc['views'].keys()), ['index001'])
 
             view = ddoc['views'][index.name]
-            self.assertEquals(view['map']['fields']['age'], 'asc')
-            self.assertEquals(view['map']['fields']['name'], 'asc')
-            self.assertEquals(view['options']['def']['fields'], ['name', 'age'])
-            self.assertEquals(view['reduce'], '_count')
+            self.assertEqual(view['map']['fields']['age'], 'asc')
+            self.assertEqual(view['map']['fields']['name'], 'asc')
+            self.assertEqual(view['options']['def']['fields'], ['name', 'age'])
+            self.assertEqual(view['reduce'], '_count')
 
     def test_create_an_index_without_ddoc_index_name(self):
         """
@@ -189,21 +189,21 @@ class IndexTests(UnitTestDbBase):
         with DesignDocument(self.db, index.design_document_id) as ddoc:
             self.assertIsInstance(ddoc.get_view(index.name), QueryIndexView)
 
-            self.assertEquals(ddoc['_id'], index.design_document_id)
+            self.assertEqual(ddoc['_id'], index.design_document_id)
             self.assertTrue(ddoc['_rev'].startswith('1-'))
 
-            self.assertEquals(ddoc['indexes'], {})
-            self.assertEquals(ddoc['language'], 'query')
-            self.assertEquals(ddoc['lists'], {})
-            self.assertEquals(ddoc['shows'], {})
+            self.assertEqual(ddoc['indexes'], {})
+            self.assertEqual(ddoc['language'], 'query')
+            self.assertEqual(ddoc['lists'], {})
+            self.assertEqual(ddoc['shows'], {})
 
             self.assertListEqual(list(ddoc['views'].keys()), [index.name])
 
             view = ddoc['views'][index.name]
-            self.assertEquals(view['map']['fields']['age'], 'asc')
-            self.assertEquals(view['map']['fields']['name'], 'asc')
-            self.assertEquals(view['options']['def']['fields'], ['name', 'age'])
-            self.assertEquals(view['reduce'], '_count')
+            self.assertEqual(view['map']['fields']['age'], 'asc')
+            self.assertEqual(view['map']['fields']['name'], 'asc')
+            self.assertEqual(view['options']['def']['fields'], ['name', 'age'])
+            self.assertEqual(view['reduce'], '_count')
 
     def test_create_an_index_with_empty_ddoc_index_name(self):
         """
@@ -217,21 +217,21 @@ class IndexTests(UnitTestDbBase):
         with DesignDocument(self.db, index.design_document_id) as ddoc:
             self.assertIsInstance(ddoc.get_view(index.name), QueryIndexView)
 
-            self.assertEquals(ddoc['_id'], index.design_document_id)
+            self.assertEqual(ddoc['_id'], index.design_document_id)
             self.assertTrue(ddoc['_rev'].startswith('1-'))
 
-            self.assertEquals(ddoc['indexes'], {})
-            self.assertEquals(ddoc['language'], 'query')
-            self.assertEquals(ddoc['lists'], {})
-            self.assertEquals(ddoc['shows'], {})
+            self.assertEqual(ddoc['indexes'], {})
+            self.assertEqual(ddoc['language'], 'query')
+            self.assertEqual(ddoc['lists'], {})
+            self.assertEqual(ddoc['shows'], {})
 
             self.assertListEqual(list(ddoc['views'].keys()), [index.name])
 
             view = ddoc['views'][index.name]
-            self.assertEquals(view['map']['fields']['age'], 'asc')
-            self.assertEquals(view['map']['fields']['name'], 'asc')
-            self.assertEquals(view['options']['def']['fields'], ['name', 'age'])
-            self.assertEquals(view['reduce'], '_count')
+            self.assertEqual(view['map']['fields']['age'], 'asc')
+            self.assertEqual(view['map']['fields']['name'], 'asc')
+            self.assertEqual(view['options']['def']['fields'], ['name', 'age'])
+            self.assertEqual(view['reduce'], '_count')
 
     def test_create_an_index_using_design_prefix(self):
         """
@@ -245,21 +245,21 @@ class IndexTests(UnitTestDbBase):
         with DesignDocument(self.db, index.design_document_id) as ddoc:
             self.assertIsInstance(ddoc.get_view(index.name), QueryIndexView)
 
-            self.assertEquals(ddoc['_id'], index.design_document_id)
+            self.assertEqual(ddoc['_id'], index.design_document_id)
             self.assertTrue(ddoc['_rev'].startswith('1-'))
 
-            self.assertEquals(ddoc['indexes'], {})
-            self.assertEquals(ddoc['language'], 'query')
-            self.assertEquals(ddoc['lists'], {})
-            self.assertEquals(ddoc['shows'], {})
+            self.assertEqual(ddoc['indexes'], {})
+            self.assertEqual(ddoc['language'], 'query')
+            self.assertEqual(ddoc['lists'], {})
+            self.assertEqual(ddoc['shows'], {})
 
             self.assertListEqual(list(ddoc['views'].keys()), [index.name])
 
             view = ddoc['views'][index.name]
-            self.assertEquals(view['map']['fields']['age'], 'asc')
-            self.assertEquals(view['map']['fields']['name'], 'asc')
-            self.assertEquals(view['options']['def']['fields'], ['name', 'age'])
-            self.assertEquals(view['reduce'], '_count')
+            self.assertEqual(view['map']['fields']['age'], 'asc')
+            self.assertEqual(view['map']['fields']['name'], 'asc')
+            self.assertEqual(view['options']['def']['fields'], ['name', 'age'])
+            self.assertEqual(view['reduce'], '_count')
 
     def test_create_uses_custom_encoder(self):
         """
@@ -446,22 +446,22 @@ class TextIndexTests(UnitTestDbBase):
         self.assertEqual(index.design_document_id, '_design/ddoc001')
         self.assertEqual(index.name, 'index001')
         with DesignDocument(self.db, index.design_document_id) as ddoc:
-            self.assertEquals(ddoc['_id'], index.design_document_id)
+            self.assertEqual(ddoc['_id'], index.design_document_id)
             self.assertTrue(ddoc['_rev'].startswith('1-'))
 
-            self.assertEquals(ddoc['language'], 'query')
-            self.assertEquals(ddoc['lists'], {})
-            self.assertEquals(ddoc['shows'], {})
-            self.assertEquals(ddoc['views'], {})
+            self.assertEqual(ddoc['language'], 'query')
+            self.assertEqual(ddoc['lists'], {})
+            self.assertEqual(ddoc['shows'], {})
+            self.assertEqual(ddoc['views'], {})
 
             index = ddoc['indexes']['index001']
-            self.assertEquals(index['analyzer']['default'], 'keyword')
-            self.assertEquals(index['analyzer']['fields']['$default'], 'standard')
-            self.assertEquals(index['analyzer']['name'], 'perfield')
-            self.assertEquals(index['index']['default_analyzer'], 'keyword')
-            self.assertEquals(index['index']['default_field'], {})
-            self.assertEquals(index['index']['fields'], 'all_fields')
-            self.assertEquals(index['index']['selector'], {})
+            self.assertEqual(index['analyzer']['default'], 'keyword')
+            self.assertEqual(index['analyzer']['fields']['$default'], 'standard')
+            self.assertEqual(index['analyzer']['name'], 'perfield')
+            self.assertEqual(index['index']['default_analyzer'], 'keyword')
+            self.assertEqual(index['index']['default_field'], {})
+            self.assertEqual(index['index']['fields'], 'all_fields')
+            self.assertEqual(index['index']['selector'], {})
             self.assertTrue(index['index']['index_array_lengths'])
 
     def test_create_a_search_index_with_kwargs(self):
@@ -480,22 +480,22 @@ class TextIndexTests(UnitTestDbBase):
         self.assertEqual(index.design_document_id, '_design/ddoc001')
         self.assertEqual(index.name, 'index001')
         with DesignDocument(self.db, index.design_document_id) as ddoc:
-            self.assertEquals(ddoc['_id'], index.design_document_id)
+            self.assertEqual(ddoc['_id'], index.design_document_id)
             self.assertTrue(ddoc['_rev'].startswith('1-'))
 
-            self.assertEquals(ddoc['language'], 'query')
-            self.assertEquals(ddoc['lists'], {})
-            self.assertEquals(ddoc['shows'], {})
-            self.assertEquals(ddoc['views'], {})
+            self.assertEqual(ddoc['language'], 'query')
+            self.assertEqual(ddoc['lists'], {})
+            self.assertEqual(ddoc['shows'], {})
+            self.assertEqual(ddoc['views'], {})
 
             index = ddoc['indexes']['index001']
-            self.assertEquals(index['analyzer']['default'], 'keyword')
-            self.assertEquals(index['analyzer']['fields']['$default'], 'german')
-            self.assertEquals(index['analyzer']['name'], 'perfield')
-            self.assertEquals(index['index']['default_analyzer'], 'keyword')
-            self.assertEquals(index['index']['default_field']['analyzer'], 'german')
-            self.assertEquals(index['index']['fields'], [{'name': 'name', 'type': 'string'}, {'name': 'age', 'type': 'number'}])
-            self.assertEquals(index['index']['selector'], {})
+            self.assertEqual(index['analyzer']['default'], 'keyword')
+            self.assertEqual(index['analyzer']['fields']['$default'], 'german')
+            self.assertEqual(index['analyzer']['name'], 'perfield')
+            self.assertEqual(index['index']['default_analyzer'], 'keyword')
+            self.assertEqual(index['index']['default_field']['analyzer'], 'german')
+            self.assertEqual(index['index']['fields'], [{'name': 'name', 'type': 'string'}, {'name': 'age', 'type': 'number'}])
+            self.assertEqual(index['index']['selector'], {})
             self.assertTrue(index['index']['default_field']['enabled'])
             self.assertTrue(index['index']['index_array_lengths'])
 

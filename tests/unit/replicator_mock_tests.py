@@ -86,9 +86,9 @@ class ReplicatorDocumentValidationMockTests(unittest.TestCase):
         rep.create_replication(src, tgt, repl_id=self.repl_id)
 
         kcall = m_replicator.create_document.call_args_list
-        self.assertEquals(len(kcall), 1)
+        self.assertEqual(len(kcall), 1)
         args, kwargs = kcall[0]
-        self.assertEquals(len(args), 1)
+        self.assertEqual(len(args), 1)
 
         expected_doc = {
             '_id': self.repl_id,
@@ -118,9 +118,9 @@ class ReplicatorDocumentValidationMockTests(unittest.TestCase):
             src, tgt, repl_id=self.repl_id, user_ctx=self.user_ctx)
 
         kcall = m_replicator.create_document.call_args_list
-        self.assertEquals(len(kcall), 1)
+        self.assertEqual(len(kcall), 1)
         args, kwargs = kcall[0]
-        self.assertEquals(len(args), 1)
+        self.assertEqual(len(args), 1)
 
         expected_doc = {
             '_id': self.repl_id,
@@ -154,9 +154,9 @@ class ReplicatorDocumentValidationMockTests(unittest.TestCase):
             src, tgt, repl_id=self.repl_id, user_ctx=self.user_ctx)
 
         kcall = m_replicator.create_document.call_args_list
-        self.assertEquals(len(kcall), 1)
+        self.assertEqual(len(kcall), 1)
         args, kwargs = kcall[0]
-        self.assertEquals(len(args), 1)
+        self.assertEqual(len(args), 1)
 
         expected_doc = {
             '_id': self.repl_id,

@@ -474,9 +474,9 @@ class ChangesTests(UnitTestDbBase):
             include_docs=False
         )
         params = feed._translate(feed._options)
-        self.assertEquals(params['filter'], 'mailbox/new_mail')
-        self.assertEquals(params['foo'], 'bar')
-        self.assertEquals(params['include_docs'], 'false')
+        self.assertEqual(params['filter'], 'mailbox/new_mail')
+        self.assertEqual(params['foo'], 'bar')
+        self.assertEqual(params['include_docs'], 'false')
 
     def test_invalid_argument_type(self):
         """

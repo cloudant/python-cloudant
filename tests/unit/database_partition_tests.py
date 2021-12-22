@@ -63,7 +63,7 @@ class DatabasePartitionTests(UnitTestDbBase):
     def test_partitioned_all_docs(self):
         for partition_key in self.populate_db_with_partitioned_documents(5, 25):
             docs = self.db.partitioned_all_docs(partition_key)
-            self.assertEquals(len(docs['rows']), 25)
+            self.assertEqual(len(docs['rows']), 25)
 
             for doc in docs['rows']:
                 self.assertTrue(doc['id'].startswith(partition_key + ':'))
@@ -71,8 +71,8 @@ class DatabasePartitionTests(UnitTestDbBase):
     def test_partition_metadata(self):
         for partition_key in self.populate_db_with_partitioned_documents(5, 25):
             meta = self.db.partition_metadata(partition_key)
-            self.assertEquals(meta['partition'], partition_key)
-            self.assertEquals(meta['doc_count'], 25)
+            self.assertEqual(meta['partition'], partition_key)
+            self.assertEqual(meta['doc_count'], 25)
 
     def test_partitioned_search(self):
         ddoc = DesignDocument(self.db, 'partitioned_search', partitioned=True)
@@ -91,7 +91,7 @@ class DatabasePartitionTests(UnitTestDbBase):
                 print(result)
                 self.assertTrue(result['id'].startswith(partition_key + ':'))
                 i += 1
-            self.assertEquals(i, 10)
+            self.assertEqual(i, 10)
 
     def test_get_partitioned_index(self):
         index_name = 'test_partitioned_index'
@@ -99,16 +99,16 @@ class DatabasePartitionTests(UnitTestDbBase):
         self.db.create_query_index(index_name=index_name, fields=['foo'])
 
         results = self.db.get_query_indexes()
-        self.assertEquals(len(results), 2)
+        self.assertEqual(len(results), 2)
 
         index_all_docs = results[0]
-        self.assertEquals(index_all_docs.name, '_all_docs')
-        self.assertEquals(type(index_all_docs), SpecialIndex)
+        self.assertEqual(index_all_docs.name, '_all_docs')
+        self.assertEqual(type(index_all_docs), SpecialIndex)
         self.assertFalse(index_all_docs.partitioned)
 
         index_partitioned = results[1]
-        self.assertEquals(index_partitioned.name, index_name)
-        self.assertEquals(type(index_partitioned), Index)
+        self.assertEqual(index_partitioned.name, index_name)
+        self.assertEqual(type(index_partitioned), Index)
         self.assertTrue(index_partitioned.partitioned)
 
     def test_partitioned_query(self):
@@ -122,7 +122,7 @@ class DatabasePartitionTests(UnitTestDbBase):
             for result in results:
                 self.assertTrue(result['_id'].startswith(partition_key + ':'))
                 i += 1
-            self.assertEquals(i, 10)
+            self.assertEqual(i, 10)
 
     def test_partitioned_view(self):
         ddoc = DesignDocument(self.db, 'partitioned_view', partitioned=True)
@@ -138,4 +138,4 @@ class DatabasePartitionTests(UnitTestDbBase):
                 self.assertTrue(
                     result['id'].startswith(partition_key + ':'))
                 i += 1
-            self.assertEquals(i, 10)
+            self.assertEqual(i, 10)

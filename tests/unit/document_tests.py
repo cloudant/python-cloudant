@@ -944,14 +944,14 @@ class DocumentTests(UnitTestDbBase):
 
         raw_doc = self.db.all_docs(include_docs=True)['rows'][0]['doc']
 
-        self.assertEquals(raw_doc['name'], 'julia')
-        self.assertEquals(raw_doc['dt']['_type'], 'datetime')
-        self.assertEquals(raw_doc['dt']['value'], '2018-07-09T15:11:10')
+        self.assertEqual(raw_doc['name'], 'julia')
+        self.assertEqual(raw_doc['dt']['_type'], 'datetime')
+        self.assertEqual(raw_doc['dt']['value'], '2018-07-09T15:11:10')
 
         doc2 = Document(self.db, doc['_id'], decoder=DTDecoder)
         doc2.fetch()
 
-        self.assertEquals(doc2['dt'], doc['dt'])
+        self.assertEqual(doc2['dt'], doc['dt'])
 
 if __name__ == '__main__':
     unittest.main()
