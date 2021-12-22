@@ -266,7 +266,7 @@ class ClientTests(UnitTestDbBase):
             timeout=None
         )
 
-        self.assertEquals(all_dbs, ['animaldb'])
+        self.assertEqual(all_dbs, ['animaldb'])
 
     @mock.patch('cloudant._client_session.Session.request')
     def test_session_basic_with_no_credentials(self, m_req):
@@ -333,7 +333,7 @@ class ClientTests(UnitTestDbBase):
             auth=('baz', 'qux'),  # uses HTTP Basic Auth
             timeout=None
         )
-        self.assertEquals(all_dbs, ['animaldb'])
+        self.assertEqual(all_dbs, ['animaldb'])
 
     @skip_if_not_cookie_auth
     def test_basic_auth_str(self):
@@ -442,7 +442,7 @@ class ClientTests(UnitTestDbBase):
 
         self.assertEqual(cm.exception.status_code, 500)
 
-        self.assertEquals(m_req.call_count, 3)
+        self.assertEqual(m_req.call_count, 3)
         m_req.assert_called_with(
             'PUT',
             '/'.join([self.url, dbname]),
@@ -730,7 +730,7 @@ class CloudantClientTests(UnitTestDbBase):
             with cloudant_bluemix(vcap_services, instance_name=instance_name) as c:
                 self.assertIsInstance(c, Cloudant)
                 self.assertIsInstance(c.r_session, requests.Session)
-                self.assertEquals(c.session()['userCtx']['name'], self.user)
+                self.assertEqual(c.session()['userCtx']['name'], self.user)
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
 
@@ -809,7 +809,7 @@ class CloudantClientTests(UnitTestDbBase):
                                   service_name=service_name) as c:
                 self.assertIsInstance(c, Cloudant)
                 self.assertIsInstance(c.r_session, requests.Session)
-                self.assertEquals(c.session()['userCtx']['name'], self.user)
+                self.assertEqual(c.session()['userCtx']['name'], self.user)
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
 
@@ -850,7 +850,7 @@ class CloudantClientTests(UnitTestDbBase):
             c.connect()
             self.assertIsInstance(c, Cloudant)
             self.assertIsInstance(c.r_session, requests.Session)
-            self.assertEquals(c.session()['userCtx']['name'], self.user)
+            self.assertEqual(c.session()['userCtx']['name'], self.user)
 
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
@@ -916,7 +916,7 @@ class CloudantClientTests(UnitTestDbBase):
             c.connect()
             self.assertIsInstance(c, Cloudant)
             self.assertIsInstance(c.r_session, requests.Session)
-            self.assertEquals(c.session()['userCtx']['name'], self.user)
+            self.assertEqual(c.session()['userCtx']['name'], self.user)
 
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))
@@ -960,7 +960,7 @@ class CloudantClientTests(UnitTestDbBase):
             c.connect()
             self.assertIsInstance(c, Cloudant)
             self.assertIsInstance(c.r_session, requests.Session)
-            self.assertEquals(c.session()['userCtx']['name'], self.user)
+            self.assertEqual(c.session()['userCtx']['name'], self.user)
 
         except Exception as err:
             self.fail('Exception {0} was raised.'.format(str(err)))

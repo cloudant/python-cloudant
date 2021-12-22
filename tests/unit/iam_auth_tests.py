@@ -88,12 +88,12 @@ class IAMAuthTests(unittest.TestCase):
 
     def test_iam_set_credentials(self):
         iam = IAMSession(MOCK_API_KEY, 'http://127.0.0.1:5984')
-        self.assertEquals(iam._api_key, MOCK_API_KEY)
+        self.assertEqual(iam._api_key, MOCK_API_KEY)
 
         new_api_key = 'some_new_api_key'
         iam.set_credentials(None, new_api_key)
 
-        self.assertEquals(iam._api_key, new_api_key)
+        self.assertEqual(iam._api_key, new_api_key)
 
     @mock.patch('cloudant._client_session.ClientSession.request')
     def test_iam_get_access_token(self, m_req):

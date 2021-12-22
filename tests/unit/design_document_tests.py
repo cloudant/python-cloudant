@@ -843,9 +843,9 @@ class DesignDocumentTests(UnitTestDbBase):
         # Validate the metadata
         search_index_metadata = search_info['search_index']
         self.assertIsNotNone(search_index_metadata)
-        self.assertEquals(search_index_metadata['doc_del_count'], 0, 'There should be no deleted docs.')
+        self.assertEqual(search_index_metadata['doc_del_count'], 0, 'There should be no deleted docs.')
         self.assertTrue(search_index_metadata['doc_count'] <= 100, 'There should be 100 or fewer docs.')
-        self.assertEquals(search_index_metadata['committed_seq'], 0, 'The committed_seq should be 0.')
+        self.assertEqual(search_index_metadata['committed_seq'], 0, 'The committed_seq should be 0.')
         self.assertTrue(search_index_metadata['pending_seq'] <= 101, 'The pending_seq should be 101 or fewer.')
         self.assertTrue(search_index_metadata['disk_size'] >0, 'The disk_size should be greater than 0.')
 
@@ -1275,7 +1275,7 @@ class DesignDocumentTests(UnitTestDbBase):
         doc = Document(self.db, 'rewrite_doc')
         doc.save()
         resp = self.client.r_session.get('/'.join([ddoc.document_url, '_rewrite']))
-        self.assertEquals(
+        self.assertEqual(
             response_to_json_dict(resp),
             {
                 '_id': 'rewrite_doc',
