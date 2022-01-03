@@ -21,6 +21,10 @@ content like using `raw_result=True` in `python-cloudant`.
    com/IBM/ibm-cloud-sdk-common/#automatic-retries) feature for failed requests.
 1. Error handling is not transferable from `python-cloudant` to `cloudant-python-sdk`. For more information go to the [Error handling section](https://cloud.ibm.com/apidocs/cloudant?code=python#error-handling) in our API docs.
 1. Custom HTTP client configurations in `python-cloudant` are not transferable to `python-java-sdk`. For more information go to the [Configuring the HTTP client section(https://githubcom/IBM/ibm-cloud-sdk-common/#configuring-the-http-client) in the IBM Cloud SDK Common README.
+1. Authentication errors turn out at the time of instantiation of a client, while errors
+   with the server can be found during calling the first operation against it. We suggest to
+   check server errors with [`getServerInformation`](https://cloud.ibm.com/apidocs/cloudant?
+   code=python#getserverinformation) which is the new alternative of `metadata()`.
 
 ## Request mapping
 Here's a list of the top 5 most frequently used `python-cloudant` operations and the `cloudant-python-sdk` equivalent API operation documentation link:
