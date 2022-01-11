@@ -20,8 +20,21 @@ content like using `raw_result=True` in `python-cloudant`.
 1. Replay adapters are replaced by the [automatic retries](https://github.
    com/IBM/ibm-cloud-sdk-common/#automatic-retries) feature for failed requests.
 1. Error handling is not transferable from `python-cloudant` to `cloudant-python-sdk`. For more information go to the [Error handling section](https://cloud.ibm.com/apidocs/cloudant?code=python#error-handling) in our API docs.
-1. Custom HTTP client configurations in `python-cloudant` are not transferable to `python-java-sdk`. For more information go to the [Configuring the HTTP client section(https://githubcom/IBM/ibm-cloud-sdk-common/#configuring-the-http-client) in the IBM Cloud SDK Common README.
-
+1. Custom HTTP client configurations in `python-cloudant` can be set differently in
+   `cloudant-python-sdk`. For more information go to the
+   [Configuring the HTTP client section](https://github.com/IBM/ibm-cloud-sdk-common/#configuring-the-http-client)
+   in the IBM Cloud SDK Common README.
+   
+### Troubleshooting
+1. Authentication errors occur during service instantiation. For example, the code `service =
+   CloudantV1.new_instance(service_name="EXAMPLE")` will fail with `ValueError: At least one of
+   iam_profile_name or iam_profile_id must be specified.` if required environment variables
+   prefixed with `EXAMPLE` are not set.
+1. Server errors occur when running a request against the service. We suggest to
+   check server errors with
+   [`getServerInformation`](https://cloud.ibm.com/apidocs/cloudant?code=python#getserverinformation)
+   which is the new alternative of `metadata()`.
+   
 ## Request mapping
 Here's a list of the top 5 most frequently used `python-cloudant` operations and the `cloudant-python-sdk` equivalent API operation documentation link:
 
