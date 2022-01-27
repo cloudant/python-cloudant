@@ -1,3 +1,6 @@
+# UNRELEASED
+- [DEPRECATED] This library is end-of-life and no longer supported.
+
 # 2.15.0 (2021-08-26)
 - [NEW] Override `dict.get` method for `CouchDatabase` to add `remote` parameter allowing it to
   retrieve a remote document if specified.
