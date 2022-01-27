@@ -24,7 +24,7 @@ import warnings
 from .client import Cloudant, CouchDB
 from ._common_util import CloudFoundryService
 
-warnings.warn('The module cloudant is now deprecated. The replacement is ibmcloudant.',
+warnings.warn('The module cloudant is now end-of-life. The replacement is ibmcloudant.',
               DeprecationWarning)
 
 @contextlib.contextmanager
