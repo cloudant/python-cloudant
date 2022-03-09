@@ -17,8 +17,7 @@ remote HTTP API. For example, in the case of the document context manager, this 
 to fetch and a `put_document` to save.
 1. In `cloudant-python-sdk` View, Search, and Query (aka `_find` endpoint) operation responses contain raw JSON
 content like using `raw_result=True` in `python-cloudant`.
-1. Replay adapters are replaced by the [automatic retries](https://github.
-   com/IBM/ibm-cloud-sdk-common/#automatic-retries) feature for failed requests.
+1. Replay adapters are replaced by the [automatic retries](https://github.com/IBM/ibm-cloud-sdk-common/#automatic-retries) feature for failed requests.
 1. Error handling is not transferable from `python-cloudant` to `cloudant-python-sdk`. For more information go to the [Error handling section](https://cloud.ibm.com/apidocs/cloudant?code=python#error-handling) in our API docs.
 1. Custom HTTP client configurations in `python-cloudant` can be set differently in
    `cloudant-python-sdk`. For more information go to the
